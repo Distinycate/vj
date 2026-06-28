@@ -1,8 +1,13 @@
 'use client';
 import { motion } from 'framer-motion';
-import { Play, Store, Trophy, Target, Star, Bug } from 'lucide-react';
+import { Play, Store, Trophy, Target, Star, Bug, LogOut } from 'lucide-react';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function Dashboard() {
+  const { student, progress, logout } = useAppStore();
+
+  if (!student) return null;
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 font-sans p-4 md:p-8 pb-24 relative overflow-hidden">
       
@@ -16,19 +21,19 @@ export default function Dashboard() {
         <header className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-              สวัสดี, นักเรียน
+              สวัสดี, {student.student_name}
             </h1>
             <div className="flex items-center gap-3 mt-2">
               <span className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-full text-sm font-semibold shadow-lg shadow-amber-500/30">
-                Rank 1: Novice
+                Rank {progress?.current_rank || 1}
               </span>
               <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-sm text-emerald-300 font-medium border border-white/5">
-                🔥 ต่อเนื่อง 3 วัน
+                🔥 ต่อเนื่อง {progress?.streak_days || 0} วัน
               </span>
             </div>
           </div>
-          <button className="w-12 h-12 rounded-full bg-white/5 backdrop-blur-lg border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors">
-            <span className="text-xl">🧑‍🎓</span>
+          <button onClick={logout} className="w-12 h-12 rounded-full bg-white/5 backdrop-blur-lg border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors text-slate-300 hover:text-white">
+            <LogOut className="w-5 h-5" />
           </button>
         </header>
 
@@ -44,12 +49,12 @@ export default function Dashboard() {
             <div>
               <p className="text-slate-400 font-medium mb-1">ด่านปัจจุบัน</p>
               <h2 className="text-4xl font-extrabold text-white flex items-center gap-2">
-                ด่าน 1 <Star className="text-amber-400 fill-amber-400 w-6 h-6" />
+                ด่าน {progress?.current_stage || 1} <Star className="text-amber-400 fill-amber-400 w-6 h-6" />
               </h2>
             </div>
             <div className="text-right">
               <p className="text-slate-400 text-sm mb-1">ความคืบหน้า</p>
-              <p className="text-xl font-bold text-emerald-400">45%</p>
+              <p className="text-xl font-bold text-emerald-400">0%</p>
             </div>
           </div>
           
@@ -57,7 +62,7 @@ export default function Dashboard() {
           <div className="w-full h-3 bg-black/40 rounded-full overflow-hidden relative z-10">
             <motion.div 
               initial={{ width: 0 }}
-              animate={{ width: '45%' }}
+              animate={{ width: '0%' }}
               transition={{ duration: 1, delay: 0.2 }}
               className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full"
             />
