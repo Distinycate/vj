@@ -47,7 +47,7 @@ export default function Home() {
     setError('');
 
     try {
-      // 1. Authenticate with Supabase Auth using a virtual email
+      // 1. Authenticate with Supabase Auth using virtual email
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: `${loginUsername.trim()}@school.local`,
         password: loginPassword
@@ -73,8 +73,18 @@ export default function Home() {
         .eq('student_id', studentData.id)
         .single();
 
+      // 4. Fetch pre-test record to determine if they have completed it
+      const { data: pretestData } = await supabase
+        .from('pre_tests')
+        .select('created_at')
+        .eq('student_id', studentData.id)
+        .maybeSingle();
+
       setStudent(studentData);
-      setProgress(progressData || { current_rank: 1, current_stage: 1 });
+      setProgress({ 
+        ...progressData, 
+        pretest_date: pretestData ? pretestData.created_at : null 
+      });
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ');

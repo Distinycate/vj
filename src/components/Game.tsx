@@ -44,13 +44,15 @@ export default function Game() {
   const [refHardestWord, setRefHardestWord] = useState('');
   const [refFeeling, setRefFeeling] = useState('😊 สนุกปานกลาง');
 
-  // Text-To-Speech
   const speakWord = (text: string) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const msg = new SpeechSynthesisUtterance(text);
       msg.lang = 'en-US';
       window.speechSynthesis.speak(msg);
+    } else {
+      const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(text)}`);
+      audio.play();
     }
   };
 

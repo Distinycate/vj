@@ -2,23 +2,85 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
-import { BarChart3, TrendingUp, Users, BookOpen, AlertCircle, Sparkles, Trophy, LogOut, ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, BookOpen, AlertCircle, Sparkles, Trophy, LogOut, ArrowLeft, Shield } from 'lucide-react';
 
 export default function ExecutiveDashboard() {
-  const [loading, setLoading] = useState(true);
+  const [executiveUser, setExecutiveUser] = useState<any>(null);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
+
   const [stats, setStats] = useState<any>({
     totalStudents: 0,
     totalTeachers: 0,
     totalClassrooms: 0,
     schoolAverage: 82,
     atRiskCount: 0,
-    growthRate: 15.5 // Normalized gain percentage
+    growthRate: 15.5
   });
   
   const [classPerformance, setClassPerformance] = useState<any[]>([]);
   const [weakCategories, setWeakCategories] = useState<any[]>([]);
 
+  // Check login on load
   useEffect(() => {
+    const saved = localStorage.getItem('vocab_journey_executive');
+    if (saved) {
+      setExecutiveUser(JSON.parse(saved));
+    }
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim() || !password.trim()) {
+      return setLoginError('กรุณากรอก Username และ Password');
+    }
+    setIsLoading(true);
+    setLoginError('');
+
+    try {
+      // 1. Authenticate using Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: `${username.trim()}@school.local`,
+        password: password
+      });
+
+      if (authError || !authData.user) {
+        throw new Error('ชื่อผู้ใช้หรือรหัสผ่านผู้บริหารไม่ถูกต้อง');
+      }
+
+      // 2. Fetch teacher profile and check role
+      const { data, error } = await supabase
+        .from('teachers')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (error || !data) throw new Error('ไม่พบข้อมูลบัญชีผู้บริหารในระบบ');
+      
+      if (data.role !== 'EXECUTIVE' && data.role !== 'ADMIN') {
+        throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าใช้ระบบรายงานผู้บริหาร');
+      }
+
+      setExecutiveUser(data);
+      localStorage.setItem('vocab_journey_executive', JSON.stringify(data));
+    } catch (err: any) {
+      setLoginError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('vocab_journey_executive');
+    setExecutiveUser(null);
+  };
+
+  useEffect(() => {
+    if (!executiveUser) return;
+
     async function loadExecutiveData() {
       try {
         // 1. Fetch totals
@@ -67,14 +129,56 @@ export default function ExecutiveDashboard() {
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        setLoadingData(false);
       }
     }
 
     loadExecutiveData();
-  }, []);
+  }, [executiveUser]);
 
-  if (loading) {
+  // LOGIN SCREEN
+  if (!executiveUser) {
+    return (
+      <div className="min-h-screen bg-slate-955 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[128px]"></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-indigo-500/10 rounded-full mix-blend-screen filter blur-[128px]"></div>
+
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }} 
+          animate={{ opacity: 1, scale: 1 }} 
+          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl relative z-10"
+        >
+          <div className="text-center mb-6">
+            <Shield className="w-14 h-14 text-emerald-400 mx-auto mb-3" />
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-indigo-300 mb-2">
+              Executive Portal
+            </h1>
+            <p className="text-slate-400">ระบบรายงานสารสนเทศเชิงนโยบายระดับโรงเรียน</p>
+          </div>
+
+          {loginError && <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-3 rounded-xl mb-6 text-sm text-center">{loginError}</div>}
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <div>
+              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">ชื่อผู้ใช้ (ผู้บริหาร)</label>
+              <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500" placeholder="เช่น test3" />
+            </div>
+            
+            <div>
+              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">รหัสผ่าน</label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500" placeholder="เช่น test333333" />
+            </div>
+
+            <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-emerald-500 to-indigo-600 hover:from-emerald-400 text-white font-bold py-4 rounded-xl shadow-lg mt-4 disabled:opacity-50">
+              {isLoading ? 'กำลังโหลด...' : 'ลงชื่อเข้าใช้ระบบผู้บริหาร 🔒'}
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (loadingData) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center">
         <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
@@ -84,7 +188,7 @@ export default function ExecutiveDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 pb-20 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-955 text-slate-100 p-4 md:p-8 pb-20 relative overflow-hidden">
       
       {/* Glow orbs */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-500/5 rounded-full filter blur-[120px] pointer-events-none"></div>
@@ -93,20 +197,28 @@ export default function ExecutiveDashboard() {
       <div className="max-w-6xl mx-auto relative z-10">
         
         {/* Header */}
-        <header className="flex justify-between items-center mb-8 bg-slate-900 border border-slate-900 p-6 rounded-3xl">
+        <header className="flex flex-col md:flex-row justify-between items-center mb-8 bg-slate-900 border border-slate-900 p-6 rounded-3xl gap-4">
           <div className="flex items-center gap-3">
             <TrendingUp className="w-8 h-8 text-indigo-400" />
             <div>
               <h1 className="text-2xl font-black text-white">รายงานผลประเมินนวัตกรรมผู้บริหาร</h1>
-              <p className="text-slate-400 text-sm">การสรุปคะแนนระดับสถาบันการศึกษาเพื่อวัดผล O-NET</p>
+              <p className="text-slate-400 text-sm">การสรุปคะแนนระดับสถาบันการศึกษาเพื่อวัดผล O-NET • ผู้บริหาร: {executiveUser.name}</p>
             </div>
           </div>
-          <button 
-            onClick={() => window.location.href = '/admin'}
-            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold rounded-xl flex items-center justify-center gap-2 hover:scale-102 transition-all"
-          >
-            <ArrowLeft className="w-4 h-4" /> ไปหน้าครูผู้สอน
-          </button>
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <button 
+              onClick={() => window.location.href = '/admin'}
+              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold rounded-xl flex items-center justify-center gap-2 hover:scale-102 transition-all w-full md:w-auto"
+            >
+              <ArrowLeft className="w-4 h-4" /> ไปหน้าครูผู้สอน
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="px-5 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl flex items-center justify-center gap-2 hover:scale-102 transition-all w-full md:w-auto font-bold"
+            >
+              <LogOut className="w-4 h-4" /> ออกจากระบบ
+            </button>
+          </div>
         </header>
 
         {/* Instutional Top-Level Cards Grid */}
