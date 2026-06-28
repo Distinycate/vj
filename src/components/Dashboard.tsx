@@ -4,7 +4,7 @@ import { Play, Store, Trophy, Target, Star, Bug, LogOut } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function Dashboard() {
-  const { student, progress, logout } = useAppStore();
+  const { student, progress, logout, setScreen } = useAppStore();
 
   if (!student) return null;
 
@@ -72,6 +72,7 @@ export default function Dashboard() {
         {/* Action Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <motion.button 
+            onClick={() => setScreen('study')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white p-5 rounded-2xl font-bold text-lg shadow-lg shadow-emerald-500/25 border border-emerald-400/20"
@@ -81,6 +82,7 @@ export default function Dashboard() {
           </motion.button>
           
           <motion.button 
+            onClick={() => setScreen('game')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 backdrop-blur-lg text-white p-5 rounded-2xl font-bold text-lg border border-white/10 transition-colors"

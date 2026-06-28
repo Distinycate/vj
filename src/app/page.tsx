@@ -4,9 +4,11 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import Dashboard from '@/components/Dashboard';
+import StudyCamp from '@/components/StudyCamp';
+import Game from '@/components/Game';
 
 export default function Home() {
-  const { student, setStudent, setProgress } = useAppStore();
+  const { student, setStudent, setProgress, currentScreen } = useAppStore();
   const [studentId, setStudentId] = useState('');
   const [studentName, setStudentName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -67,6 +69,8 @@ export default function Home() {
   };
 
   if (student) {
+    if (currentScreen === 'study') return <StudyCamp />;
+    if (currentScreen === 'game') return <Game />;
     return <Dashboard />;
   }
 
