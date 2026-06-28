@@ -62,7 +62,7 @@ export default function Home() {
       
     } catch (err: any) {
       console.error(err);
-      setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+      setError(`เกิดข้อผิดพลาด: ${err.message || 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้'}`);
     } finally {
       setIsLoading(false);
     }
