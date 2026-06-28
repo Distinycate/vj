@@ -48,6 +48,13 @@ async function main() {
         
         // Every 10 words is a new stage
         currentStage = Math.floor(i / 10) + 1;
+        
+        // Rank 1: Stages 1-20, Rank 2: 21-40, Rank 3: 41-60, Rank 4: 61-80, Rank 5: 81-100
+        let currentRank = 1;
+        if (currentStage > 20) currentRank = 2;
+        if (currentStage > 40) currentRank = 3;
+        if (currentStage > 60) currentRank = 4;
+        if (currentStage > 80) currentRank = 5;
 
         vocabToInsert.push({
           word_id: row.WordID || `M1-${String(i+1).padStart(3, '0')}`,
@@ -58,6 +65,7 @@ async function main() {
           category: row.Category || '',
           example: row.Example || '',
           stage: currentStage,
+          rank: currentRank,
           image_url: row.ImageURL || null
         });
       }

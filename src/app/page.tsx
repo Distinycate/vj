@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/useAppStore';
 import Dashboard from '@/components/Dashboard';
 import StudyCamp from '@/components/StudyCamp';
 import Game from '@/components/Game';
+import PreTest from '@/components/PreTest';
 
 export default function Home() {
   const { student, setStudent, setProgress, currentScreen } = useAppStore();
@@ -105,6 +106,7 @@ export default function Home() {
   };
 
   if (student) {
+    if (!progress?.pretest_date) return <PreTest />;
     if (currentScreen === 'study') return <StudyCamp />;
     if (currentScreen === 'game') return <Game />;
     return <Dashboard />;

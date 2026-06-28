@@ -1,10 +1,13 @@
 'use client';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Store, Trophy, Target, Star, Bug, LogOut } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import ShopModal from '@/components/ShopModal';
 
 export default function Dashboard() {
   const { student, progress, logout, setScreen } = useAppStore();
+  const [showShop, setShowShop] = useState(false);
 
   if (!student) return null;
 
@@ -109,6 +112,7 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
+            onClick={() => setShowShop(true)}
             className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-colors cursor-pointer"
           >
             <Store className="w-8 h-8 text-purple-400 mb-3" />
@@ -124,6 +128,8 @@ export default function Dashboard() {
         <Bug className="w-6 h-6" />
       </button>
 
+      {/* Modals */}
+      {showShop && <ShopModal onClose={() => setShowShop(false)} />}
     </div>
   );
 }
