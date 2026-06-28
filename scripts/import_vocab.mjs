@@ -41,6 +41,15 @@ async function main() {
       console.log("Clearing existing vocabulary...");
       await supabase.from('vocabulary').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
+      // Fetch categories to map names to IDs
+      const { data: categories } = await supabase.from('vocabulary_categories').select('*');
+      const categoryMap = {};
+      if (categories) {
+        categories.forEach(cat => {
+          categoryMap[cat.name.toLowerCase()] = cat.id;
+        });
+      }
+
       let currentStage = 1;
 
       for (let i = 0; i < rows.length; i++) {
@@ -56,13 +65,21 @@ async function main() {
         if (currentStage > 60) currentRank = 4;
         if (currentStage > 80) currentRank = 5;
 
+        // Resolve category_id or fallback to 'animals'
+        const csvCat = (row.Category || 'Animals').trim().toLowerCase();
+        let catId = categoryMap[csvCat];
+        if (!catId) {
+          // If the CSV category is something like "occupations", match "occupation"
+          const matchedKey = Object.keys(categoryMap).find(k => csvCat.includes(k) || k.includes(csvCat));
+          catId = matchedKey ? categoryMap[matchedKey] : categoryMap['animals'];
+        }
+
         vocabToInsert.push({
           word_id: row.WordID || `M1-${String(i+1).padStart(3, '0')}`,
-          grade_level: row.GradeLevel || 'M1',
           word: row.Word || '',
           meaning: row.Meaning || '',
           part_of_speech: row.PartOfSpeech || '',
-          category: row.Category || '',
+          category_id: catId,
           example: row.Example || '',
           stage: currentStage,
           rank: currentRank,

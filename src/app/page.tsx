@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
@@ -9,8 +9,21 @@ import Game from '@/components/Game';
 import PreTest from '@/components/PreTest';
 
 export default function Home() {
-  const { student, setStudent, setProgress, currentScreen } = useAppStore();
+  const { student, progress, setStudent, setProgress, currentScreen } = useAppStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then(
+        (registration) => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        },
+        (err) => {
+          console.log('ServiceWorker registration failed: ', err);
+        }
+      );
+    }
+  }, []);
   
   // Login State
   const [loginUsername, setLoginUsername] = useState('');
@@ -24,7 +37,6 @@ export default function Home() {
   const [regYear, setRegYear] = useState(new Date().getFullYear().toString());
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
-
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -35,26 +47,37 @@ export default function Home() {
     setError('');
 
     try {
-      const { data, error } = await supabase
+      // 1. Authenticate with Supabase Auth using a virtual email
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: `${loginUsername.trim()}@school.local`,
+        password: loginPassword
+      });
+
+      if (authError || !authData.user) {
+        throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+      }
+
+      // 2. Fetch student profile mapping
+      const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('*')
-        .eq('username', loginUsername)
-        .eq('password_hash', loginPassword) // Basic text comparison for prototype
+        .eq('id', authData.user.id)
         .single();
 
-      if (error || !data) throw new Error('Username หรือ Password ไม่ถูกต้อง');
+      if (studentError || !studentData) throw new Error('ไม่พบข้อมูลโปรไฟล์นักเรียน');
 
+      // 3. Fetch learning path progression
       const { data: progressData } = await supabase
-        .from('progress_summary')
+        .from('learning_paths')
         .select('*')
-        .eq('student_id', data.id)
+        .eq('student_id', studentData.id)
         .single();
 
-      setStudent(data);
+      setStudent(studentData);
       setProgress(progressData || { current_rank: 1, current_stage: 1 });
     } catch (err: any) {
       console.error(err);
-      setError(err.message);
+      setError(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
     } finally {
       setIsLoading(false);
     }
@@ -69,37 +92,71 @@ export default function Home() {
     setError('');
 
     try {
-      // Create Student
-      const { data, error } = await supabase
+      // 1. Resolve Classroom dynamically
+      const className = `${regGrade.trim()}/${regRoom.trim()}`;
+      let classroomId = null;
+
+      const { data: existingClass } = await supabase
+        .from('classrooms')
+        .select('id')
+        .eq('class_name', className)
+        .maybeSingle();
+
+      if (existingClass) {
+        classroomId = existingClass.id;
+      } else {
+        const { data: newClass, error: classError } = await supabase
+          .from('classrooms')
+          .insert([{ class_name: className }])
+          .select()
+          .single();
+        if (classError) throw classError;
+        if (newClass) classroomId = newClass.id;
+      }
+
+      // 2. Register user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: `${regUsername.trim()}@school.local`,
+        password: regPassword
+      });
+
+      if (authError || !authData.user) {
+        throw new Error(authError?.message || 'สมัครสมาชิกไม่สำเร็จ');
+      }
+
+      // 3. Create Student profile row mapping to auth user ID
+      const { data: studentData, error: studentError } = await supabase
         .from('students')
         .insert([{ 
+          id: authData.user.id,
           student_id: regStudentId,
           student_name: regName,
-          grade: regGrade,
-          room: regRoom,
+          classroom_id: classroomId,
           academic_year: regYear,
-          username: regUsername,
-          password_hash: regPassword
+          username: regUsername
         }])
         .select()
         .single();
         
-      if (error) {
-         if (error.code === '23505') throw new Error('Username หรือ รหัสนักเรียนนี้ถูกใช้ไปแล้ว');
-         throw error;
+      if (studentError) {
+         throw studentError;
       }
       
-      // Init Progress
-      await supabase.from('progress_summary').insert([{ student_id: data.id }]);
-      await supabase.from('stage_progress').insert([{ student_id: data.id, grade_level: regGrade, stage: 1, is_unlocked: true }]);
+      // 4. Initialize learning path
+      await supabase.from('learning_paths').insert([{ 
+        student_id: studentData.id,
+        current_rank: 1,
+        current_stage: 1,
+        coins: 0,
+        exp: 0
+      }]);
       
-      // Auto login
-      setStudent(data);
-      setProgress({ current_rank: 1, current_stage: 1 });
+      setStudent(studentData);
+      setProgress({ current_rank: 1, current_stage: 1, coins: 0, exp: 0 });
       
     } catch (err: any) {
       console.error(err);
-      setError(err.message);
+      setError(err.message || 'เกิดข้อผิดพลาดในการลงทะเบียน');
     } finally {
       setIsLoading(false);
     }

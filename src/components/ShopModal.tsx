@@ -22,11 +22,11 @@ export default function ShopModal({ onClose }: ShopModalProps) {
 
   const fetchShopData = async () => {
     // Fetch items
-    const { data: shopItems } = await supabase.from('shop_items').select('*');
+    const { data: shopItems } = await supabase.from('items').select('*');
     if (shopItems) setItems(shopItems);
 
     // Fetch inventory
-    const { data: inv } = await supabase.from('student_inventory').select('item_id').eq('student_id', student.id).eq('is_equipped', false);
+    const { data: inv } = await supabase.from('student_inventory').select('item_id').eq('student_id', student.id);
     if (inv) {
         setInventory(inv.map(i => i.item_id));
     }
@@ -43,26 +43,24 @@ export default function ShopModal({ onClose }: ShopModalProps) {
     try {
       // Deduct coins
       const newCoins = (progress?.coins || 0) - item.price;
-      await supabase.from('progress_summary').update({ coins: newCoins }).eq('student_id', student.id);
+      await supabase.from('learning_paths').update({ coins: newCoins }).eq('student_id', student.id);
       
       // Add to inventory
-      await supabase.from('student_inventory').insert([{ student_id: student.id, item_id: item.item_id }]);
+      await supabase.from('student_inventory').insert([{ student_id: student.id, item_id: item.id }]);
       
+      // Update coins ledger
+      await supabase.from('coins_transactions').insert([{
+        student_id: student.id,
+        amount: -item.price,
+        source: `SHOP_BUY_${item.item_code}`
+      }]);
+
       setProgress({ ...progress, coins: newCoins });
       
       // Update local inventory state
-      const newInv = [...inventory, item.item_id];
-      
-      // Check if all items bought (Shop Reset Logic)
-      if (newInv.length >= items.length) {
-          // If they bought all available items, we clear the local "bought" state so they can buy again
-          // But actually, we don't clear DB inventory. They just can buy more.
-          // Wait, the rule is "ซื้อให้ครบก่อนถึงจะรีเซ็ทให้ซื้อใหม่". 
-          // So we can just clear the local tracking array or let them have multiple items.
-      }
-      
+      const newInv = [...inventory, item.id];
       setInventory(newInv);
-      setMessage(`ซื้อ ${item.item_name} สำเร็จ!`);
+      setMessage(`ซื้อ ${item.name} สำเร็จ!`);
       setTimeout(() => setMessage(''), 2000);
       
     } catch (err) {
@@ -70,7 +68,7 @@ export default function ShopModal({ onClose }: ShopModalProps) {
     }
   };
 
-  const isAllBought = inventory.length > 0 && items.every(i => inventory.includes(i.item_id));
+  const isAllBought = inventory.length > 0 && items.every(i => inventory.includes(i.id));
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
@@ -100,16 +98,16 @@ export default function ShopModal({ onClose }: ShopModalProps) {
           ) : (
             <div className="space-y-4">
               {items.map(item => {
-                const isBought = inventory.includes(item.item_id) && !isAllBought;
+                const isBought = inventory.includes(item.id) && !isAllBought;
                 
                 return (
-                  <div key={item.item_id} className="bg-slate-700/30 border border-slate-600 rounded-2xl p-4 flex justify-between items-center">
+                  <div key={item.id} className="bg-slate-700/30 border border-slate-600 rounded-2xl p-4 flex justify-between items-center">
                     <div className="flex items-center gap-4">
                       <div className="text-4xl bg-slate-800 w-16 h-16 rounded-xl flex items-center justify-center border border-slate-600 shadow-inner">
                         {item.image_url}
                       </div>
                       <div>
-                        <h3 className="text-white font-bold text-lg">{item.item_name}</h3>
+                        <h3 className="text-white font-bold text-lg">{item.name}</h3>
                         <p className="text-slate-400 text-sm">ราคา {item.price} เหรียญ</p>
                       </div>
                     </div>
