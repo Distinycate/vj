@@ -54,14 +54,24 @@ export default function AdminPage() {
     setLoginError('');
 
     try {
+      // 1. Authenticate using Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: `${username.trim()}@school.local`,
+        password: password
+      });
+
+      if (authError || !authData.user) {
+        throw new Error('ชื่อผู้ใช้หรือรหัสผ่านครูไม่ถูกต้อง');
+      }
+
+      // 2. Fetch teacher profile
       const { data, error } = await supabase
         .from('teachers')
         .select('*')
-        .eq('username', username)
-        .eq('password_hash', password) // plaintext compare for school convenience
+        .eq('id', authData.user.id)
         .single();
 
-      if (error || !data) throw new Error('ชื่อบัญชีหรือรหัสผ่านครูไม่ถูกต้อง');
+      if (error || !data) throw new Error('ไม่พบข้อมูลบัญชีครูในระบบ');
       setTeacher(data);
       localStorage.setItem('vocab_journey_teacher', JSON.stringify(data));
     } catch (err: any) {
