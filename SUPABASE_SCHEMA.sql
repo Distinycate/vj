@@ -91,6 +91,10 @@ create table public.vocabulary (
     image_url text,
     rank integer default 1 check (rank between 1 and 5),
     stage integer default 1,
+    bloom_level text default 'Remember' check (bloom_level in ('Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create')),
+    skill_area text default 'Vocabulary' check (skill_area in ('Vocabulary', 'Grammar', 'Listening', 'Reading', 'Spelling')),
+    cefr_level text default 'A1' check (cefr_level in ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')),
+    assessment_type text default 'Meaning Match',
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -375,9 +379,46 @@ create table public.intervention_alerts (
     student_id uuid references public.students(id) on delete cascade,
     classroom_id uuid references public.classrooms(id) on delete cascade,
     alert_type text check (alert_type in ('STAGE_FAIL_3X', 'DEMOTION', 'HIGH_TIME', 'REPEATED_ERRORS', 'INACTIVITY', 'EXCESSIVE_ITEMS')),
+    alert_level text default 'LOW' check (alert_level in ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
     description text not null,
+    teacher_recommendation text,
     is_resolved boolean default false,
     resolved_at timestamp with time zone,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 32. Item Analysis Table
+create table public.item_analysis (
+    id uuid default uuid_generate_v4() primary key,
+    word_id uuid references public.vocabulary(id) on delete cascade unique,
+    p_value numeric(4,2) default 0.00,
+    d_value numeric(4,2) default 0.00,
+    success_rate numeric(5,2) default 0.00,
+    attempt_count integer default 0,
+    avg_time_ms numeric default 0,
+    choices_selected_counts jsonb default '{"A":0,"B":0,"C":0,"D":0}'::jsonb,
+    updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 33. Recommendations Table
+create table public.recommendations (
+    id uuid default uuid_generate_v4() primary key,
+    student_id uuid references public.students(id) on delete cascade,
+    type text not null check (type in ('LISTENING_CAMP', 'FILL_IN_THE_BLANK_PRACTICE', 'CONTEXT_PRACTICE', 'STUDY_CAMP', 'REVIEW_MODE')),
+    reason text not null,
+    is_completed boolean default false,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    unique(student_id, type)
+);
+
+-- 34. Audit Logs Table
+create table public.audit_logs (
+    id uuid default uuid_generate_v4() primary key,
+    user_id uuid,
+    action text not null,
+    details jsonb,
+    ip_address text,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -409,6 +450,9 @@ alter table public.assignments enable row level security;
 alter table public.assignment_progress enable row level security;
 alter table public.analytics_summary enable row level security;
 alter table public.intervention_alerts enable row level security;
+alter table public.item_analysis enable row level security;
+alter table public.recommendations enable row level security;
+alter table public.audit_logs enable row level security;
 
 -- 1. Vocabulary & Categories (Publicly readable by authenticated students and teachers)
 create policy "Authenticated users can read categories" on public.vocabulary_categories
@@ -530,9 +574,49 @@ create policy "Admin role can do everything" on public.students
         )
     );
 
+-- Item Analysis Policies
+create policy "Anyone authenticated can view item analysis" on public.item_analysis
+    for select using (auth.role() = 'authenticated');
+
+create policy "Admins/Teachers can manage item analysis" on public.item_analysis
+    for all using (
+        exists (
+            select 1 from public.teachers t 
+            where t.id = auth.uid() and t.role in ('TEACHER', 'ADMIN')
+        )
+    );
+
+-- Recommendations Policies
+create policy "Students can view own recommendations" on public.recommendations
+    for select using (student_id = auth.uid());
+
+create policy "Teachers can manage recommendations for their students" on public.recommendations
+    for all using (
+        exists (
+            select 1 from public.students s
+            join public.classrooms c on c.id = s.classroom_id
+            where s.id = recommendations.student_id and c.teacher_id = auth.uid()
+        )
+    );
+
+-- Audit Logs Policies
+create policy "Users can view own audit logs" on public.audit_logs
+    for select using (user_id = auth.uid());
+
+create policy "Admins can view all audit logs" on public.audit_logs
+    for select using (
+        exists (
+            select 1 from public.teachers t
+            where t.id = auth.uid() and t.role = 'ADMIN'
+        )
+    );
+
+create policy "Enable system log inserts" on public.audit_logs
+    for insert with check (true);
+
 -- ==========================================
--- SEED DATA
--- ==========================================
+-- ROW LEVEL SECURITY (RLS) POLICIES END
+-- ====================================================================================
 
 -- 1. Seed Categories
 INSERT INTO public.vocabulary_categories (id, name, display_name_en, display_name_th, icon) VALUES

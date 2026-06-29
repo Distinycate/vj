@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
+import { Volume2 } from 'lucide-react';
 
 export default function PreTest() {
   const { student, progress, setProgress, setScreen } = useAppStore();
@@ -12,6 +13,34 @@ export default function PreTest() {
   const [isFinished, setIsFinished] = useState(false);
   const [loading, setLoading] = useState(true);
   const [startTime] = useState<number>(Date.now());
+
+  const speakWord = (text: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      window.speechSynthesis.speak(utterance);
+    } else {
+      const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(text)}`);
+      audio.play();
+    }
+  };
+
+  function generateQuestion(correctWord: any, allVocab: any[]) {
+    const choices = [correctWord.meaning];
+    while(choices.length < 4) {
+      const randomWord = allVocab[Math.floor(Math.random() * allVocab.length)];
+      if (!choices.includes(randomWord.meaning)) {
+        choices.push(randomWord.meaning);
+      }
+    }
+    return {
+      id: correctWord.id,
+      word: correctWord.word,
+      correctChoice: correctWord.meaning,
+      choices: choices.sort(() => 0.5 - Math.random())
+    };
+  }
 
   useEffect(() => {
     const fetchPretest = async () => {
@@ -32,22 +61,6 @@ export default function PreTest() {
     fetchPretest();
   }, []);
 
-  const generateQuestion = (correctWord: any, allVocab: any[]) => {
-    const choices = [correctWord.meaning];
-    while(choices.length < 4) {
-      const randomWord = allVocab[Math.floor(Math.random() * allVocab.length)];
-      if (!choices.includes(randomWord.meaning)) {
-        choices.push(randomWord.meaning);
-      }
-    }
-    return {
-      id: correctWord.id,
-      word: correctWord.word,
-      correctChoice: correctWord.meaning,
-      choices: choices.sort(() => 0.5 - Math.random())
-    };
-  };
-
   const handleAnswer = (choice: string) => {
     const isCorrect = choice === questions[currentIndex].correctChoice;
     if (isCorrect) setScore(score + 1);
@@ -61,6 +74,7 @@ export default function PreTest() {
 
   const finishTest = async (finalScore: number) => {
     setIsFinished(true);
+    /* eslint-disable-next-line react-hooks/purity */
     const duration = Math.round((Date.now() - startTime) / 1000);
 
     // Calculate Rank based on 25 questions
@@ -223,6 +237,12 @@ export default function PreTest() {
         <div className="text-center mb-12">
           <span className="text-slate-500 text-sm tracking-widest uppercase block mb-2">คำศัพท์</span>
           <h2 className="text-5xl font-black text-white tracking-tight">{currentQ.word}</h2>
+          <button 
+            onClick={() => speakWord(currentQ.word)}
+            className="mt-3 text-emerald-400 hover:text-emerald-300 font-bold flex items-center justify-center gap-1.5 mx-auto transition-colors"
+          >
+            <Volume2 className="w-5 h-5" /> ฟังออกเสียง (TTS)
+          </button>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

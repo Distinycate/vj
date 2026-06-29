@@ -11,14 +11,10 @@ interface ShopModalProps {
 
 export default function ShopModal({ onClose }: ShopModalProps) {
   const { student, progress, setProgress } = useAppStore();
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<Record<string, any>[]>([]);
   const [inventory, setInventory] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    fetchShopData();
-  }, []);
 
   const fetchShopData = async () => {
     // Fetch items
@@ -33,7 +29,12 @@ export default function ShopModal({ onClose }: ShopModalProps) {
     setLoading(false);
   };
 
-  const handleBuy = async (item: any) => {
+  useEffect(() => {
+    fetchShopData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleBuy = async (item: Record<string, any>) => {
     if ((progress?.coins || 0) < item.price) {
       setMessage('เหรียญไม่พอ!');
       setTimeout(() => setMessage(''), 2000);

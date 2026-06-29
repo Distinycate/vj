@@ -147,7 +147,7 @@ export default function Game() {
     }
   }, [gameState, currentIndex, words]);
 
-  const setupQuestion = (word: any) => {
+  function setupQuestion(word: Record<string, any>) {
     const rank = progress?.current_rank || 1;
     let pool: string[] = [];
 
@@ -211,7 +211,7 @@ export default function Game() {
     return () => clearInterval(timer);
   }, [gameState, loading, isAnswered, currentIndex, words, lives]);
 
-  const submitAnswer = async (answer: string) => {
+  async function submitAnswer(answer: string) {
     if (isAnswered) return;
     setIsAnswered(true);
     setSelectedAnswer(answer);
@@ -271,7 +271,7 @@ export default function Game() {
     }, 2000);
   };
 
-  const usePowerup = async (itemCode: string) => {
+  const applyPowerup = async (itemCode: string) => {
     if (usedItemsThisStage.includes(itemCode)) return;
 
     // Find in inventory
@@ -671,7 +671,7 @@ export default function Game() {
           return (
             <button 
               key={invItem.id} 
-              onClick={() => usePowerup(itemCode)} 
+              onClick={() => applyPowerup(itemCode)} 
               disabled={isUsed}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all ${
                 isUsed 
