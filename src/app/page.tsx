@@ -33,7 +33,7 @@ export default function Home() {
   const [regStudentId, setRegStudentId] = useState(''); // This will store เลขที่ (Seat Number)
   const [regName, setRegName] = useState('');
   const [regGrade, setRegGrade] = useState('');
-  const [regRoom, setRegRoom] = useState('');
+  const [regRoom, setRegRoom] = useState('1'); // Default to room 1 since there is only 1 room per grade
   const [regYear, setRegYear] = useState('2569'); // Default academic year to 2569
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
@@ -242,14 +242,10 @@ export default function Home() {
               <label className="text-slate-300 text-sm font-bold block mb-1.5">ชื่อ-นามสกุล</label>
               <input type="text" value={regName} onChange={(e) => setRegName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="เช่น เด็กชายส้ม สมมติ" />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">ชั้น</label>
                 <input type="text" value={regGrade} onChange={(e) => setRegGrade(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="ม.1" />
-              </div>
-              <div>
-                <label className="text-slate-300 text-sm font-bold block mb-1.5">ห้อง</label>
-                <input type="text" value={regRoom} onChange={(e) => setRegRoom(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="1" />
               </div>
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">เลขที่</label>
