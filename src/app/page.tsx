@@ -140,9 +140,10 @@ export default function Home() {
         .insert([{ 
           id: authData.user.id,
           student_id: regStudentId.trim(),
-          name: regName.trim(),
+          student_name: regName.trim(),
+          username: regUsername.trim(),
           classroom_id: classroomId,
-          academic_year: parseInt(regYear)
+          academic_year: regYear.trim()
         }])
         .select()
         .single();
@@ -187,6 +188,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Admin and Executive Entry Buttons */}
+      <div className="absolute top-4 right-4 z-50 flex flex-col sm:flex-row gap-3">
+        <a href="/admin" className="bg-slate-900/80 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:border-indigo-500 px-5 py-2.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg backdrop-blur-md">
+          <span>👨‍🏫</span>
+          <span>ระบบครูผู้สอน</span>
+        </a>
+        <a href="/executive" className="bg-slate-900/80 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500 px-5 py-2.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg backdrop-blur-md">
+          <span>📊</span>
+          <span>ระบบผู้บริหาร</span>
+        </a>
+      </div>
+
       {/* Ambient orbs */}
       <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[128px] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-500/10 rounded-full mix-blend-screen filter blur-[128px] pointer-events-none"></div>
@@ -278,11 +291,6 @@ export default function Home() {
           </form>
         )}
 
-        <div className="mt-6 text-center text-xs text-slate-500 space-x-3 border-t border-slate-800 pt-4">
-          <a href="/admin" className="hover:text-indigo-400 font-extrabold transition-colors">ระบบครูผู้สอน 👨‍🏫</a>
-          <span>&middot;</span>
-          <a href="/executive" className="hover:text-emerald-400 font-extrabold transition-colors">รายงานผู้บริหาร 📊</a>
-        </div>
       </motion.div>
     </div>
   );
