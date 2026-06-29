@@ -43,7 +43,7 @@ export default function ExecutiveDashboard() {
     try {
       // 1. Authenticate using Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: `${username.trim()}@school.local`,
+        email: `${username.trim()}@vocabjourney.com`,
         password: password
       });
 

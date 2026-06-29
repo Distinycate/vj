@@ -49,7 +49,7 @@ export default function Home() {
     try {
       // 1. Authenticate with Supabase Auth using virtual email
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: `${loginUsername.trim()}@school.local`,
+        email: `${loginUsername.trim()}@vocabjourney.com`,
         password: loginPassword
       });
 
@@ -126,7 +126,7 @@ export default function Home() {
 
       // 2. Register user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: `${regUsername.trim()}@school.local`,
+        email: `${regUsername.trim()}@vocabjourney.com`,
         password: regPassword
       });
 

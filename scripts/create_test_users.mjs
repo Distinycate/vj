@@ -14,7 +14,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function createTestUser(username, password, roleType, extraDetails = {}) {
-  const email = `${username}@school.local`;
+  const email = `${username}@vocabjourney.com`;
   console.log(`Creating Auth User: ${email}...`);
 
   // 1. Create user in Supabase Auth via Admin API (bypasses email confirmation)
