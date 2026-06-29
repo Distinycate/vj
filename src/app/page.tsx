@@ -118,9 +118,11 @@ export default function Home() {
       }
 
       // 2. Create Student profile row directly in database (no Supabase Auth)
+      const newStudentUuid = crypto.randomUUID();
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .insert([{ 
+          id: newStudentUuid,
           student_id: regStudentId.trim(),
           student_name: regName.trim(),
           username: regUsername.trim(),
