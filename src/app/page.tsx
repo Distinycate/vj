@@ -30,11 +30,11 @@ export default function Home() {
   const [loginPassword, setLoginPassword] = useState('');
   
   // Register State
-  const [regStudentId, setRegStudentId] = useState('');
+  const [regStudentId, setRegStudentId] = useState(''); // This will store เลขที่ (Seat Number)
   const [regName, setRegName] = useState('');
   const [regGrade, setRegGrade] = useState('');
   const [regRoom, setRegRoom] = useState('');
-  const [regYear, setRegYear] = useState(new Date().getFullYear().toString());
+  const [regYear, setRegYear] = useState('2569'); // Default academic year to 2569
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -119,11 +119,13 @@ export default function Home() {
 
       // 2. Create Student profile row directly in database (no Supabase Auth)
       const newStudentUuid = crypto.randomUUID();
+      const computedStudentId = `${className}-${regStudentId.trim()}`; // e.g. "ม.1/1-12"
+      
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .insert([{ 
           id: newStudentUuid,
-          student_id: regStudentId.trim(),
+          student_id: computedStudentId,
           student_name: regName.trim(),
           username: regUsername.trim(),
           password: regPassword.trim(),
@@ -134,7 +136,7 @@ export default function Home() {
         .single();
 
       if (studentError || !studentData) {
-        throw new Error(studentError?.message || 'สมัครสมาชิกไม่สำเร็จ (อาจมี Username หรือรหัสนักเรียนซ้ำในระบบ)');
+        throw new Error(studentError?.message || 'สมัครสมาชิกไม่สำเร็จ (อาจมี Username หรือเลขที่ซ้ำในระบบ)');
       }
 
       // 3. Initialize Learning Path with basic stats
@@ -236,28 +238,22 @@ export default function Home() {
           </form>
         ) : (
           <form onSubmit={handleRegister} className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-slate-300 text-sm font-bold block mb-1.5">ชื่อ-นามสกุล</label>
-                <input type="text" value={regName} onChange={(e) => setRegName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="ชื่อจริง" />
-              </div>
-              <div>
-                <label className="text-slate-300 text-sm font-bold block mb-1.5">รหัสนักเรียน</label>
-                <input type="text" value={regStudentId} onChange={(e) => setRegStudentId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="รหัสประจำตัว" />
-              </div>
+            <div>
+              <label className="text-slate-300 text-sm font-bold block mb-1.5">ชื่อ-นามสกุล</label>
+              <input type="text" value={regName} onChange={(e) => setRegName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="เช่น เด็กชายส้ม สมมติ" />
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="text-slate-300 text-sm font-bold block mb-1.5">ชั้น (เช่น ป.1)</label>
-                <input type="text" value={regGrade} onChange={(e) => setRegGrade(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="ป.1" />
+                <label className="text-slate-300 text-sm font-bold block mb-1.5">ชั้น</label>
+                <input type="text" value={regGrade} onChange={(e) => setRegGrade(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="ม.1" />
               </div>
               <div>
-                <label className="text-slate-300 text-sm font-bold block mb-1.5">ห้อง (เช่น 1)</label>
+                <label className="text-slate-300 text-sm font-bold block mb-1.5">ห้อง</label>
                 <input type="text" value={regRoom} onChange={(e) => setRegRoom(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="1" />
               </div>
               <div>
-                <label className="text-slate-300 text-sm font-bold block mb-1.5">ปีการศึกษา</label>
-                <input type="text" value={regYear} onChange={(e) => setRegYear(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" />
+                <label className="text-slate-300 text-sm font-bold block mb-1.5">เลขที่</label>
+                <input type="text" value={regStudentId} onChange={(e) => setRegStudentId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="15" />
               </div>
             </div>
             
@@ -265,13 +261,13 @@ export default function Home() {
             
             <div>
               <label className="text-slate-300 text-sm font-bold block mb-1.5">ตั้ง Username</label>
-              <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="ภาษาอังกฤษ" />
+              <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="สำหรับเข้าใช้งาน" />
             </div>
             <div>
               <label className="text-slate-300 text-sm font-bold block mb-1.5">ตั้ง Password</label>
-              <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="รหัสอย่างน้อย 6 หลัก" />
+              <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="รหัสผ่านเข้าสู่ระบบ" />
             </div>
-
+ 
             <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg mt-4 disabled:opacity-50 transition-all transform active:scale-95">
               {isLoading ? 'กำลังโหลด...' : 'ลงทะเบียนและเริ่มผจญภัย 🎉'}
             </button>
