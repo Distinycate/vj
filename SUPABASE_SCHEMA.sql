@@ -454,7 +454,22 @@ alter table public.item_analysis enable row level security;
 alter table public.recommendations enable row level security;
 alter table public.audit_logs enable row level security;
 
--- 1. Vocabulary & Categories (Publicly readable by authenticated students and teachers)
+-- 1. Classrooms Policies (Public select & insert to allow student registration, teacher update)
+create policy "Allow select for everyone on classrooms" on public.classrooms
+    for select using (true);
+
+create policy "Allow insert for everyone on classrooms" on public.classrooms
+    for insert with check (true);
+
+create policy "Allow update for teachers on classrooms" on public.classrooms
+    for update using (
+        exists (
+            select 1 from public.teachers t
+            where t.id = auth.uid() and t.role in ('TEACHER', 'ADMIN')
+        )
+    );
+
+-- 2. Vocabulary & Categories (Publicly readable by authenticated students and teachers)
 create policy "Authenticated users can read categories" on public.vocabulary_categories
     for select using (auth.role() = 'authenticated');
 
@@ -473,6 +488,9 @@ create policy "Students can view own profile" on public.students
 
 create policy "Students can update own profile" on public.students
     for update using (auth.uid() = id);
+
+create policy "Students can insert own profile" on public.students
+    for insert with check (auth.uid() = id);
 
 create policy "Students can read/write learning path" on public.learning_paths
     for all using (auth.uid() = student_id);
