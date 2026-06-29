@@ -54,24 +54,15 @@ export default function AdminPage() {
     setLoginError('');
 
     try {
-      // 1. Authenticate using Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: `${username.trim()}@vocabjourney.com`,
-        password: password
-      });
-
-      if (authError || !authData.user) {
-        throw new Error('ชื่อผู้ใช้หรือรหัสผ่านครูไม่ถูกต้อง');
-      }
-
-      // 2. Fetch teacher profile
+      // 1. Authenticate by querying the teachers table directly
       const { data, error } = await supabase
         .from('teachers')
         .select('*')
-        .eq('id', authData.user.id)
-        .single();
+        .eq('username', username.trim())
+        .eq('password', password.trim())
+        .maybeSingle();
 
-      if (error || !data) throw new Error('ไม่พบข้อมูลบัญชีครูในระบบ');
+      if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านครูไม่ถูกต้อง');
       setTeacher(data);
       localStorage.setItem('vocab_journey_teacher', JSON.stringify(data));
     } catch (err: any) {

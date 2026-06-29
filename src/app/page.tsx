@@ -47,33 +47,26 @@ export default function Home() {
     setError('');
 
     try {
-      // 1. Authenticate with Supabase Auth using virtual email
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: `${loginUsername.trim()}@vocabjourney.com`,
-        password: loginPassword
-      });
-
-      if (authError || !authData.user) {
-        throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
-      }
-
-      // 2. Fetch student profile mapping
+      // 1. Authenticate by querying the students table directly
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('*')
-        .eq('id', authData.user.id)
-        .single();
+        .eq('username', loginUsername.trim())
+        .eq('password', loginPassword.trim())
+        .maybeSingle();
 
-      if (studentError || !studentData) throw new Error('ไม่พบข้อมูลโปรไฟล์นักเรียน');
+      if (studentError || !studentData) {
+        throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+      }
 
-      // 3. Fetch learning path progression
+      // 2. Fetch learning path progression
       const { data: progressData } = await supabase
         .from('learning_paths')
         .select('*')
         .eq('student_id', studentData.id)
         .single();
 
-      // 4. Fetch pre-test record to determine if they have completed it
+      // 3. Fetch pre-test record to determine if they have completed it
       const { data: pretestData } = await supabase
         .from('pre_tests')
         .select('created_at')
@@ -124,33 +117,25 @@ export default function Home() {
         if (newClass) classroomId = newClass.id;
       }
 
-      // 2. Register user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: `${regUsername.trim()}@vocabjourney.com`,
-        password: regPassword
-      });
-
-      if (authError || !authData.user) {
-        throw new Error(authError?.message || 'สมัครสมาชิกไม่สำเร็จ');
-      }
-
-      // 3. Create Student profile row mapping to auth user ID
+      // 2. Create Student profile row directly in database (no Supabase Auth)
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .insert([{ 
-          id: authData.user.id,
           student_id: regStudentId.trim(),
           student_name: regName.trim(),
           username: regUsername.trim(),
+          password: regPassword.trim(),
           classroom_id: classroomId,
           academic_year: regYear.trim()
         }])
         .select()
         .single();
 
-      if (studentError || !studentData) throw studentError;
+      if (studentError || !studentData) {
+        throw new Error(studentError?.message || 'สมัครสมาชิกไม่สำเร็จ (อาจมี Username หรือรหัสนักเรียนซ้ำในระบบ)');
+      }
 
-      // 4. Initialize Learning Path with basic stats
+      // 3. Initialize Learning Path with basic stats
       const { data: progressData, error: progressError } = await supabase
         .from('learning_paths')
         .insert([{

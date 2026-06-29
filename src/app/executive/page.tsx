@@ -41,24 +41,15 @@ export default function ExecutiveDashboard() {
     setLoginError('');
 
     try {
-      // 1. Authenticate using Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: `${username.trim()}@vocabjourney.com`,
-        password: password
-      });
-
-      if (authError || !authData.user) {
-        throw new Error('ชื่อผู้ใช้หรือรหัสผ่านผู้บริหารไม่ถูกต้อง');
-      }
-
-      // 2. Fetch teacher profile and check role
+      // 1. Authenticate by querying the teachers table directly
       const { data, error } = await supabase
         .from('teachers')
         .select('*')
-        .eq('id', authData.user.id)
-        .single();
+        .eq('username', username.trim())
+        .eq('password', password.trim())
+        .maybeSingle();
 
-      if (error || !data) throw new Error('ไม่พบข้อมูลบัญชีผู้บริหารในระบบ');
+      if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านผู้บริหารไม่ถูกต้อง');
       
       if (data.role !== 'EXECUTIVE' && data.role !== 'ADMIN') {
         throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าใช้ระบบรายงานผู้บริหาร');

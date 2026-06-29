@@ -39,8 +39,9 @@ drop table if exists public.teachers cascade;
 
 -- 1. Teachers Table
 create table public.teachers (
-    id uuid references auth.users on delete cascade primary key,
+    id uuid default uuid_generate_v4() primary key,
     username text unique not null,
+    password text not null,
     name text not null,
     role text default 'TEACHER' check (role in ('TEACHER', 'ADMIN', 'EXECUTIVE')),
     is_active boolean default true,
@@ -57,9 +58,10 @@ create table public.classrooms (
 
 -- 3. Students Table
 create table public.students (
-    id uuid references auth.users on delete cascade primary key,
+    id uuid default uuid_generate_v4() primary key,
     student_id text unique not null,
     username text unique not null,
+    password text not null,
     student_name text not null,
     classroom_id uuid references public.classrooms(id) on delete set null,
     academic_year text not null,

@@ -14,23 +14,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function createTestUser(username, password, roleType, extraDetails = {}) {
-  const email = `${username}@vocabjourney.com`;
-  console.log(`Creating Auth User: ${email}...`);
-
-  // 1. Create user in Supabase Auth via Admin API (bypasses email confirmation)
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email: email,
-    password: password,
-    email_confirm: true
-  });
-
-  if (authError) {
-    console.error(`Error creating auth user for ${username}:`, authError.message);
-    return null;
-  }
-
-  const userId = authData.user.id;
-  console.log(`Successfully created auth user for ${username} (ID: ${userId})`);
+  console.log(`Creating Database User: ${username} (Role: ${roleType})...`);
 
   if (roleType === 'STUDENT') {
     // Check/create classroom first
@@ -44,22 +28,22 @@ async function createTestUser(username, password, roleType, extraDetails = {}) {
     }
 
     console.log(`Creating Student Profile for ${username}...`);
-    const { error: profileError } = await supabase.from('students').insert([{
-      id: userId,
+    const { data: studentData, error: profileError } = await supabase.from('students').insert([{
       student_id: `STD-${username.toUpperCase()}`,
       username: username,
+      password: password,
       student_name: `นักเรียนทดสอบ ${username.toUpperCase()}`,
       classroom_id: classroomId,
       academic_year: '2569'
-    }]);
+    }]).select().single();
 
-    if (profileError) {
-      console.error(`Error creating student profile:`, profileError.message);
+    if (profileError || !studentData) {
+      console.error(`Error creating student profile:`, profileError?.message);
     } else {
       console.log(`Profile created. Initializing learning path...`);
       // Initial learning path
       await supabase.from('learning_paths').insert([{
-        student_id: userId,
+        student_id: studentData.id,
         current_rank: 1,
         current_stage: 1,
         coins: 100, // Gift 100 coins for testing shop items!
@@ -70,8 +54,8 @@ async function createTestUser(username, password, roleType, extraDetails = {}) {
   } else if (roleType === 'TEACHER' || roleType === 'EXECUTIVE') {
     console.log(`Creating Teacher/Executive Profile for ${username} (Role: ${roleType})...`);
     const { error: teacherError } = await supabase.from('teachers').insert([{
-      id: userId,
       username: username,
+      password: password,
       name: `${roleType === 'TEACHER' ? 'คุณครู' : 'ผู้บริหาร'} ${username.toUpperCase()}`,
       role: roleType
     }]);
