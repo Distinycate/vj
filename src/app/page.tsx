@@ -177,17 +177,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Admin and Executive Entry Buttons */}
-      <div className="absolute top-4 right-4 z-50 flex flex-col sm:flex-row gap-3">
-        <a href="/admin" className="bg-slate-900/80 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:border-indigo-500 px-5 py-2.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg backdrop-blur-md">
-          <span>👨‍🏫</span>
-          <span>ระบบครูผู้สอน</span>
-        </a>
-        <a href="/executive" className="bg-slate-900/80 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500 px-5 py-2.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg backdrop-blur-md">
-          <span>📊</span>
-          <span>ระบบผู้บริหาร</span>
-        </a>
-      </div>
+
 
       {/* Ambient orbs */}
       <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[128px] pointer-events-none"></div>
@@ -270,6 +260,18 @@ export default function Home() {
           </form>
         )}
 
+        {/* Teacher & Executive Quick Logins */}
+        <div className="mt-6 pt-5 border-t border-slate-800/80 flex flex-col gap-3">
+          <div className="text-center text-xs text-slate-500 font-bold">เข้าสู่ระบบสำหรับเจ้าหน้าที่</div>
+          <div className="grid grid-cols-2 gap-3">
+            <a href="/admin" className="bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 hover:border-indigo-500 text-indigo-400 hover:text-indigo-300 py-3 rounded-xl text-xs font-black text-center flex items-center justify-center gap-1.5 transition-all shadow-md">
+              👨‍🏫 ระบบครูผู้สอน
+            </a>
+            <a href="/executive" className="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500 text-emerald-400 hover:text-emerald-300 py-3 rounded-xl text-xs font-black text-center flex items-center justify-center gap-1.5 transition-all shadow-md">
+              📊 ระบบผู้บริหาร
+            </a>
+          </div>
+        </div>
       </motion.div>
     </div>
   );
