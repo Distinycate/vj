@@ -299,7 +299,7 @@ export default function PreTest() {
       >
         <div className="text-center mb-12">
           <span className="text-slate-500 text-sm tracking-widest uppercase block mb-2">คำศัพท์</span>
-          <h2 className="text-5xl font-black text-white tracking-tight">{currentQ.word}</h2>
+          <h2 className="text-5xl font-black text-white tracking-tight notranslate" translate="no">{currentQ.word}</h2>
           <button 
             onClick={() => playWordAudio(currentQ.word)}
             className="mt-3 text-emerald-400 hover:text-emerald-300 font-bold flex items-center justify-center gap-1.5 mx-auto transition-colors"

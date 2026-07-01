@@ -738,7 +738,7 @@ export default function Game() {
             {qType === 'MEANING_MC' && (
               <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl shadow-xl">
                 <span className="text-xs text-slate-500 tracking-widest uppercase block mb-3">สะกดคำศัพท์</span>
-                <h2 className="text-6xl font-black text-white mb-2">{currentWord.word}</h2>
+                <h2 className="text-6xl font-black text-white mb-2 notranslate" translate="no">{currentWord.word}</h2>
                 <p className="text-slate-400 text-lg">แปลว่าอะไรในภาษาไทย?</p>
               </div>
             )}
@@ -799,7 +799,7 @@ export default function Game() {
             {qType === 'CONTEXT_MC' && (
               <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl shadow-xl">
                 <span className="text-xs text-slate-500 tracking-widest uppercase block mb-4">การเติมประโยคในบริบท</span>
-                <div className="bg-slate-950 border border-slate-850 p-6 rounded-2xl mb-4 italic text-slate-200 text-xl font-medium leading-relaxed">
+                <div className="bg-slate-950 border border-slate-850 p-6 rounded-2xl mb-4 italic text-slate-200 text-xl font-medium leading-relaxed notranslate" translate="no">
                   "{currentWord.example.replace(new RegExp(currentWord.word, 'i'), '__________')}"
                 </div>
                 <p className="text-slate-400 text-lg">เติมตัวเลือกข้อใดในช่องว่างจึงจะสมบูรณ์ที่สุด?</p>
@@ -836,7 +836,7 @@ export default function Game() {
                   disabled={isAnswered}
                   className={`p-5 rounded-2xl border text-lg font-bold flex justify-between items-center transition-all ${btnClass} ${!isAnswered && 'hover:scale-[1.01]'}`}
                 >
-                  <span className="flex-1 text-center">{choice}</span>
+                  <span className="flex-1 text-center notranslate" translate="no">{choice}</span>
                   {icon}
                 </button>
               );
