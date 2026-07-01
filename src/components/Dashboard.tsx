@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [reviewWords, setReviewWords] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({ xp: 0, level: 1 });
   const [activeTab, setActiveTab] = useState<'roadmap' | 'stats' | 'review'>('roadmap');
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
 
   useEffect(() => {
@@ -56,6 +57,29 @@ export default function Dashboard() {
         // Calculate dynamic level: 1 level per 100 EXP
         const level = Math.floor((pathData.exp || 0) / 100) + 1;
         setStats({ xp: pathData.exp || 0, level });
+      }
+
+      // 6. Fetch Leaderboard for Classroom
+      const { data: leadData } = await supabase
+        .from('students')
+        .select('id, student_name, learning_paths(coins, exp, current_stage)')
+        .eq('classroom_id', student.classroom_id);
+      
+      if (leadData) {
+        const sorted = leadData
+          .map(s => {
+            const lp = Array.isArray(s.learning_paths) ? s.learning_paths[0] : s.learning_paths;
+            return {
+              id: s.id,
+              name: s.student_name,
+              coins: lp?.coins || 0,
+              exp: lp?.exp || 0,
+              stage: lp?.current_stage || 1,
+              isSelf: s.id === student.id
+            };
+          })
+          .sort((a, b) => b.exp - a.exp || b.coins - a.coins || b.stage - a.stage);
+        setLeaderboard(sorted);
       }
     }
 
@@ -333,6 +357,76 @@ export default function Dashboard() {
                       ทำภารกิจคำศัพท์ในเกมเพื่อปลดล็อกรางวัล
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Leaderboard panel */}
+              <div className="glass-card p-6 sm:p-8 rounded-3xl">
+                <h3 className="text-xl font-black text-white flex items-center gap-2 mb-6">
+                  <Trophy className="w-6 h-6 text-amber-400" /> ตารางผู้นำคะแนนสูงสุด (Leaderboard)
+                </h3>
+                
+                <div className="bg-slate-950/40 rounded-2xl overflow-hidden border border-slate-900 shadow-inner">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-950/80 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                          <th className="p-4 text-center">อันดับ</th>
+                          <th className="p-4">นักเรียน</th>
+                          <th className="p-4 text-center">เลเวล</th>
+                          <th className="p-4 text-center">เหรียญ</th>
+                          <th className="p-4 text-center">ด่านปัจจุบัน</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-900/60 text-slate-200 text-sm">
+                        {leaderboard.map((user, idx) => {
+                          const rankIcons = ['🥇', '🥈', '🥉'];
+                          const isTop3 = idx < 3;
+                          
+                          return (
+                            <tr 
+                              key={user.id} 
+                              className={`transition-colors ${
+                                user.isSelf 
+                                  ? 'bg-emerald-500/10 hover:bg-emerald-500/15 font-extrabold text-emerald-400 border-l-4 border-emerald-500' 
+                                  : 'hover:bg-slate-900/20'
+                              }`}
+                            >
+                              <td className="p-4 text-center text-lg font-black">
+                                {isTop3 ? rankIcons[idx] : idx + 1}
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="truncate">{user.name}</span>
+                                  {user.isSelf && (
+                                    <span className="text-[10px] bg-emerald-500 text-slate-950 font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                                      คุณ
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="p-4 text-center font-bold text-indigo-400">
+                                Lvl {Math.floor((user.exp || 0) / 100) + 1}
+                              </td>
+                              <td className="p-4 text-center font-semibold">
+                                🪙 {user.coins}
+                              </td>
+                              <td className="p-4 text-center text-slate-400">
+                                ด่าน {user.stage}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {leaderboard.length === 0 && (
+                          <tr>
+                            <td colSpan={5} className="p-6 text-center text-slate-500 italic">
+                              ไม่มีข้อมูลอันดับในห้องเรียนนี้
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </motion.div>

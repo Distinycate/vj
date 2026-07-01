@@ -60,7 +60,10 @@ export default function StudyCamp() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8 flex flex-col items-center">
+    <div 
+      className="min-h-screen bg-slate-900 text-white p-4 md:p-8 flex flex-col items-center select-none"
+      onContextMenu={(e) => e.preventDefault()}
+    >
       {/* Header */}
       <div className="w-full max-w-2xl flex justify-between items-center mb-8">
         <div>

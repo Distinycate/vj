@@ -264,7 +264,10 @@ export default function PreTest() {
   const currentQ = questions[currentIndex];
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 flex flex-col justify-center items-center relative overflow-hidden">
+    <div 
+      className="min-h-screen bg-slate-950 p-6 flex flex-col justify-center items-center relative overflow-hidden select-none"
+      onContextMenu={(e) => e.preventDefault()}
+    >
       <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[100px] pointer-events-none"></div>
       
       <div className="w-full max-w-xl flex justify-between items-center mb-4 relative z-10">

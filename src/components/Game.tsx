@@ -667,7 +667,10 @@ export default function Game() {
   const correctChoice = isWordMC ? currentWord.word : currentWord.meaning;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 flex flex-col items-center relative overflow-hidden">
+    <div 
+      className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 flex flex-col items-center relative overflow-hidden select-none"
+      onContextMenu={(e) => e.preventDefault()}
+    >
       
       {/* Header Panel */}
       <div className="w-full max-w-3xl flex justify-between items-center mb-8 relative z-10">

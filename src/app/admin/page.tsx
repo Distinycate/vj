@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
-import { BookOpen, Users, BarChart3, AlertTriangle, FileSpreadsheet, Plus, Edit2, ShieldAlert, Sparkles, LogOut, Check, X, Shield, Eye } from 'lucide-react';
+import { BookOpen, Users, BarChart3, AlertTriangle, FileSpreadsheet, Plus, Edit2, ShieldAlert, Sparkles, LogOut, Check, X, Shield, Eye, Trophy } from 'lucide-react';
 import Papa from 'papaparse';
 
 type AdminTab = 'students' | 'item-analysis' | 'heatmap' | 'assignments' | 'alerts' | 'content-builder';
@@ -373,6 +373,47 @@ export default function AdminPage() {
                   <FileSpreadsheet className="w-5 h-5" /> ส่งออกผลการเรียนเป็น CSV
                 </button>
               </div>
+
+              {/* Leaderboard Podium for Teachers */}
+              {studentsList.length > 0 && (
+                <div className="bg-slate-900/30 border border-slate-900 p-6 rounded-3xl space-y-4">
+                  <h3 className="text-lg font-black text-white flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-amber-400" /> ทำเนียบนักเรียนคะแนนสูงสุด (Class Leaderboard)
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[...studentsList]
+                      .sort((a, b) => (b.learning_paths?.exp || 0) - (a.learning_paths?.exp || 0) || (b.learning_paths?.coins || 0) - (a.learning_paths?.coins || 0))
+                      .slice(0, 3)
+                      .map((stud, idx) => {
+                        const cardStyles = [
+                          'from-amber-500/20 to-yellow-500/5 border-amber-500/30 text-amber-300 shadow-lg shadow-amber-500/5',
+                          'from-slate-400/20 to-slate-500/5 border-slate-400/30 text-slate-300',
+                          'from-amber-700/20 to-amber-800/5 border-amber-700/30 text-amber-600'
+                        ];
+                        const badges = ['🥇 อันดับ 1', '🥈 อันดับ 2', '🥉 อันดับ 3'];
+                        return (
+                          <div 
+                            key={stud.id} 
+                            className={`bg-gradient-to-br ${cardStyles[idx]} border p-5 rounded-2xl flex items-center justify-between transition-all hover:scale-[1.01]`}
+                          >
+                            <div className="min-w-0">
+                              <span className="text-[10px] font-black uppercase tracking-wider block opacity-70">{badges[idx]}</span>
+                              <h4 className="text-base font-black text-white mt-1 truncate">{stud.student_name}</h4>
+                              <p className="text-xs text-slate-400 mt-0.5">
+                                เลเวล {Math.floor((stud.learning_paths?.exp || 0) / 100) + 1} • {stud.learning_paths?.coins || 0} เหรียญ
+                              </p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-xl font-black text-white block">ด่าน {stud.learning_paths?.current_stage || 1}</span>
+                              <span className="text-[10px] text-slate-500 font-medium">ตำแหน่งปัจจุบัน</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
 
               {/* Student progress table */}
               <div className="bg-slate-900/60 border border-slate-900 rounded-3xl overflow-hidden shadow-xl">
