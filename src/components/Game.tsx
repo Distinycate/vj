@@ -739,18 +739,18 @@ export default function Game() {
             className="text-center mb-10"
           >
             {qType === 'MEANING_MC' && (
-              <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl shadow-xl">
+              <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
                 <span className="text-xs text-slate-500 tracking-widest uppercase block mb-3">สะกดคำศัพท์</span>
-                <h2 className="text-6xl font-black text-white mb-2 notranslate" translate="no">{currentWord.word}</h2>
-                <p className="text-slate-400 text-lg">แปลว่าอะไรในภาษาไทย?</p>
+                <h2 className="text-4xl sm:text-6xl font-black text-white mb-2 notranslate break-all" translate="no">{currentWord.word}</h2>
+                <p className="text-slate-400 text-base sm:text-lg">แปลว่าอะไรในภาษาไทย?</p>
               </div>
             )}
 
             {qType === 'WORD_MC' && (
-              <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl shadow-xl">
+              <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
                 <span className="text-xs text-slate-500 tracking-widest uppercase block mb-3">คำแปลภาษาไทย</span>
-                <h2 className="text-5xl font-black text-emerald-400 mb-2">{currentWord.meaning}</h2>
-                <p className="text-slate-400 text-lg">ตรงกับคำศัพท์ภาษาอังกฤษคำใด?</p>
+                <h2 className="text-3xl sm:text-5xl font-black text-emerald-400 mb-2 break-words">{currentWord.meaning}</h2>
+                <p className="text-slate-400 text-base sm:text-lg">ตรงกับคำศัพท์ภาษาอังกฤษคำใด?</p>
               </div>
             )}
 
@@ -768,9 +768,9 @@ export default function Game() {
             )}
 
             {qType === 'FILL_BLANK' && (
-              <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl shadow-xl">
+              <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
                 <span className="text-xs text-slate-500 tracking-widest uppercase block mb-3">สะกดคำศัพท์ภาษาอังกฤษ</span>
-                <h2 className="text-4xl font-black text-emerald-400 mb-6">{currentWord.meaning}</h2>
+                <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-6 break-words">{currentWord.meaning}</h2>
                 
                 <form 
                   onSubmit={(e) => { e.preventDefault(); submitAnswer(fillAnswer); }}
@@ -800,12 +800,12 @@ export default function Game() {
             )}
 
             {qType === 'CONTEXT_MC' && (
-              <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl shadow-xl">
+              <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
                 <span className="text-xs text-slate-500 tracking-widest uppercase block mb-4">การเติมประโยคในบริบท</span>
-                <div className="bg-slate-950 border border-slate-850 p-6 rounded-2xl mb-4 italic text-slate-200 text-xl font-medium leading-relaxed notranslate" translate="no">
+                <div className="bg-slate-950 border border-slate-850 p-4 sm:p-6 rounded-2xl mb-4 italic text-slate-200 text-lg sm:text-xl font-medium leading-relaxed notranslate break-words" translate="no">
                   "{currentWord.example.replace(new RegExp(currentWord.word, 'i'), '__________')}"
                 </div>
-                <p className="text-slate-400 text-lg">เติมตัวเลือกข้อใดในช่องว่างจึงจะสมบูรณ์ที่สุด?</p>
+                <p className="text-slate-400 text-base sm:text-lg">เติมตัวเลือกข้อใดในช่องว่างจึงจะสมบูรณ์ที่สุด?</p>
               </div>
             )}
           </motion.div>
@@ -837,9 +837,9 @@ export default function Game() {
                   key={idx}
                   onClick={() => submitAnswer(choice)}
                   disabled={isAnswered}
-                  className={`p-5 rounded-2xl border text-lg font-bold flex justify-between items-center transition-all ${btnClass} ${!isAnswered && 'hover:scale-[1.01]'}`}
+                  className={`p-4 sm:p-5 rounded-2xl border text-base sm:text-lg font-bold flex justify-between items-center transition-all ${btnClass} ${!isAnswered && 'hover:scale-[1.01]'} break-words`}
                 >
-                  <span className="flex-1 text-center notranslate" translate="no">{choice}</span>
+                  <span className="flex-1 text-center notranslate break-words" translate="no">{choice}</span>
                   {icon}
                 </button>
               );

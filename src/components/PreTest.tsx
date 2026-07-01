@@ -302,7 +302,7 @@ export default function PreTest() {
       >
         <div className="text-center mb-12">
           <span className="text-slate-500 text-sm tracking-widest uppercase block mb-2">คำศัพท์</span>
-          <h2 className="text-5xl font-black text-white tracking-tight notranslate" translate="no">{currentQ.word}</h2>
+          <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight notranslate break-all" translate="no">{currentQ.word}</h2>
           <button 
             onClick={() => playWordAudio(currentQ.word)}
             className="mt-3 text-emerald-400 hover:text-emerald-300 font-bold flex items-center justify-center gap-1.5 mx-auto transition-colors"
@@ -316,7 +316,7 @@ export default function PreTest() {
             <button 
               key={idx}
               onClick={() => handleAnswer(choice)}
-              className="bg-slate-800/40 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/30 hover:text-emerald-400 text-slate-300 p-5 rounded-2xl text-lg font-bold transition-all text-center"
+              className="bg-slate-800/40 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/30 hover:text-emerald-400 text-slate-300 p-4 sm:p-5 rounded-2xl text-base sm:text-lg font-bold transition-all text-center break-words"
             >
               {choice}
             </button>

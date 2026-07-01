@@ -97,16 +97,16 @@ export default function StudyCamp() {
               )}
             </div>
 
-            <div className="text-center">
-              <h2 className="text-6xl font-extrabold text-emerald-400 mb-2">{word.word}</h2>
-              <p className="text-xl text-slate-400 font-mono mb-6">{word.phonetic}</p>
+            <div className="text-center w-full break-words">
+              <h2 className="text-4xl sm:text-6xl font-extrabold text-emerald-400 mb-2 break-all">{word.word}</h2>
+              <p className="text-base sm:text-xl text-slate-400 font-mono mb-6">{word.phonetic}</p>
               
-              <div className="inline-block px-4 py-1 bg-white/10 rounded-full text-sm text-slate-300 mb-4 uppercase tracking-widest">
+              <div className="inline-block px-4 py-1 bg-white/10 rounded-full text-xs sm:text-sm text-slate-300 mb-4 uppercase tracking-widest">
                 {word.part_of_speech || 'noun'}
               </div>
 
-              <h3 className="text-3xl font-bold mb-4">{word.meaning}</h3>
-              <p className="text-lg text-slate-400 italic mb-8">"{word.example}"</p>
+              <h3 className="text-2xl sm:text-3xl font-bold mb-4 break-words">{word.meaning}</h3>
+              <p className="text-base sm:text-lg text-slate-400 italic mb-8 break-words">"{word.example}"</p>
             </div>
 
             <button 
