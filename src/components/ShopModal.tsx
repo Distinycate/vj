@@ -78,8 +78,11 @@ export default function ShopModal({ onClose }: ShopModalProps) {
         animate={{ opacity: 1, scale: 1 }}
         className="bg-slate-800 border border-slate-700 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl relative"
       >
-        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-700/50 p-2 rounded-full">
-          <X className="w-6 h-6" />
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 text-white bg-slate-700/50 hover:bg-slate-700 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+        >
+          <X className="w-4 h-4 text-rose-400" /> กลับหน้าหลัก
         </button>
 
         <div className="p-6 border-b border-slate-700">

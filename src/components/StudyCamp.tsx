@@ -67,8 +67,11 @@ export default function StudyCamp() {
           <h1 className="text-2xl font-bold">Study Camp</h1>
           <p className="text-slate-400">คำที่ {currentIndex + 1} / {words.length}</p>
         </div>
-        <button onClick={() => setScreen('dashboard')} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20">
-          <X className="w-5 h-5" />
+        <button 
+          onClick={() => setScreen('dashboard')} 
+          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl flex items-center gap-1.5 transition-all text-sm font-bold"
+        >
+          <X className="w-4 h-4 text-rose-400" /> กลับหน้าหลัก
         </button>
       </div>
 

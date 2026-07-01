@@ -682,8 +682,11 @@ export default function Game() {
           <span className={`text-xl font-bold font-mono ${timeLeft <= 5 ? "text-rose-500" : "text-slate-100"}`}>{timeLeft}s</span>
         </div>
 
-        <button onClick={() => setScreen('dashboard')} className="p-2.5 bg-slate-900 border border-slate-800 rounded-full hover:bg-slate-800 text-slate-400 transition-colors">
-          <X className="w-5 h-5" />
+        <button 
+          onClick={() => setScreen('dashboard')} 
+          className="px-4 py-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-white rounded-xl flex items-center gap-1.5 transition-all text-xs font-bold"
+        >
+          <X className="w-4 h-4 text-rose-400" /> กลับหน้าหลัก
         </button>
       </div>
 

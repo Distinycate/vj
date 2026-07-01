@@ -272,8 +272,16 @@ export default function PreTest() {
             <span>Vocab Journey Pre-Test</span>
             <span className="text-indigo-400 text-xs mt-0.5">ประเมินรอบที่ {pretestCount + 1} / 5</span>
           </div>
-          <div className="bg-slate-900 border border-slate-800 px-4 py-2 rounded-full text-emerald-400 font-bold text-xs">
-            ข้อ {currentIndex + 1} / {questions.length}
+          <div className="flex items-center gap-3">
+            <div className="bg-slate-900 border border-slate-800 px-4 py-2 rounded-full text-emerald-400 font-bold text-xs">
+              ข้อ {currentIndex + 1} / {questions.length}
+            </div>
+            <button 
+              onClick={() => useAppStore.getState().logout()}
+              className="bg-slate-900 hover:bg-slate-850 border border-slate-800 px-3.5 py-2 rounded-xl text-rose-400 hover:text-rose-300 text-xs font-bold transition-all flex items-center gap-1"
+            >
+              🚪 ออก
+            </button>
           </div>
       </div>
 
