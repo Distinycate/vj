@@ -74,71 +74,74 @@ export default function Dashboard() {
       <div className="max-w-4xl mx-auto relative z-10">
         
         {/* Top Header Row */}
-        <header className="flex justify-between items-center mb-8 bg-slate-900/50 backdrop-blur-md border border-slate-900 p-6 rounded-3xl">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-2xl flex items-center justify-center text-3xl font-bold shadow-lg shadow-emerald-500/20 text-slate-950">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 bg-slate-900/50 backdrop-blur-md border border-slate-900 p-5 sm:p-6 rounded-3xl">
+          <div className="flex items-center gap-3 sm:gap-4 w-full">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-lg shadow-emerald-500/20 text-slate-950">
               {student.student_name ? student.student_name.charAt(0).toUpperCase() : 'S'}
             </div>
-            <div>
-              <h1 className="text-2xl font-black bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl font-black bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent truncate">
                 {student.student_name}
               </h1>
-              <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                <span className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-full text-xs font-black shadow-md shadow-amber-500/20">
+              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-full text-[10px] sm:text-xs font-black shadow-md shadow-amber-500/20">
                   RANK {progress?.current_rank || 1}
                 </span>
-                <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-bold">
-                  Level {stats.level} ({stats.xp % 100}/100 XP)
+                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[10px] sm:text-xs font-bold">
+                  Lvl {stats.level}
                 </span>
-                <span className="px-3 py-1 bg-slate-800 text-slate-400 rounded-full text-xs font-medium">
-                  🔥 {progress?.streak_days || 0} วันต่อเนื่อง
+                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-slate-800 text-slate-400 rounded-full text-[10px] sm:text-xs font-medium">
+                  🔥 {progress?.streak_days || 0} วัน
                 </span>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t border-slate-800/60 pt-3 sm:pt-0 sm:border-0">
             {/* Coins Display */}
-            <div className="flex items-center gap-2 bg-slate-950 px-4 py-2.5 rounded-2xl border border-slate-900 shadow-inner">
-              <span className="text-lg">🪙</span>
-              <span className="text-white font-black text-lg">{progress?.coins || 0}</span>
+            <div className="flex items-center gap-2 bg-slate-950 px-3.5 py-2 rounded-xl border border-slate-900 shadow-inner">
+              <span className="text-base">🪙</span>
+              <span className="text-white font-black text-base">{progress?.coins || 0}</span>
             </div>
             
             {/* Logout button */}
             <button 
               onClick={logout} 
-              className="w-11 h-11 rounded-2xl bg-slate-850 hover:bg-slate-800 border border-slate-900 flex items-center justify-center hover:scale-105 transition-all text-slate-400 hover:text-white"
+              className="w-10 h-10 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-900 flex items-center justify-center hover:scale-105 transition-all text-slate-400 hover:text-white"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </header>
 
         {/* Dashboard Tabs Selector */}
-        <div className="flex bg-slate-900 border border-slate-900 rounded-2xl p-1 mb-8">
+        <div className="grid grid-cols-3 bg-slate-900 border border-slate-900 rounded-2xl p-1 mb-8 gap-0.5">
           <button 
             onClick={() => setActiveTab('roadmap')} 
-            className={`flex-1 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all ${
+            className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 transition-all ${
               activeTab === 'roadmap' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Compass className="w-5 h-5" /> เส้นทางคำศัพท์
+            <Compass className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+            <span className="text-[10px] sm:text-sm font-black">เส้นทาง</span>
           </button>
           <button 
             onClick={() => setActiveTab('review')} 
-            className={`flex-1 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all ${
+            className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 transition-all ${
               activeTab === 'review' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Bookmark className="w-5 h-5" /> คำที่ควรทบทวน
+            <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+            <span className="text-[10px] sm:text-sm font-black">ทบทวน</span>
           </button>
           <button 
             onClick={() => setActiveTab('stats')} 
-            className={`flex-1 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all ${
+            className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 transition-all ${
               activeTab === 'stats' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Trophy className="w-5 h-5" /> เกียรติยศ & รางวัล
+            <Trophy className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+            <span className="text-[10px] sm:text-sm font-black">รางวัล</span>
           </button>
         </div>
 
@@ -205,24 +208,24 @@ export default function Dashboard() {
               </div>
               
               {/* Play Stage Buttons */}
-              <div className="bg-slate-900 border border-slate-900 rounded-3xl p-6 flex flex-col md:flex-row gap-4 justify-between items-center shadow-lg">
-                <div className="text-center md:text-left">
+              <div className="bg-slate-900 border border-slate-900 rounded-3xl p-5 sm:p-6 flex flex-col md:flex-row gap-4 justify-between items-center shadow-lg w-full">
+                <div className="text-center md:text-left w-full md:w-auto">
                   <h3 className="text-lg font-bold text-white">ด่านผจญภัยถัดไปของคุณคือ</h3>
                   <p className="text-slate-400 text-sm mt-0.5">ด่าน {progress?.current_stage || 1} • เรียนรู้คำศัพท์ชุดที่ {progress?.current_stage || 1}</p>
                 </div>
                 
-                <div className="flex gap-3 w-full md:w-auto">
+                <div className="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto mt-2 md:mt-0">
                   <button 
                     onClick={() => setScreen('study')} 
-                    className="flex-1 md:flex-initial px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-700/50 flex items-center justify-center gap-2 hover:scale-[1.02] transition-all"
+                    className="w-full sm:w-auto px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-700/50 flex items-center justify-center gap-2 hover:scale-[1.02] transition-all text-sm"
                   >
-                    <BookOpen className="w-5 h-5 text-emerald-400" /> เข้าค่ายท่องศัพท์
+                    <BookOpen className="w-4 h-4 text-emerald-400" /> เข้าค่ายท่องศัพท์
                   </button>
                   <button 
                     onClick={() => setScreen('game')} 
-                    className="flex-1 md:flex-initial px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-all"
+                    className="w-full sm:w-auto px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-all text-sm"
                   >
-                    <Play className="w-5 h-5 fill-slate-950" /> ลุยด่านท้าทาย
+                    <Play className="w-4 h-4 fill-slate-950" /> ลุยด่านท้าทาย
                   </button>
                 </div>
               </div>
