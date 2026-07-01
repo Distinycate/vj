@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, XCircle, Trophy, Timer, Volume2, Snowflake, Scissors, Heart, Sparkles, BookOpen, AlertCircle, HelpCircle } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
+import { playWordAudio } from '@/utils/audio';
 
 type GameStep = 'goal' | 'play' | 'reflection' | 'results';
 
@@ -44,17 +45,6 @@ export default function Game() {
   const [refHardestWord, setRefHardestWord] = useState('');
   const [refFeeling, setRefFeeling] = useState('😊 สนุกปานกลาง');
 
-  const speakWord = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const msg = new SpeechSynthesisUtterance(text);
-      msg.lang = 'en-US';
-      window.speechSynthesis.speak(msg);
-    } else {
-      const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(text)}`);
-      audio.play();
-    }
-  };
 
   useEffect(() => {
     async function initStage() {
@@ -183,7 +173,7 @@ export default function Game() {
     }
 
     if (type === 'LISTENING_MC') {
-      setTimeout(() => speakWord(word.word), 300);
+      setTimeout(() => playWordAudio(word.word), 300);
     }
 
     setFillAnswer('');
@@ -727,7 +717,7 @@ export default function Game() {
               <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl shadow-xl">
                 <span className="text-xs text-slate-500 tracking-widest uppercase block mb-6">ฟังและแปลความหมาย</span>
                 <button 
-                  onClick={() => speakWord(currentWord.word)}
+                  onClick={() => playWordAudio(currentWord.word)}
                   className="w-24 h-24 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6 hover:scale-105 transition-all shadow-lg"
                 >
                   <Volume2 className="w-12 h-12" />

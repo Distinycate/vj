@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import { Volume2 } from 'lucide-react';
+import { playWordAudio } from '@/utils/audio';
 
 export default function PreTest() {
   const { student, progress, setProgress, setScreen } = useAppStore();
@@ -13,18 +14,6 @@ export default function PreTest() {
   const [isFinished, setIsFinished] = useState(false);
   const [loading, setLoading] = useState(true);
   const [startTime] = useState<number>(Date.now());
-
-  const speakWord = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      window.speechSynthesis.speak(utterance);
-    } else {
-      const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(text)}`);
-      audio.play();
-    }
-  };
 
   function generateQuestion(correctWord: any, allVocab: any[]) {
     const choices = [correctWord.meaning];
@@ -238,7 +227,7 @@ export default function PreTest() {
           <span className="text-slate-500 text-sm tracking-widest uppercase block mb-2">คำศัพท์</span>
           <h2 className="text-5xl font-black text-white tracking-tight">{currentQ.word}</h2>
           <button 
-            onClick={() => speakWord(currentQ.word)}
+            onClick={() => playWordAudio(currentQ.word)}
             className="mt-3 text-emerald-400 hover:text-emerald-300 font-bold flex items-center justify-center gap-1.5 mx-auto transition-colors"
           >
             <Volume2 className="w-5 h-5" /> ฟังออกเสียง (TTS)

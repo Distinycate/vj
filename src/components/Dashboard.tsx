@@ -5,6 +5,7 @@ import { Play, Store, Trophy, Target, Star, Bug, LogOut, ShieldAlert, Award, Com
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
 import ShopModal from '@/components/ShopModal';
+import { playWordAudio } from '@/utils/audio';
 
 export default function Dashboard() {
   const { student, progress, logout, setScreen, setProgress } = useAppStore();
@@ -16,17 +17,6 @@ export default function Dashboard() {
   const [stats, setStats] = useState<any>({ xp: 0, level: 1 });
   const [activeTab, setActiveTab] = useState<'roadmap' | 'stats' | 'review'>('roadmap');
 
-  const speakWord = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      window.speechSynthesis.speak(utterance);
-    } else {
-      const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(text)}`);
-      audio.play();
-    }
-  };
 
   useEffect(() => {
     if (!student) return;
@@ -267,7 +257,7 @@ export default function Dashboard() {
                       </div>
                       
                       <button 
-                        onClick={() => speakWord(word.word)}
+                        onClick={() => playWordAudio(word.word)}
                         className="w-11 h-11 bg-slate-900 border border-slate-800 text-emerald-400 hover:text-emerald-300 rounded-full flex items-center justify-center hover:scale-105 transition-all shadow-md"
                       >
                         <Volume2 className="w-5 h-5" />

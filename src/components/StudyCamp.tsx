@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Volume2, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
+import { playWordAudio } from '@/utils/audio';
 
 export default function StudyCamp() {
   const { setScreen, progress } = useAppStore();
@@ -34,17 +35,6 @@ export default function StudyCamp() {
     fetchWords();
   }, [progress]);
 
-  const playAudio = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      window.speechSynthesis.speak(utterance);
-    } else {
-      const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(text)}`);
-      audio.play();
-    }
-  };
 
   if (loading) {
     return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white"><div className="animate-pulse">กำลังเตรียมคำศัพท์...</div></div>;
@@ -114,8 +104,8 @@ export default function StudyCamp() {
             </div>
 
             <button 
-              onClick={() => playAudio(word.word)}
-              className="absolute top-6 right-6 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 hover:scale-110 transition-all text-emerald-300"
+              onClick={() => playWordAudio(word.word)}
+              className="mt-4 bg-white/10 hover:bg-white/20 p-4 rounded-2xl flex items-center justify-center gap-2 transition-all hover:scale-105 text-emerald-300"
             >
               <Volume2 className="w-6 h-6" />
             </button>
