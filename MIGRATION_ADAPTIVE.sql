@@ -8,16 +8,16 @@ ADD COLUMN IF NOT EXISTS total_exp INTEGER DEFAULT 0,
 ADD COLUMN IF NOT EXISTS avatar_url TEXT DEFAULT 'default_avatar.png',
 ADD COLUMN IF NOT EXISTS total_stages INTEGER DEFAULT 100;
 
--- 2. Create stages table (if not exists)
-CREATE TABLE IF NOT EXISTS stages (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    stage_number INTEGER UNIQUE NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    theme VARCHAR(100) NOT NULL,
-    word_pool_id VARCHAR(100) NULL,
-    is_boss_stage BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
+-- 2. Alter stages table to add missing columns if it already exists
+ALTER TABLE stages ADD COLUMN IF NOT EXISTS title VARCHAR(255) DEFAULT 'ด่านผจญภัย';
+ALTER TABLE stages ADD COLUMN IF NOT EXISTS theme VARCHAR(100) DEFAULT 'General';
+ALTER TABLE stages ADD COLUMN IF NOT EXISTS word_pool_id VARCHAR(100) NULL;
+ALTER TABLE stages ADD COLUMN IF NOT EXISTS is_boss_stage BOOLEAN DEFAULT FALSE;
+ALTER TABLE stages ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW());
+
+-- Ensure stage_number is unique to allow ON CONFLICT query to work
+ALTER TABLE stages DROP CONSTRAINT IF EXISTS stages_category_id_stage_number_key;
+ALTER TABLE stages ADD CONSTRAINT stages_stage_number_key UNIQUE (stage_number);
 
 -- 3. Update vocabulary table with difficulty levels
 ALTER TABLE vocabulary 
