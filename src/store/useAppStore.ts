@@ -27,7 +27,9 @@ export const useAppStore = create<AppState>((set) => ({
   recommendations: [],
   isReviewMode: false,
   setStudent: (student) => set({ student }),
-  setProgress: (progress) => set({ progress }),
+  setProgress: (newProgress) => set((state) => ({ 
+    progress: state.progress && newProgress ? { ...state.progress, ...newProgress } : newProgress 
+  })),
   setScreen: (screen) => set({ currentScreen: screen }),
   setCurrentCategory: (currentCategory) => set({ currentCategory }),
   setInventory: (inventory) => set({ inventory }),
