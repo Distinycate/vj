@@ -78,12 +78,23 @@ async function main() {
           word_id: row.WordID || `M1-${String(i+1).padStart(3, '0')}`,
           word: row.Word || '',
           meaning: row.Meaning || '',
+          meaning_th: row.Meaning || '',
           part_of_speech: row.PartOfSpeech || '',
           category_id: catId,
           example: row.Example || '',
+          example_sentence: row.Example || '',
           stage: currentStage,
+          stage_number: currentStage,
           rank: currentRank,
-          image_url: row.ImageURL || null
+          difficulty_level:
+            currentRank >= 5 ? 'expert' :
+            currentRank >= 4 ? 'hard' :
+            currentRank >= 2 ? 'normal' : 'easy',
+          image_url: row.ImageURL || null,
+          audio_url: row.AudioURL || null,
+          normalized_word: (row.Word || '').trim().toLowerCase().replace(/\s+/g, ' '),
+          normalized_meaning_th: (row.Meaning || '').trim().replace(/\s+/g, ' '),
+          is_active: true
         });
       }
 

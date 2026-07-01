@@ -87,34 +87,72 @@ export default function ExecutiveDashboard() {
         if (classrooms) {
           mappedPerformance = classrooms.map((c: any) => {
             const students = c.students || [];
-            const scores = students.map((s: any) => s.analytics_summary?.success_rate || 0).filter(Boolean);
+            const scores = students
+              .map((s: any) => Number(s.analytics_summary?.success_rate))
+              .filter((score: number) => Number.isFinite(score));
             const average = scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : 0;
             return {
               id: c.id,
               name: c.class_name,
               studentCount: students.length,
-              averageScore: average || 70 + (c.class_name.charCodeAt(1) % 15) // fallback mock for demo
+              averageScore: average,
+              hasData: scores.length > 0,
             };
           });
           setClassPerformance(mappedPerformance);
         }
 
-        // Mock weak categories
-        setWeakCategories([
-          { category: 'Technology', display: 'เทคโนโลยี', errorRate: 38 },
-          { category: 'Emotion', display: 'อารมณ์', errorRate: 24 },
-          { category: 'Health', display: 'สุขภาพ', errorRate: 15 }
-        ]);
+        const { data: reviewRows } = await supabase
+          .from('user_review_words')
+          .select('wrong_count, vocabulary:word_id(vocabulary_categories(name, display_name_th))');
+        const categoryTotals = new Map<string, {
+          category: string;
+          display: string;
+          wrongCount: number;
+        }>();
+
+        (reviewRows || []).forEach((row: any) => {
+          const category = row.vocabulary?.vocabulary_categories;
+          if (!category?.name) return;
+          const current = categoryTotals.get(category.name) || {
+            category: category.name,
+            display: category.display_name_th || category.name,
+            wrongCount: 0,
+          };
+          current.wrongCount += Number(row.wrong_count || 0);
+          categoryTotals.set(category.name, current);
+        });
+
+        const totalErrors = [...categoryTotals.values()].reduce(
+          (sum, category) => sum + category.wrongCount,
+          0
+        );
+        setWeakCategories(
+          [...categoryTotals.values()]
+            .sort((a, b) => b.wrongCount - a.wrongCount)
+            .slice(0, 3)
+            .map((category) => ({
+              ...category,
+              errorRate: totalErrors > 0
+                ? Math.round((category.wrongCount / totalErrors) * 100)
+                : 0,
+            }))
+        );
 
         setStats({
           totalStudents: studentCount || 0,
           totalTeachers: teacherCount || 0,
           totalClassrooms: classCount || 0,
-          schoolAverage: mappedPerformance.length > 0 
-            ? Math.round(mappedPerformance.reduce((acc, curr) => acc + curr.averageScore, 0) / mappedPerformance.length)
-            : 78,
+          schoolAverage: mappedPerformance.some((classroom) => classroom.hasData)
+            ? Math.round(
+                mappedPerformance
+                  .filter((classroom) => classroom.hasData)
+                  .reduce((acc, curr) => acc + curr.averageScore, 0) /
+                mappedPerformance.filter((classroom) => classroom.hasData).length
+              )
+            : 0,
           atRiskCount: alertCount || 0,
-          growthRate: 18.2 // pre vs post gain
+          growthRate: 0
         });
 
       } catch (err) {
@@ -264,12 +302,12 @@ export default function ExecutiveDashboard() {
                 <div key={c.id} className="space-y-1.5">
                   <div className="flex justify-between text-sm">
                     <span className="font-bold text-slate-200">{c.name} ({c.studentCount} คน)</span>
-                    <span className="font-black text-emerald-400">{c.averageScore}%</span>
+                    <span className="font-black text-emerald-400">{c.hasData ? `${c.averageScore}%` : 'ยังไม่มีข้อมูล'}</span>
                   </div>
                   <div className="w-full h-3 bg-slate-950 border border-slate-900 rounded-full overflow-hidden shadow-inner">
                     <div 
                       className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all"
-                      style={{ width: `${c.averageScore}%` }}
+                      style={{ width: `${c.hasData ? c.averageScore : 0}%` }}
                     />
                   </div>
                 </div>
@@ -299,6 +337,11 @@ export default function ExecutiveDashboard() {
                   </div>
                 </div>
               ))}
+              {weakCategories.length === 0 && (
+                <p className="text-sm text-slate-500 text-center py-8">
+                  ยังไม่มีประวัติคำตอบผิดสำหรับวิเคราะห์
+                </p>
+              )}
             </div>
           </div>
 

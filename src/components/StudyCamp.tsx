@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Volume2, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import { X, Volume2, ArrowRight, ArrowLeft, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
@@ -18,7 +18,7 @@ export default function StudyCamp() {
       const stage = progress?.current_stage || 1;
       const isBoss = stage % 10 === 0;
 
-      let wordsQuery = supabase.from('vocabulary').select('*');
+      let wordsQuery = supabase.from('vocabulary').select('*').eq('is_active', true);
 
       if (isBoss) {
         // Boss stages combine words from stages in the current world range
@@ -34,13 +34,6 @@ export default function StudyCamp() {
 
       if (data && data.length > 0) {
         setWords(data);
-      } else {
-        // Fallback mock data if DB is empty
-        setWords([
-          { id: '1', word: 'apple', phonetic: '/ˈæp.əl/', meaning: 'แอปเปิ้ล', example_sentence: 'I eat an apple.', part_of_speech: 'noun' },
-          { id: '2', word: 'banana', phonetic: '/bəˈnæn.ə/', meaning: 'กล้วย', example_sentence: 'Monkeys love bananas.', part_of_speech: 'noun' },
-          { id: '3', word: 'cat', phonetic: '/kæt/', meaning: 'แมว', example_sentence: 'The cat sleeps on the sofa.', part_of_speech: 'noun' }
-        ]);
       }
       setLoading(false);
     }
@@ -52,6 +45,24 @@ export default function StudyCamp() {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
         <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
         <div className="text-slate-400">กำลังเตรียมคำศัพท์ค่าย...</div>
+      </div>
+    );
+  }
+
+  if (words.length === 0) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
+        <div className="bg-slate-900 border border-amber-500/20 rounded-3xl p-8 max-w-md text-center">
+          <AlertTriangle className="w-14 h-14 text-amber-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-black mb-2">ยังไม่มีคำศัพท์ในด่านนี้</h2>
+          <p className="text-slate-400 text-sm mb-6">กรุณาแจ้งคุณครูให้เพิ่มคำศัพท์ก่อนเริ่มเรียน</p>
+          <button
+            onClick={() => setScreen('dashboard')}
+            className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold"
+          >
+            กลับหน้าแผนที่
+          </button>
+        </div>
       </div>
     );
   }

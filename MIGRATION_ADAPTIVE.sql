@@ -181,7 +181,7 @@ BEGIN
     FOR vocab_rec IN SELECT id FROM vocabulary ORDER BY word LOOP
         diff_val := diffs[1 + (cnt % 4)];
         UPDATE vocabulary 
-        SET stage_number = (cnt % 100) + 1,
+        SET stage_number = ((cnt - 1) % 100) + 1,
             difficulty_level = diff_val
         WHERE id = vocab_rec.id;
         cnt := cnt + 1;

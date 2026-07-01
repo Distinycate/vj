@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vocab Journey
 
-## Getting Started
+ระบบเรียนรู้คำศัพท์ภาษาอังกฤษแบบ Adaptive สำหรับใช้งานภายในโรงเรียน ประกอบด้วยเส้นทางนักเรียน 100 ด่าน ระบบทบทวนคำศัพท์ แดชบอร์ดครู และรายงานผู้บริหาร
 
-First, run the development server:
+## เทคโนโลยี
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Next.js 16 และ React 19
+- TypeScript, Tailwind CSS 4 และ Zustand
+- Supabase สำหรับฐานข้อมูล
+- Framer Motion, Lucide และ DiceBear Avatar
+
+## เริ่มต้นใช้งาน
+
+สร้างไฟล์ `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+จากนั้น:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+เปิด `http://localhost:3000`
 
-## Learn More
+## ฐานข้อมูล
 
-To learn more about Next.js, take a look at the following resources:
+`SUPABASE_SCHEMA.sql` เป็นสคริปต์สำหรับติดตั้งฐานข้อมูลใหม่และมีคำสั่งลบตารางเดิม ห้ามรันกับฐานข้อมูลจริงที่มีข้อมูลโดยไม่สำรองข้อมูลก่อน
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+สำหรับฐานข้อมูลเดิม ให้รัน migration ตามลำดับ:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. `MIGRATION_ADAPTIVE.sql`
+2. `MIGRATION_DUPLICATE_WORDS.sql`
+3. `MIGRATION_AVATAR_VALIDATION.sql`
+4. `MIGRATION_RUNTIME_CONSISTENCY.sql`
 
-## Deploy on Vercel
+Migration ตัวสุดท้ายทำให้ชื่อฟิลด์รุ่นเก่าและรุ่น Adaptive สอดคล้องกัน สร้างข้อมูล analytics ที่ขาด และปิดคำศัพท์อังกฤษซ้ำในด่านเดียวโดยไม่ลบประวัติเดิม
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## คำสั่งตรวจสอบ
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run check
+npm run build
+```
+
+## โครงสร้างหลัก
+
+- `src/app/page.tsx` — สมัครและเข้าสู่ระบบ
+- `src/components/PreTest.tsx` — Pre-Test 5 รอบ
+- `src/components/Dashboard.tsx` — แผนที่ คลังศัพท์ แรงกิ้ง ร้านค้า และโปรไฟล์
+- `src/components/StudyCamp.tsx` — Flashcard ประจำด่าน
+- `src/components/Game.tsx` — Challenge Game
+- `src/utils/adaptiveEngine.ts` — สร้างข้อสอบ รางวัล Rank และ Spaced Repetition
+- `src/lib/quizUtils.ts` — มาตรฐานคำตอบและตัวเลือกกลาง
+- `src/app/admin` — แดชบอร์ดครูและ Question Audit
+- `src/app/executive` — รายงานผู้บริหาร
+
+ระบบบัญชีปัจจุบันออกแบบสำหรับเครือข่ายภายในโรงเรียนและอ่านบัญชีจากตาราง Supabase โดยตรง

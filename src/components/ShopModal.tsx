@@ -31,7 +31,6 @@ export default function ShopModal({ onClose }: ShopModalProps) {
 
   useEffect(() => {
     fetchShopData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleBuy = async (item: Record<string, any>) => {
@@ -44,10 +43,23 @@ export default function ShopModal({ onClose }: ShopModalProps) {
     try {
       // Deduct coins
       const newCoins = (progress?.coins || 0) - item.price;
-      await supabase.from('learning_paths').update({ coins: newCoins }).eq('student_id', student.id);
+      const { error: coinError } = await supabase
+        .from('learning_paths')
+        .update({ coins: newCoins })
+        .eq('student_id', student.id);
+      if (coinError) throw coinError;
       
       // Add to inventory
-      await supabase.from('student_inventory').insert([{ student_id: student.id, item_id: item.id }]);
+      const { error: inventoryError } = await supabase
+        .from('student_inventory')
+        .insert([{ student_id: student.id, item_id: item.id }]);
+      if (inventoryError) {
+        await supabase
+          .from('learning_paths')
+          .update({ coins: progress?.coins || 0 })
+          .eq('student_id', student.id);
+        throw inventoryError;
+      }
       
       // Update coins ledger
       await supabase.from('coins_transactions').insert([{
@@ -66,10 +78,10 @@ export default function ShopModal({ onClose }: ShopModalProps) {
       
     } catch (err) {
       console.error(err);
+      setMessage('ซื้อไอเทมไม่สำเร็จ กรุณาลองใหม่');
+      setTimeout(() => setMessage(''), 2500);
     }
   };
-
-  const isAllBought = inventory.length > 0 && items.every(i => inventory.includes(i.id));
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
@@ -102,7 +114,7 @@ export default function ShopModal({ onClose }: ShopModalProps) {
           ) : (
             <div className="space-y-4">
               {items.map(item => {
-                const isBought = inventory.includes(item.id) && !isAllBought;
+                const isBought = inventory.includes(item.id);
                 
                 return (
                   <div key={item.id} className="bg-slate-700/30 border border-slate-600 rounded-2xl p-4 flex justify-between items-center">
@@ -136,11 +148,6 @@ export default function ShopModal({ onClose }: ShopModalProps) {
           )}
         </div>
         
-        {isAllBought && (
-          <div className="p-4 bg-emerald-500/20 text-emerald-400 text-center font-medium border-t border-emerald-500/30">
-            ร้านค้ารีเซ็ตแล้ว! คุณสามารถซื้อไอเทมเพิ่มได้
-          </div>
-        )}
       </motion.div>
     </div>
   );

@@ -197,6 +197,17 @@ export default function Home() {
         
       if (progressError) throw progressError;
 
+      await supabase.from('analytics_summary').upsert({
+        student_id: studentData.id,
+        pretest_score: 0,
+        posttest_score: 0,
+        learning_gain: 0,
+        normalized_gain: 0,
+        success_rate: 0,
+        attempt_count: 0,
+        total_time_on_task_sec: 0,
+      }, { onConflict: 'student_id' });
+
       // Auto-login after register
       setStudent(studentData);
       setProgress(progressData);

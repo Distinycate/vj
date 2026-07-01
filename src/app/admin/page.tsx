@@ -26,6 +26,8 @@ export default function AdminPage() {
   const [assignments, setAssignments] = useState<any[]>([]);
   const [attempts, setAttempts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [itemAnalysisByWord, setItemAnalysisByWord] = useState<Record<string, any>>({});
+  const [wrongCountByWord, setWrongCountByWord] = useState<Record<string, number>>({});
 
   // Content Builder forms
   const [wordInput, setWordInput] = useState('');
@@ -103,6 +105,15 @@ export default function AdminPage() {
       const { data: vData } = await supabase.from('vocabulary').select('*, vocabulary_categories(*)');
       if (vData) setVocabList(vData);
 
+      const { data: itemAnalysisData } = await supabase
+        .from('item_analysis')
+        .select('*');
+      if (itemAnalysisData) {
+        setItemAnalysisByWord(
+          Object.fromEntries(itemAnalysisData.map((item) => [item.word_id, item]))
+        );
+      }
+
       // Fetch Alerts
       const { data: alertData } = await supabase
         .from('intervention_alerts')
@@ -131,6 +142,23 @@ export default function AdminPage() {
         .eq('classroom_id', selectedClassroom);
       
       if (students) setStudentsList(students);
+
+      const studentIds = (students || []).map((student) => student.id);
+      if (studentIds.length > 0) {
+        const { data: reviewData } = await supabase
+          .from('user_review_words')
+          .select('word_id, wrong_count')
+          .in('user_id', studentIds);
+
+        const wrongCounts: Record<string, number> = {};
+        (reviewData || []).forEach((row) => {
+          wrongCounts[row.word_id] =
+            (wrongCounts[row.word_id] || 0) + Number(row.wrong_count || 0);
+        });
+        setWrongCountByWord(wrongCounts);
+      } else {
+        setWrongCountByWord({});
+      }
 
       const { data: attData } = await supabase
         .from('attempts')
@@ -186,11 +214,14 @@ export default function AdminPage() {
           .update({
             word: wordInput,
             meaning: meaningInput,
+            meaning_th: meaningInput,
             example: exampleInput,
+            example_sentence: exampleInput,
             part_of_speech: posInput,
             category_id: catInput,
             rank: rankInput,
-            stage: stageInput
+            stage: stageInput,
+            stage_number: stageInput
           })
           .eq('id', editingWordId);
         alert('แก้ไขคำศัพท์เรียบร้อย!');
@@ -199,11 +230,16 @@ export default function AdminPage() {
           word_id: `M1-NEW-${Math.floor(Math.random() * 1000)}`,
           word: wordInput,
           meaning: meaningInput,
+          meaning_th: meaningInput,
           example: exampleInput,
+          example_sentence: exampleInput,
           part_of_speech: posInput,
           category_id: catInput,
           rank: rankInput,
-          stage: stageInput
+          stage: stageInput,
+          stage_number: stageInput,
+          difficulty_level: rankInput >= 5 ? 'expert' : rankInput >= 4 ? 'hard' : rankInput >= 2 ? 'normal' : 'easy',
+          is_active: true,
         }]);
         alert('เพิ่มคำศัพท์สำเร็จ!');
       }
@@ -229,10 +265,13 @@ export default function AdminPage() {
 
   // Export Analytics Summary to CSV
   const handleExportCSV = () => {
+    const classroomName =
+      classrooms.find((classroom) => classroom.id === selectedClassroom)?.class_name ||
+      selectedClassroom;
     const dataToExport = studentsList.map(s => ({
       'รหัสนักเรียน': s.student_id,
       'ชื่อ-นามสกุล': s.student_name,
-      'ระดับชั้น': s.grade + '/' + s.room,
+      'ระดับชั้น': classroomName,
       'คะแนน Pre-Test': s.analytics_summary?.pretest_score || 0,
       'ด่านปัจจุบัน': s.learning_paths?.current_stage || 1,
       'ระดับ Rank': s.learning_paths?.current_rank || 1,
@@ -486,27 +525,30 @@ export default function AdminPage() {
                     </thead>
                     <tbody className="divide-y divide-slate-900 text-slate-200">
                       {vocabList.slice(0, 15).map((v) => {
-                        // Generate mock dynamic p/d value based on word ID hashes to show working model
-                        const hash = v.word.charCodeAt(0) + v.word.charCodeAt(v.word.length - 1);
-                        const pVal = Number((0.3 + (hash % 50) / 100).toFixed(2));
-                        const dVal = Number((0.15 + (hash % 30) / 100).toFixed(2));
+                        const analysis = itemAnalysisByWord[v.id];
+                        const pVal = Number(analysis?.p_value || 0);
+                        const dVal = Number(analysis?.d_value || 0);
+                        const attemptCount = Number(analysis?.attempt_count || 0);
                         
-                        let statusText = 'ดีมาก นำไปใช้งานได้';
-                        let statusColor = 'text-emerald-400';
-                        if (pVal < 0.2) {
+                        let statusText = 'ข้อมูลยังไม่เพียงพอ';
+                        let statusColor = 'text-slate-400';
+                        if (attemptCount >= 10 && pVal < 0.2) {
                           statusText = 'ยากเกินไป ควรแก้ไข';
                           statusColor = 'text-rose-400';
-                        } else if (pVal > 0.8) {
+                        } else if (attemptCount >= 10 && pVal > 0.8) {
                           statusText = 'ง่ายเกินไป';
                           statusColor = 'text-amber-400';
+                        } else if (attemptCount >= 10) {
+                          statusText = 'ระดับความยากเหมาะสม';
+                          statusColor = 'text-emerald-400';
                         }
 
                         return (
                           <tr key={v.id} className="hover:bg-slate-900/35 transition-colors">
                             <td className="p-5 font-bold uppercase text-white">{v.word}</td>
                             <td className="p-5 text-slate-400">{v.vocabulary_categories?.display_name_th || 'ทั่วไป'}</td>
-                            <td className="p-5 text-center font-bold">{pVal}</td>
-                            <td className="p-5 text-center font-bold">{dVal}</td>
+                            <td className="p-5 text-center font-bold">{attemptCount > 0 ? pVal.toFixed(2) : '—'}</td>
+                            <td className="p-5 text-center font-bold">{attemptCount >= 20 && dVal !== 0 ? dVal.toFixed(2) : 'รอข้อมูล'}</td>
                             <td className={`p-5 text-center font-bold ${statusColor}`}>{statusText}</td>
                           </tr>
                         );
@@ -529,12 +571,11 @@ export default function AdminPage() {
               <div className="bg-slate-900/60 border border-slate-900 p-8 rounded-3xl shadow-xl">
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
                   {vocabList.slice(0, 48).map((v) => {
-                    const hash = v.word.charCodeAt(0) + v.word.charCodeAt(v.word.length - 1);
-                    const errorWeight = hash % 5; // mock 0 to 4 errors density
+                    const errorWeight = wrongCountByWord[v.id] || 0;
                     
                     let bg = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
-                    if (errorWeight === 2) bg = 'bg-amber-500/10 border-amber-500/30 text-amber-400';
-                    if (errorWeight >= 3) bg = 'bg-rose-500/15 border-rose-500/40 text-rose-400';
+                    if (errorWeight >= 2) bg = 'bg-amber-500/10 border-amber-500/30 text-amber-400';
+                    if (errorWeight >= 5) bg = 'bg-rose-500/15 border-rose-500/40 text-rose-400';
 
                     return (
                       <div 
@@ -605,7 +646,7 @@ export default function AdminPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {assignments.map((as) => (
+                  {assignments.filter((as) => as.classroom_id === selectedClassroom).map((as) => (
                     <div key={as.id} className="bg-slate-900/60 border border-slate-900 p-5 rounded-2xl flex justify-between items-center">
                       <div>
                         <h4 className="text-lg font-bold text-white">{as.title}</h4>
@@ -620,7 +661,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                   ))}
-                  {assignments.length === 0 && (
+                  {assignments.filter((as) => as.classroom_id === selectedClassroom).length === 0 && (
                     <p className="text-slate-600 text-center py-12 italic">ยังไม่มีงานมอบหมายสร้างไว้ในประวัติ</p>
                   )}
                 </div>
@@ -756,24 +797,24 @@ export default function AdminPage() {
                       {vocabList.slice(0, 50).map((v) => (
                         <tr key={v.id} className="hover:bg-slate-900/35 transition-colors">
                           <td className="p-4 font-bold uppercase text-white">{v.word}</td>
-                          <td className="p-4 text-slate-300 font-bold">{v.meaning}</td>
+                          <td className="p-4 text-slate-300 font-bold">{v.meaning_th || v.meaning}</td>
                           <td className="p-4 text-center">
                             <span className="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full text-xs font-bold border border-amber-500/10">
                               Rank {v.rank}
                             </span>
                           </td>
-                          <td className="p-4 text-center font-bold text-indigo-400">ด่าน {v.stage}</td>
+                          <td className="p-4 text-center font-bold text-indigo-400">ด่าน {v.stage_number || v.stage}</td>
                           <td className="p-4 text-center">
                             <button 
                               onClick={() => {
                                 setEditingWordId(v.id);
                                 setWordInput(v.word);
-                                setMeaningInput(v.meaning);
-                                setExampleInput(v.example || '');
+                                setMeaningInput(v.meaning_th || v.meaning);
+                                setExampleInput(v.example_sentence || v.example || '');
                                 setPosInput(v.part_of_speech || 'noun');
                                 setCatInput(v.category_id || '');
                                 setRankInput(v.rank || 1);
-                                setStageInput(v.stage || 1);
+                                setStageInput(v.stage_number || v.stage || 1);
                               }}
                               className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-indigo-400"
                             >

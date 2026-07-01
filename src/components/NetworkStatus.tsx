@@ -24,7 +24,7 @@ export default function NetworkStatus() {
   return (
     <div className="bg-rose-500/90 text-white text-sm font-bold text-center py-2 px-4 flex items-center justify-center gap-2 border-b border-rose-600 fixed top-0 left-0 right-0 z-50 animate-pulse">
       <WifiOff className="w-4 h-4" />
-      <span>คุณกำลังใช้งานแบบออฟไลน์ (ระบบจะจัดเก็บผลลัพธ์ไว้ และซิงค์ข้อมูลเมื่อเชื่อมต่อเน็ตอีกครั้ง)</span>
+      <span>คุณกำลังออฟไลน์ หน้าที่เคยเปิดอาจยังดูได้ แต่ต้องเชื่อมต่ออินเทอร์เน็ตก่อนบันทึกผลการเรียน</span>
     </div>
   );
 }

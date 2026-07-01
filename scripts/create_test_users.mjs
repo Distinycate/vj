@@ -49,6 +49,9 @@ async function createTestUser(username, password, roleType, extraDetails = {}) {
         coins: 100, // Gift 100 coins for testing shop items!
         exp: 0
       }]);
+      await supabase.from('analytics_summary').upsert([{
+        student_id: studentData.id
+      }], { onConflict: 'student_id' });
     }
 
   } else if (roleType === 'TEACHER' || roleType === 'EXECUTIVE') {

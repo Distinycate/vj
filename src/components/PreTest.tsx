@@ -5,6 +5,13 @@ import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import { Volume2 } from 'lucide-react';
 import { playWordAudio } from '@/utils/audio';
+import {
+  filterDistractors,
+  getVocabularyField,
+  QuizChoice,
+  shuffleArray,
+  uniqueChoicesByText,
+} from '@/lib/quizUtils';
 
 export default function PreTest() {
   const { student, progress, setProgress, setScreen } = useAppStore();
@@ -18,18 +25,29 @@ export default function PreTest() {
   const [previousPretests, setPreviousPretests] = useState<any[]>([]);
 
   function generateQuestion(correctWord: any, allVocab: any[]) {
-    const choices = [correctWord.meaning];
-    while(choices.length < 4) {
-      const randomWord = allVocab[Math.floor(Math.random() * allVocab.length)];
-      if (!choices.includes(randomWord.meaning)) {
-        choices.push(randomWord.meaning);
-      }
-    }
+    const distractors = filterDistractors({
+      targetWord: correctWord,
+      candidates: shuffleArray(allVocab),
+      answerField: 'meaning_th',
+      limit: 3,
+    });
+    const correctChoice: QuizChoice = {
+      word_id: correctWord.id,
+      text: getVocabularyField(correctWord, 'meaning_th'),
+      is_correct: true,
+    };
+    const wrongChoices: QuizChoice[] = distractors.map((word) => ({
+      word_id: word.id,
+      text: getVocabularyField(word, 'meaning_th'),
+      is_correct: false,
+    }));
+
     return {
       id: correctWord.id,
       word: correctWord.word,
-      correctChoice: correctWord.meaning,
-      choices: choices.sort(() => 0.5 - Math.random())
+      correct_word_id: correctWord.id,
+      correct_answer: correctChoice.text,
+      choices: shuffleArray(uniqueChoicesByText([correctChoice, ...wrongChoices])),
     };
   }
 
@@ -50,11 +68,16 @@ export default function PreTest() {
       const { data: vocab } = await supabase
         .from('vocabulary')
         .select('*')
+        .eq('is_active', true)
         .limit(150);
         
       if (vocab && vocab.length > 0) {
          const shuffled = vocab.sort(() => 0.5 - Math.random()).slice(0, vocab.length > 25 ? 25 : vocab.length);
-         setQuestions(shuffled.map(v => generateQuestion(v, vocab)));
+         setQuestions(
+           shuffled
+             .map(v => generateQuestion(v, vocab))
+             .filter(question => question.choices.length === 4)
+         );
       }
     } catch (e) {
       console.error(e);
@@ -67,8 +90,11 @@ export default function PreTest() {
     fetchPretestData();
   }, [student.id]);
 
-  const handleAnswer = (choice: string) => {
-    const isCorrect = choice === questions[currentIndex].correctChoice;
+  const handleAnswer = (choice: QuizChoice) => {
+    const currentQuestion = questions[currentIndex];
+    const isCorrect =
+      choice.is_correct === true &&
+      choice.word_id === currentQuestion.correct_word_id;
     if (isCorrect) setScore(score + 1);
 
     if (currentIndex + 1 < questions.length) {
@@ -82,12 +108,21 @@ export default function PreTest() {
     setIsFinished(true);
     const duration = Math.round((Date.now() - startTime) / 1000);
 
-    // Calculate Rank based on 25 questions
+    const allScores = [
+      ...previousPretests.map((attempt) => Number(attempt.score || 0)),
+      finalScore,
+    ];
+    const averageScore = Math.round(
+      allScores.reduce((sum, attemptScore) => sum + attemptScore, 0) /
+      allScores.length
+    );
+
+    // Calculate Rank from the average of all completed pre-test attempts.
     let newRank = 1;
-    if (finalScore >= 6) newRank = 2;
-    if (finalScore >= 11) newRank = 3;
-    if (finalScore >= 16) newRank = 4;
-    if (finalScore >= 21) newRank = 5;
+    if (averageScore >= 6) newRank = 2;
+    if (averageScore >= 11) newRank = 3;
+    if (averageScore >= 16) newRank = 4;
+    if (averageScore >= 21) newRank = 5;
 
     const newStage = 1; // All students start at Stage 1 in Adaptive Difficulty model!
 
@@ -115,16 +150,30 @@ export default function PreTest() {
           })
           .eq('student_id', student.id);
 
-        // Update analytics summary
-        await supabase
+        const previousDuration = previousPretests.reduce(
+          (sum, attempt) => sum + Number(attempt.time_spent_sec || 0),
+          0
+        );
+        const { data: analytics } = await supabase
           .from('analytics_summary')
-          .update({
-            pretest_score: finalScore,
-            total_time_on_task_sec: duration,
-            attempt_count: 5,
-            last_updated_at: new Date().toISOString()
-          })
-          .eq('student_id', student.id);
+          .select('*')
+          .eq('student_id', student.id)
+          .maybeSingle();
+
+        await supabase.from('analytics_summary').upsert({
+          student_id: student.id,
+          pretest_score: averageScore,
+          posttest_score: analytics?.posttest_score || 0,
+          learning_gain: analytics?.learning_gain || 0,
+          normalized_gain: analytics?.normalized_gain || 0,
+          success_rate: analytics?.success_rate || 0,
+          attempt_count: analytics?.attempt_count || 0,
+          total_time_on_task_sec:
+            (analytics?.total_time_on_task_sec || 0) +
+            previousDuration +
+            duration,
+          last_updated_at: new Date().toISOString(),
+        }, { onConflict: 'student_id' });
 
         // Ensure stage is unlocked
         const { data: stageRecord } = await supabase
@@ -150,7 +199,7 @@ export default function PreTest() {
           initial_rank: newRank,
           current_rank: newRank,
           current_stage: newStage,
-          pretest_score: finalScore,
+          pretest_score: averageScore,
           pretest_date: new Date().toISOString()
         });
       }
@@ -314,13 +363,13 @@ export default function PreTest() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {currentQ.choices.map((choice: string, idx: number) => (
+          {currentQ.choices.map((choice: QuizChoice) => (
             <button 
-              key={idx}
+              key={choice.word_id}
               onClick={() => handleAnswer(choice)}
               className="bg-slate-800/40 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/30 hover:text-emerald-400 text-slate-300 p-4 sm:p-5 rounded-2xl text-base sm:text-lg font-bold transition-all text-center break-words"
             >
-              {choice}
+              {choice.text}
             </button>
           ))}
         </div>

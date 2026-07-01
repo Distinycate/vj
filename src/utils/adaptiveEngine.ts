@@ -1,10 +1,20 @@
 import { supabase } from '@/utils/supabase/client';
-import { ADAPTIVE_RANK_CONFIG, RankConfig, STORY_WORLDS, getWorldForStage } from './adaptiveConfig';
+import { ADAPTIVE_RANK_CONFIG, RankConfig, getWorldForStage } from './adaptiveConfig';
+import {
+  filterDistractors,
+  getVocabularyField,
+  QUESTION_ANSWER_CONFIG,
+  QuestionType,
+  QuizChoice,
+  shuffleArray,
+  uniqueChoicesByText,
+} from '@/lib/quizUtils';
+import { validateQuestion, logQuestionValidationError } from '@/utils/questionValidator';
 
 // 1. GET ADAPTIVE DIFFICULTY PARAMETERS
 export async function getAdaptiveDifficulty(studentId: string, stageNumber: number): Promise<RankConfig & { rank: number }> {
   // Query student's current rank from learning_paths
-  const { data: pathData, error } = await supabase
+  const { data: pathData } = await supabase
     .from('learning_paths')
     .select('current_rank')
     .eq('student_id', studentId)
@@ -29,7 +39,7 @@ export async function generateStageQuestions(studentId: string, stageNumber: num
     const targetCount = isBoss ? Math.round(questionCount * 1.5) : questionCount;
 
     // 2. Resolve Word Pool based on stage (Normal vs. Boss Stage)
-    let wordsQuery = supabase.from('vocabulary').select('*');
+    let wordsQuery = supabase.from('vocabulary').select('*').eq('is_active', true);
     
     if (isBoss) {
       // Boss stage combines vocabulary from the current world range.
@@ -117,69 +127,230 @@ export async function generateStageQuestions(studentId: string, stageNumber: num
     selectedWords = selectedWords.slice(0, targetCount);
 
     // 5. Generate multiple choices and questions structure
-    const allVocabularyList = stageWords.length >= 10 ? stageWords : await supabase.from('vocabulary').select('*').limit(20).then(r => r.data || []);
+    // 5. Fetch vocabulary list for distractors
+    const allVocabularyList = await supabase
+      .from('vocabulary')
+      .select('*')
+      .eq('is_active', true)
+      .limit(250)
+      .then((response) => response.data?.length ? response.data : stageWords);
     
-    const formattedQuestions = selectedWords.map((wordItem, idx) => {
-      // Pick random question type from rank choices
-      let chosenType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+    // Auto-healing logic
+    const questions: any[] = [];
+    
+    for (const targetWord of selectedWords) {
+      let chosenType = questionTypes[Math.floor(Math.random() * questionTypes.length)] as QuestionType | 'mixed_challenge';
       if (chosenType === 'mixed_challenge') {
-        const standardTypes = ['meaning_mc', 'word_mc', 'listening_mc', 'context_mc', 'spelling'];
+        const standardTypes: QuestionType[] = ['meaning_mc', 'word_mc', 'listening_mc', 'context_mc', 'spelling'];
         chosenType = standardTypes[Math.floor(Math.random() * standardTypes.length)];
       }
 
-      // Generate wrong choices from vocabulary list
-      const wrongCandidates = allVocabularyList.filter(v => v.id !== wordItem.id);
-      const shuffledWrong = wrongCandidates.sort(() => 0.5 - Math.random());
-      
-      let choices: string[] = [];
-      let correctChoice = '';
+      const question = await generateValidQuestion({
+        targetWord,
+        questionType: chosenType as QuestionType,
+        candidates: allVocabularyList
+      });
 
-      if (chosenType === 'meaning_mc' || chosenType === 'listening_mc') {
-        correctChoice = wordItem.meaning;
-        choices = [
-          correctChoice,
-          shuffledWrong[0]?.meaning || 'ตัวเลือกหลอก A',
-          shuffledWrong[1]?.meaning || 'ตัวเลือกหลอก B',
-          shuffledWrong[2]?.meaning || 'ตัวเลือกหลอก C',
-        ];
-      } else if (chosenType === 'word_mc' || chosenType === 'context_mc') {
-        correctChoice = wordItem.word;
-        choices = [
-          correctChoice,
-          shuffledWrong[0]?.word || 'distractor1',
-          shuffledWrong[1]?.word || 'distractor2',
-          shuffledWrong[2]?.word || 'distractor3',
-        ];
-      } else {
-        // spelling / fill_blank
-        correctChoice = wordItem.word;
-        choices = [];
+      if (question) {
+        questions.push(question);
       }
+    }
 
-      // Shuffle choices
-      choices = choices.sort(() => 0.5 - Math.random());
+    if (questions.length === 0) {
+      console.warn("No valid questions could be generated");
+      return [];
+    }
 
-      return {
-        id: wordItem.id,
-        word: wordItem.word,
-        meaning: wordItem.meaning,
-        phonetic: wordItem.phonetic,
-        example: wordItem.example_sentence || wordItem.example || '',
-        audio_url: wordItem.audio_url || '',
-        qType: chosenType === 'spelling' ? 'FILL_BLANK' : 
-               chosenType === 'meaning_mc' ? 'MEANING_MC' :
-               chosenType === 'word_mc' ? 'WORD_MC' :
-               chosenType === 'listening_mc' ? 'LISTENING_MC' : 'CONTEXT_MC',
-        choices,
-        correctChoice
-      };
-    });
-
-    return formattedQuestions;
+    return questions;
   } catch (err) {
     console.error("Error generating stage questions:", err);
     return [];
   }
+}
+
+async function generateValidQuestion(params: { targetWord: any, questionType: QuestionType, candidates: any[] }) {
+  const MAX_ATTEMPTS = 10;
+  let lastQuestion: ReturnType<typeof buildRawQuestion> | null = null;
+  let lastReason: string | null = null;
+  
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    // Make sure we shuffle candidates each attempt to get different distractors
+    const shuffledCandidates = shuffleArray(params.candidates);
+    const rawQuestion = buildRawQuestion({ ...params, candidates: shuffledCandidates });
+    lastQuestion = rawQuestion;
+    const validation = validateQuestion(rawQuestion);
+    
+    if (validation.valid) {
+      return rawQuestion;
+    }
+    lastReason = validation.reason;
+  }
+
+  if (lastQuestion) {
+    await logQuestionValidationError(lastQuestion, lastReason);
+  }
+  
+  return null;
+}
+
+function buildRawQuestion({ targetWord, questionType, candidates }: { targetWord: any, questionType: QuestionType, candidates: any[] }) {
+  switch (questionType) {
+    case 'listening_mc':
+      return createListeningQuestion(targetWord, candidates);
+    case 'word_mc':
+      return createWordMcQuestion(targetWord, candidates);
+    case 'meaning_mc':
+      return createMeaningMcQuestion(targetWord, candidates);
+    case 'context_mc':
+      return createContextMcQuestion(targetWord, candidates);
+    case 'spelling':
+      return createSpellingQuestion(targetWord);
+    default:
+      return createMeaningMcQuestion(targetWord, candidates);
+  }
+}
+
+function createListeningQuestion(targetWord: any, candidates: any[]) {
+  const config = QUESTION_ANSWER_CONFIG.listening_mc;
+  const answerField = config.choiceField || config.answerField;
+  const distractors = filterDistractors({
+    targetWord,
+    candidates,
+    answerField,
+    limit: 3
+  });
+
+  const correctChoice = {
+    word_id: targetWord.id,
+    text: getVocabularyField(targetWord, config.answerField),
+    is_correct: true
+  };
+
+  const wrongChoices = distractors.map((word) => ({
+    word_id: word.id,
+    text: getVocabularyField(word, answerField),
+    is_correct: false
+  }));
+
+  const choices = shuffleArray(uniqueChoicesByText([correctChoice, ...wrongChoices]));
+
+  return {
+    id: targetWord.id,
+    qType: "LISTENING_MC",
+    question_type: "listening_mc",
+    word_id: targetWord.id,
+    correct_word_id: targetWord.id,
+    audio_url: targetWord.audio_url || null,
+    prompt: "ฟังเสียงแล้วเลือกคำศัพท์ที่ได้ยิน",
+    correct_answer: getVocabularyField(targetWord, config.answerField),
+    answer_language: config.answerLanguage,
+    word: targetWord.word,
+    meaning: getVocabularyField(targetWord, "meaning_th"),
+    choices
+  };
+}
+
+function createChoiceQuestion(params: {
+  targetWord: any;
+  candidates: any[];
+  questionType: Exclude<QuestionType, "listening_mc" | "spelling">;
+  qType: "WORD_MC" | "MEANING_MC" | "CONTEXT_MC";
+  prompt: string;
+  example?: string;
+}) {
+  const { targetWord, candidates, questionType, qType, prompt, example } = params;
+  const config = QUESTION_ANSWER_CONFIG[questionType];
+  const answerField = config.choiceField;
+  const correctAnswer = getVocabularyField(targetWord, config.answerField);
+  const distractors = filterDistractors({
+    targetWord,
+    candidates,
+    answerField,
+    limit: 3
+  });
+
+  const correctChoice: QuizChoice = {
+    word_id: targetWord.id,
+    text: correctAnswer,
+    is_correct: true
+  };
+
+  const wrongChoices: QuizChoice[] = distractors.map((word) => ({
+    word_id: word.id,
+    text: getVocabularyField(word, answerField),
+    is_correct: false
+  }));
+
+  const choices = shuffleArray(uniqueChoicesByText([correctChoice, ...wrongChoices]));
+
+  return {
+    id: targetWord.id,
+    qType,
+    question_type: questionType,
+    word_id: targetWord.id,
+    correct_word_id: targetWord.id,
+    prompt,
+    correct_answer: correctAnswer,
+    answer_language: config.answerLanguage,
+    word: targetWord.word,
+    meaning: getVocabularyField(targetWord, "meaning_th"),
+    example,
+    choices
+  };
+}
+
+function createWordMcQuestion(targetWord: any, candidates: any[]) {
+  return createChoiceQuestion({
+    targetWord,
+    candidates,
+    questionType: "word_mc",
+    qType: "WORD_MC",
+    prompt: getVocabularyField(targetWord, "meaning_th"),
+  });
+}
+
+function createMeaningMcQuestion(targetWord: any, candidates: any[]) {
+  return createChoiceQuestion({
+    targetWord,
+    candidates,
+    questionType: "meaning_mc",
+    qType: "MEANING_MC",
+    prompt: getVocabularyField(targetWord, "word"),
+  });
+}
+
+function createContextMcQuestion(targetWord: any, candidates: any[]) {
+  const sentence = String(targetWord.example_sentence || targetWord.example || "");
+  const blankSentence = sentence.replace(
+    new RegExp(`\\b${targetWord.word}\\b`, "i"),
+    "_____"
+  );
+
+  return createChoiceQuestion({
+    targetWord,
+    candidates,
+    questionType: "context_mc",
+    qType: "CONTEXT_MC",
+    prompt: blankSentence,
+    example: sentence,
+  });
+}
+
+function createSpellingQuestion(targetWord: any) {
+  const config = QUESTION_ANSWER_CONFIG.spelling;
+  return {
+    id: targetWord.id,
+    qType: "FILL_BLANK",
+    question_type: "spelling",
+    word_id: targetWord.id,
+    correct_word_id: targetWord.id,
+    prompt: getVocabularyField(targetWord, "meaning_th"),
+    hint: targetWord.word?.[0] || "",
+    correct_answer: getVocabularyField(targetWord, config.answerField),
+    answer_language: config.answerLanguage,
+    word: targetWord.word,
+    meaning: getVocabularyField(targetWord, "meaning_th")
+  };
 }
 
 // 3. COMPLETE STAGE LOGIC (POST-GAME ASSESSMENT & REWARDS)
@@ -187,14 +358,46 @@ export interface CompleteStageResult {
   score: number;
   accuracy: number;
   responseTimeAvg: number;
-  wrongWords: string[]; // List of vocabulary IDs wrong
+  wrongWords: string[];
+  correctWords: string[];
+  totalQuestions: number;
   usedHints: number;
+}
+
+function calculateStreak(lastActiveDate: string | null, currentStreak: number): number {
+  if (!lastActiveDate) return 1;
+
+  const now = new Date();
+  const lastActive = new Date(lastActiveDate);
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const lastUtc = Date.UTC(
+    lastActive.getUTCFullYear(),
+    lastActive.getUTCMonth(),
+    lastActive.getUTCDate()
+  );
+  const dayDifference = Math.floor((todayUtc - lastUtc) / 86_400_000);
+
+  if (dayDifference <= 0) return Math.max(1, currentStreak);
+  if (dayDifference === 1) return Math.max(1, currentStreak) + 1;
+  return 1;
 }
 
 export async function completeStage(studentId: string, stageNumber: number, result: CompleteStageResult) {
   try {
-    const { score, accuracy, responseTimeAvg, wrongWords, usedHints } = result;
+    const {
+      score,
+      accuracy,
+      responseTimeAvg,
+      wrongWords,
+      correctWords,
+      totalQuestions,
+      usedHints,
+    } = result;
     const isBoss = stageNumber % 10 === 0;
+    const uniqueWrongWords = [...new Set(wrongWords)];
+    const uniqueCorrectWords = [...new Set(correctWords)].filter(
+      (wordId) => !uniqueWrongWords.includes(wordId)
+    );
 
     // 1. Get student current rank
     const diffInfo = await getAdaptiveDifficulty(studentId, stageNumber);
@@ -213,9 +416,28 @@ export async function completeStage(studentId: string, stageNumber: number, resu
       used_hints: usedHints
     }]);
 
+    const { data: stageData } = await supabase
+      .from('stages')
+      .select('id')
+      .eq('stage_number', stageNumber)
+      .maybeSingle();
+
+    if (stageData) {
+      await supabase.from('attempts').insert([{
+        student_id: studentId,
+        stage_id: stageData.id,
+        score,
+        total_questions: totalQuestions,
+        time_spent_sec: Math.round(responseTimeAvg * Math.max(1, totalQuestions)),
+        items_used_count: usedHints,
+        error_count: uniqueWrongWords.length,
+        is_passed: passed,
+      }]);
+    }
+
     // 3. Spaced Repetition / Wrong Words logging
-    if (wrongWords.length > 0) {
-      for (const wordId of wrongWords) {
+    if (uniqueWrongWords.length > 0) {
+      for (const wordId of uniqueWrongWords) {
         // Get existing review info
         const { data: existingWord } = await supabase
           .from('user_review_words')
@@ -246,35 +468,90 @@ export async function completeStage(studentId: string, stageNumber: number, resu
       }
     }
 
-    // 4. Update Mastery level for words answered correctly (Spaced Repetition promotion)
-    // First retrieve correct words (words in stage pool not in wrong list)
-    const { data: stageVocab } = await supabase.from('vocabulary').select('id').eq('stage_number', stageNumber);
-    if (stageVocab) {
-      const correctWordIds = stageVocab.map(v => v.id).filter(id => !wrongWords.includes(id));
-      for (const wordId of correctWordIds) {
-        const { data: existingWord } = await supabase
-          .from('user_review_words')
-          .select('wrong_count, mastery_level')
-          .eq('user_id', studentId)
-          .eq('word_id', wordId)
-          .maybeSingle();
+    // 4. Promote only words that were actually shown and answered correctly.
+    for (const wordId of uniqueCorrectWords) {
+      const { data: existingWord } = await supabase
+        .from('user_review_words')
+        .select('wrong_count, mastery_level')
+        .eq('user_id', studentId)
+        .eq('word_id', wordId)
+        .maybeSingle();
 
-        if (existingWord) {
-          // Increment mastery level on correct answer (max 4)
-          const newMastery = Math.min(4, (existingWord.mastery_level || 0) + 1);
-          const reviewIntervals = [0, 1, 3, 7, 30]; // level 4: 30 days
-          const nextReviewDate = new Date();
-          nextReviewDate.setDate(nextReviewDate.getDate() + reviewIntervals[newMastery]);
+      const newMastery = Math.min(4, (existingWord?.mastery_level || 0) + 1);
+      const reviewIntervals = [0, 1, 3, 7, 30];
+      const nextReviewDate = new Date();
+      nextReviewDate.setDate(nextReviewDate.getDate() + reviewIntervals[newMastery]);
 
-          await supabase.from('user_review_words').update({
-            mastery_level: newMastery,
-            next_review_at: nextReviewDate.toISOString()
-          })
-          .eq('user_id', studentId)
-          .eq('word_id', wordId);
-        }
-      }
+      await supabase.from('user_review_words').upsert({
+        user_id: studentId,
+        word_id: wordId,
+        wrong_count: existingWord?.wrong_count || 0,
+        mastery_level: newMastery,
+        next_review_at: nextReviewDate.toISOString()
+      }, { onConflict: 'user_id,word_id' });
     }
+
+    const answeredWordIds = [...uniqueCorrectWords, ...uniqueWrongWords];
+    for (const wordId of answeredWordIds) {
+      const { data: existingAnalysis } = await supabase
+        .from('item_analysis')
+        .select('*')
+        .eq('word_id', wordId)
+        .maybeSingle();
+
+      const oldAttemptCount = existingAnalysis?.attempt_count || 0;
+      const oldSuccessRate = Number(existingAnalysis?.success_rate || 0);
+      const wasCorrect = uniqueCorrectWords.includes(wordId) ? 1 : 0;
+      const nextItemAttemptCount = oldAttemptCount + 1;
+      const nextItemSuccessRate = (
+        (oldSuccessRate * oldAttemptCount + wasCorrect * 100) /
+        nextItemAttemptCount
+      );
+      const oldAverageTime = Number(existingAnalysis?.avg_time_ms || 0);
+      const nextAverageTime = (
+        (oldAverageTime * oldAttemptCount + responseTimeAvg * 1000) /
+        nextItemAttemptCount
+      );
+
+      await supabase.from('item_analysis').upsert({
+        word_id: wordId,
+        p_value: Number((nextItemSuccessRate / 100).toFixed(2)),
+        d_value: Number(existingAnalysis?.d_value || 0),
+        success_rate: Number(nextItemSuccessRate.toFixed(2)),
+        attempt_count: nextItemAttemptCount,
+        avg_time_ms: Math.round(nextAverageTime),
+        choices_selected_counts: existingAnalysis?.choices_selected_counts || {},
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'word_id' });
+    }
+
+    // Keep the research dashboard in sync with the gameplay result.
+    const { data: analytics } = await supabase
+      .from('analytics_summary')
+      .select('*')
+      .eq('student_id', studentId)
+      .maybeSingle();
+
+    const previousAttemptCount = analytics?.attempt_count || 0;
+    const nextAttemptCount = previousAttemptCount + 1;
+    const previousSuccessRate = Number(analytics?.success_rate || 0);
+    const nextSuccessRate = (
+      (previousSuccessRate * previousAttemptCount + accuracy) /
+      nextAttemptCount
+    );
+    const addedTime = Math.round(responseTimeAvg * Math.max(1, totalQuestions));
+
+    await supabase.from('analytics_summary').upsert({
+      student_id: studentId,
+      pretest_score: analytics?.pretest_score || 0,
+      posttest_score: analytics?.posttest_score || 0,
+      learning_gain: analytics?.learning_gain || 0,
+      normalized_gain: analytics?.normalized_gain || 0,
+      success_rate: Number(nextSuccessRate.toFixed(2)),
+      attempt_count: nextAttemptCount,
+      total_time_on_task_sec: (analytics?.total_time_on_task_sec || 0) + addedTime,
+      last_updated_at: new Date().toISOString(),
+    }, { onConflict: 'student_id' });
 
     // 5. Calculate coins & EXP rewards (only if passed)
     if (passed) {
@@ -311,7 +588,7 @@ export async function completeStage(studentId: string, stageNumber: number, resu
       // Fetch current learning path stats
       const { data: pathData } = await supabase
         .from('learning_paths')
-        .select('coins, exp, total_exp, current_stage')
+        .select('coins, exp, total_exp, current_stage, streak_days, last_active_date')
         .eq('student_id', studentId)
         .single();
 
@@ -320,6 +597,10 @@ export async function completeStage(studentId: string, stageNumber: number, resu
         const newExp = (pathData.exp || 0) + earnedExp;
         const newTotalExp = (pathData.total_exp || 0) + earnedExp;
         const nextStageNum = Math.min(100, Math.max(pathData.current_stage || 1, stageNumber + 1));
+        const nextStreak = calculateStreak(
+          pathData.last_active_date,
+          pathData.streak_days || 0
+        );
 
         // Update learning path record
         await supabase
@@ -329,6 +610,7 @@ export async function completeStage(studentId: string, stageNumber: number, resu
             exp: newExp,
             total_exp: newTotalExp,
             current_stage: nextStageNum,
+            streak_days: nextStreak,
             last_active_date: new Date().toISOString()
           })
           .eq('student_id', studentId);
@@ -339,6 +621,59 @@ export async function completeStage(studentId: string, stageNumber: number, resu
           amount: earnedCoins,
           source: `STAGE_${stageNumber}_PASS`
         }]);
+      }
+    } else {
+      const { data: failedPathData } = await supabase
+        .from('learning_paths')
+        .select('streak_days, last_active_date')
+        .eq('student_id', studentId)
+        .maybeSingle();
+      await supabase
+        .from('learning_paths')
+        .update({
+          streak_days: calculateStreak(
+            failedPathData?.last_active_date || null,
+            failedPathData?.streak_days || 0
+          ),
+          last_active_date: new Date().toISOString()
+        })
+        .eq('student_id', studentId);
+
+      const { data: recentStageFailures } = await supabase
+        .from('stage_results')
+        .select('passed')
+        .eq('user_id', studentId)
+        .eq('stage_number', stageNumber)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (
+        recentStageFailures?.length === 3 &&
+        recentStageFailures.every((attempt) => !attempt.passed)
+      ) {
+        const { data: studentData } = await supabase
+          .from('students')
+          .select('classroom_id')
+          .eq('id', studentId)
+          .maybeSingle();
+        const { data: existingAlert } = await supabase
+          .from('intervention_alerts')
+          .select('id')
+          .eq('student_id', studentId)
+          .eq('alert_type', 'STAGE_FAIL_3X')
+          .eq('is_resolved', false)
+          .maybeSingle();
+
+        if (!existingAlert && studentData?.classroom_id) {
+          await supabase.from('intervention_alerts').insert([{
+            student_id: studentId,
+            classroom_id: studentData.classroom_id,
+            alert_type: 'STAGE_FAIL_3X',
+            alert_level: 'HIGH',
+            description: `ไม่ผ่านด่าน ${stageNumber} ติดต่อกัน 3 ครั้ง`,
+            teacher_recommendation: 'ทบทวนคำศัพท์ใน Study Camp และฝึกคำที่ตอบผิดก่อนลองใหม่',
+          }]);
+        }
       }
     }
 

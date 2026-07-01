@@ -2,30 +2,26 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Play, Store, Trophy, Star, LogOut, Award, Compass, 
-  Bookmark, Eye, CheckCircle2, BookOpen, Volume2, User, ChevronDown, ChevronUp, BookMarked, Activity
+  Play, Trophy, Star, LogOut, Award, Compass, Store,
+  Bookmark, Eye, CheckCircle2, BookOpen, Volume2, User, ChevronDown, ChevronUp, BookMarked, Activity, Shuffle
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
-import ShopModal from '@/components/ShopModal';
 import { playWordAudio } from '@/utils/audio';
-import { STORY_WORLDS, ADAPTIVE_RANK_CONFIG, getWorldForStage, WorldInfo } from '@/utils/adaptiveConfig';
-
-const AVATARS = ['🦸‍♂️', '🧙‍♂️', '🥷', '👩‍🚀', '🕵️‍♂️', '🧜‍♂️', '🧑‍🎨', '🧚‍♀️', '🦁', '🦉'];
+import { STORY_WORLDS, ADAPTIVE_RANK_CONFIG, getWorldForStage } from '@/utils/adaptiveConfig';
+import AvatarDisplay from '@/components/AvatarDisplay';
+import ShopModal from '@/components/ShopModal';
 
 export default function Dashboard() {
   const { student, progress, logout, setScreen, setProgress } = useAppStore();
-  const [showShop, setShowShop] = useState(false);
-  const [badges, setBadges] = useState<any[]>([]);
-  const [achievements, setAchievements] = useState<any[]>([]);
   const [reviewWords, setReviewWords] = useState<any[]>([]);
   const [wordCollection, setWordCollection] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({ xp: 0, level: 1 });
-  const [activeTab, setActiveTab] = useState<'roadmap' | 'review' | 'stats' | 'collection'>('roadmap');
+  const [activeTab, setActiveTab] = useState<'roadmap' | 'review' | 'stats' | 'collection' | 'profile'>('roadmap');
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
-  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [expandedWorld, setExpandedWorld] = useState<number | null>(1);
   const [aiTeacherMessage, setAiTeacherMessage] = useState('');
+  const [showShop, setShowShop] = useState(false);
 
   // Classroom stats calculations
   const [classroomStats, setClassroomStats] = useState({
@@ -38,20 +34,12 @@ export default function Dashboard() {
     if (!student) return;
     
     async function loadDashboardData() {
-      // 1. Fetch Earned Badges
-      const { data: badgeData } = await supabase.from('student_badges').select('*, badges(*)').eq('student_id', student.id);
-      if (badgeData) setBadges(badgeData.map(b => b.badges).filter(Boolean));
-
-      // 2. Fetch Earned Achievements
-      const { data: achData } = await supabase.from('student_achievements').select('*, achievements(*)').eq('student_id', student.id);
-      if (achData) setAchievements(achData.map(a => a.achievements).filter(Boolean));
-
-      // 3. Fetch Spaced Repetition Due Words from user_review_words (Due now or past)
+      // 1. Fetch Spaced Repetition Due Words
       const { data: repData } = await supabase
         .from('user_review_words')
         .select('*, vocabulary:word_id(*)')
         .eq('user_id', student.id)
-        .lt('mastery_level', 4) // ignore fully mastered words
+        .lt('mastery_level', 4)
         .lte('next_review_at', new Date().toISOString())
         .order('next_review_at', { ascending: true });
       
@@ -59,7 +47,7 @@ export default function Dashboard() {
         setReviewWords(repData.map(r => r.vocabulary).filter(Boolean));
       }
 
-      // 4. Fetch All Words Ever Encountered (Collection)
+      // 2. Fetch All Words Ever Encountered (Collection)
       const { data: collectionData } = await supabase
         .from('user_review_words')
         .select('*, vocabulary:word_id(*)')
@@ -70,7 +58,7 @@ export default function Dashboard() {
         setWordCollection(collectionData.filter(c => c.vocabulary));
       }
 
-      // 5. Fetch Learning Path
+      // 3. Fetch Learning Path with new Avatar properties
       const { data: pathData } = await supabase
         .from('learning_paths')
         .select('*')
@@ -78,16 +66,17 @@ export default function Dashboard() {
         .single();
       
       if (pathData) {
+        // Fallback seed assignment in UI state if DB hasn't populated yet
+        if (!pathData.avatar_seed) pathData.avatar_seed = student.id;
         setProgress(pathData);
-        // Calculate dynamic level: 1 level per 100 EXP
         const level = Math.floor((pathData.total_exp || pathData.exp || 0) / 100) + 1;
         setStats({ xp: pathData.total_exp || pathData.exp || 0, level });
       }
 
-      // 6. Fetch Leaderboard for Classroom
+      // 4. Fetch Leaderboard for Classroom
       const { data: leadData } = await supabase
         .from('students')
-        .select('id, student_name, learning_paths(coins, exp, total_exp, current_stage, avatar_url)')
+        .select('id, student_name, learning_paths(coins, exp, total_exp, current_stage, avatar_seed, avatar_style)')
         .eq('classroom_id', student.classroom_id);
       
       if (leadData) {
@@ -106,7 +95,8 @@ export default function Dashboard() {
             return {
               id: s.id,
               name: s.student_name,
-              avatar: lp?.avatar_url || '🦸‍♂️',
+              avatar_seed: lp?.avatar_seed || s.id,
+              avatar_style: lp?.avatar_style || 'adventurer',
               coins: lp?.coins || 0,
               exp: lp?.total_exp || lp?.exp || 0,
               stage: lp?.current_stage || 1,
@@ -153,18 +143,21 @@ export default function Dashboard() {
 
   if (!student) return null;
 
-  // Handle avatar update
-  const handleSelectAvatar = async (avatar: string) => {
+  // Generate new random Avatar Seed
+  const handleRandomizeAvatar = async () => {
     try {
+      const newSeed = Math.random().toString(36).substring(2, 10);
+      const styles = ['adventurer', 'fun-emoji', 'bottts', 'micah'];
+      const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+
       await supabase
         .from('learning_paths')
-        .update({ avatar_url: avatar })
+        .update({ avatar_seed: newSeed, avatar_style: randomStyle })
         .eq('student_id', student.id);
       
-      setProgress({ ...progress, avatar_url: avatar });
-      setShowAvatarSelector(false);
+      setProgress({ ...progress, avatar_seed: newSeed, avatar_style: randomStyle });
     } catch (e) {
-      console.error(e);
+      console.error("Error randomizing avatar:", e);
     }
   };
 
@@ -185,12 +178,19 @@ export default function Dashboard() {
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 p-5 rounded-3xl relative">
           <div className="flex items-center gap-3 sm:gap-4 w-full">
             <button 
-              onClick={() => setShowAvatarSelector(!showAvatarSelector)}
-              className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-lg transition-transform active:scale-95 relative group"
-              title="เปลี่ยนภาพประจำตัว"
+              onClick={() => setActiveTab('profile')}
+              className="relative group shrink-0 active:scale-95 transition-transform"
+              title="เปิดหน้าโปรไฟล์"
             >
-              {progress?.avatar_url || '🦸‍♂️'}
-              <span className="absolute bottom-0 right-0 text-[10px] bg-emerald-500 text-slate-950 font-black px-1 rounded-full uppercase scale-0 group-hover:scale-100 transition-all">EDIT</span>
+              <AvatarDisplay 
+                seed={progress?.avatar_seed || student.id} 
+                style={progress?.avatar_style || 'adventurer'} 
+                size="lg"
+                className="w-14 h-14 sm:w-16 sm:h-16 shadow-lg shadow-emerald-500/20 group-hover:border-emerald-400 transition-colors"
+              />
+              <span className="absolute bottom-[-5px] right-[-5px] bg-emerald-500 text-slate-950 rounded-full p-1 shadow-md scale-0 group-hover:scale-100 transition-transform">
+                <User className="w-3 h-3 font-bold" />
+              </span>
             </button>
             
             <div className="min-w-0 flex-1">
@@ -219,6 +219,14 @@ export default function Dashboard() {
               <span className="text-base">🪙</span>
               <span className="text-white font-black text-base">{progress?.coins || 0}</span>
             </div>
+
+            <button
+              onClick={() => setShowShop(true)}
+              className="h-10 px-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-300 flex items-center gap-1.5 font-bold text-xs"
+              title="เปิดร้านค้าไอเทม"
+            >
+              <Store className="w-4 h-4" /> ร้านค้า
+            </button>
             
             <button 
               onClick={logout} 
@@ -227,31 +235,6 @@ export default function Dashboard() {
               <LogOut className="w-4 h-4" />
             </button>
           </div>
-
-          {/* Avatar Chooser drop down */}
-          <AnimatePresence>
-            {showAvatarSelector && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute left-6 top-20 bg-slate-900 border border-slate-850 p-4 rounded-2xl shadow-2xl z-50 max-w-[280px]"
-              >
-                <p className="text-xs text-slate-400 font-bold mb-2 text-left">เลือกรูปประจำตัวของคุณ:</p>
-                <div className="grid grid-cols-5 gap-2">
-                  {AVATARS.map((av) => (
-                    <button 
-                      key={av} 
-                      onClick={() => handleSelectAvatar(av)}
-                      className="text-2xl p-1 bg-slate-950 hover:bg-slate-800 border border-slate-900 rounded-lg transition-transform active:scale-90"
-                    >
-                      {av}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </header>
 
         {/* AI Mascot Bubble */}
@@ -271,7 +254,7 @@ export default function Dashboard() {
         </div>
 
         {/* Tab Links */}
-        <div className="grid grid-cols-4 bg-slate-900/60 border border-slate-850 rounded-2xl p-1 mb-8 gap-0.5">
+        <div className="grid grid-cols-5 bg-slate-900/60 border border-slate-850 rounded-2xl p-1 mb-8 gap-0.5">
           <button 
             onClick={() => setActiveTab('roadmap')} 
             className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
@@ -307,6 +290,15 @@ export default function Dashboard() {
           >
             <Trophy className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span className="text-[10px] sm:text-sm font-black">แรงกิ้ง</span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('profile')} 
+            className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+              activeTab === 'profile' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <User className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+            <span className="text-[10px] sm:text-sm font-black">โปรไฟล์</span>
           </button>
         </div>
 
@@ -456,6 +448,21 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-6 text-left"
             >
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-indigo-500/10 border border-indigo-500/15 p-5 rounded-2xl">
+                  <span className="text-xs text-indigo-300 font-bold">เหรียญรวมทั้งห้อง</span>
+                  <strong className="text-2xl text-white block mt-1">🪙 {classroomStats.totalCoins}</strong>
+                </div>
+                <div className="bg-emerald-500/10 border border-emerald-500/15 p-5 rounded-2xl">
+                  <span className="text-xs text-emerald-300 font-bold">ด่านเฉลี่ยของห้อง</span>
+                  <strong className="text-2xl text-white block mt-1">ด่าน {classroomStats.averageStage}</strong>
+                </div>
+                <div className="bg-amber-500/10 border border-amber-500/15 p-5 rounded-2xl">
+                  <span className="text-xs text-amber-300 font-bold">เลเวลสูงสุด</span>
+                  <strong className="text-2xl text-white block mt-1">Lvl {classroomStats.highestLevel}</strong>
+                </div>
+              </div>
+
               <div className="glass-card p-6 sm:p-8 rounded-3xl">
                 <div className="flex items-center gap-3 mb-6">
                   <Bookmark className="w-8 h-8 text-emerald-400" />
@@ -550,7 +557,7 @@ export default function Dashboard() {
             </motion.div>
           )}
 
-          {/* TAB 4: RANKING & CLASSROOM COMPETITION (STATS, LEADERBOARD, HEATMAP) */}
+          {/* TAB 4: RANKING & CLASSROOM COMPETITION */}
           {activeTab === 'stats' && (
             <motion.div 
               key="stats" 
@@ -559,53 +566,6 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-6 text-left"
             >
-              {/* Classroom statistics block */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-br from-indigo-500/10 to-transparent border border-indigo-500/10 p-5 rounded-2xl">
-                  <span className="text-xs text-indigo-400 font-bold block mb-1">เหรียญทองรวมทั้งห้อง</span>
-                  <span className="text-3xl font-black text-white">🪙 {classroomStats.totalCoins}</span>
-                </div>
-                <div className="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/10 p-5 rounded-2xl">
-                  <span className="text-xs text-emerald-400 font-bold block mb-1">ด่านเฉลี่ยห้องเรียน</span>
-                  <span className="text-3xl font-black text-white">ด่าน {classroomStats.averageStage} / 100</span>
-                </div>
-                <div className="bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/10 p-5 rounded-2xl">
-                  <span className="text-xs text-amber-400 font-bold block mb-1">เลเวลสูงสุดในชั้น</span>
-                  <span className="text-3xl font-black text-white">Lvl {classroomStats.highestLevel}</span>
-                </div>
-              </div>
-
-              {/* Heatmap simulation */}
-              <div className="glass-card p-6 sm:p-8 rounded-3xl">
-                <h3 className="text-lg font-black text-white flex items-center gap-2 mb-4">
-                  <Activity className="w-5 h-5 text-emerald-400" /> ตารางการฝึกฝนต่อเนื่อง (Study Streak Frequency)
-                </h3>
-                <div className="grid grid-cols-7 sm:grid-cols-14 gap-1.5 bg-slate-950 p-4 rounded-2xl border border-slate-900 shadow-inner">
-                  {Array.from({ length: 28 }).map((_, i) => {
-                    const isStreakDay = i % 5 === 0 || i % 6 === 0;
-                    return (
-                      <div 
-                        key={i} 
-                        className={`aspect-square rounded-md transition-colors ${
-                          isStreakDay ? 'bg-emerald-500' : 'bg-slate-900 border border-slate-800'
-                        }`} 
-                        title={`วันที่ ${i + 1}`}
-                      />
-                    );
-                  })}
-                </div>
-                <p className="text-[10px] text-slate-500 mt-2 font-mono text-center">สีเขียวเข้มหมายถึงวันที่เข้าเรียนและฝึกฝนศัพท์อย่างต่อเนื่อง</p>
-              </div>
-
-              {/* Prediction widget */}
-              <div className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/20 p-5 rounded-2xl">
-                <span className="text-xs font-bold text-purple-400 block mb-1">🤖 การทำนายอนาคต (AI Prediction)</span>
-                <p className="text-sm text-slate-300 leading-relaxed font-medium">
-                  จากการประเมินความเร็วตอบสนอง {rankConfig.timeLimit}s และความแม่นยำเฉลี่ยของคุณ ระบบอัจฉริยะวิเคราะห์ว่าคุณจะสามารถพิชิตบอสด่านสุดท้าย (Stage 100) ได้เสร็จสมบูรณ์ภายใน <strong className="text-purple-400 font-black">12-15 วันการฝึกฝนถัดไป!</strong>
-                </p>
-              </div>
-
-              {/* Leaderboard */}
               <div className="glass-card p-6 sm:p-8 rounded-3xl">
                 <h3 className="text-xl font-black text-white flex items-center gap-2 mb-6">
                   <Trophy className="w-6 h-6 text-amber-400" /> ตารางเพื่อนร่วมผจญภัยในชั้นเรียน (Leaderboard)
@@ -641,8 +601,13 @@ export default function Dashboard() {
                                 {isTop3 ? rankIcons[idx] : idx + 1}
                               </td>
                               <td className="p-4">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xl">{user.avatar || '🦸‍♂️'}</span>
+                                <div className="flex items-center gap-3">
+                                  <AvatarDisplay 
+                                    seed={user.avatar_seed} 
+                                    style={user.avatar_style} 
+                                    size="sm" 
+                                    className="shrink-0"
+                                  />
                                   <span className="truncate">{user.name}</span>
                                   {user.isSelf && (
                                     <span className="text-[10px] bg-emerald-500 text-slate-950 font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider">
@@ -678,20 +643,48 @@ export default function Dashboard() {
             </motion.div>
           )}
 
+          {/* TAB 5: PROFILE & AVATAR SETTINGS */}
+          {activeTab === 'profile' && (
+            <motion.div 
+              key="profile" 
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6 text-left"
+            >
+              <div className="glass-card p-6 sm:p-10 rounded-3xl text-center">
+                <h3 className="text-2xl font-black text-white mb-8">รูปประจำตัว (Avatar Profile)</h3>
+                
+                <div className="flex flex-col items-center justify-center">
+                  <div className="relative mb-8">
+                    <AvatarDisplay 
+                      seed={progress?.avatar_seed || student.id} 
+                      style={progress?.avatar_style || 'adventurer'} 
+                      size="xl"
+                      className="shadow-2xl shadow-emerald-500/20 ring-4 ring-slate-800"
+                    />
+                  </div>
+                  
+                  <h4 className="text-3xl font-black text-white mb-2">{student.student_name}</h4>
+                  <p className="text-emerald-400 font-bold mb-8">Level {stats.level} • {rankConfig.skillTitle}</p>
+                  
+                  <button 
+                    onClick={handleRandomizeAvatar}
+                    className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 px-8 py-4 rounded-2xl font-black shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all"
+                  >
+                    <Shuffle className="w-5 h-5" /> สุ่มรูปประจำตัวใหม่ (Randomize)
+                  </button>
+                  <p className="text-xs text-slate-500 mt-4 max-w-sm">
+                    รูปประจำตัวสร้างอัตโนมัติจาก DiceBear API ระบบจะสร้างรูปที่ไม่ซ้ำใครให้กับคุณทุกครั้งที่กดปุ่มสุ่มรูปใหม่!
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
         </AnimatePresence>
 
-        {/* Store Button */}
-        <div className="mt-8 flex justify-center">
-          <button 
-            onClick={() => setShowShop(true)} 
-            className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-purple-500/20 hover:scale-105 transition-all text-sm uppercase tracking-wider"
-          >
-            <Store className="w-5 h-5" /> เปิดไอเทมช็อป (Item Shop) 🛒
-          </button>
-        </div>
-
       </div>
-
       {showShop && <ShopModal onClose={() => setShowShop(false)} />}
     </div>
   );

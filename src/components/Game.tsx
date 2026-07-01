@@ -3,28 +3,30 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, CheckCircle, XCircle, Trophy, Timer, Volume2, 
-  Heart, Sparkles, BookOpen, HelpCircle, Award
+  Heart, Sparkles, AlertTriangle
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
 import { generateStageQuestions, completeStage, getAdaptiveDifficulty } from '@/utils/adaptiveEngine';
+import { normalizeAnswer, QuizChoice } from '@/lib/quizUtils';
 
-type GameStep = 'goal' | 'play' | 'reflection' | 'results';
+type GameStep = 'play' | 'reflection' | 'results';
 
 export default function Game() {
   const { setScreen, progress, student, setProgress } = useAppStore();
   const [words, setWords] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [gameState, setGameState] = useState<GameStep>('goal');
+  const [loadError, setLoadError] = useState('');
+  const [gameState, setGameState] = useState<GameStep>('play');
   
   // Game Play States
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [timeLeft, setTimeLeft] = useState(15);
   const [isAnswered, setIsAnswered] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<QuizChoice | string | null>(null);
   const [questionStartTime, setQuestionStartTime] = useState<number>(0);
   const [responseTimes, setResponseTimes] = useState<number[]>([]);
   
@@ -43,7 +45,7 @@ export default function Game() {
   
   // Quiz Mode Details
   const [qType, setQType] = useState<string>('MEANING_MC');
-  const [choices, setChoices] = useState<string[]>([]);
+  const [choices, setChoices] = useState<QuizChoice[]>([]);
   const [fillAnswer, setFillAnswer] = useState('');
   const [showHint, setShowHint] = useState(false);
   const [currentStageId, setCurrentStageId] = useState<string | null>(null);
@@ -51,11 +53,6 @@ export default function Game() {
   // Inventory items
   const [inventory, setInventory] = useState<any[]>([]);
   const [usedItemsThisStage, setUsedItemsThisStage] = useState<string[]>([]);
-
-  // Goal Setting State
-  const [goalWords, setGoalWords] = useState(10);
-  const [goalStages, setGoalStages] = useState(1);
-  const [goalTime, setGoalTime] = useState(5);
 
   // Reflection State
   const [refWordsLearned, setRefWordsLearned] = useState('');
@@ -92,12 +89,7 @@ export default function Game() {
       if (generatedQuestions && generatedQuestions.length > 0) {
         setWords(generatedQuestions);
       } else {
-        // Fallback mockup questions if empty
-        setWords([
-          { id: 'mock-1', word: 'elephant', meaning: 'ช้าง', example: 'The elephant is huge.', phonetic: '/ˈel.ɪ.fənt/', qType: 'MEANING_MC', choices: ['ช้าง', 'มด', 'สิงโต', 'แมว'], correctChoice: 'ช้าง' },
-          { id: 'mock-2', word: 'butterfly', meaning: 'ผีเสื้อ', example: 'A butterfly has wings.', phonetic: '/ˈbʌt.ə.flaɪ/', qType: 'WORD_MC', choices: ['butterfly', 'giraffe', 'elephant', 'dolphin'], correctChoice: 'butterfly' },
-          { id: 'mock-3', word: 'giraffe', meaning: 'ยีราฟ', example: 'Giraffes have long necks.', phonetic: '/dʒɪˈrɑːf/', qType: 'MEANING_MC', choices: ['ยีราฟ', 'ม้าลาย', 'เสือ', 'แพะ'], correctChoice: 'ยีราฟ' }
-        ]);
+        setLoadError('ไม่พบชุดคำถามที่ผ่านการตรวจสอบสำหรับด่านนี้ กรุณาแจ้งคุณครูเพื่อตรวจคลังคำศัพท์');
       }
 
       // 4. Fetch student inventory
@@ -107,7 +99,9 @@ export default function Game() {
         .eq('student_id', student.id);
       
       if (userInventory) {
-        setInventory(userInventory);
+        setInventory(
+          userInventory.filter((item) => item.items && Number(item.quantity || 0) > 0)
+        );
       }
 
       setLoading(false);
@@ -126,7 +120,20 @@ export default function Game() {
     setChoices(word.choices || []);
     setShowHint(false);
 
-    if (word.qType === 'LISTENING_MC') {
+    if (word.question_type === 'listening_mc' || word.qType === 'LISTENING_MC') {
+      console.table({
+        type: word.question_type,
+        word_id: word.word_id,
+        correct_word_id: word.correct_word_id,
+        audio_url: word.audio_url,
+        correct_answer: word.correct_answer,
+        answer_language: word.answer_language,
+        choices: (word.choices || []).map((choice: QuizChoice) => ({
+          word_id: choice.word_id,
+          text: choice.text,
+          is_correct: choice.is_correct
+        }))
+      });
       setTimeout(() => playWordAudio(word.word), 300);
     }
 
@@ -155,7 +162,7 @@ export default function Game() {
     return () => clearInterval(timer);
   }, [gameState, loading, isAnswered, currentIndex, words, lives, difficultyConfig]);
 
-  async function submitAnswer(answer: string) {
+  async function submitAnswer(answer: QuizChoice | string) {
     if (isAnswered) return;
     setIsAnswered(true);
     setSelectedAnswer(answer);
@@ -166,9 +173,16 @@ export default function Game() {
     const wordObj = words[currentIndex];
     let isCorrect = false;
 
-    if (qType === 'MEANING_MC') isCorrect = answer === wordObj.meaning;
-    else if (qType === 'WORD_MC' || qType === 'LISTENING_MC' || qType === 'CONTEXT_MC') isCorrect = answer === wordObj.word;
-    else if (qType === 'FILL_BLANK') isCorrect = answer.trim().toLowerCase() === wordObj.word.toLowerCase();
+    if (qType === 'FILL_BLANK') {
+      isCorrect = normalizeAnswer(answer) === normalizeAnswer(wordObj.correct_answer);
+    } else if (typeof answer === 'object') {
+      const selectedText = normalizeAnswer(answer.text);
+      const correctText = normalizeAnswer(wordObj.correct_answer);
+      isCorrect =
+        answer.is_correct === true &&
+        answer.word_id === wordObj.correct_word_id &&
+        selectedText === correctText;
+    }
 
     if (isCorrect) {
       setScore(s => s + 1);
@@ -178,7 +192,7 @@ export default function Game() {
     } else {
       setLives(l => l - 1);
       setComboCount(0); // break combo
-      setWrongWords(w => [...w, wordObj.id]);
+      setWrongWords(w => [...w, wordObj.word_id || wordObj.id]);
     }
 
     setTimeout(() => {
@@ -225,11 +239,9 @@ export default function Game() {
       } else if (itemCode === 'EXTRA_LIFE') {
         setLives(l => Math.min(3, l + 1));
       } else if (itemCode === 'FIFTY_FIFTY') {
-        const wordObj = words[currentIndex];
-        const correct = qType === 'MEANING_MC' ? wordObj.meaning : wordObj.word;
-        const wrongList = choices.filter(c => c !== correct);
+        const wrongList = choices.filter((c: any) => c && c.is_correct === false);
         const toHide = wrongList.sort(() => 0.5 - Math.random()).slice(0, 2);
-        setChoices(choices.map(c => toHide.includes(c) ? '' : c));
+        setChoices(choices.map((c: any) => toHide.includes(c) ? { ...c, hidden: true } : c));
       } else if (itemCode === 'HINT') {
         setShowHint(true);
         setUsedHintsCount(h => h + 1);
@@ -241,23 +253,6 @@ export default function Game() {
     } catch (err) {
       console.error('Error consuming item:', err);
     }
-  };
-
-  const handleSaveGoal = async () => {
-    try {
-      if (currentStageId) {
-        await supabase.from('goals').upsert([{
-          student_id: student.id,
-          stage_id: currentStageId,
-          words_target: goalWords,
-          stages_target: goalStages,
-          time_target_min: goalTime
-        }], { onConflict: 'student_id,stage_id' });
-      }
-    } catch (err) {
-      console.error(err);
-    }
-    setGameState('play');
   };
 
   const handleSaveReflection = async () => {
@@ -285,7 +280,11 @@ export default function Game() {
         score,
         accuracy: accuracyVal,
         responseTimeAvg: avgResponseTime,
-        wrongWords,
+        wrongWords: [...new Set(wrongWords)],
+        correctWords: words
+          .map((question) => question.word_id || question.id)
+          .filter((wordId) => wordId && !wrongWords.includes(wordId)),
+        totalQuestions: words.length,
         usedHints: usedHintsCount
       });
 
@@ -334,52 +333,29 @@ export default function Game() {
     );
   }
 
-  // STEP 1: GOAL SETTING
-  if (gameState === 'goal') {
+  if (loadError || words.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 relative overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] bg-emerald-500/5 rounded-full filter blur-[80px] pointer-events-none"></div>
-        
-        <motion.div 
-          initial={{ opacity: 0, y: 15 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl relative z-10"
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-slate-900 border border-rose-500/20 p-8 rounded-3xl w-full max-w-md text-center"
         >
-          <div className="text-center mb-6">
-            <BookOpen className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-            <h2 className="text-2xl font-black text-white">ตั้งเป้าหมายประจำด่าน</h2>
-            <p className="text-slate-400 text-sm mt-1">ก่อนลุยด่าน {progress.current_stage} วางแผนความเร็วกันสักนิด</p>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">จำนวนคำศัพท์เป้าหมาย</label>
-              <input type="number" value={goalWords} onChange={e => setGoalWords(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500" />
-            </div>
-            
-            <div>
-              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">เป้าหมายจำนวนด่านที่จะเล่นวันนี้</label>
-              <input type="number" value={goalStages} onChange={e => setGoalStages(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500" />
-            </div>
-
-            <div>
-              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">เวลาฝึกฝน (นาที)</label>
-              <input type="number" value={goalTime} onChange={e => setGoalTime(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500" />
-            </div>
-          </div>
-
-          <button 
-            onClick={handleSaveGoal}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg shadow-emerald-500/20 mt-8 hover:scale-[1.02] transition-all text-sm uppercase"
+          <AlertTriangle className="w-14 h-14 text-amber-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-black text-white mb-2">ยังเริ่มด่านไม่ได้</h2>
+          <p className="text-slate-400 text-sm leading-relaxed mb-6">{loadError}</p>
+          <button
+            onClick={() => setScreen('dashboard')}
+            className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold"
           >
-            เริ่มท้าทายด่านผจญภัย 🚀
+            กลับหน้าแผนที่
           </button>
         </motion.div>
       </div>
     );
   }
 
-  // STEP 2: REFLECTION SCREEN
+  // STEP 1: REFLECTION SCREEN
   if (gameState === 'reflection') {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 relative overflow-hidden">
@@ -428,9 +404,8 @@ export default function Game() {
     );
   }
 
-  // STEP 3: RESULTS SCREEN
+  // STEP 2: RESULTS SCREEN
   if (gameState === 'results') {
-    const isGameOver = lives <= 0;
     const passed = passReport?.passed || false;
     const accuracyVal = Math.round((score / words.length) * 100);
     const isPerfect = accuracyVal === 100;
@@ -515,10 +490,8 @@ export default function Game() {
     );
   }
 
-  // STEP 4: ACTIVE PLAYING GAMEPLAY SCREEN
+  // STEP 3: ACTIVE PLAYING GAMEPLAY SCREEN
   const currentWord = words[currentIndex];
-  const isWordMC = qType === 'WORD_MC' || qType === 'LISTENING_MC' || qType === 'CONTEXT_MC';
-  const correctChoice = isWordMC ? currentWord.word : currentWord.meaning;
 
   return (
     <div 
@@ -615,7 +588,7 @@ export default function Game() {
             {qType === 'WORD_MC' && (
               <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">ความหมายภาษาไทย</span>
-                <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-2 break-words">{currentWord.meaning}</h2>
+                <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-2 break-words">{currentWord.prompt}</h2>
                 <p className="text-slate-400 text-base sm:text-lg">ตรงกับคำศัพท์ภาษาอังกฤษคำใด?</p>
               </div>
             )}
@@ -636,7 +609,7 @@ export default function Game() {
             {qType === 'FILL_BLANK' && (
               <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">พิมพ์สะกดด่านความท้าทาย</span>
-                <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-6 break-words">{currentWord.meaning}</h2>
+                <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-6 break-words">{currentWord.prompt}</h2>
                 
                 <form 
                   onSubmit={(e) => { e.preventDefault(); submitAnswer(fillAnswer); }}
@@ -669,7 +642,7 @@ export default function Game() {
               <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-4">การเติมประโยคในบริบท</span>
                 <div className="bg-slate-950 border border-slate-850 p-4 sm:p-6 rounded-2xl mb-4 italic text-slate-200 text-lg sm:text-xl font-medium leading-relaxed notranslate break-words" translate="no">
-                  "{currentWord.example.replace(new RegExp(currentWord.word, 'i'), '__________')}"
+                  &ldquo;{currentWord.prompt}&rdquo;
                 </div>
                 <p className="text-slate-400 text-base sm:text-lg">เติมตัวเลือกข้อใดในช่องว่างจึงจะสมบูรณ์ที่สุด?</p>
               </div>
@@ -681,16 +654,16 @@ export default function Game() {
         {qType.includes('_MC') && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {choices.map((choice, idx) => {
-              if (choice === '') return <div key={idx} className="opacity-0 pointer-events-none"></div>;
+              if (!choice || choice.hidden) return <div key={`hidden-${idx}`} className="opacity-0 pointer-events-none"></div>;
 
               let btnClass = "bg-slate-900/50 hover:bg-slate-900 border-slate-850 hover:border-slate-700 text-slate-350";
               let icon = null;
 
               if (isAnswered) {
-                if (choice === correctChoice) {
+                if (choice.is_correct === true) {
                   btnClass = "bg-emerald-500/20 border-emerald-500 text-emerald-300 font-extrabold shadow-lg shadow-emerald-500/10";
                   icon = <CheckCircle className="w-5 h-5 text-emerald-400" />;
-                } else if (choice === selectedAnswer) {
+                } else if (selectedAnswer !== null && typeof selectedAnswer === 'object' && selectedAnswer.word_id === choice.word_id && selectedAnswer.text === choice.text) {
                   btnClass = "bg-rose-500/20 border-rose-500 text-rose-300 font-extrabold shadow-lg";
                   icon = <XCircle className="w-5 h-5 text-rose-400" />;
                 } else {
@@ -700,12 +673,12 @@ export default function Game() {
 
               return (
                 <button 
-                  key={idx}
+                  key={`${choice.word_id}-${idx}`}
                   onClick={() => submitAnswer(choice)}
                   disabled={isAnswered}
                   className={`p-4 sm:p-5 rounded-2xl border text-base sm:text-lg font-bold flex justify-between items-center transition-all ${btnClass} ${!isAnswered && 'hover:scale-[1.01]'} break-words`}
                 >
-                  <span className="flex-1 text-center notranslate break-words" translate="no">{choice}</span>
+                  <span className="flex-1 text-center notranslate break-words" translate="no">{choice.text}</span>
                   {icon}
                 </button>
               );
@@ -716,7 +689,7 @@ export default function Game() {
         {/* Feedback block for spelling input mode */}
         {isAnswered && qType === 'FILL_BLANK' && (
           <div className="text-center mt-6">
-            {selectedAnswer?.trim().toLowerCase() === currentWord.word.toLowerCase() ? (
+            {typeof selectedAnswer === 'string' && normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.correct_answer) ? (
               <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-lg">
                 <CheckCircle className="w-5 h-5" /> ถูกต้องสมบูรณ์แบบ!
               </div>

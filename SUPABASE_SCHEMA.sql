@@ -9,7 +9,6 @@ drop table if exists public.intervention_alerts cascade;
 drop table if exists public.analytics_summary cascade;
 drop table if exists public.assignment_progress cascade;
 drop table if exists public.assignments cascade;
-drop table if exists public.goals cascade;
 drop table if exists public.reflections cascade;
 drop table if exists public.student_weekly_missions cascade;
 drop table if exists public.weekly_missions cascade;
@@ -28,6 +27,10 @@ drop table if exists public.post_tests cascade;
 drop table if exists public.pre_tests cascade;
 drop table if exists public.spaced_repetition cascade;
 drop table if exists public.wrong_words cascade;
+drop table if exists public.question_validation_logs cascade;
+drop table if exists public.user_review_words cascade;
+drop table if exists public.rank_history cascade;
+drop table if exists public.stage_results cascade;
 drop table if exists public.attempts cascade;
 drop table if exists public.stages cascade;
 drop table if exists public.learning_paths cascade;
@@ -87,12 +90,20 @@ create table public.vocabulary (
     word text not null,
     phonetic text,
     meaning text not null,
+    meaning_th text,
     example text,
+    example_sentence text,
     thai_pronunciation text,
     part_of_speech text,
     image_url text,
+    audio_url text,
     rank integer default 1 check (rank between 1 and 5),
     stage integer default 1,
+    stage_number integer default 1,
+    difficulty_level text default 'normal' check (difficulty_level in ('easy', 'normal', 'hard', 'expert')),
+    normalized_word text,
+    normalized_meaning_th text,
+    is_active boolean default true,
     bloom_level text default 'Remember' check (bloom_level in ('Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create')),
     skill_area text default 'Vocabulary' check (skill_area in ('Vocabulary', 'Grammar', 'Listening', 'Reading', 'Spelling')),
     cefr_level text default 'A1' check (cefr_level in ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')),
@@ -104,11 +115,16 @@ create table public.vocabulary (
 create table public.learning_paths (
     student_id uuid references public.students(id) on delete cascade primary key,
     current_category_id uuid references public.vocabulary_categories(id) on delete set null,
+    initial_rank integer default 1,
     current_rank integer default 1,
     current_stage integer default 1,
     streak_days integer default 0,
     exp integer default 0,
+    total_exp integer default 0,
     coins integer default 0,
+    avatar_seed varchar(255),
+    avatar_style varchar(50) default 'adventurer',
+    total_stages integer default 100,
     last_active_date timestamp with time zone,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -120,7 +136,7 @@ create table public.stages (
     category_id uuid references public.vocabulary_categories(id) on delete cascade,
     rank integer default 1,
     description text,
-    unique(category_id, stage_number)
+    unique(stage_number)
 );
 
 -- 8. Attempts (Records of stage gameplay results)
@@ -134,6 +150,51 @@ create table public.attempts (
     items_used_count integer default 0,
     error_count integer default 0,
     is_passed boolean not null,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Adaptive stage result history
+create table public.stage_results (
+    id uuid default uuid_generate_v4() primary key,
+    user_id uuid references public.students(id) on delete cascade,
+    stage_number integer not null,
+    rank_at_play integer not null,
+    score integer not null,
+    accuracy double precision not null,
+    response_time_avg double precision not null,
+    passed boolean not null,
+    used_hints integer default 0,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create table public.rank_history (
+    id uuid default uuid_generate_v4() primary key,
+    user_id uuid references public.students(id) on delete cascade,
+    old_rank integer not null,
+    new_rank integer not null,
+    reason text not null,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create table public.user_review_words (
+    id uuid default uuid_generate_v4() primary key,
+    user_id uuid references public.students(id) on delete cascade,
+    word_id uuid references public.vocabulary(id) on delete cascade,
+    wrong_count integer default 0,
+    mastery_level integer default 0,
+    last_wrong_at timestamp with time zone default timezone('utc'::text, now()),
+    next_review_at timestamp with time zone default timezone('utc'::text, now()),
+    unique(user_id, word_id)
+);
+
+create table public.question_validation_logs (
+    id uuid default uuid_generate_v4() primary key,
+    question_id varchar(255) not null,
+    word_id uuid,
+    question_type varchar(50) not null,
+    error_type varchar(100) not null,
+    error_message text not null,
+    raw_question_json jsonb not null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -326,18 +387,6 @@ create table public.reflections (
     unique(student_id, stage_id)
 );
 
--- 27. Goals Table (Goal setting before starting a stage)
-create table public.goals (
-    id uuid default uuid_generate_v4() primary key,
-    student_id uuid references public.students(id) on delete cascade,
-    stage_id uuid references public.stages(id) on delete cascade,
-    words_target integer default 10,
-    stages_target integer default 1,
-    time_target_min integer default 5,
-    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-    unique(student_id, stage_id)
-);
-
 -- 28. Assignments Table (Teacher assignments)
 create table public.assignments (
     id uuid default uuid_generate_v4() primary key,
@@ -447,7 +496,6 @@ alter table public.items enable row level security;
 alter table public.student_inventory enable row level security;
 alter table public.item_usage_logs enable row level security;
 alter table public.reflections enable row level security;
-alter table public.goals enable row level security;
 alter table public.assignments enable row level security;
 alter table public.assignment_progress enable row level security;
 alter table public.analytics_summary enable row level security;
@@ -525,9 +573,6 @@ create policy "Students can read/write item usage logs" on public.item_usage_log
     for all using (auth.uid() = student_id);
 
 create policy "Students can read/write reflections" on public.reflections
-    for all using (auth.uid() = student_id);
-
-create policy "Students can read/write goals" on public.goals
     for all using (auth.uid() = student_id);
 
 create policy "Students can read assignment progress" on public.assignment_progress
@@ -661,6 +706,7 @@ BEGIN
     FOR cat_record IN SELECT id FROM public.vocabulary_categories ORDER BY name LOOP
         cat_id := cat_record.id;
         FOR i IN 1..15 LOOP
+            EXIT WHEN stage_num > 100;
             curr_rank := CASE 
                 WHEN stage_num <= 20 THEN 1
                 WHEN stage_num <= 40 THEN 2
@@ -670,9 +716,10 @@ BEGIN
             END;
             INSERT INTO public.stages (stage_number, category_id, rank, description)
             VALUES (stage_num, cat_id, curr_rank, 'ด่านที่ ' || stage_num || ' หมวดหมู่คำศัพท์')
-            ON CONFLICT (category_id, stage_number) DO NOTHING;
+            ON CONFLICT (stage_number) DO NOTHING;
             stage_num := stage_num + 1;
         END LOOP;
+        EXIT WHEN stage_num > 100;
     END LOOP;
 END $$;
 
@@ -704,4 +751,3 @@ INSERT INTO public.weekly_missions (mission_title, target_type, target_value, re
     ('เรียนรู้คำศัพท์ 50 คำใน 1 สัปดาห์', 'WORDS_STUDIED', 50, 50),
     ('ผ่านด่านท้าทาย 15 ด่าน', 'STAGES_PLAYED', 15, 75)
 ON CONFLICT (mission_title) DO NOTHING;
-
