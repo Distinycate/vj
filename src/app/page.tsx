@@ -8,6 +8,17 @@ import StudyCamp from '@/components/StudyCamp';
 import Game from '@/components/Game';
 import PreTest from '@/components/PreTest';
 
+const generateUUID = () => {
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 export default function Home() {
   const { student, progress, setStudent, setProgress, currentScreen } = useAppStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -37,6 +48,7 @@ export default function Home() {
   const [regYear, setRegYear] = useState('2569'); // Default academic year to 2569
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [loginRole, setLoginRole] = useState<'student' | 'teacher' | 'executive'>('student');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -47,37 +59,65 @@ export default function Home() {
     setError('');
 
     try {
-      // 1. Authenticate by querying the students table directly
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('*')
-        .eq('username', loginUsername.trim())
-        .eq('password', loginPassword.trim())
-        .maybeSingle();
+      if (loginRole === 'student') {
+        // 1. Authenticate student by querying the students table directly
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('*')
+          .eq('username', loginUsername.trim())
+          .eq('password', loginPassword.trim())
+          .maybeSingle();
 
-      if (studentError || !studentData) {
-        throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+        if (studentError || !studentData) {
+          throw new Error('ชื่อผู้ใช้หรือรหัสผ่านนักเรียนไม่ถูกต้อง');
+        }
+
+        // 2. Fetch learning path progression
+        const { data: progressData } = await supabase
+          .from('learning_paths')
+          .select('*')
+          .eq('student_id', studentData.id)
+          .single();
+
+        // 3. Fetch pre-test record
+        const { data: pretestData } = await supabase
+          .from('pre_tests')
+          .select('created_at')
+          .eq('student_id', studentData.id)
+          .maybeSingle();
+
+        setStudent(studentData);
+        setProgress({ 
+          ...progressData, 
+          pretest_date: pretestData ? pretestData.created_at : null 
+        });
+      } else {
+        // Authenticate teacher/executive directly
+        const { data: teacherData, error: teacherError } = await supabase
+          .from('teachers')
+          .select('*')
+          .eq('username', loginUsername.trim())
+          .eq('password', loginPassword.trim())
+          .maybeSingle();
+
+        if (teacherError || !teacherData) {
+          throw new Error('ชื่อผู้ใช้หรือรหัสผ่านเจ้าหน้าที่ไม่ถูกต้อง');
+        }
+
+        if (loginRole === 'teacher') {
+          if (teacherData.role !== 'TEACHER' && teacherData.role !== 'ADMIN') {
+            throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานระบบครูผู้สอน');
+          }
+          localStorage.setItem('vocab_journey_teacher', JSON.stringify(teacherData));
+          window.location.href = '/admin';
+        } else if (loginRole === 'executive') {
+          if (teacherData.role !== 'EXECUTIVE' && teacherData.role !== 'ADMIN') {
+            throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานระบบผู้บริหาร');
+          }
+          localStorage.setItem('vocab_journey_executive', JSON.stringify(teacherData));
+          window.location.href = '/executive';
+        }
       }
-
-      // 2. Fetch learning path progression
-      const { data: progressData } = await supabase
-        .from('learning_paths')
-        .select('*')
-        .eq('student_id', studentData.id)
-        .single();
-
-      // 3. Fetch pre-test record to determine if they have completed it
-      const { data: pretestData } = await supabase
-        .from('pre_tests')
-        .select('created_at')
-        .eq('student_id', studentData.id)
-        .maybeSingle();
-
-      setStudent(studentData);
-      setProgress({ 
-        ...progressData, 
-        pretest_date: pretestData ? pretestData.created_at : null 
-      });
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -118,7 +158,7 @@ export default function Home() {
       }
 
       // 2. Create Student profile row directly in database (no Supabase Auth)
-      const newStudentUuid = crypto.randomUUID();
+      const newStudentUuid = generateUUID();
       const computedStudentId = `${className}-${regStudentId.trim()}`; // e.g. "ม.1/1-12"
       
       const { data: studentData, error: studentError } = await supabase
@@ -212,18 +252,47 @@ export default function Home() {
 
         {error && <div className="error-state mb-6 text-sm">{error}</div>}
 
+        {mode === 'login' && (
+          <div className="grid grid-cols-3 gap-2 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-1 mb-6">
+            <button 
+              type="button"
+              onClick={() => { setLoginRole('student'); setError(''); }}
+              className={`py-2 rounded-xl text-xs font-bold transition-all ${loginRole === 'student' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:text-white border border-transparent'}`}
+            >
+              👩‍🎓 นักเรียน
+            </button>
+            <button 
+              type="button"
+              onClick={() => { setLoginRole('teacher'); setError(''); }}
+              className={`py-2 rounded-xl text-xs font-bold transition-all ${loginRole === 'teacher' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:text-white border border-transparent'}`}
+            >
+              👨‍🏫 ครูผู้สอน
+            </button>
+            <button 
+              type="button"
+              onClick={() => { setLoginRole('executive'); setError(''); }}
+              className={`py-2 rounded-xl text-xs font-bold transition-all ${loginRole === 'executive' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:text-white border border-transparent'}`}
+            >
+              📊 ผู้บริหาร
+            </button>
+          </div>
+        )}
+
         {mode === 'login' ? (
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <div>
               <label className="text-slate-300 text-sm font-bold block mb-1.5">Username</label>
-              <input type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors glass-input" placeholder="เช่น test1" />
+              <input type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors glass-input" placeholder="กรอกชื่อผู้ใช้งาน" />
             </div>
             <div>
               <label className="text-slate-300 text-sm font-bold block mb-1.5">Password</label>
-              <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors glass-input" placeholder="เช่น test111111" />
+              <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors glass-input" placeholder="กรอกรหัสผ่าน" />
             </div>
             <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg mt-4 disabled:opacity-50 transition-all transform active:scale-95">
-              {isLoading ? 'กำลังโหลด...' : 'เข้าสู่ระบบผจญภัย 🚀'}
+              {isLoading ? 'กำลังโหลด...' : 
+               loginRole === 'student' ? 'เข้าสู่ระบบผจญภัย 🚀' : 
+               loginRole === 'teacher' ? 'เข้าสู่ระบบจัดการเรียนรู้ 👨‍🏫' : 
+               'เข้าสู่ระบบรายงานผู้บริหาร 📊'}
             </button>
           </form>
         ) : (
@@ -259,19 +328,6 @@ export default function Home() {
             </button>
           </form>
         )}
-
-        {/* Teacher & Executive Quick Logins */}
-        <div className="mt-6 pt-5 border-t border-slate-800/80 flex flex-col gap-3">
-          <div className="text-center text-xs text-slate-500 font-bold">เข้าสู่ระบบสำหรับเจ้าหน้าที่</div>
-          <div className="grid grid-cols-2 gap-3">
-            <a href="/admin" className="bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 hover:border-indigo-500 text-indigo-400 hover:text-indigo-300 py-3 rounded-xl text-xs font-black text-center flex items-center justify-center gap-1.5 transition-all shadow-md">
-              👨‍🏫 ระบบครูผู้สอน
-            </a>
-            <a href="/executive" className="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500 text-emerald-400 hover:text-emerald-300 py-3 rounded-xl text-xs font-black text-center flex items-center justify-center gap-1.5 transition-all shadow-md">
-              📊 ระบบผู้บริหาร
-            </a>
-          </div>
-        </div>
       </motion.div>
     </div>
   );
