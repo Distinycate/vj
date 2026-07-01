@@ -1,10 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, XCircle, Trophy, Timer, Volume2, Snowflake, Scissors, Heart, Sparkles, BookOpen, AlertCircle, HelpCircle } from 'lucide-react';
+import { 
+  X, CheckCircle, XCircle, Trophy, Timer, Volume2, 
+  Heart, Sparkles, BookOpen, HelpCircle, Award
+} from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
+import { generateStageQuestions, completeStage, getAdaptiveDifficulty } from '@/utils/adaptiveEngine';
 
 type GameStep = 'goal' | 'play' | 'reflection' | 'results';
 
@@ -23,6 +27,19 @@ export default function Game() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [questionStartTime, setQuestionStartTime] = useState<number>(0);
   const [responseTimes, setResponseTimes] = useState<number[]>([]);
+  
+  // Combo and Streak mechanics
+  const [comboCount, setComboCount] = useState(0);
+  const [maxCombo, setMaxCombo] = useState(0);
+  const [wrongWords, setWrongWords] = useState<string[]>([]);
+  const [usedHintsCount, setUsedHintsCount] = useState(0);
+
+  // Difficulty settings from dynamic engine
+  const [difficultyConfig, setDifficultyConfig] = useState<any>({
+    timeLimit: 15,
+    passScore: 75,
+    hintMode: 'limited'
+  });
   
   // Quiz Mode Details
   const [qType, setQType] = useState<string>('MEANING_MC');
@@ -46,78 +63,44 @@ export default function Game() {
   const [refFeeling, setRefFeeling] = useState('😊 สนุกปานกลาง');
   const [previousAttempts, setPreviousAttempts] = useState<any[]>([]);
 
+  // Stage Completion Report
+  const [passReport, setPassReport] = useState<{ passed: boolean; targetPassScore: number } | null>(null);
 
   useEffect(() => {
     async function initStage() {
       const stageNum = progress?.current_stage || 1;
-      const rank = progress?.current_rank || 1;
 
-      // 1. Resolve Stage ID
+      // 1. Fetch stage ID
       const { data: stageData } = await supabase
         .from('stages')
         .select('id')
         .eq('stage_number', stageNum)
-        .single();
+        .maybeSingle();
       
-      let stageId = null;
       if (stageData) {
-        stageId = stageData.id;
-        setCurrentStageId(stageId);
+        setCurrentStageId(stageData.id);
       }
 
-      // 2. Fetch vocabulary for current stage
-      const { data: stageVocab } = await supabase
-        .from('vocabulary')
-        .select('*')
-        .eq('stage', stageNum);
+      // 2. Fetch difficulty configuration from adaptive engine
+      const diffConfig = await getAdaptiveDifficulty(student.id, stageNum);
+      setDifficultyConfig(diffConfig);
+      setTimeLeft(diffConfig.timeLimit || 15);
 
-      let finalWordPool = stageVocab || [];
-
-      // 3. Spaced Repetition / Wrong Words Integration
-      // Fetch up to 3 wrong words to mix in
-      const { data: wrongWordsData } = await supabase
-        .from('wrong_words')
-        .select('word_id, error_count')
-        .eq('student_id', student.id)
-        .order('error_count', { ascending: false })
-        .limit(5);
-
-      if (wrongWordsData && wrongWordsData.length > 0 && finalWordPool.length > 0) {
-        const wrongWordIds = wrongWordsData.map(w => w.word_id);
-        const { data: wrongVocab } = await supabase
-          .from('vocabulary')
-          .select('*')
-          .in('id', wrongWordIds);
-
-        if (wrongVocab && wrongVocab.length > 0) {
-          // Replace last 2-3 words with wrong words if not already in pool
-          let replacedCount = 0;
-          wrongVocab.forEach(wv => {
-            if (replacedCount < 3 && !finalWordPool.some(w => w.word === wv.word)) {
-              const replaceIndex = finalWordPool.length - 1 - replacedCount;
-              if (replaceIndex >= 0) {
-                finalWordPool[replaceIndex] = wv;
-                replacedCount++;
-              }
-            }
-          });
-        }
+      // 3. Generate adaptive questions
+      const generatedQuestions = await generateStageQuestions(student.id, stageNum);
+      
+      if (generatedQuestions && generatedQuestions.length > 0) {
+        setWords(generatedQuestions);
+      } else {
+        // Fallback mockup questions if empty
+        setWords([
+          { id: 'mock-1', word: 'elephant', meaning: 'ช้าง', example: 'The elephant is huge.', phonetic: '/ˈel.ɪ.fənt/', qType: 'MEANING_MC', choices: ['ช้าง', 'มด', 'สิงโต', 'แมว'], correctChoice: 'ช้าง' },
+          { id: 'mock-2', word: 'butterfly', meaning: 'ผีเสื้อ', example: 'A butterfly has wings.', phonetic: '/ˈbʌt.ə.flaɪ/', qType: 'WORD_MC', choices: ['butterfly', 'giraffe', 'elephant', 'dolphin'], correctChoice: 'butterfly' },
+          { id: 'mock-3', word: 'giraffe', meaning: 'ยีราฟ', example: 'Giraffes have long necks.', phonetic: '/dʒɪˈrɑːf/', qType: 'MEANING_MC', choices: ['ยีราฟ', 'ม้าลาย', 'เสือ', 'แพะ'], correctChoice: 'ยีราฟ' }
+        ]);
       }
 
-      // If pool is empty, provide mockup fallbacks
-      if (finalWordPool.length === 0) {
-        finalWordPool = [
-          { id: 'mock-1', word: 'elephant', meaning: 'ช้าง', example: 'The elephant is huge.', phonetic: '/ˈel.ɪ.fənt/' },
-          { id: 'mock-2', word: 'butterfly', meaning: 'ผีเสื้อ', example: 'A butterfly has wings.', phonetic: '/ˈbʌt.ə.flaɪ/' },
-          { id: 'mock-3', word: 'giraffe', meaning: 'ยีราฟ', example: 'Giraffes have long necks.', phonetic: '/dʒɪˈrɑːf/' },
-          { id: 'mock-4', word: 'dolphin', meaning: 'โลมา', example: 'Dolphins are intelligent.', phonetic: '/ˈdɒl.fɪn/' },
-          { id: 'mock-5', word: 'leopard', meaning: 'เสือดาว', example: 'Leopards can run fast.', phonetic: '/ˈlep.əd/' }
-        ];
-      }
-
-      setWords(finalWordPool.sort(() => 0.5 - Math.random()));
-
-      // 4. Fetch Student Inventory
+      // 4. Fetch student inventory
       const { data: userInventory } = await supabase
         .from('student_inventory')
         .select('*, items(*)')
@@ -138,51 +121,21 @@ export default function Game() {
     }
   }, [gameState, currentIndex, words]);
 
-  function setupQuestion(word: Record<string, any>) {
-    const rank = progress?.current_rank || 1;
-    let pool: string[] = [];
-
-    // Rank-based quiz formats selection
-    if (rank === 1) {
-      pool = ['MEANING_MC', 'WORD_MC'];
-    } else if (rank === 2) {
-      pool = ['MEANING_MC', 'WORD_MC', 'LISTENING_MC'];
-    } else if (rank === 3) {
-      pool = ['MEANING_MC', 'WORD_MC', 'LISTENING_MC', 'FILL_BLANK'];
-    } else {
-      pool = ['MEANING_MC', 'WORD_MC', 'LISTENING_MC', 'FILL_BLANK', 'CONTEXT_MC'];
-    }
-
-    const type = pool[Math.floor(Math.random() * pool.length)];
-    setQType(type);
+  function setupQuestion(word: any) {
+    setQType(word.qType || 'MEANING_MC');
+    setChoices(word.choices || []);
     setShowHint(false);
 
-    if (type.includes('_MC')) {
-      const isWordMatch = type === 'WORD_MC' || type === 'LISTENING_MC' || type === 'CONTEXT_MC';
-      const correct = isWordMatch ? word.word : word.meaning;
-
-      const wrongs = words
-        .filter(w => w.word !== word.word)
-        .map(w => isWordMatch ? w.word : w.meaning);
-
-      while (wrongs.length < 3) {
-        wrongs.push(isWordMatch ? `option-${Math.random()}` : `ความหมาย-${Math.random()}`);
-      }
-
-      const allChoices = [correct, ...wrongs.sort(() => 0.5 - Math.random()).slice(0, 3)];
-      setChoices(allChoices.sort(() => 0.5 - Math.random()));
-    }
-
-    if (type === 'LISTENING_MC') {
+    if (word.qType === 'LISTENING_MC') {
       setTimeout(() => playWordAudio(word.word), 300);
     }
 
     setFillAnswer('');
-    setTimeLeft(15);
+    setTimeLeft(difficultyConfig.timeLimit || 15);
     setIsAnswered(false);
     setSelectedAnswer(null);
     setQuestionStartTime(Date.now());
-  };
+  }
 
   // Timer loop
   useEffect(() => {
@@ -200,7 +153,7 @@ export default function Game() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameState, loading, isAnswered, currentIndex, words, lives]);
+  }, [gameState, loading, isAnswered, currentIndex, words, lives, difficultyConfig]);
 
   async function submitAnswer(answer: string) {
     if (isAnswered) return;
@@ -217,40 +170,15 @@ export default function Game() {
     else if (qType === 'WORD_MC' || qType === 'LISTENING_MC' || qType === 'CONTEXT_MC') isCorrect = answer === wordObj.word;
     else if (qType === 'FILL_BLANK') isCorrect = answer.trim().toLowerCase() === wordObj.word.toLowerCase();
 
-    // Spaced Repetition & Wrong Words Logging
     if (isCorrect) {
       setScore(s => s + 1);
-      // If correct, update/upsert spaced repetition interval
-      await supabase.from('spaced_repetition').upsert([{
-        student_id: student.id,
-        word_id: wordObj.id,
-        interval_days: 2,
-        next_review_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
-      }], { onConflict: 'student_id,word_id' });
+      const newCombo = comboCount + 1;
+      setComboCount(newCombo);
+      if (newCombo > maxCombo) setMaxCombo(newCombo);
     } else {
       setLives(l => l - 1);
-      // Log wrong word count
-      const { data: existingWrong } = await supabase
-        .from('wrong_words')
-        .select('error_count')
-        .eq('student_id', student.id)
-        .eq('word_id', wordObj.id)
-        .single();
-
-      if (existingWrong) {
-        await supabase
-          .from('wrong_words')
-          .update({ error_count: (existingWrong.error_count || 0) + 1, last_attempt_at: new Date().toISOString() })
-          .eq('student_id', student.id)
-          .eq('word_id', wordObj.id);
-      } else {
-        await supabase.from('wrong_words').insert([{
-          student_id: student.id,
-          word_id: wordObj.id,
-          error_count: 1,
-          last_attempt_at: new Date().toISOString()
-        }]);
-      }
+      setComboCount(0); // break combo
+      setWrongWords(w => [...w, wordObj.id]);
     }
 
     setTimeout(() => {
@@ -260,7 +188,7 @@ export default function Game() {
         setGameState('reflection');
       }
     }, 2000);
-  };
+  }
 
   const applyPowerup = async (itemCode: string) => {
     if (usedItemsThisStage.includes(itemCode)) return;
@@ -270,7 +198,7 @@ export default function Game() {
     if (!inventoryItem || inventoryItem.quantity <= 0) return;
 
     try {
-      // 1. Consume item in Database (Decrement quantity or delete if 1)
+      // 1. Consume item in Database
       if (inventoryItem.quantity > 1) {
         await supabase
           .from('student_inventory')
@@ -283,7 +211,7 @@ export default function Game() {
           .eq('id', inventoryItem.id);
       }
 
-      // 2. Insert Item Usage Log
+      // 2. Insert item usage log
       await supabase.from('item_usage_logs').insert([{
         student_id: student.id,
         item_id: inventoryItem.item_id,
@@ -291,18 +219,20 @@ export default function Game() {
         question_word: words[currentIndex]?.word || null
       }]);
 
-      // 3. Trigger Powerup logic on frontend
+      // 3. Trigger item effect
       if (itemCode === 'TIME_FREEZE') {
         setTimeLeft(t => t + 10);
       } else if (itemCode === 'EXTRA_LIFE') {
         setLives(l => Math.min(3, l + 1));
       } else if (itemCode === 'FIFTY_FIFTY') {
-        const correct = qType === 'MEANING_MC' ? words[currentIndex].meaning : words[currentIndex].word;
+        const wordObj = words[currentIndex];
+        const correct = qType === 'MEANING_MC' ? wordObj.meaning : wordObj.word;
         const wrongList = choices.filter(c => c !== correct);
         const toHide = wrongList.sort(() => 0.5 - Math.random()).slice(0, 2);
         setChoices(choices.map(c => toHide.includes(c) ? '' : c));
       } else if (itemCode === 'HINT') {
         setShowHint(true);
+        setUsedHintsCount(h => h + 1);
       }
 
       setUsedItemsThisStage(u => [...u, itemCode]);
@@ -331,163 +261,67 @@ export default function Game() {
   };
 
   const handleSaveReflection = async () => {
-    try {
-      if (currentStageId) {
-        await supabase.from('reflections').upsert([{
-          student_id: student.id,
-          stage_id: currentStageId,
-          words_learned: refWordsLearned || 'คำศัพท์หมวดทั่วไป',
-          hardest_word: refHardestWord || null,
-          feeling: refFeeling
-        }], { onConflict: 'student_id,stage_id' });
-
-        // Fetch past attempts for this stage
-        const { data: pastAttempts } = await supabase
-          .from('attempts')
-          .select('*')
-          .eq('student_id', student.id)
-          .eq('stage_id', currentStageId)
-          .order('created_at', { ascending: true });
-          
-        setPreviousAttempts(pastAttempts || []);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-    setGameState('results');
-  };
-
-  const handleFinishGame = async () => {
-    const isWin = score >= 8 && lives > 0;
-    const currentRank = progress?.current_rank || 1;
-    const currentStage = progress?.current_stage || 1;
-    
-    // Response time calculations
+    const stageNum = progress?.current_stage || 1;
     const avgResponseTime = responseTimes.length > 0 
       ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length 
       : 10;
 
-    // Promotion & Demotion Conditions
-    let newRank = currentRank;
-    let newStage = currentStage;
-    let streakCount = progress?.high_score_streak || 0;
-
-    if (isWin) {
-      newStage = currentStage + 1;
-      // Streak calculation for promotion (3 consecutive stages >= 80% with additional parameters)
-      if (avgResponseTime < 10 && usedItemsThisStage.length <= 1) {
-        streakCount += 1;
-      } else {
-        streakCount = Math.max(0, streakCount - 1);
-      }
-
-      if (streakCount >= 3 && newRank < 5) {
-        newRank += 1;
-        streakCount = 0; // reset
-      }
-    } else {
-      // Demote condition: fail 3 times or excessive latency
-      streakCount = 0;
-      if (avgResponseTime > 20 && newRank > 1) {
-        newRank -= 1;
-      }
-    }
-
-    const wonCoins = isWin ? 5 : 0;
-    const earnedExp = score * 10;
-    const newCoins = (progress?.coins || 0) + wonCoins;
-    const newExp = (progress?.exp || 0) + earnedExp;
+    const accuracyVal = Math.round((score / words.length) * 100);
 
     try {
-      // 1. Log Attempt
+      // 1. Submit reflection details
       if (currentStageId) {
-        await supabase.from('attempts').insert([{
+        await supabase.from('reflections').upsert([{
           student_id: student.id,
           stage_id: currentStageId,
-          score,
-          total_questions: words.length,
-          time_spent_sec: responseTimes.reduce((a, b) => a + b, 0),
-          items_used_count: usedItemsThisStage.length,
-          error_count: words.length - score,
-          is_passed: isWin
-        }]);
+          words_learned: refWordsLearned || 'คำศัพท์ทั่วไป',
+          hardest_word: refHardestWord || null,
+          feeling: refFeeling
+        }], { onConflict: 'student_id,stage_id' });
       }
 
-      // 2. Update Coins ledger if won
-      if (wonCoins > 0) {
-        await supabase.from('coins_transactions').insert([{
-          student_id: student.id,
-          amount: wonCoins,
-          source: `STAGE_${currentStage}_PASS`
-        }]);
-      }
+      // 2. Call completeStage from adaptive engine
+      const completeReport = await completeStage(student.id, stageNum, {
+        score,
+        accuracy: accuracyVal,
+        responseTimeAvg: avgResponseTime,
+        wrongWords,
+        usedHints: usedHintsCount
+      });
 
-      // 3. Update Learning Path
-      await supabase
+      setPassReport(completeReport);
+
+      // 3. Fetch latest progress to refresh state
+      const { data: latestPath } = await supabase
         .from('learning_paths')
-        .update({
-          current_rank: newRank,
-          current_stage: newStage,
-          coins: newCoins,
-          exp: newExp,
-          last_active_date: new Date().toISOString()
-        })
-        .eq('student_id', student.id);
-
-      // 4. Update Analytics Summary
-      const { data: analytics } = await supabase
-        .from('analytics_summary')
         .select('*')
         .eq('student_id', student.id)
         .single();
       
-      const newAttempts = (analytics?.attempt_count || 0) + 1;
-      const newTime = (analytics?.total_time_on_task_sec || 0) + responseTimes.reduce((a, b) => a + b, 0);
-      const preScore = analytics?.pretest_score || 0;
-      const successRate = ((score / words.length) * 100);
-
-      await supabase
-        .from('analytics_summary')
-        .update({
-          success_rate: Math.round(((analytics?.success_rate || 0) * (newAttempts - 1) + successRate) / newAttempts),
-          attempt_count: newAttempts,
-          total_time_on_task_sec: newTime,
-          last_updated_at: new Date().toISOString()
-        })
-        .eq('student_id', student.id);
-
-      // Check for intervention alerts (Fail 3 times in a row)
-      if (!isWin) {
-        const { data: recentAttempts } = await supabase
-          .from('attempts')
-          .select('is_passed')
-          .eq('student_id', student.id)
-          .order('created_at', { ascending: false })
-          .limit(2);
-
-        const consecutiveFails = recentAttempts && recentAttempts.length === 2 && recentAttempts.every(a => !a.is_passed);
-        if (consecutiveFails) {
-          await supabase.from('intervention_alerts').insert([{
-            student_id: student.id,
-            classroom_id: student.classroom_id,
-            alert_type: 'STAGE_FAIL_3X',
-            description: `${student.student_name} ทำด่านที่ ${currentStage} ไม่ผ่านติดต่อกัน 3 ครั้ง`
-          }]);
-        }
+      if (latestPath) {
+        setProgress(latestPath);
       }
 
-      setProgress({
-        ...progress,
-        current_rank: newRank,
-        current_stage: newStage,
-        coins: newCoins,
-        exp: newExp
-      });
+      // 4. Fetch previous attempts to show progress graph
+      if (currentStageId) {
+        const { data: pastAttempts } = await supabase
+          .from('stage_results')
+          .select('*')
+          .eq('user_id', student.id)
+          .eq('stage_number', stageNum)
+          .order('created_at', { ascending: true });
+        
+        setPreviousAttempts(pastAttempts || []);
+      }
 
     } catch (err) {
-      console.error('Error updating game completion state:', err);
+      console.error('Error submitting stage reflection:', err);
     }
 
+    setGameState('results');
+  };
+
+  const handleFinishGame = () => {
     setScreen('dashboard');
   };
 
@@ -495,16 +329,16 @@ export default function Game() {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center">
         <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-400">กำลังดาวน์โหลดชุดคำศัพท์...</p>
+        <p className="text-slate-400">กำลังดาวน์โหลดชุดคำศัพท์ระบบ Adaptive...</p>
       </div>
     );
   }
 
-  // STEP 1: GOAL SETTING SCREEN
+  // STEP 1: GOAL SETTING
   if (gameState === 'goal') {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 relative overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] bg-emerald-500/5 rounded-full filter blur-[80px]"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] bg-emerald-500/5 rounded-full filter blur-[80px] pointer-events-none"></div>
         
         <motion.div 
           initial={{ opacity: 0, y: 15 }} 
@@ -513,43 +347,43 @@ export default function Game() {
         >
           <div className="text-center mb-6">
             <BookOpen className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-            <h2 className="text-2xl font-black text-white">ตั้งเป้าหมายก่อนผจญภัย</h2>
-            <p className="text-slate-400 text-sm mt-1">การตั้งเป้าหมายช่วยให้คุณมีสมาธิและจดจำคำศัพท์ได้ดีขึ้น</p>
+            <h2 className="text-2xl font-black text-white">ตั้งเป้าหมายประจำด่าน</h2>
+            <p className="text-slate-400 text-sm mt-1">ก่อนลุยด่าน {progress.current_stage} วางแผนความเร็วกันสักนิด</p>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div>
-              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">จำนวนคำที่จะเรียนรู้</label>
+              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">จำนวนคำศัพท์เป้าหมาย</label>
               <input type="number" value={goalWords} onChange={e => setGoalWords(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500" />
             </div>
             
             <div>
-              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">เป้าหมายจำนวนด่าน</label>
+              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">เป้าหมายจำนวนด่านที่จะเล่นวันนี้</label>
               <input type="number" value={goalStages} onChange={e => setGoalStages(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500" />
             </div>
 
             <div>
-              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">เวลาที่ใช้วันนี้ (นาที)</label>
+              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">เวลาฝึกฝน (นาที)</label>
               <input type="number" value={goalTime} onChange={e => setGoalTime(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500" />
             </div>
           </div>
 
           <button 
             onClick={handleSaveGoal}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 mt-8 hover:scale-[1.02] transition-all"
+            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg shadow-emerald-500/20 mt-8 hover:scale-[1.02] transition-all text-sm uppercase"
           >
-            เริ่มบทเรียนภารกิจ 🚀
+            เริ่มท้าทายด่านผจญภัย 🚀
           </button>
         </motion.div>
       </div>
     );
   }
 
-  // STEP 2: REFLECTION SCREEN (POST-GAME)
+  // STEP 2: REFLECTION SCREEN
   if (gameState === 'reflection') {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 relative overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] bg-emerald-500/5 rounded-full filter blur-[80px]"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] bg-emerald-500/5 rounded-full filter blur-[80px] pointer-events-none"></div>
         
         <motion.div 
           initial={{ opacity: 0, y: 15 }} 
@@ -558,23 +392,23 @@ export default function Game() {
         >
           <div className="text-center mb-6">
             <Sparkles className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-            <h2 className="text-2xl font-black text-white">บันทึกช่วยสะท้อนคิด</h2>
+            <h2 className="text-2xl font-black text-white">บันทึกสะท้อนคิดส่วนตัว</h2>
             <p className="text-slate-400 text-sm mt-1">วันนี้คุณได้เรียนรู้อะไรบ้าง? เขียนสรุปความเข้าใจของคุณ</p>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div>
-              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">คำศัพท์ใหม่ที่จำได้วันนี้</label>
-              <input type="text" value={refWordsLearned} onChange={e => setRefWordsLearned(e.target.value)} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500" placeholder="เช่น elephant, giraffe" />
+              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">คำศัพท์ที่คุณจำได้แม่นยำ</label>
+              <input type="text" value={refWordsLearned} onChange={e => setRefWordsLearned(e.target.value)} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500" placeholder="เช่น elephant, word" />
             </div>
 
             <div>
-              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">คำศัพท์ที่คิดว่ายากที่สุด</label>
-              <input type="text" value={refHardestWord} onChange={e => setRefHardestWord(e.target.value)} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500" placeholder="พิมพ์คำศัพท์ที่ตอบผิดหรือจำไม่ได้" />
+              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">คำศัพท์ที่คุณรู้สึกว่ายากที่สุด</label>
+              <input type="text" value={refHardestWord} onChange={e => setRefHardestWord(e.target.value)} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500" placeholder="คำศัพท์ที่สะกดผิดบ่อย" />
             </div>
 
             <div>
-              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">ความรู้สึกเกี่ยวกับการเล่นในด่านนี้</label>
+              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">ทัศนคติต่อโจทย์ของด่านนี้</label>
               <select value={refFeeling} onChange={e => setRefFeeling(e.target.value)} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500">
                 <option value="😊 สนุกและเข้าใจง่าย">😊 สนุกและเข้าใจง่าย</option>
                 <option value="😐 ปานกลาง ท้าทายดี">😐 ปานกลาง ท้าทายดี</option>
@@ -585,9 +419,9 @@ export default function Game() {
 
           <button 
             onClick={handleSaveReflection}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 mt-8 hover:scale-[1.02] transition-all"
+            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg shadow-emerald-500/20 mt-8 hover:scale-[1.02] transition-all"
           >
-            บันทึกและดูคะแนน 🎯
+            ประมวลผลด่านความยาก ➡️
           </button>
         </motion.div>
       </div>
@@ -597,15 +431,17 @@ export default function Game() {
   // STEP 3: RESULTS SCREEN
   if (gameState === 'results') {
     const isGameOver = lives <= 0;
-    const passed = score >= 8 && !isGameOver;
-    const totalDuration = responseTimes.reduce((a, b) => a + b, 0);
+    const passed = passReport?.passed || false;
+    const accuracyVal = Math.round((score / words.length) * 100);
+    const isPerfect = accuracyVal === 100;
+    const isNoHint = usedHintsCount === 0;
 
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-8 relative overflow-hidden">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
-          className="text-center bg-slate-900 border border-slate-800 p-12 rounded-3xl max-w-lg w-full shadow-2xl relative z-10"
+          className="text-center bg-slate-900 border border-slate-800 p-8 sm:p-12 rounded-3xl max-w-lg w-full shadow-2xl relative z-10"
         >
           {passed ? (
             <Trophy className="w-24 h-24 text-amber-400 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(245,158,11,0.2)]" />
@@ -613,48 +449,66 @@ export default function Game() {
             <XCircle className="w-24 h-24 text-rose-500 mx-auto mb-6" />
           )}
           <h2 className="text-4xl font-black mb-2">{passed ? 'ภารกิจสำเร็จ! 🎉' : 'ไม่ผ่านเกณฑ์ 💔'}</h2>
-          <p className="text-slate-400 mb-6">{passed ? 'คุณผ่านเกณฑ์ประเมิน 80% แล้ว ได้รับเหรียญเพิ่ม!' : 'ต้องตอบถูก 8 ใน 10 ข้อ เพื่อผ่านด่านนะ'}</p>
-          
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl">
-              <span className="text-xs text-slate-500 block">คะแนนของคุณ</span>
-              <strong className="text-2xl text-white">{score} / {words.length}</strong>
+          <p className="text-slate-400 mb-6">
+            {passed 
+              ? `คุณผ่านเกณฑ์ที่ระบบตั้งเป้าหมายไว้แล้ว! (${passReport?.targetPassScore}%)` 
+              : `ด่านนี้ต้องทำคะแนนให้ได้มากกว่า ${passReport?.targetPassScore}% เพื่อก้าวข้ามไป`
+            }
+          </p>
+
+          {/* Reward Bonus Badges */}
+          {passed && (isPerfect || isNoHint) && (
+            <div className="flex justify-center gap-2 mb-6">
+              {isPerfect && (
+                <span className="flex items-center gap-1 text-[10px] bg-amber-500/20 text-amber-400 font-extrabold px-3 py-1.5 rounded-full border border-amber-500/30">
+                  🎉 PERFECT BONUS (+30%)
+                </span>
+              )}
+              {isNoHint && (
+                <span className="flex items-center gap-1 text-[10px] bg-indigo-500/20 text-indigo-400 font-extrabold px-3 py-1.5 rounded-full border border-indigo-500/30">
+                  🧠 NO HINT BONUS (+20%)
+                </span>
+              )}
             </div>
-            <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl">
-              <span className="text-xs text-slate-500 block">เวลาทั้งหมด</span>
-              <strong className="text-2xl text-white">{totalDuration} วินาที</strong>
+          )}
+          
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="bg-slate-950 border border-slate-850 p-4 rounded-xl">
+              <span className="text-[10px] text-slate-500 block">คะแนนสะสม</span>
+              <strong className="text-xl text-white">{score} / {words.length}</strong>
+            </div>
+            <div className="bg-slate-950 border border-slate-850 p-4 rounded-xl">
+              <span className="text-[10px] text-slate-500 block">คอมโบสูงสุด</span>
+              <strong className="text-xl text-emerald-400">{maxCombo} Combo</strong>
+            </div>
+            <div className="bg-slate-950 border border-slate-850 p-4 rounded-xl">
+              <span className="text-[10px] text-slate-500 block">ความถูกต้อง</span>
+              <strong className={`text-xl font-bold ${passed ? 'text-emerald-400' : 'text-rose-400'}`}>{accuracyVal}%</strong>
             </div>
           </div>
 
           {/* Previous attempts for this stage */}
           {previousAttempts.length > 0 && (
-            <div className="mt-2 mb-6 border-t border-slate-800 pt-4 text-left">
-              <p className="text-slate-300 text-xs font-bold mb-2">📜 คะแนนคำถามด่านนี้ในรอบที่ผ่านมา:</p>
-              <div className="grid grid-cols-2 gap-2 max-h-28 overflow-y-auto pr-1">
-                {previousAttempts.map((att, idx) => (
-                  <div key={att.id || idx} className="bg-slate-950/80 border border-slate-900 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs">
+            <div className="mt-2 mb-6 border-t border-slate-850 pt-4 text-left">
+              <p className="text-slate-400 text-xs font-bold mb-2">📜 ประวัติความแม่นยำในการผจญภัยด่านนี้:</p>
+              <div className="grid grid-cols-2 gap-2 max-h-24 overflow-y-auto pr-1">
+                {previousAttempts.slice(-4).map((att, idx) => (
+                  <div key={att.id || idx} className="bg-slate-950 border border-slate-900 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs">
                     <span className="text-slate-500">รอบที่ {idx + 1}:</span>
-                    <span className={att.is_passed ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
-                      {att.score} / {att.total_questions || 10}
+                    <span className={att.passed ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                      {att.accuracy}%
                     </span>
                   </div>
                 ))}
-                {/* Include the current attempt */}
-                <div className="bg-slate-950/80 border border-slate-900 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs border-emerald-500/20">
-                  <span className="text-slate-400">รอบล่าสุด:</span>
-                  <span className={passed ? "text-emerald-400 font-black" : "text-rose-400 font-black"}>
-                    {score} / {words.length}
-                  </span>
-                </div>
               </div>
             </div>
           )}
 
           <button 
             onClick={handleFinishGame} 
-            className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold transition-all shadow-lg text-lg hover:scale-[1.02]"
+            className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl font-black transition-all shadow-lg text-lg hover:scale-[1.02]"
           >
-            กลับหน้าหลัก
+            กลับสู่แผนที่ผจญภัย 🧭
           </button>
         </motion.div>
       </div>
@@ -673,28 +527,40 @@ export default function Game() {
     >
       
       {/* Header Panel */}
-      <div className="w-full max-w-3xl flex justify-between items-center mb-8 relative z-10">
-        <div className="flex gap-1.5 bg-slate-900 border border-slate-800 px-4 py-2 rounded-2xl">
+      <div className="w-full max-w-2xl flex justify-between items-center mb-6 relative z-10">
+        <div className="flex gap-1 bg-slate-900 border border-slate-800 px-3 py-2 rounded-xl">
           {Array(3).fill(0).map((_, i) => (
-            <Heart key={i} className={`w-6 h-6 ${i < lives ? 'fill-rose-500 text-rose-500' : 'text-slate-800'}`} />
+            <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'text-slate-850'}`} />
           ))}
         </div>
+
+        {/* Combo Multiplier indicator */}
+        {comboCount > 0 && (
+          <motion.div 
+            key={comboCount}
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-full font-black text-xs shadow-md animate-bounce"
+          >
+            ⚡ {comboCount} COMBO
+          </motion.div>
+        )}
         
-        <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 px-6 py-2.5 rounded-full">
+        <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-full">
           <Timer className={timeLeft <= 5 ? "text-rose-500 animate-pulse" : "text-emerald-400"} />
-          <span className={`text-xl font-bold font-mono ${timeLeft <= 5 ? "text-rose-500" : "text-slate-100"}`}>{timeLeft}s</span>
+          <span className={`text-lg font-bold font-mono ${timeLeft <= 5 ? "text-rose-500" : "text-slate-100"}`}>{timeLeft}s</span>
         </div>
 
         <button 
           onClick={() => setScreen('dashboard')} 
-          className="px-4 py-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-white rounded-xl flex items-center gap-1.5 transition-all text-xs font-bold"
+          className="px-3.5 py-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-white rounded-xl flex items-center gap-1.5 transition-all text-xs font-bold"
         >
-          <X className="w-4 h-4 text-rose-400" /> กลับหน้าหลัก
+          <X className="w-4 h-4 text-rose-400" /> ยอมแพ้
         </button>
       </div>
 
       {/* Item powerups inventory dock */}
-      <div className="w-full max-w-3xl flex justify-center gap-3 mb-6 relative z-10">
+      <div className="w-full max-w-2xl flex flex-wrap justify-center gap-2 mb-6 relative z-10">
         {inventory.map((invItem) => {
           const itemCode = invItem.items.item_code;
           const isUsed = usedItemsThisStage.includes(itemCode);
@@ -704,24 +570,24 @@ export default function Game() {
               key={invItem.id} 
               onClick={() => applyPowerup(itemCode)} 
               disabled={isUsed}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border font-bold text-xs transition-all ${
                 isUsed 
                   ? 'opacity-40 bg-slate-950 border-slate-900 text-slate-600' 
                   : 'bg-slate-900 border-slate-800 hover:border-emerald-500/50 hover:bg-slate-800 text-slate-200 hover:scale-105'
               }`}
             >
-              <span className="text-lg">{invItem.items.image_url}</span>
+              <span className="text-base">{invItem.items.image_url}</span>
               <span>{invItem.items.name} ({invItem.quantity})</span>
             </button>
           );
         })}
         {inventory.length === 0 && (
-          <p className="text-slate-600 text-sm italic">ไม่มีไอเทมติดตัวในกระเป๋า</p>
+          <p className="text-slate-600 text-xs italic">ไม่มีไอเทมใช้งานในด่านนี้</p>
         )}
       </div>
 
       {/* Stage Progress line */}
-      <div className="w-full max-w-2xl h-2 bg-slate-900 border border-slate-800/80 rounded-full mb-10 overflow-hidden relative z-10">
+      <div className="w-full max-w-2xl h-2 bg-slate-900 border border-slate-850 rounded-full mb-8 overflow-hidden relative z-10">
         <div 
           className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-300"
           style={{ width: `${(currentIndex / words.length) * 100}%` }}
@@ -736,40 +602,40 @@ export default function Game() {
             initial={{ opacity: 0, scale: 0.95 }} 
             animate={{ opacity: 1, scale: 1 }} 
             exit={{ opacity: 0, scale: 0.95 }} 
-            className="text-center mb-10"
+            className="text-center mb-8"
           >
             {qType === 'MEANING_MC' && (
               <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
-                <span className="text-xs text-slate-500 tracking-widest uppercase block mb-3">สะกดคำศัพท์</span>
-                <h2 className="text-4xl sm:text-6xl font-black text-white mb-2 notranslate break-all" translate="no">{currentWord.word}</h2>
+                <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">แปลศัพท์สเปกตรัม</span>
+                <h2 className="text-4xl sm:text-5xl font-black text-white mb-2 notranslate break-all" translate="no">{currentWord.word}</h2>
                 <p className="text-slate-400 text-base sm:text-lg">แปลว่าอะไรในภาษาไทย?</p>
               </div>
             )}
 
             {qType === 'WORD_MC' && (
               <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
-                <span className="text-xs text-slate-500 tracking-widest uppercase block mb-3">คำแปลภาษาไทย</span>
-                <h2 className="text-3xl sm:text-5xl font-black text-emerald-400 mb-2 break-words">{currentWord.meaning}</h2>
+                <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">ความหมายภาษาไทย</span>
+                <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-2 break-words">{currentWord.meaning}</h2>
                 <p className="text-slate-400 text-base sm:text-lg">ตรงกับคำศัพท์ภาษาอังกฤษคำใด?</p>
               </div>
             )}
 
             {qType === 'LISTENING_MC' && (
-              <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl shadow-xl">
-                <span className="text-xs text-slate-500 tracking-widest uppercase block mb-6">ฟังและแปลความหมาย</span>
+              <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl shadow-xl w-full">
+                <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-6">ฟังและเลือกสะกด</span>
                 <button 
                   onClick={() => playWordAudio(currentWord.word)}
-                  className="w-24 h-24 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6 hover:scale-105 transition-all shadow-lg"
+                  className="w-20 h-20 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6 hover:scale-105 transition-all shadow-lg"
                 >
-                  <Volume2 className="w-12 h-12" />
+                  <Volume2 className="w-10 h-10" />
                 </button>
-                <p className="text-slate-400 text-lg">เสียงสะกดเป็นคำศัพท์ภาษาอังกฤษข้อใด?</p>
+                <p className="text-slate-400 text-base">เสียงสะกดเป็นคำศัพท์ภาษาอังกฤษข้อใด?</p>
               </div>
             )}
 
             {qType === 'FILL_BLANK' && (
               <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
-                <span className="text-xs text-slate-500 tracking-widest uppercase block mb-3">สะกดคำศัพท์ภาษาอังกฤษ</span>
+                <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">พิมพ์สะกดด่านความท้าทาย</span>
                 <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-6 break-words">{currentWord.meaning}</h2>
                 
                 <form 
@@ -783,7 +649,7 @@ export default function Game() {
                     disabled={isAnswered}
                     autoFocus
                     placeholder="พิมพ์สะกดคำศัพท์..."
-                    className="w-full text-center px-4 py-4 rounded-xl bg-slate-950 border border-slate-800 text-2xl font-bold focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-white placeholder-slate-600 mb-3"
+                    className="w-full text-center px-4 py-4 rounded-xl bg-slate-950 border border-slate-800 text-xl font-bold focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-white placeholder-slate-650 mb-3"
                   />
                   {!isAnswered && (
                     <button type="submit" className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition-all shadow-md">
@@ -792,7 +658,7 @@ export default function Game() {
                   )}
                 </form>
                 {showHint && (
-                  <p className="text-slate-400 text-sm mt-3 italic">
+                  <p className="text-slate-400 text-xs mt-3 italic">
                     คำใบ้: ขึ้นต้นด้วยตัว <strong className="text-emerald-400 uppercase">{currentWord.word.charAt(0)}</strong> (คำนี้สะกดด้วย {currentWord.word.length} ตัวอักษร)
                   </p>
                 )}
@@ -801,7 +667,7 @@ export default function Game() {
 
             {qType === 'CONTEXT_MC' && (
               <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
-                <span className="text-xs text-slate-500 tracking-widest uppercase block mb-4">การเติมประโยคในบริบท</span>
+                <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-4">การเติมประโยคในบริบท</span>
                 <div className="bg-slate-950 border border-slate-850 p-4 sm:p-6 rounded-2xl mb-4 italic text-slate-200 text-lg sm:text-xl font-medium leading-relaxed notranslate break-words" translate="no">
                   "{currentWord.example.replace(new RegExp(currentWord.word, 'i'), '__________')}"
                 </div>
@@ -815,9 +681,9 @@ export default function Game() {
         {qType.includes('_MC') && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {choices.map((choice, idx) => {
-              if (choice === '') return <div key={idx} className="opacity-0 pointer-events-none"></div>; // used 50/50
+              if (choice === '') return <div key={idx} className="opacity-0 pointer-events-none"></div>;
 
-              let btnClass = "bg-slate-900/50 hover:bg-slate-900 border-slate-800/80 hover:border-slate-700 text-slate-300";
+              let btnClass = "bg-slate-900/50 hover:bg-slate-900 border-slate-850 hover:border-slate-700 text-slate-350";
               let icon = null;
 
               if (isAnswered) {
@@ -828,7 +694,7 @@ export default function Game() {
                   btnClass = "bg-rose-500/20 border-rose-500 text-rose-300 font-extrabold shadow-lg";
                   icon = <XCircle className="w-5 h-5 text-rose-400" />;
                 } else {
-                  btnClass = "bg-slate-950 border-slate-950 text-slate-600 opacity-40";
+                  btnClass = "bg-slate-950 border-slate-950 text-slate-650 opacity-40";
                 }
               }
 
@@ -852,12 +718,12 @@ export default function Game() {
           <div className="text-center mt-6">
             {selectedAnswer?.trim().toLowerCase() === currentWord.word.toLowerCase() ? (
               <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-lg">
-                <CheckCircle className="w-5 h-5" /> ถูกสะกดคำตอบถูกต้อง!
+                <CheckCircle className="w-5 h-5" /> ถูกต้องสมบูรณ์แบบ!
               </div>
             ) : (
               <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 py-4 rounded-xl flex flex-col items-center gap-1.5 font-bold text-lg">
                 <div className="flex items-center gap-2">
-                  <XCircle className="w-5 h-5" /> สะกดไม่ถูกต้อง
+                  <XCircle className="w-5 h-5" /> พิมพ์สะกดไม่ถูกต้อง
                 </div>
                 <span className="text-slate-400 text-sm">ตัวสะกดที่ถูกต้องคือ: <strong className="text-slate-200 font-extrabold text-base">{currentWord.word}</strong></span>
               </div>

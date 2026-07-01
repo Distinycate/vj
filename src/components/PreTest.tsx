@@ -89,7 +89,7 @@ export default function PreTest() {
     if (finalScore >= 16) newRank = 4;
     if (finalScore >= 21) newRank = 5;
 
-    const newStage = ((newRank - 1) * 20) + 1;
+    const newStage = 1; // All students start at Stage 1 in Adaptive Difficulty model!
 
     try {
       // 1. Log to pre_tests table
@@ -108,6 +108,7 @@ export default function PreTest() {
         await supabase
           .from('learning_paths')
           .update({
+            initial_rank: newRank,
             current_rank: newRank,
             current_stage: newStage,
             last_active_date: new Date().toISOString()
@@ -146,6 +147,7 @@ export default function PreTest() {
 
         setProgress({
           ...progress,
+          initial_rank: newRank,
           current_rank: newRank,
           current_stage: newStage,
           pretest_score: finalScore,
