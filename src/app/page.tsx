@@ -79,17 +79,20 @@ export default function Home() {
           .eq('student_id', studentData.id)
           .single();
 
-        // 3. Fetch pre-test record
-        const { data: pretestData } = await supabase
+        // 3. Fetch pre-test record (order by latest in case of multiple attempts)
+        const { data: pretestList } = await supabase
           .from('pre_tests')
           .select('created_at')
           .eq('student_id', studentData.id)
-          .maybeSingle();
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        const pretestDate = pretestList && pretestList.length > 0 ? pretestList[0].created_at : null;
 
         setStudent(studentData);
         setProgress({ 
           ...progressData, 
-          pretest_date: pretestData ? pretestData.created_at : null 
+          pretest_date: pretestDate 
         });
       } else {
         // Authenticate teacher/executive directly
