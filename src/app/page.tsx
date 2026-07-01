@@ -79,15 +79,15 @@ export default function Home() {
           .eq('student_id', studentData.id)
           .single();
 
-        // 3. Fetch pre-test record (order by latest in case of multiple attempts)
-        const { data: pretestList } = await supabase
+        // 3. Fetch pre-test record count and latest attempt date
+        const { data: pretestList, count: pretestCount } = await supabase
           .from('pre_tests')
-          .select('created_at')
+          .select('created_at', { count: 'exact' })
           .eq('student_id', studentData.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
+          .order('created_at', { ascending: false });
 
-        const pretestDate = pretestList && pretestList.length > 0 ? pretestList[0].created_at : null;
+        const hasCompleted5Pretests = pretestCount !== null && pretestCount >= 5;
+        const pretestDate = hasCompleted5Pretests && pretestList && pretestList.length > 0 ? pretestList[0].created_at : null;
 
         setStudent(studentData);
         setProgress({ 

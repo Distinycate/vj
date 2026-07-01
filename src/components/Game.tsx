@@ -44,6 +44,7 @@ export default function Game() {
   const [refWordsLearned, setRefWordsLearned] = useState('');
   const [refHardestWord, setRefHardestWord] = useState('');
   const [refFeeling, setRefFeeling] = useState('😊 สนุกปานกลาง');
+  const [previousAttempts, setPreviousAttempts] = useState<any[]>([]);
 
 
   useEffect(() => {
@@ -339,6 +340,16 @@ export default function Game() {
           hardest_word: refHardestWord || null,
           feeling: refFeeling
         }], { onConflict: 'student_id,stage_id' });
+
+        // Fetch past attempts for this stage
+        const { data: pastAttempts } = await supabase
+          .from('attempts')
+          .select('*')
+          .eq('student_id', student.id)
+          .eq('stage_id', currentStageId)
+          .order('created_at', { ascending: true });
+          
+        setPreviousAttempts(pastAttempts || []);
       }
     } catch (err) {
       console.error(err);
@@ -614,6 +625,30 @@ export default function Game() {
               <strong className="text-2xl text-white">{totalDuration} วินาที</strong>
             </div>
           </div>
+
+          {/* Previous attempts for this stage */}
+          {previousAttempts.length > 0 && (
+            <div className="mt-2 mb-6 border-t border-slate-800 pt-4 text-left">
+              <p className="text-slate-300 text-xs font-bold mb-2">📜 คะแนนคำถามด่านนี้ในรอบที่ผ่านมา:</p>
+              <div className="grid grid-cols-2 gap-2 max-h-28 overflow-y-auto pr-1">
+                {previousAttempts.map((att, idx) => (
+                  <div key={att.id || idx} className="bg-slate-950/80 border border-slate-900 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs">
+                    <span className="text-slate-500">รอบที่ {idx + 1}:</span>
+                    <span className={att.is_passed ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                      {att.score} / {att.total_questions || 10}
+                    </span>
+                  </div>
+                ))}
+                {/* Include the current attempt */}
+                <div className="bg-slate-950/80 border border-slate-900 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs border-emerald-500/20">
+                  <span className="text-slate-400">รอบล่าสุด:</span>
+                  <span className={passed ? "text-emerald-400 font-black" : "text-rose-400 font-black"}>
+                    {score} / {words.length}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <button 
             onClick={handleFinishGame} 
