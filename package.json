@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test src/lib/quizUtils.test.ts",
+    "test": "node --test src/lib/*.test.ts",
     "check": "npm run lint && npm run typecheck && npm test"
   },
   "dependencies": {

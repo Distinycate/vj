@@ -16,6 +16,21 @@ import { Users, Target, Zap, BrainCircuit } from 'lucide-react';
 import StudentHero from '@/components/StudentHero';
 import StudentTeamCard from '@/components/StudentTeamCard';
 import TeamLeaderboard from '@/components/TeamLeaderboard';
+import CardCenterModal from '@/components/CardCenterModal';
+
+const CARD_RARITY_RANK: Record<string, number> = { N: 0, R: 1, SR: 2, SSR: 3, UR: 4 };
+
+function getRareCardStatus(inventory: any) {
+  const rows = Array.isArray(inventory) ? inventory : [];
+  const rareCards = rows
+    .filter((row) => (row.quantity || 0) > 0 && CARD_RARITY_RANK[row.cards?.rarity] >= 2)
+    .sort((a, b) => CARD_RARITY_RANK[b.cards?.rarity] - CARD_RARITY_RANK[a.cards?.rarity]);
+  const best = rareCards[0]?.cards;
+  if (!best) return null;
+  if (best.rarity === 'UR') return { rarity: 'UR', icon: '👑', label: 'ผู้ครอบครอง UR' };
+  if (best.rarity === 'SSR') return { rarity: 'SSR', icon: '✨', label: 'ผู้ครอบครอง SSR' };
+  return { rarity: 'SR', icon: '🛡️', label: 'ผู้ครอบครอง SR' };
+}
 
 export default function Dashboard() {
   const { student, progress, logout, setScreen, setProgress } = useAppStore();
@@ -27,6 +42,7 @@ export default function Dashboard() {
   const [expandedWorld, setExpandedWorld] = useState<number | null>(1);
   const [aiTeacherMessage, setAiTeacherMessage] = useState('');
   const [showShop, setShowShop] = useState(false);
+  const [showCardCenter, setShowCardCenter] = useState(false);
   const [myTeams, setMyTeams] = useState<any[]>([]);
   const [teamScores, setTeamScores] = useState<Record<string, any>>({});
 
@@ -87,6 +103,17 @@ export default function Dashboard() {
         .eq('classroom_id', student.classroom_id);
       
       if (leadData) {
+        const { data: cardStatusData } = await supabase
+          .from('card_inventory')
+          .select('student_id, quantity, cards(rarity, effect_type)')
+          .in('student_id', leadData.map((row) => row.id));
+        const cardsByStudent = new Map<string, any[]>();
+        for (const row of cardStatusData || []) {
+          const current = cardsByStudent.get(row.student_id) || [];
+          current.push(row);
+          cardsByStudent.set(row.student_id, current);
+        }
+
         let totalCoins = 0;
         let totalStage = 0;
         let maxLevel = 1;
@@ -107,6 +134,7 @@ export default function Dashboard() {
               coins: lp?.coins || 0,
               exp: lp?.total_exp || lp?.exp || 0,
               stage: lp?.current_stage || 1,
+              rareCardStatus: getRareCardStatus(cardsByStudent.get(s.id)),
               isSelf: s.id === student.id
             };
           })
@@ -205,6 +233,7 @@ export default function Dashboard() {
           stats={stats} 
           rankConfig={rankConfig} 
           setShowShop={setShowShop} 
+          setShowCardCenter={setShowCardCenter}
           logout={logout} 
         />
 
@@ -628,6 +657,20 @@ export default function Dashboard() {
                                     className="shrink-0"
                                   />
                                   <span className="truncate">{user.name}</span>
+                                  {user.rareCardStatus && (
+                                    <span
+                                      title={user.rareCardStatus.label}
+                                      className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                                        user.rareCardStatus.rarity === 'UR'
+                                          ? 'bg-amber-400/15 text-amber-300 border-amber-400/40 shadow-[0_0_14px_rgba(251,191,36,0.35)]'
+                                          : user.rareCardStatus.rarity === 'SSR'
+                                            ? 'bg-fuchsia-400/15 text-fuchsia-300 border-fuchsia-400/40'
+                                            : 'bg-sky-400/15 text-sky-300 border-sky-400/40'
+                                      }`}
+                                    >
+                                      {user.rareCardStatus.icon} {user.rareCardStatus.rarity}
+                                    </span>
+                                  )}
                                   {user.isSelf && (
                                     <span className="text-[10px] bg-emerald-500 text-slate-950 font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider">
                                       คุณ
@@ -780,6 +823,7 @@ export default function Dashboard() {
 
       </div>
       {showShop && <ShopModal onClose={() => setShowShop(false)} />}
+      {showCardCenter && <CardCenterModal onClose={() => setShowCardCenter(false)} />}
     </div>
   );
 }

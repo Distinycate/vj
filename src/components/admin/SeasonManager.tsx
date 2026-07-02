@@ -8,6 +8,10 @@ export default function SeasonManager() {
   const [loading, setLoading] = useState(true);
   const [newSeasonName, setNewSeasonName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [message, setMessage] = useState('');
+  const teacher = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('vocab_journey_teacher') || 'null')
+    : null;
 
   useEffect(() => {
     loadSeasons();
@@ -55,6 +59,20 @@ export default function SeasonManager() {
     }
   }
 
+  async function handleCloseAndReward(seasonId: string) {
+    if (!teacher?.id || !window.confirm('ยืนยันปิดฤดูกาลและแจกตั๋วให้สมาชิกทีมที่ชนะ? การทำรายการนี้ซ้ำไม่ได้')) return;
+    setMessage('');
+    const { data, error } = await supabase.rpc('close_and_reward_team_season', {
+      p_season_id: seasonId,
+      p_teacher_id: teacher.id,
+    });
+    if (error) setMessage(error.message);
+    else {
+      setMessage(`ทีม ${data.winner_team_name} ชนะ แจกตั๋วแล้ว ${data.rewarded_members} คน`);
+      await loadSeasons();
+    }
+  }
+
   if (loading) {
     return <div className="text-slate-400 p-8 text-center bg-slate-900/40 rounded-3xl animate-pulse">กำลังโหลดข้อมูลฤดูกาล...</div>;
   }
@@ -74,6 +92,11 @@ export default function SeasonManager() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {message && (
+          <div className="lg:col-span-3 p-3 bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-xl">
+            {message}
+          </div>
+        )}
         {/* New Season Form */}
         <div className="lg:col-span-1">
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6">
@@ -139,7 +162,15 @@ export default function SeasonManager() {
                   </p>
                 </div>
                 {season.is_active ? (
-                  <CheckCircle className="w-6 h-6 text-indigo-400" />
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-6 h-6 text-indigo-400" />
+                    <button
+                      onClick={() => handleCloseAndReward(season.id)}
+                      className="px-3 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-lg"
+                    >
+                      ปิดฤดูกาล + แจกรางวัล
+                    </button>
+                  </div>
                 ) : (
                   <div className="text-xs font-bold text-slate-500 bg-slate-900 px-3 py-1 rounded-lg">จบฤดูกาลแล้ว</div>
                 )}

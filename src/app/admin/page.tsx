@@ -18,8 +18,9 @@ import SeasonManager from '@/components/admin/SeasonManager';
 import SchoolLevelDashboard from '@/components/admin/SchoolLevelDashboard';
 import ClassLevelAnalytics from '@/components/admin/ClassLevelAnalytics';
 import IndividualStudentProfile from '@/components/admin/IndividualStudentProfile';
+import CardWorkflowPanel from '@/components/admin/CardWorkflowPanel';
 
-type AdminTab = 'school-overview' | 'overview' | 'students' | 'teams' | 'weak-words' | 'risks';
+type AdminTab = 'school-overview' | 'overview' | 'students' | 'teams' | 'cards' | 'weak-words' | 'risks';
 
 export default function AdminPage() {
   const [teacher, setTeacher] = useState<any>(null);
@@ -229,6 +230,7 @@ export default function AdminPage() {
             { id: 'overview', icon: <Activity className="w-4 h-4"/>, label: 'ภาพรวมห้องเรียน' },
             { id: 'students', icon: <Users className="w-4 h-4"/>, label: 'นักเรียน' },
             { id: 'teams', icon: <Trophy className="w-4 h-4"/>, label: 'ทีม (Team Battle)' },
+            { id: 'cards', icon: <Sparkles className="w-4 h-4"/>, label: 'อนุมัติการ์ด' },
             { id: 'weak-words', icon: <BookOpen className="w-4 h-4"/>, label: 'คำที่ผิดบ่อย' },
             { id: 'risks', icon: <AlertTriangle className="w-4 h-4"/>, label: 'กลุ่มเสี่ยง' }
           ].map(tab => (
@@ -381,6 +383,12 @@ export default function AdminPage() {
               )}
               
               <TeamLeaderboard scope="school" />
+            </motion.div>
+          )}
+
+          {activeTab === 'cards' && (
+            <motion.div key="cards" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}}>
+              <CardWorkflowPanel teacher={teacher} classroomId={selectedClassroom} />
             </motion.div>
           )}
           
