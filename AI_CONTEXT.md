@@ -36,13 +36,21 @@ Vocab Journey ไม่ใช่แค่แอปพลิเคชันเล
 
 ---
 
-## 🚀 4. Pending Features (ฟีเจอร์ที่ต้องทำต่อ)
-หาก User ขอให้คุณทำงานต่อ นี่คือ Roadmap ที่ผ่านการอนุมัติแล้ว:
+## 🚀 4. Completed & Pending Features (อัปเดตล่าสุด)
+
+**✅ เพิ่งทำเสร็จ (Recently Completed):**
 1. **Contextual Puzzles (ประโยคบริบท):** 
-   - เพิ่มคอลัมน์ `example_sentence` ในตาราง `vocabulary` 
-   - ปรับหน้า `Game.tsx` ให้รองรับ `qType === 'FILL_BLANK'` โดยเจาะช่องว่าง `________` ในประโยคให้เด็กเติม
-2. **AI Insight Improvements:**
-   - เปลี่ยนจากการ hard-code `gpt-3.5-turbo` เป็นรุ่นใหม่ (เช่น GPT-4o หรือ Claude) และจัดการระบบ API Key สำหรับรายงานรายบุคคล
+   - เพิ่มคอลัมน์ `example_sentence` ในตาราง `vocabulary` เรียบร้อยแล้ว (อ้างอิง `MIGRATION_CONTEXTUAL_PUZZLES.sql`)
+   - `Game.tsx` และ `adaptiveEngine.ts` รองรับโหมด `FILL_BLANK` โดยเจาะช่องว่าง `________` ในประโยคให้เด็กเติมคำอัตโนมัติ
+2. **Decoupled Analytics (แยกระบบคะแนนเกมและวิชาการ):**
+   - ใน `adaptiveEngine.ts` ตัวแปร `academicWasCorrect` จะมีค่าเป็น 0 ทันที หากนักเรียนใช้ไอเทมช่วยเหลือ (Hint หรือ 50/50) เพื่อป้องกันความสามารถถูกบิดเบือนในตารางวิเคราะห์ข้อสอบ (`item_analysis`)
+
+**⏳ ฟีเจอร์ที่รอการพัฒนา (Pending Features):**
+1. **AI Insight Improvements:**
+   - ระบบรายงานจุดอ่อนเด็กให้ครูฟัง ปัจจุบันมีการใช้ `gpt-3.5-turbo` แบบ hard-code
+   - สิ่งที่ต้องทำ: เปลี่ยนเป็นรุ่นใหม่ (เช่น GPT-4o หรือ Claude) และสร้างระบบให้ครูกรอก API Key ของตัวเองได้
+2. **ระบบการแข่งขันแบบทีม (Advanced Team Battles):**
+   - ปัจจุบันมีการสร้างตารางฤดูกาลไว้แล้ว สิ่งที่ต้องทำคือ UI สำหรับครูในการสร้างและควบคุม Season การแข่งขัน
 
 ---
 *Message to AI:* You are fully briefed. Proceed with extreme caution regarding async state and database relations. Good luck! 🚀
