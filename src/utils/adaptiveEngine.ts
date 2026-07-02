@@ -196,7 +196,7 @@ async function generateValidQuestion(params: { targetWord: any, questionType: Qu
 
 function buildRawQuestion({ targetWord, questionType, candidates }: { targetWord: any, questionType: QuestionType, candidates: any[] }) {
   // Contextual Puzzle override
-  if (targetWord.context_sentence && Math.random() > 0.5) {
+  if (targetWord.example_sentence && Math.random() > 0.5) {
     return createContextFillQuestion(targetWord);
   }
 
@@ -263,7 +263,9 @@ function createContextFillQuestion(targetWord: any) {
     question_type: "spelling",
     word_id: targetWord.id,
     correct_word_id: targetWord.id,
-    prompt: targetWord.context_sentence,
+    prompt: targetWord.example_sentence?.includes('________') 
+      ? targetWord.example_sentence 
+      : (targetWord.example_sentence || '').replace(new RegExp(`\\b${targetWord.word}\\b`, 'gi'), '________') || targetWord.word,
     correct_answer: targetWord.blank_answer || targetWord.word,
     answer_language: 'en',
     word: targetWord.word,

@@ -591,8 +591,15 @@ export default function Game() {
 
             {qType === 'FILL_BLANK' && (
               <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
-                <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">พิมพ์สะกดด่านความท้าทาย</span>
-                <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-6 break-words">{currentWord.prompt}</h2>
+                <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">พิมพ์สะกด / เติมประโยค (Contextual Puzzle)</span>
+                
+                {currentWord.prompt?.includes('________') ? (
+                  <div className="bg-slate-950 border border-emerald-900/30 p-4 sm:p-6 rounded-2xl mb-6 italic text-slate-200 text-lg sm:text-xl font-medium leading-relaxed notranslate break-words shadow-inner" translate="no">
+                    &ldquo;{currentWord.prompt}&rdquo;
+                  </div>
+                ) : (
+                  <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-6 break-words">{currentWord.prompt}</h2>
+                )}
                 
                 <form 
                   onSubmit={(e) => { e.preventDefault(); submitAnswer(fillAnswer); }}
