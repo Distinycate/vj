@@ -14,8 +14,11 @@ import { calculateLearningGain, calculateRiskScore, getRiskLevel, getProgressTre
 import { generateStudentInsight } from '@/utils/aiTeacherInsight';
 
 import TeamLeaderboard from '@/components/TeamLeaderboard';
+import SchoolLevelDashboard from '@/components/admin/SchoolLevelDashboard';
+import ClassLevelAnalytics from '@/components/admin/ClassLevelAnalytics';
+import IndividualStudentProfile from '@/components/admin/IndividualStudentProfile';
 
-type AdminTab = 'overview' | 'students' | 'teams' | 'weak-words' | 'risks';
+type AdminTab = 'school-overview' | 'overview' | 'students' | 'teams' | 'weak-words' | 'risks';
 
 export default function AdminPage() {
   const [teacher, setTeacher] = useState<any>(null);
@@ -24,7 +27,7 @@ export default function AdminPage() {
   const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [activeTab, setActiveTab] = useState<AdminTab>('school-overview');
   const [classrooms, setClassrooms] = useState<any[]>([]);
   const [selectedClassroom, setSelectedClassroom] = useState<string>('');
   
@@ -214,7 +217,8 @@ export default function AdminPage() {
         {/* Tabs Menu */}
         <div className="flex overflow-x-auto gap-2 pb-2 mb-6 custom-scrollbar">
           {[
-            { id: 'overview', icon: <Activity className="w-4 h-4"/>, label: 'ภาพรวม' },
+            { id: 'school-overview', icon: <Activity className="w-4 h-4"/>, label: 'ภาพรวมโรงเรียน' },
+            { id: 'overview', icon: <Activity className="w-4 h-4"/>, label: 'ภาพรวมห้องเรียน' },
             { id: 'students', icon: <Users className="w-4 h-4"/>, label: 'นักเรียน' },
             { id: 'teams', icon: <Trophy className="w-4 h-4"/>, label: 'ทีม (Team Battle)' },
             { id: 'weak-words', icon: <BookOpen className="w-4 h-4"/>, label: 'คำที่ผิดบ่อย' },
@@ -236,6 +240,13 @@ export default function AdminPage() {
 
         <AnimatePresence mode="wait">
           
+          {/* TAB: SCHOOL OVERVIEW */}
+          {activeTab === 'school-overview' && classroomMetrics && (
+            <motion.div key="school-overview" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
+              <SchoolLevelDashboard studentsList={classroomMetrics.students} />
+            </motion.div>
+          )}
+
           {/* TAB: OVERVIEW */}
           {activeTab === 'overview' && classroomMetrics && (
             <motion.div key="overview" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
@@ -297,6 +308,10 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div>
+
+              <div className="mt-8">
+                <ClassLevelAnalytics studentsList={classroomMetrics.students} weakestSkill={classroomMetrics.weakestSkill} />
+              </div>
             </motion.div>
           )}
 
@@ -357,127 +372,10 @@ export default function AdminPage() {
         </AnimatePresence>
       </div>
 
-      {/* STUDENT DETAIL DRAWER (MODAL) */}
+      {/* STUDENT DETAIL MODAL */}
       <AnimatePresence>
         {selectedStudent && (
-          <div className="fixed inset-0 z-50 flex justify-end">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedStudent(null)}
-              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm cursor-pointer"
-            />
-            
-            <motion.div 
-              initial={{ x: '100%', opacity: 0 }} 
-              animate={{ x: 0, opacity: 1 }} 
-              exit={{ x: '100%', opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-xl h-full bg-slate-950 border-l border-slate-800 flex flex-col shadow-2xl"
-            >
-              {/* Drawer Header */}
-              <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/40">
-                <div className="flex items-center gap-4">
-                  <img src={`https://api.dicebear.com/9.x/adventurer/svg?seed=${selectedStudent.learning_paths?.avatar_seed || selectedStudent.id}`} alt="Avatar" className="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700" />
-                  <div>
-                    <h2 className="text-2xl font-black text-white">{selectedStudent.student_name}</h2>
-                    <p className="text-slate-400 font-mono text-sm">{selectedStudent.student_id}</p>
-                  </div>
-                </div>
-                <button onClick={() => setSelectedStudent(null)} className="p-3 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-full transition-colors">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Drawer Tabs */}
-              <div className="flex border-b border-slate-800 bg-slate-900/20">
-                {['overview', 'skills', 'wrong-words'].map(t => (
-                  <button 
-                    key={t}
-                    onClick={() => setStudentTab(t as any)}
-                    className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors ${
-                      studentTab === t ? 'text-indigo-400 border-b-2 border-indigo-500 bg-indigo-500/5' : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                  >
-                    {t === 'overview' ? 'ภาพรวม' : t === 'skills' ? 'ทักษะ' : 'คำผิด'}
-                  </button>
-                ))}
-              </div>
-
-              {/* Drawer Content */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                
-                {studentTab === 'overview' && (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 text-center">
-                        <span className="text-xs text-slate-500 font-bold block mb-1">ด่านผจญภัย</span>
-                        <span className="text-2xl font-black text-indigo-400">{selectedStudent.learning_paths?.current_stage || 1}</span>
-                      </div>
-                      <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 text-center">
-                        <span className="text-xs text-slate-500 font-bold block mb-1">Accuracy</span>
-                        <span className="text-2xl font-black text-emerald-400">{Math.round(selectedStudent.acc)}%</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-indigo-500/10 border border-indigo-500/20 p-5 rounded-2xl">
-                      <h4 className="text-sm font-bold text-indigo-400 mb-2 flex items-center gap-2"><Sparkles className="w-4 h-4"/> AI Insight</h4>
-                      <p className="text-sm text-indigo-200 leading-relaxed">
-                        {generateStudentInsight({
-                          gainPercent: selectedStudent.gainPercent,
-                          accuracy: selectedStudent.acc,
-                          weakestSkill: 'Listening', // Mocked here for brevity, in real app should pass calculated
-                          reviewCount: selectedStudent.reviewWordsCount,
-                          inactiveDays: selectedStudent.daysInactive
-                        })}
-                      </p>
-                    </div>
-                  </>
-                )}
-
-                {studentTab === 'skills' && (
-                  <div className="bg-slate-900/40 p-4 rounded-2xl border border-slate-800">
-                    <h4 className="text-sm font-bold text-white mb-4 text-center">Skill Radar</h4>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={[
-                          { subject: 'Meaning', A: calculateStudentSkillRadar(selectedStudent.acc, wrongWords.filter(w => w.user_id === selectedStudent.id)).Meaning, fullMark: 100 },
-                          { subject: 'Listening', A: calculateStudentSkillRadar(selectedStudent.acc, wrongWords.filter(w => w.user_id === selectedStudent.id)).Listening, fullMark: 100 },
-                          { subject: 'Context', A: calculateStudentSkillRadar(selectedStudent.acc, wrongWords.filter(w => w.user_id === selectedStudent.id)).Context, fullMark: 100 },
-                          { subject: 'Spelling', A: calculateStudentSkillRadar(selectedStudent.acc, wrongWords.filter(w => w.user_id === selectedStudent.id)).Spelling, fullMark: 100 },
-                          { subject: 'Word Recog', A: calculateStudentSkillRadar(selectedStudent.acc, wrongWords.filter(w => w.user_id === selectedStudent.id))['Word Recog'], fullMark: 100 },
-                        ]}>
-                          <PolarGrid stroke="#334155" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 10 }} />
-                          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                          <Radar name="Student Skills" dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
-                        </RadarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                )}
-
-                {studentTab === 'wrong-words' && (
-                  <div className="space-y-3">
-                    {wrongWords.filter(w => w.user_id === selectedStudent.id).map(w => (
-                      <div key={w.id} className="flex justify-between items-center bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-                        <div>
-                          <span className="font-black text-white uppercase text-lg block">{w.vocabulary?.word}</span>
-                          <span className="text-xs text-slate-500 font-mono">{w.vocabulary?.difficulty_level}</span>
-                        </div>
-                        <span className="text-xs bg-rose-500/20 text-rose-400 px-3 py-1.5 rounded-xl font-bold">ผิด {w.wrong_count} ครั้ง</span>
-                      </div>
-                    ))}
-                    {wrongWords.filter(w => w.user_id === selectedStudent.id).length === 0 && (
-                      <div className="text-slate-500 text-center py-10 font-bold">ไม่มีประวัติการตอบผิด 🎉</div>
-                    )}
-                  </div>
-                )}
-
-              </div>
-            </motion.div>
-          </div>
+          <IndividualStudentProfile student={selectedStudent} onClose={() => setSelectedStudent(null)} />
         )}
       </AnimatePresence>
     </div>
