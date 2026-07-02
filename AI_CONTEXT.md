@@ -44,13 +44,11 @@ Vocab Journey ไม่ใช่แค่แอปพลิเคชันเล
    - `Game.tsx` และ `adaptiveEngine.ts` รองรับโหมด `FILL_BLANK` โดยเจาะช่องว่าง `________` ในประโยคให้เด็กเติมคำอัตโนมัติ
 2. **Decoupled Analytics (แยกระบบคะแนนเกมและวิชาการ):**
    - ใน `adaptiveEngine.ts` ตัวแปร `academicWasCorrect` จะมีค่าเป็น 0 ทันที หากนักเรียนใช้ไอเทมช่วยเหลือ (Hint หรือ 50/50) เพื่อป้องกันความสามารถถูกบิดเบือนในตารางวิเคราะห์ข้อสอบ (`item_analysis`)
+3. **Advanced Team Battles (ระบบควบคุมฤดูกาลแข่ง):**
+   - เพิ่ม `SeasonManager.tsx` ในหน้า Admin Dashboard ให้สร้างฤดูกาลใหม่ได้ เมื่อสร้างแล้วจะปิดฤดูกาลเก่าทันที (Reset คะแนนทุกคนเป็น 0 สำหรับ Season ใหม่)
 
-**⏳ ฟีเจอร์ที่รอการพัฒนา (Pending Features):**
-1. **AI Insight Improvements:**
-   - ระบบรายงานจุดอ่อนเด็กให้ครูฟัง ปัจจุบันมีการใช้ `gpt-3.5-turbo` แบบ hard-code
-   - สิ่งที่ต้องทำ: เปลี่ยนเป็นรุ่นใหม่ (เช่น GPT-4o หรือ Claude) และสร้างระบบให้ครูกรอก API Key ของตัวเองได้
-2. **ระบบการแข่งขันแบบทีม (Advanced Team Battles):**
-   - ปัจจุบันมีการสร้างตารางฤดูกาลไว้แล้ว สิ่งที่ต้องทำคือ UI สำหรับครูในการสร้างและควบคุม Season การแข่งขัน
+**⏳ ฟีเจอร์ที่ถูกยกเลิก (Deprecated/Cancelled):**
+- **AI Insight Improvements:** ผู้ใช้แจ้งให้ยกเลิกการแก้ไขส่วนนี้ ให้ใช้ `gpt-3.5-turbo` แบบ Hard-code เดิมไปก่อน ไม่ต้องเพิ่ม UI ใส่ Custom API Key
 
 ---
-*Message to AI:* You are fully briefed. Proceed with extreme caution regarding async state and database relations. Good luck! 🚀
+*Message to AI:* You are fully briefed. All core critical issues and major roadmap features have been successfully implemented. The system is stable. Proceed with extreme caution regarding async state and database relations if adding new features. Good luck! 🚀
