@@ -12,6 +12,7 @@ export default function StudyCamp() {
   const [words, setWords] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [buffGranted, setBuffGranted] = useState(false);
 
   useEffect(() => {
     async function fetchWords() {
@@ -39,6 +40,34 @@ export default function StudyCamp() {
     }
     fetchWords();
   }, [progress]);
+
+  // Lore Book Buff Logic (5 seconds rule)
+  useEffect(() => {
+    if (words.length > 0 && currentIndex < words.length) {
+      setBuffGranted(false);
+      const studentData = useAppStore.getState().student;
+      
+      const timer = setTimeout(async () => {
+        if (!studentData?.id) return;
+        try {
+          const expiresAt = new Date();
+          expiresAt.setHours(expiresAt.getHours() + 24);
+          
+          await supabase.from('student_buffs').insert([{
+            student_id: studentData.id,
+            buff_type: 'PASSIVE_EXP_BOOST',
+            multiplier: 1.05,
+            expires_at: expiresAt.toISOString()
+          }]);
+          setBuffGranted(true);
+        } catch (e) {
+          console.error('Error granting buff:', e);
+        }
+      }, 5000); // 5 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, words.length]);
 
   if (loading) {
     return (
@@ -111,7 +140,18 @@ export default function StudyCamp() {
       {/* Header */}
       <div className="w-full max-w-2xl flex justify-between items-center mb-8 relative z-10">
         <div>
-          <h1 className="text-2xl font-black text-white">Study Camp (ค่ายฝึกฝน)</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-black text-white">Study Camp (ค่ายฝึกฝน)</h1>
+            {buffGranted && (
+              <motion.span 
+                initial={{ scale: 0, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                className="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase flex items-center gap-1 shadow-[0_0_10px_rgba(245,158,11,0.2)]"
+              >
+                ✨ +5% EXP BUFF
+              </motion.span>
+            )}
+          </div>
           <p className="text-slate-500 text-sm mt-0.5">คำศัพท์ลำดับที่ {currentIndex + 1} / {words.length}</p>
         </div>
         <button 

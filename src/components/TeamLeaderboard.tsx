@@ -10,6 +10,22 @@ export default function TeamLeaderboard({ scope = 'school' }: { scope?: 'class' 
 
   useEffect(() => {
     async function loadLeaderboard() {
+      const cacheKey = `vj_leaderboard_cache_${scope}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          // Check if cache is less than 5 minutes old
+          if (Date.now() - parsed.timestamp < 5 * 60 * 1000) {
+            setTeams(parsed.data);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          // Ignore cache parse error
+        }
+      }
+
       setLoading(true);
       try {
         const { data: dbTeams } = await supabase
@@ -30,6 +46,12 @@ export default function TeamLeaderboard({ scope = 'school' }: { scope?: 'class' 
           // Sort by final score
           scoredTeams.sort((a, b) => b.finalScore - a.finalScore);
           setTeams(scoredTeams);
+          
+          // Save to local cache
+          localStorage.setItem(cacheKey, JSON.stringify({
+            timestamp: Date.now(),
+            data: scoredTeams
+          }));
         }
       } catch (e) {
         console.error(e);

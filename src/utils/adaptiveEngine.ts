@@ -195,6 +195,11 @@ async function generateValidQuestion(params: { targetWord: any, questionType: Qu
 }
 
 function buildRawQuestion({ targetWord, questionType, candidates }: { targetWord: any, questionType: QuestionType, candidates: any[] }) {
+  // Contextual Puzzle override
+  if (targetWord.context_sentence && Math.random() > 0.5) {
+    return createContextFillQuestion(targetWord);
+  }
+
   switch (questionType) {
     case 'listening_mc':
       return createListeningQuestion(targetWord, candidates);
@@ -248,6 +253,21 @@ function createListeningQuestion(targetWord: any, candidates: any[]) {
     word: targetWord.word,
     meaning: getVocabularyField(targetWord, "meaning_th"),
     choices
+  };
+}
+
+function createContextFillQuestion(targetWord: any) {
+  return {
+    id: targetWord.id,
+    qType: "FILL_BLANK",
+    question_type: "spelling",
+    word_id: targetWord.id,
+    correct_word_id: targetWord.id,
+    prompt: targetWord.context_sentence,
+    correct_answer: targetWord.blank_answer || targetWord.word,
+    answer_language: 'en',
+    word: targetWord.word,
+    meaning: getVocabularyField(targetWord, "meaning_th")
   };
 }
 
@@ -363,6 +383,7 @@ export interface CompleteStageResult {
   correctWords: string[];
   totalQuestions: number;
   usedHints: number;
+  assistedWords?: string[];
 }
 
 function calculateStreak(lastActiveDate: string | null, currentStreak: number): number {
@@ -533,10 +554,15 @@ export async function completeStage(studentId: string, stageNumber: number, resu
           const upsertAnalysis = answeredWordIds.map(wordId => {
              const existing = analysisMap.get(wordId);
              const wasCorrect = uniqueCorrectWords.includes(wordId) ? 1 : 0;
+             const wasAssisted = result.assistedWords?.includes(wordId) || false;
+             
+             // Decoupled Analytics: Use academic correctness (not assisted) for raw analytics
+             const academicWasCorrect = (wasCorrect === 1 && !wasAssisted) ? 1 : 0;
+             
              const oldAttemptCount = existing?.attempt_count || 0;
              const oldSuccessRate = Number(existing?.success_rate || 0);
              const nextItemAttemptCount = oldAttemptCount + 1;
-             const nextItemSuccessRate = ((oldSuccessRate * oldAttemptCount + wasCorrect * 100) / nextItemAttemptCount);
+             const nextItemSuccessRate = ((oldSuccessRate * oldAttemptCount + academicWasCorrect * 100) / nextItemAttemptCount);
              const oldAverageTime = Number(existing?.avg_time_ms || 0);
              const nextAverageTime = ((oldAverageTime * oldAttemptCount + responseTimeAvg * 1000) / nextItemAttemptCount);
              

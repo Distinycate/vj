@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, CheckCircle, XCircle, Trophy, Timer, Volume2, 
@@ -10,6 +10,7 @@ import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
 import { generateStageQuestions, completeStage, getAdaptiveDifficulty } from '@/utils/adaptiveEngine';
 import { normalizeAnswer, QuizChoice } from '@/lib/quizUtils';
+import { useAntiCheat } from '@/hooks/useAntiCheat';
 
 type GameStep = 'play' | 'reflection' | 'results';
 
@@ -20,6 +21,7 @@ export default function Game() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [gameState, setGameState] = useState<GameStep>('play');
+  const isAnsweringRef = useRef(false); // Ref for strict debounce
   
   // Game Play States
   const [score, setScore] = useState(0);
@@ -34,6 +36,7 @@ export default function Game() {
   const [comboCount, setComboCount] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
   const [wrongWords, setWrongWords] = useState<string[]>([]);
+  const [assistedWords, setAssistedWords] = useState<string[]>([]); // Track items used on specific words
   const [usedHintsCount, setUsedHintsCount] = useState(0);
 
   // Difficulty settings from dynamic engine
@@ -61,7 +64,23 @@ export default function Game() {
   const [previousAttempts, setPreviousAttempts] = useState<any[]>([]);
 
   // Stage Completion Report
-  const [passReport, setPassReport] = useState<{ passed: boolean; targetPassScore: number } | null>(null);
+  const [passReport, setPassReport] = useState<any>(null);
+
+  // Anti Cheat States
+  const [cheatWarning, setCheatWarning] = useState<number | null>(null);
+  const [cheatDetected, setCheatDetected] = useState<string | null>(null);
+
+  const { validateTime } = useAntiCheat(
+    gameState === 'play',
+    (reason) => {
+      setCheatDetected(reason);
+      setGameState('results'); // Force end stage on cheat
+    },
+    (warnCount) => {
+      setCheatWarning(warnCount);
+      setTimeout(() => setCheatWarning(null), 3000);
+    }
+  );
 
   useEffect(() => {
     async function initStage() {
@@ -121,19 +140,6 @@ export default function Game() {
     setShowHint(false);
 
     if (word.question_type === 'listening_mc' || word.qType === 'LISTENING_MC') {
-      console.table({
-        type: word.question_type,
-        word_id: word.word_id,
-        correct_word_id: word.correct_word_id,
-        audio_url: word.audio_url,
-        correct_answer: word.correct_answer,
-        answer_language: word.answer_language,
-        choices: (word.choices || []).map((choice: QuizChoice) => ({
-          word_id: choice.word_id,
-          text: choice.text,
-          is_correct: choice.is_correct
-        }))
-      });
       setTimeout(() => playWordAudio(word.word), 300);
     }
 
@@ -163,7 +169,12 @@ export default function Game() {
   }, [gameState, loading, isAnswered, currentIndex, words, lives, difficultyConfig]);
 
   async function submitAnswer(answer: QuizChoice | string) {
-    if (isAnswered) return;
+    if (isAnswered || isAnsweringRef.current) return;
+    
+    // Strict 0.5s Debounce to prevent click spam
+    isAnsweringRef.current = true;
+    setTimeout(() => { isAnsweringRef.current = false; }, 500);
+
     setIsAnswered(true);
     setSelectedAnswer(answer);
 
@@ -243,9 +254,11 @@ export default function Game() {
         const wrongList = choices.filter((c: any) => c && c.is_correct === false);
         const toHide = wrongList.sort(() => 0.5 - Math.random()).slice(0, 2);
         setChoices(choices.map((c: any) => toHide.includes(c) ? { ...c, hidden: true } : c));
+        setAssistedWords(prev => [...new Set([...prev, words[currentIndex]?.word_id || words[currentIndex]?.id])]);
       } else if (itemCode === 'HINT') {
         setShowHint(true);
         setUsedHintsCount(h => h + 1);
+        setAssistedWords(prev => [...new Set([...prev, words[currentIndex]?.word_id || words[currentIndex]?.id])]);
       }
 
       setUsedItemsThisStage(u => [...u, itemCode]);
@@ -257,6 +270,11 @@ export default function Game() {
   };
 
   const handleProcessResults = async () => {
+    // 1. Anti-Cheat: Validate Time
+    if (!validateTime(words.length)) {
+       return; // Block submission if speed hack is detected
+    }
+
     const stageNum = progress?.current_stage || 1;
     const avgResponseTime = responseTimes.length > 0 
       ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length 
@@ -275,7 +293,8 @@ export default function Game() {
           .map((question) => question.word_id || question.id)
           .filter((wordId) => wordId && !wrongWords.includes(wordId)),
         totalQuestions: words.length,
-        usedHints: usedHintsCount
+        usedHints: usedHintsCount,
+        assistedWords: [...new Set(assistedWords)]
       });
 
       setPassReport(completeReport);
@@ -340,6 +359,26 @@ export default function Game() {
         <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
         <h2 className="text-xl font-black text-white mb-2">กำลังประมวลผลด่านความยาก...</h2>
         <p className="text-slate-400 text-sm">Adaptive Engine กำลังคำนวณและปรับลด-เพิ่มความยากสำหรับคุณ</p>
+      </div>
+    );
+  }
+
+  // CHEAT DETECTED SCREEN
+  if (cheatDetected) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 text-center">
+        <div className="w-24 h-24 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
+          <AlertTriangle className="w-12 h-12 text-red-500" />
+        </div>
+        <h2 className="text-3xl font-black text-white mb-4">ยุติการทดสอบ (Invalid Run)</h2>
+        <p className="text-slate-400 max-w-md mb-8">
+          {cheatDetected === 'BLUR_MAX_WARNINGS' 
+            ? 'ระบบตรวจพบการสลับหน้าจอ (พับแท็บ) เกิน 3 ครั้ง ซึ่งถือเป็นการผิดกฎการทดสอบในโหมดนี้'
+            : 'ระบบตรวจพบการทำเวลาที่ผิดปกติ (Speed Hack) เวลาที่ใช้ในการทำข้อสอบน้อยเกินกว่าจะเป็นไปได้'}
+        </p>
+        <button onClick={() => setScreen('dashboard')} className="px-8 py-4 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold">
+          กลับสู่หน้าหลัก
+        </button>
       </div>
     );
   }
