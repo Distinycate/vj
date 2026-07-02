@@ -55,8 +55,8 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
       
       const { data } = await supabase
         .from('wrong_words')
-        .select('vocabulary(part_of_speech)')
-        .in('user_id', studentIds);
+        .select('error_count, vocabulary(part_of_speech)')
+        .in('student_id', studentIds);
 
       if (data) {
         const errorCounts: Record<string, number> = {};
@@ -64,8 +64,9 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
         
         data.forEach((w: any) => {
           let pos = w.vocabulary?.part_of_speech || 'Other';
-          errorCounts[pos] = (errorCounts[pos] || 0) + 1;
-          totalErrors++;
+          const count = w.error_count || 1;
+          errorCounts[pos] = (errorCounts[pos] || 0) + count;
+          totalErrors += count;
         });
 
         const formatted = Object.keys(errorCounts).map(pos => ({

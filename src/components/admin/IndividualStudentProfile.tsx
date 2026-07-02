@@ -112,14 +112,14 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
       // 3. System Logs (Latest wrong words)
       const { data: wrongWords } = await supabase
         .from('wrong_words')
-        .select('word_id, created_at, vocabulary(word)')
-        .eq('user_id', student.id)
-        .order('created_at', { ascending: false })
+        .select('word_id, last_attempt_at, vocabulary(word)')
+        .eq('student_id', student.id)
+        .order('last_attempt_at', { ascending: false })
         .limit(3);
       
       const sysLogs = (wrongWords || []).map((w: any, idx) => ({
         id: `sys-${idx}`,
-        date: new Date(w.created_at).toISOString().split('T')[0],
+        date: new Date(w.last_attempt_at).toISOString().split('T')[0],
         text: `ตอบผิดคำว่า "${w.vocabulary?.word}"`,
         type: 'system'
       }));

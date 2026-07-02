@@ -25,8 +25,8 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
       
       const { data } = await supabase
         .from('wrong_words')
-        .select('vocabulary(word, meaning)')
-        .in('user_id', studentIds);
+        .select('error_count, vocabulary(word, meaning)')
+        .in('student_id', studentIds);
 
       if (data) {
         const wordCounts: Record<string, { count: number, meaning: string }> = {};
@@ -36,7 +36,7 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
           if (!wordCounts[word]) {
             wordCounts[word] = { count: 0, meaning };
           }
-          wordCounts[word].count++;
+          wordCounts[word].count += row.error_count || 1;
         });
 
         const sorted = Object.keys(wordCounts)
