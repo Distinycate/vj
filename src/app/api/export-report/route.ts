@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
 
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 export async function GET() {
   try {
     const workbook = new ExcelJS.Workbook();
@@ -25,15 +31,23 @@ export async function GET() {
     sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } }; // Indigo-600
 
-    // Mock data for demonstration. In production, fetch from Supabase `item_analysis` joined with `vocabulary`.
-    const mockData = [
-      { vocab: 'abandon', meaning: 'ละทิ้ง', attempts: 120, success: 45, p_value: 0.45, d_value: 0.20 },
-      { vocab: 'benevolent', meaning: 'เมตตา', attempts: 85, success: 30, p_value: 0.30, d_value: 0.45 },
-      { vocab: 'crucial', meaning: 'สำคัญมาก', attempts: 150, success: 80, p_value: 0.80, d_value: 0.15 },
-      { vocab: 'dilemma', meaning: 'ภาวะกลืนไม่เข้าคายไม่ออก', attempts: 90, success: 20, p_value: 0.20, d_value: 0.50 }
-    ];
+    const { data: rawData, error } = await supabase
+      .from('item_analysis')
+      .select('*, vocabulary(word, meaning)')
+      .order('p_value', { ascending: true });
 
-    mockData.forEach((row, index) => {
+    if (error) throw error;
+
+    const exportData = (rawData || []).map((row: any) => ({
+      vocab: row.vocabulary?.word || 'Unknown',
+      meaning: row.vocabulary?.meaning || 'Unknown',
+      attempts: row.attempt_count,
+      success: row.success_rate,
+      p_value: row.p_value,
+      d_value: row.d_value
+    }));
+
+    exportData.forEach((row, index) => {
       // Calculate status based on P and D values
       let status = 'Good';
       if (row.p_value < 0.2) status = 'Too Hard';

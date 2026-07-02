@@ -98,7 +98,7 @@ export default function AdminPage() {
 
       const studentIds = students?.map(s => s.id) || [];
       if (studentIds.length > 0) {
-        const { data: wData } = await supabase.from('wrong_words').select('*, vocabulary(*)').in('user_id', studentIds);
+        const { data: wData } = await supabase.from('wrong_words').select('*, vocabulary(*)').in('student_id', studentIds);
         if (wData) setWrongWords(wData);
       } else {
         setWrongWords([]);
@@ -114,22 +114,26 @@ export default function AdminPage() {
     let highRiskCount = 0;
     
     const processedStudents = studentsList.map(s => {
-      const stats = s.analytics_summary?.[0] || { pretest_score: 0, posttest_score: 0, success_rate: 0, attempt_count: 0, last_active_at: new Date(0).toISOString() };
+      const stats = (Array.isArray(s.analytics_summary) ? s.analytics_summary[0] : s.analytics_summary) || { pretest_score: 0, posttest_score: 0, success_rate: 0, attempt_count: 0, last_active_at: new Date(0).toISOString() };
       const pre = stats.pretest_score || 0;
       const post = stats.posttest_score || 0;
       const { percentage: gainPercent } = calculateLearningGain(pre, post);
       const acc = stats.success_rate || 0;
       const attempts = stats.attempt_count || 0;
       
-      const wwCount = wrongWords.filter(w => w.user_id === s.id).reduce((sum, w) => sum + (w.wrong_count || 1), 0);
+      const wwCount = wrongWords.filter(w => w.student_id === s.id).reduce((sum, w) => sum + (w.error_count || 1), 0);
       
-      const lastActive = new Date(stats.last_active_at);
+      const lp = Array.isArray(s.learning_paths) ? s.learning_paths[0] : s.learning_paths;
+      const lastActive = lp?.last_active_date ? new Date(lp.last_active_date) : null;
       const now = new Date();
-      const daysInactive = Math.floor((now.getTime() - lastActive.getTime()) / (1000 * 3600 * 24));
+      const daysInactive = lastActive ? Math.floor((now.getTime() - lastActive.getTime()) / (1000 * 3600 * 24)) : 999;
       
-      const riskScore = calculateRiskScore({ accuracy: acc, reviewWords: wwCount, daysInactive, stageStagnationDays: 0 });
-      const riskLevel = getRiskLevel(riskScore);
-      if (riskLevel === 'High' || riskLevel === 'Critical') highRiskCount++;
+      let riskLevel = 'No Data';
+      if (stats?.attempt_count > 0 || stats?.success_rate > 0) {
+        const riskScore = calculateRiskScore({ accuracy: acc, reviewWords: wwCount, daysInactive: lastActive ? daysInactive : 0, stageStagnationDays: 0 });
+        riskLevel = getRiskLevel(riskScore);
+        if (riskLevel === 'High' || riskLevel === 'Critical') highRiskCount++;
+      }
 
       totalPre += pre; totalPost += post; totalGain += gainPercent; totalAcc += acc;
       

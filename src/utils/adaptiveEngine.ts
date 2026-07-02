@@ -499,6 +499,23 @@ export async function completeStage(studentId: string, stageNumber: number, resu
       });
       
       await supabase.from('user_review_words').upsert(upsertReviewWords, { onConflict: 'user_id,word_id' });
+
+      // Synchronize with wrong_words for reporting
+      if (wrongWords.length > 0) {
+         const { data: existingWrong } = await supabase.from('wrong_words').select('*').in('word_id', wrongWords).eq('student_id', studentId);
+         const wrongMap = new Map((existingWrong || []).map(w => [w.word_id, w]));
+         
+         const upsertWrong = wrongWords.map(wordId => {
+           const existing = wrongMap.get(wordId);
+           return {
+             student_id: studentId,
+             word_id: wordId,
+             error_count: (existing?.error_count || 0) + 1,
+             last_attempt_at: new Date().toISOString()
+           };
+         });
+         await supabase.from('wrong_words').upsert(upsertWrong, { onConflict: 'student_id,word_id' });
+      }
     }
 
     // 4. Calculate coins & EXP rewards (only if passed)
@@ -543,8 +560,8 @@ export async function completeStage(studentId: string, stageNumber: number, resu
       }).eq('student_id', studentId);
     }
 
-    // 5. Fire-and-forget Background Analytics (Non-blocking)
-    (async () => {
+    // 5. Background Analytics (Blocking to ensure data integrity before returning to dashboard)
+    await (async () => {
       try {
         // Bulk item analysis
         if (answeredWordIds.length > 0) {

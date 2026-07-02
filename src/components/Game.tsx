@@ -178,8 +178,8 @@ export default function Game() {
     setIsAnswered(true);
     setSelectedAnswer(answer);
 
-    const elapsed = Math.round((Date.now() - questionStartTime) / 1000);
-    setResponseTimes(r => [...r, elapsed]);
+    const finalResponseTimes = [...responseTimes, elapsed];
+    setResponseTimes(finalResponseTimes);
 
     const wordObj = words[currentIndex];
     let isCorrect = false;
@@ -195,6 +195,9 @@ export default function Game() {
         selectedText === correctText;
     }
 
+    const finalScore = score + (isCorrect ? 1 : 0);
+    const finalWrongWords = isCorrect ? wrongWords : [...wrongWords, wordObj.word_id || wordObj.id];
+
     if (isCorrect) {
       setScore(s => s + 1);
       const newCombo = comboCount + 1;
@@ -207,11 +210,12 @@ export default function Game() {
     }
 
     setTimeout(() => {
-      if (lives - (isCorrect ? 0 : 1) > 0 && currentIndex + 1 < words.length) {
+      const nextLives = lives - (isCorrect ? 0 : 1);
+      if (nextLives > 0 && currentIndex + 1 < words.length) {
         setCurrentIndex(c => c + 1);
       } else {
         setGameState('reflection'); // We'll repurpose this as a processing state
-        handleProcessResults();
+        handleProcessResults(finalScore, finalWrongWords, finalResponseTimes);
       }
     }, 2000);
   }
@@ -269,29 +273,29 @@ export default function Game() {
     }
   };
 
-  const handleProcessResults = async () => {
+  const handleProcessResults = async (finalScore = score, finalWrongWords = wrongWords, finalResponseTimes = responseTimes) => {
     // 1. Anti-Cheat: Validate Time
     if (!validateTime(words.length)) {
        return; // Block submission if speed hack is detected
     }
 
     const stageNum = progress?.current_stage || 1;
-    const avgResponseTime = responseTimes.length > 0 
-      ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length 
+    const avgResponseTime = finalResponseTimes.length > 0 
+      ? finalResponseTimes.reduce((a, b) => a + b, 0) / finalResponseTimes.length 
       : 10;
 
-    const accuracyVal = Math.round((score / words.length) * 100);
+    const accuracyVal = Math.round((finalScore / words.length) * 100);
 
     try {
       // 1. Call completeStage from adaptive engine
       const completeReport = await completeStage(student.id, stageNum, {
-        score,
+        score: finalScore,
         accuracy: accuracyVal,
         responseTimeAvg: avgResponseTime,
-        wrongWords: [...new Set(wrongWords)],
+        wrongWords: [...new Set(finalWrongWords)],
         correctWords: words
           .map((question) => question.word_id || question.id)
-          .filter((wordId) => wordId && !wrongWords.includes(wordId)),
+          .filter((wordId) => wordId && !finalWrongWords.includes(wordId)),
         totalQuestions: words.length,
         usedHints: usedHintsCount,
         assistedWords: [...new Set(assistedWords)]
@@ -352,17 +356,6 @@ export default function Game() {
     );
   }
 
-  // PROCESSING SCREEN
-  if (gameState === 'reflection') {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 relative overflow-hidden">
-        <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
-        <h2 className="text-xl font-black text-white mb-2">กำลังประมวลผลด่านความยาก...</h2>
-        <p className="text-slate-400 text-sm">Adaptive Engine กำลังคำนวณและปรับลด-เพิ่มความยากสำหรับคุณ</p>
-      </div>
-    );
-  }
-
   // CHEAT DETECTED SCREEN
   if (cheatDetected) {
     return (
@@ -379,6 +372,17 @@ export default function Game() {
         <button onClick={() => setScreen('dashboard')} className="px-8 py-4 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold">
           กลับสู่หน้าหลัก
         </button>
+      </div>
+    );
+  }
+
+  // PROCESSING SCREEN
+  if (gameState === 'reflection') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 relative overflow-hidden">
+        <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
+        <h2 className="text-xl font-black text-white mb-2">กำลังประมวลผลด่านความยาก...</h2>
+        <p className="text-slate-400 text-sm">Adaptive Engine กำลังคำนวณและปรับลด-เพิ่มความยากสำหรับคุณ</p>
       </div>
     );
   }

@@ -154,7 +154,7 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
               <User className="w-8 h-8" />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white">{student.first_name} {student.last_name}</h2>
+              <h2 className="text-2xl font-black text-white">{student.student_name}</h2>
               <p className="text-sm text-slate-400">Student ID: {student.student_id} | Class: {student.classrooms?.class_name || 'N/A'}</p>
             </div>
           </div>
@@ -207,7 +207,7 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
                       <PolarGrid stroke="#1e293b" />
                       <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 10 }} />
                       <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                      <Radar name={student.first_name} dataKey="A" stroke="#10b981" fill="#10b981" fillOpacity={0.4} />
+                      <Radar name={student.student_name} dataKey="A" stroke="#10b981" fill="#10b981" fillOpacity={0.4} />
                       <Radar name="Class Average" dataKey="B" stroke="#64748b" fill="#64748b" fillOpacity={0.2} />
                       <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }} />
                     </RadarChart>
@@ -235,7 +235,7 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
                       <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
                       <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }} />
                       <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                      <Line type="monotone" dataKey="retention" name={`${student.first_name}'s Memory`} stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="retention" name={`${student.student_name}'s Memory`} stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                       <Line type="monotone" dataKey="baseline" name="Ebbinghaus Forgetting Curve" stroke="#475569" strokeDasharray="5 5" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>

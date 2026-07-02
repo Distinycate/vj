@@ -253,7 +253,7 @@ export default function Dashboard() {
         {/* Mini Leaderboard on top if in roadmap */}
         {activeTab === 'roadmap' && (
           <div className="mb-8">
-            <TeamLeaderboard scope="class" />
+            <TeamLeaderboard scope="class" classroomId={student?.classroom_id} />
           </div>
         )}
 

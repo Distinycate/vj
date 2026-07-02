@@ -65,8 +65,9 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
       let totalPre = 0;
       let totalPost = 0;
       studentsList.forEach(s => {
-        totalPre += s.analytics_summary?.[0]?.pretest_score || 0;
-        totalPost += s.analytics_summary?.[0]?.posttest_score || 0;
+        const stats = Array.isArray(s.analytics_summary) ? s.analytics_summary[0] : s.analytics_summary;
+        totalPre += stats?.pretest_score || 0;
+        totalPost += stats?.posttest_score || 0;
       });
       currentPre = Math.round(totalPre / studentsList.length);
       currentPost = Math.round(totalPost / studentsList.length);

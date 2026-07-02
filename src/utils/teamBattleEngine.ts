@@ -103,7 +103,11 @@ export async function createTeamScoreEvent(params: {
 
 export async function calculateTeamScore(teamId: string) {
   try {
-    const { data: events } = await supabase.from('team_score_events').select('*').eq('team_id', teamId);
+    const { data: season } = await supabase.from('team_battle_seasons').select('id').eq('is_active', true).eq('scope', 'school').maybeSingle();
+    let query = supabase.from('team_score_events').select('*').eq('team_id', teamId);
+    if (season) query = query.eq('season_id', season.id);
+    
+    const { data: events } = await query;
     if (!events) return { totalScore: 0, finalScore: 0, activeMembersRate: 0 };
 
     const { data: members } = await supabase.from('team_members').select('user_id').eq('team_id', teamId);

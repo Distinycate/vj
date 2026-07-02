@@ -4,13 +4,13 @@ import { supabase } from '@/utils/supabase/client';
 import { Trophy, Users, Star, Activity, Crown } from 'lucide-react';
 import { calculateTeamScore } from '@/utils/teamBattleEngine';
 
-export default function TeamLeaderboard({ scope = 'school' }: { scope?: 'class' | 'school' }) {
+export default function TeamLeaderboard({ scope = 'school', classroomId }: { scope?: 'class' | 'school', classroomId?: string }) {
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadLeaderboard() {
-      const cacheKey = `vj_leaderboard_cache_${scope}`;
+      const cacheKey = `vj_leaderboard_cache_${scope}_${classroomId || 'all'}`;
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
         try {
@@ -28,11 +28,12 @@ export default function TeamLeaderboard({ scope = 'school' }: { scope?: 'class' 
 
       setLoading(true);
       try {
-        const { data: dbTeams } = await supabase
-          .from('teams')
-          .select('*')
-          .eq('team_type', scope)
-          .eq('is_active', true);
+        let query = supabase.from('teams').select('*').eq('team_type', scope).eq('is_active', true);
+        if (scope === 'class' && classroomId) {
+          query = query.eq('classroom_id', classroomId);
+        }
+        
+        const { data: dbTeams } = await query;
           
         if (dbTeams) {
           const scoredTeams = [];

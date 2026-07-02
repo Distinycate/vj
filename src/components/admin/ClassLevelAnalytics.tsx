@@ -17,7 +17,7 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
   // 1. Student Clustering Data
   const clusteringData = useMemo(() => {
     return studentsList.map(s => {
-      const stats = s.analytics_summary?.[0] || {};
+      const stats = (Array.isArray(s.analytics_summary) ? s.analytics_summary[0] : s.analytics_summary) || {};
       const accuracy = stats.success_rate || 0; // Y axis
       const effort = stats.attempt_count || 0; // X axis
       
@@ -36,7 +36,7 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
 
       return {
         id: s.id,
-        name: s.first_name || 'Unknown',
+        name: s.student_name || 'Unknown',
         accuracy,
         effort,
         category,
@@ -117,7 +117,10 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          avgAccuracy: studentsList.reduce((a, c) => a + (c.analytics_summary?.[0]?.success_rate || 0), 0) / (studentsList.length || 1),
+          avgAccuracy: studentsList.reduce((a, c) => {
+            const st = Array.isArray(c.analytics_summary) ? c.analytics_summary[0] : c.analytics_summary;
+            return a + (st?.success_rate || 0);
+          }, 0) / (studentsList.length || 1),
           weakestSkill: actualWeakest,
           atRiskCount: clusteringData.filter(d => d.category === 'At Risk (Low Effort)').length
         })

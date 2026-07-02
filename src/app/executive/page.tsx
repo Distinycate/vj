@@ -55,7 +55,7 @@ export default function ExecutiveDashboard() {
         setTotalStudents(sCount || 0);
         setTotalTeachers(tCount || 0);
 
-        const { data: classData } = await supabase.from('classrooms').select('*, students(*, analytics_summary(*))');
+        const { data: classData } = await supabase.from('classrooms').select('*, students(*, analytics_summary(*), learning_paths(*))');
         
         // Filter out non M.1 - M.3 rooms if any slipped through
         const validClasses = (classData || []).filter(c => c.class_name.includes('ม.1') || c.class_name.includes('ม.2') || c.class_name.includes('ม.3'));
@@ -83,9 +83,10 @@ export default function ExecutiveDashboard() {
       let cPre = 0, cPost = 0, cAcc = 0, cGain = 0, studentsCount = c.students?.length || 0;
       
       (c.students || []).forEach((s: any) => {
-        const pre = s.analytics_summary?.pretest_score || 0;
-        const post = s.analytics_summary?.posttest_score || 0;
-        const acc = s.analytics_summary?.success_rate || 0;
+        const stats = Array.isArray(s.analytics_summary) ? s.analytics_summary[0] : s.analytics_summary;
+        const pre = stats?.pretest_score || 0;
+        const post = stats?.posttest_score || 0;
+        const acc = stats?.success_rate || 0;
         const { percentage } = calculateLearningGain(pre, post);
         
         cPre += pre; cPost += post; cAcc += acc; cGain += percentage;
@@ -95,7 +96,8 @@ export default function ExecutiveDashboard() {
         count++;
 
         // Simple risk estimation for executive overview (accuracy and inactivity)
-        const lastActive = s.learning_paths?.last_active_date ? new Date(s.learning_paths.last_active_date) : null;
+        const lp = Array.isArray(s.learning_paths) ? s.learning_paths[0] : s.learning_paths;
+        const lastActive = lp?.last_active_date ? new Date(lp.last_active_date) : null;
         const daysInactive = lastActive ? Math.floor((now.getTime() - lastActive.getTime()) / (1000 * 3600 * 24)) : 999;
         let riskScore = 0;
         if (acc < 50) riskScore += 40;
