@@ -14,6 +14,7 @@ import { calculateLearningGain, calculateRiskScore, getRiskLevel, getProgressTre
 import { generateStudentInsight } from '@/utils/aiTeacherInsight';
 
 import TeamLeaderboard from '@/components/TeamLeaderboard';
+import SeasonManager from '@/components/admin/SeasonManager';
 import SchoolLevelDashboard from '@/components/admin/SchoolLevelDashboard';
 import ClassLevelAnalytics from '@/components/admin/ClassLevelAnalytics';
 import IndividualStudentProfile from '@/components/admin/IndividualStudentProfile';
@@ -372,6 +373,13 @@ export default function AdminPage() {
                 <h2 className="text-xl font-black text-white flex items-center gap-2"><Trophy className="text-amber-400"/> Cross-Class Team Battle</h2>
                 <p className="text-slate-400 text-sm mt-1">อันดับทีมข้ามห้องเรียนระดับโรงเรียน</p>
               </div>
+              
+              {teacher.role === 'ADMIN' && (
+                <div className="mb-6">
+                  <SeasonManager />
+                </div>
+              )}
+              
               <TeamLeaderboard scope="school" />
             </motion.div>
           )}

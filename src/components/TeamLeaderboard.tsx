@@ -7,6 +7,7 @@ import { calculateTeamScore } from '@/utils/teamBattleEngine';
 export default function TeamLeaderboard({ scope = 'school', classroomId }: { scope?: 'class' | 'school', classroomId?: string }) {
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeSeasonName, setActiveSeasonName] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadLeaderboard() {
@@ -28,6 +29,15 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
 
       setLoading(true);
       try {
+        // Fetch active season
+        const { data: season } = await supabase
+          .from('team_battle_seasons')
+          .select('season_name')
+          .eq('scope', 'school')
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        if (season) setActiveSeasonName(season.season_name);
         let query = supabase.from('teams').select('*').eq('team_type', scope).eq('is_active', true);
         if (scope === 'class' && classroomId) {
           query = query.eq('classroom_id', classroomId);
@@ -72,8 +82,12 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
       <div className="flex items-center gap-3 mb-6">
         <Crown className="w-8 h-8 text-amber-400" />
         <div>
-          <h3 className="text-xl font-black text-white">ตารางคะแนนทีม ({scope === 'school' ? 'ระดับโรงเรียน' : 'ระดับห้องเรียน'})</h3>
-          <p className="text-sm text-slate-400">รวมคะแนนจากทุกการมีส่วนร่วมของสมาชิก</p>
+          <h3 className="text-xl font-black text-white">
+            ตารางคะแนนทีม ({scope === 'school' ? 'ระดับโรงเรียน' : 'ระดับห้องเรียน'})
+          </h3>
+          <p className="text-sm text-slate-400">
+            {activeSeasonName ? `ฤดูกาล: ${activeSeasonName}` : 'รวมคะแนนจากทุกการมีส่วนร่วมของสมาชิก'}
+          </p>
         </div>
       </div>
 
