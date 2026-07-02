@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { 
   Users, AlertTriangle, LogOut, Shield, 
-  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter
+  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw
 } from 'lucide-react';
 import { 
   BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -205,6 +205,9 @@ export default function AdminPage() {
                 ))}
               </select>
             </div>
+            <button onClick={() => window.location.reload()} className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold">
+              <RefreshCw className="w-4 h-4" /> รีเฟรช
+            </button>
             <button onClick={() => { localStorage.removeItem('vocab_journey_teacher'); window.location.reload(); }} className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
               <LogOut className="w-4 h-4" />
             </button>

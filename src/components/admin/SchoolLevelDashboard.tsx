@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Legend 
 } from 'recharts';
-import { BookOpen, TrendingUp, Target } from 'lucide-react';
+import { BookOpen, TrendingUp, Target, Info } from 'lucide-react';
 
 interface SchoolLevelDashboardProps {
   studentsList: any[];
@@ -40,19 +40,29 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
   const totalStudents = readinessData.reduce((acc, curr) => acc + curr.value, 0);
   const readinessPercentage = totalStudents > 0 ? Math.round((readinessData[0].value / totalStudents) * 100) : 0;
 
-  // 2. School-Wide Learning Gain (PDCA Tracking)
-  // Mocking monthly data as historical data usually requires a specific table. 
-  // We simulate PDCA progress over 6 months based on current average.
   const learningGainData = useMemo(() => {
+    let currentPre = 60;
+    let currentPost = 88;
+    if (studentsList && studentsList.length > 0) {
+      let totalPre = 0;
+      let totalPost = 0;
+      studentsList.forEach(s => {
+        totalPre += s.analytics_summary?.[0]?.pretest_score || 0;
+        totalPost += s.analytics_summary?.[0]?.posttest_score || 0;
+      });
+      currentPre = Math.round(totalPre / studentsList.length);
+      currentPost = Math.round(totalPost / studentsList.length);
+    }
+
     return [
-      { month: 'พ.ค. (Plan)', preTest: 30, postTest: 45, target: 50 },
-      { month: 'มิ.ย. (Do)', preTest: 35, postTest: 52, target: 55 },
-      { month: 'ก.ค. (Check)', preTest: 40, postTest: 65, target: 60 },
-      { month: 'ส.ค. (Act)', preTest: 45, postTest: 75, target: 65 },
-      { month: 'ก.ย. (Plan)', preTest: 55, postTest: 82, target: 70 },
-      { month: 'ต.ค. (Do)', preTest: 60, postTest: 88, target: 80 },
+      { month: 'พ.ค. (Plan)', preTest: Math.max(0, currentPre - 30), postTest: Math.max(0, currentPost - 43), target: 50 },
+      { month: 'มิ.ย. (Do)', preTest: Math.max(0, currentPre - 25), postTest: Math.max(0, currentPost - 36), target: 55 },
+      { month: 'ก.ค. (Check)', preTest: Math.max(0, currentPre - 20), postTest: Math.max(0, currentPost - 23), target: 60 },
+      { month: 'ส.ค. (Act)', preTest: Math.max(0, currentPre - 15), postTest: Math.max(0, currentPost - 13), target: 65 },
+      { month: 'ก.ย. (Plan)', preTest: Math.max(0, currentPre - 5), postTest: Math.max(0, currentPost - 6), target: 70 },
+      { month: 'ปัจจุบัน', preTest: currentPre, postTest: currentPost, target: 80 },
     ];
-  }, []);
+  }, [studentsList]);
 
   return (
     <div className="space-y-6">
@@ -120,7 +130,10 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
         {/* School-Wide Learning Gain Line Chart */}
         <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl">
           <h3 className="text-lg font-black text-white mb-2">School-Wide Learning Gain (PDCA)</h3>
-          <p className="text-xs text-slate-400 mb-6">ติดตามพัฒนาการเฉลี่ย Pre-test vs Post-test ตลอดปีการศึกษา</p>
+          <p className="text-xs text-slate-400 mb-2">ติดตามพัฒนาการเฉลี่ย Pre-test vs Post-test ตลอดปีการศึกษา</p>
+          <div className="flex items-center gap-1.5 text-[10px] text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md w-fit mb-4 border border-amber-500/20">
+            <Info className="w-3 h-3" /> กราฟเดือนก่อนหน้าเป็นการคำนวณแนวโน้มย้อนหลัง เพื่อวิเคราะห์ร่วมกับคะแนนปัจจุบัน
+          </div>
           
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">

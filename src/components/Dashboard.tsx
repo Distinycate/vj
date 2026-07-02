@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Trophy, Star, LogOut, Award, Compass, Store,
-  Bookmark, Eye, CheckCircle2, BookOpen, Volume2, User, ChevronDown, ChevronUp, BookMarked, Activity, Shuffle
+  Bookmark, Eye, CheckCircle2, BookOpen, Volume2, User, ChevronDown, ChevronUp, BookMarked, Activity, Shuffle, RefreshCw
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
@@ -258,7 +258,13 @@ export default function Dashboard() {
         )}
 
         {/* Tab Links */}
-        <div className="grid grid-cols-5 bg-slate-900/60 border border-slate-850 rounded-2xl p-1 mb-8 gap-0.5">
+        <div className="flex justify-between items-end mb-2">
+          <div className="text-slate-400 text-sm font-bold">เมนูหลัก</div>
+          <button onClick={() => window.location.reload()} className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-full transition-all">
+            <RefreshCw className="w-3 h-3" /> รีเฟรชข้อมูล
+          </button>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-6 bg-slate-900/60 border border-slate-850 rounded-2xl p-1 mb-8 gap-0.5">
           <button 
             onClick={() => setActiveTab('roadmap')} 
             className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
