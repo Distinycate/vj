@@ -436,125 +436,51 @@ export async function completeStage(studentId: string, stageNumber: number, resu
       }]);
     }
 
-    // 3. Spaced Repetition / Wrong Words logging
-    if (uniqueWrongWords.length > 0) {
-      for (const wordId of uniqueWrongWords) {
-        // Get existing review info
-        const { data: existingWord } = await supabase
-          .from('user_review_words')
-          .select('wrong_count, mastery_level')
-          .eq('user_id', studentId)
-          .eq('word_id', wordId)
-          .maybeSingle();
-
-        const wrongCount = (existingWord?.wrong_count || 0) + 1;
-        // Decrease mastery level by 1 on mistake (min 0)
-        const oldMastery = existingWord?.mastery_level || 0;
-        const newMastery = Math.max(0, oldMastery - 1);
+    // 3. Spaced Repetition / Wrong Words logging (BULK UPSERT)
+    const answeredWordIds = [...uniqueCorrectWords, ...uniqueWrongWords];
+    if (answeredWordIds.length > 0) {
+      const { data: existingWords } = await supabase
+        .from('user_review_words')
+        .select('word_id, wrong_count, mastery_level')
+        .eq('user_id', studentId)
+        .in('word_id', answeredWordIds);
         
-        // Calculate next_review_at based on mastery_level
-        // level 0: immediately, level 1: 1 day, level 2: 3 days, level 3: 7 days
-        const reviewIntervals = [0, 1, 3, 7];
+      const existingMap = new Map((existingWords || []).map(w => [w.word_id, w]));
+      const reviewIntervals = [0, 1, 3, 7, 30];
+      
+      const upsertReviewWords = answeredWordIds.map(wordId => {
+        const isWrong = uniqueWrongWords.includes(wordId);
+        const existing = existingMap.get(wordId);
+        
+        let newMastery = existing?.mastery_level || 0;
+        let wrongCount = existing?.wrong_count || 0;
+        let lastWrongAt = undefined;
+        
+        if (isWrong) {
+          wrongCount += 1;
+          newMastery = Math.max(0, newMastery - 1);
+          lastWrongAt = new Date().toISOString();
+        } else {
+          newMastery = Math.min(4, newMastery + 1);
+        }
+        
         const nextReviewDate = new Date();
-        nextReviewDate.setDate(nextReviewDate.getDate() + reviewIntervals[newMastery]);
-
-        await supabase.from('user_review_words').upsert({
+        nextReviewDate.setDate(nextReviewDate.getDate() + reviewIntervals[Math.min(4, newMastery)]);
+        
+        return {
           user_id: studentId,
           word_id: wordId,
           wrong_count: wrongCount,
           mastery_level: newMastery,
-          last_wrong_at: new Date().toISOString(),
-          next_review_at: nextReviewDate.toISOString()
-        }, { onConflict: 'user_id,word_id' });
-      }
+          next_review_at: nextReviewDate.toISOString(),
+          ...(lastWrongAt ? { last_wrong_at: lastWrongAt } : {})
+        };
+      });
+      
+      await supabase.from('user_review_words').upsert(upsertReviewWords, { onConflict: 'user_id,word_id' });
     }
 
-    // 4. Promote only words that were actually shown and answered correctly.
-    for (const wordId of uniqueCorrectWords) {
-      const { data: existingWord } = await supabase
-        .from('user_review_words')
-        .select('wrong_count, mastery_level')
-        .eq('user_id', studentId)
-        .eq('word_id', wordId)
-        .maybeSingle();
-
-      const newMastery = Math.min(4, (existingWord?.mastery_level || 0) + 1);
-      const reviewIntervals = [0, 1, 3, 7, 30];
-      const nextReviewDate = new Date();
-      nextReviewDate.setDate(nextReviewDate.getDate() + reviewIntervals[newMastery]);
-
-      await supabase.from('user_review_words').upsert({
-        user_id: studentId,
-        word_id: wordId,
-        wrong_count: existingWord?.wrong_count || 0,
-        mastery_level: newMastery,
-        next_review_at: nextReviewDate.toISOString()
-      }, { onConflict: 'user_id,word_id' });
-    }
-
-    const answeredWordIds = [...uniqueCorrectWords, ...uniqueWrongWords];
-    for (const wordId of answeredWordIds) {
-      const { data: existingAnalysis } = await supabase
-        .from('item_analysis')
-        .select('*')
-        .eq('word_id', wordId)
-        .maybeSingle();
-
-      const oldAttemptCount = existingAnalysis?.attempt_count || 0;
-      const oldSuccessRate = Number(existingAnalysis?.success_rate || 0);
-      const wasCorrect = uniqueCorrectWords.includes(wordId) ? 1 : 0;
-      const nextItemAttemptCount = oldAttemptCount + 1;
-      const nextItemSuccessRate = (
-        (oldSuccessRate * oldAttemptCount + wasCorrect * 100) /
-        nextItemAttemptCount
-      );
-      const oldAverageTime = Number(existingAnalysis?.avg_time_ms || 0);
-      const nextAverageTime = (
-        (oldAverageTime * oldAttemptCount + responseTimeAvg * 1000) /
-        nextItemAttemptCount
-      );
-
-      await supabase.from('item_analysis').upsert({
-        word_id: wordId,
-        p_value: Number((nextItemSuccessRate / 100).toFixed(2)),
-        d_value: Number(existingAnalysis?.d_value || 0),
-        success_rate: Number(nextItemSuccessRate.toFixed(2)),
-        attempt_count: nextItemAttemptCount,
-        avg_time_ms: Math.round(nextAverageTime),
-        choices_selected_counts: existingAnalysis?.choices_selected_counts || {},
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'word_id' });
-    }
-
-    // Keep the research dashboard in sync with the gameplay result.
-    const { data: analytics } = await supabase
-      .from('analytics_summary')
-      .select('*')
-      .eq('student_id', studentId)
-      .maybeSingle();
-
-    const previousAttemptCount = analytics?.attempt_count || 0;
-    const nextAttemptCount = previousAttemptCount + 1;
-    const previousSuccessRate = Number(analytics?.success_rate || 0);
-    const nextSuccessRate = (
-      (previousSuccessRate * previousAttemptCount + accuracy) /
-      nextAttemptCount
-    );
-    const addedTime = Math.round(responseTimeAvg * Math.max(1, totalQuestions));
-
-    await supabase.from('analytics_summary').upsert({
-      student_id: studentId,
-      pretest_score: analytics?.pretest_score || 0,
-      posttest_score: analytics?.posttest_score || 0,
-      learning_gain: analytics?.learning_gain || 0,
-      normalized_gain: analytics?.normalized_gain || 0,
-      success_rate: Number(nextSuccessRate.toFixed(2)),
-      attempt_count: nextAttemptCount,
-      total_time_on_task_sec: (analytics?.total_time_on_task_sec || 0) + addedTime,
-      last_updated_at: new Date().toISOString(),
-    }, { onConflict: 'student_id' });
-
-    // 5. Calculate coins & EXP rewards (only if passed)
+    // 4. Calculate coins & EXP rewards (only if passed)
     if (passed) {
       // Rank Multipliers: Rank 1: x1, Rank 2: x1.2, Rank 3: x1.4, Rank 4: x1.7, Rank 5: x2
       const rankMultipliers = [1, 1, 1.2, 1.4, 1.7, 2];
@@ -565,141 +491,121 @@ export async function completeStage(studentId: string, stageNumber: number, resu
       let earnedCoins = baseCoins * rankMult;
       let earnedExp = baseExp * rankMult;
 
-      // Boss stage x2 rewards
-      if (isBoss) {
-        earnedCoins *= 2;
-        earnedExp *= 2;
-      }
-
-      // No-hint bonus +20%
-      if (usedHints === 0) {
-        earnedCoins *= 1.2;
-        earnedExp *= 1.2;
-      }
-
-      // Perfect 100% accuracy bonus +30%
-      if (accuracy === 100) {
-        earnedCoins *= 1.3;
-        earnedExp *= 1.3;
-      }
+      if (isBoss) { earnedCoins *= 2; earnedExp *= 2; }
+      if (usedHints === 0) { earnedCoins *= 1.2; earnedExp *= 1.2; }
+      if (accuracy === 100) { earnedCoins *= 1.3; earnedExp *= 1.3; }
 
       earnedCoins = Math.round(earnedCoins);
       earnedExp = Math.round(earnedExp);
 
-      // Fetch current learning path stats
-      const { data: pathData } = await supabase
-        .from('learning_paths')
-        .select('coins, exp, total_exp, current_stage, streak_days, last_active_date')
-        .eq('student_id', studentId)
-        .single();
+      const { data: pathData } = await supabase.from('learning_paths').select('coins, exp, total_exp, current_stage, streak_days, last_active_date').eq('student_id', studentId).single();
 
       if (pathData) {
         const newCoins = (pathData.coins || 0) + earnedCoins;
         const newExp = (pathData.exp || 0) + earnedExp;
         const newTotalExp = (pathData.total_exp || 0) + earnedExp;
         const nextStageNum = Math.min(100, Math.max(pathData.current_stage || 1, stageNumber + 1));
-        const nextStreak = calculateStreak(
-          pathData.last_active_date,
-          pathData.streak_days || 0
-        );
+        const nextStreak = calculateStreak(pathData.last_active_date, pathData.streak_days || 0);
 
-        // Update learning path record
-        await supabase
-          .from('learning_paths')
-          .update({
-            coins: newCoins,
-            exp: newExp,
-            total_exp: newTotalExp,
-            current_stage: nextStageNum,
-            streak_days: nextStreak,
-            last_active_date: new Date().toISOString()
-          })
-          .eq('student_id', studentId);
+        await supabase.from('learning_paths').update({
+          coins: newCoins, exp: newExp, total_exp: newTotalExp, current_stage: nextStageNum,
+          streak_days: nextStreak, last_active_date: new Date().toISOString()
+        }).eq('student_id', studentId);
 
-        // Record coin transactions
-        await supabase.from('coins_transactions').insert([{
-          student_id: studentId,
-          amount: earnedCoins,
-          source: `STAGE_${stageNumber}_PASS`
-        }]);
+        await supabase.from('coins_transactions').insert([{ student_id: studentId, amount: earnedCoins, source: `STAGE_${stageNumber}_PASS` }]);
       }
     } else {
-      const { data: failedPathData } = await supabase
-        .from('learning_paths')
-        .select('streak_days, last_active_date')
-        .eq('student_id', studentId)
-        .maybeSingle();
-      await supabase
-        .from('learning_paths')
-        .update({
-          streak_days: calculateStreak(
-            failedPathData?.last_active_date || null,
-            failedPathData?.streak_days || 0
-          ),
-          last_active_date: new Date().toISOString()
-        })
-        .eq('student_id', studentId);
+      const { data: failedPathData } = await supabase.from('learning_paths').select('streak_days, last_active_date').eq('student_id', studentId).maybeSingle();
+      await supabase.from('learning_paths').update({
+        streak_days: calculateStreak(failedPathData?.last_active_date || null, failedPathData?.streak_days || 0),
+        last_active_date: new Date().toISOString()
+      }).eq('student_id', studentId);
+    }
 
-      const { data: recentStageFailures } = await supabase
-        .from('stage_results')
-        .select('passed')
-        .eq('user_id', studentId)
-        .eq('stage_number', stageNumber)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (
-        recentStageFailures?.length === 3 &&
-        recentStageFailures.every((attempt) => !attempt.passed)
-      ) {
-        const { data: studentData } = await supabase
-          .from('students')
-          .select('classroom_id')
-          .eq('id', studentId)
-          .maybeSingle();
-        const { data: existingAlert } = await supabase
-          .from('intervention_alerts')
-          .select('id')
-          .eq('student_id', studentId)
-          .eq('alert_type', 'STAGE_FAIL_3X')
-          .eq('is_resolved', false)
-          .maybeSingle();
-
-        if (!existingAlert && studentData?.classroom_id) {
-          await supabase.from('intervention_alerts').insert([{
-            student_id: studentId,
-            classroom_id: studentData.classroom_id,
-            alert_type: 'STAGE_FAIL_3X',
-            alert_level: 'HIGH',
-            description: `ไม่ผ่านด่าน ${stageNumber} ติดต่อกัน 3 ครั้ง`,
-            teacher_recommendation: 'ทบทวนคำศัพท์ใน Study Camp และฝึกคำที่ตอบผิดก่อนลองใหม่',
-          }]);
+    // 5. Fire-and-forget Background Analytics (Non-blocking)
+    (async () => {
+      try {
+        // Bulk item analysis
+        if (answeredWordIds.length > 0) {
+          const { data: existingAnalysis } = await supabase.from('item_analysis').select('*').in('word_id', answeredWordIds);
+          const analysisMap = new Map((existingAnalysis || []).map(a => [a.word_id, a]));
+          
+          const upsertAnalysis = answeredWordIds.map(wordId => {
+             const existing = analysisMap.get(wordId);
+             const wasCorrect = uniqueCorrectWords.includes(wordId) ? 1 : 0;
+             const oldAttemptCount = existing?.attempt_count || 0;
+             const oldSuccessRate = Number(existing?.success_rate || 0);
+             const nextItemAttemptCount = oldAttemptCount + 1;
+             const nextItemSuccessRate = ((oldSuccessRate * oldAttemptCount + wasCorrect * 100) / nextItemAttemptCount);
+             const oldAverageTime = Number(existing?.avg_time_ms || 0);
+             const nextAverageTime = ((oldAverageTime * oldAttemptCount + responseTimeAvg * 1000) / nextItemAttemptCount);
+             
+             return {
+                word_id: wordId,
+                p_value: Number((nextItemSuccessRate / 100).toFixed(2)),
+                d_value: Number(existing?.d_value || 0),
+                success_rate: Number(nextItemSuccessRate.toFixed(2)),
+                attempt_count: nextItemAttemptCount,
+                avg_time_ms: Math.round(nextAverageTime),
+                choices_selected_counts: existing?.choices_selected_counts || {},
+                updated_at: new Date().toISOString(),
+             };
+          });
+          await supabase.from('item_analysis').upsert(upsertAnalysis, { onConflict: 'word_id' });
         }
-      }
-    }
 
-    // 6. Update dynamic Adaptive Rank
-    await updateAdaptiveRank(studentId);
+        // Analytics summary
+        const { data: analytics } = await supabase.from('analytics_summary').select('*').eq('student_id', studentId).maybeSingle();
+        const previousAttemptCount = analytics?.attempt_count || 0;
+        const nextAttemptCount = previousAttemptCount + 1;
+        const previousSuccessRate = Number(analytics?.success_rate || 0);
+        const nextSuccessRate = ((previousSuccessRate * previousAttemptCount + accuracy) / nextAttemptCount);
+        const addedTime = Math.round(responseTimeAvg * Math.max(1, totalQuestions));
 
-    // 7. Team Battle Scoring Hook
-    if (passed) {
-      const isBoss = stageNumber % 10 === 0;
-      await createTeamScoreEvent({
-        userId: studentId,
-        eventType: isBoss ? 'boss_completed' : 'stage_completed',
-        points: isBoss ? 30 : 10,
-        metadata: { stageNumber, accuracy: result.accuracy }
-      });
-      if (result.accuracy >= 100) {
-        await createTeamScoreEvent({ userId: studentId, eventType: 'perfect_bonus', points: 25 });
-      } else if (result.accuracy >= 90) {
-        await createTeamScoreEvent({ userId: studentId, eventType: 'accuracy_bonus', points: 15 });
-      } else if (result.accuracy >= 80) {
-        await createTeamScoreEvent({ userId: studentId, eventType: 'accuracy_bonus', points: 10 });
-      } else if (result.accuracy >= 70) {
-        await createTeamScoreEvent({ userId: studentId, eventType: 'accuracy_bonus', points: 5 });
+        await supabase.from('analytics_summary').upsert({
+          student_id: studentId,
+          pretest_score: analytics?.pretest_score || 0,
+          posttest_score: analytics?.posttest_score || 0,
+          learning_gain: analytics?.learning_gain || 0,
+          normalized_gain: analytics?.normalized_gain || 0,
+          success_rate: Number(nextSuccessRate.toFixed(2)),
+          attempt_count: nextAttemptCount,
+          total_time_on_task_sec: (analytics?.total_time_on_task_sec || 0) + addedTime,
+          last_updated_at: new Date().toISOString(),
+        }, { onConflict: 'student_id' });
+
+        // Failed attempts check
+        if (!passed) {
+          const { data: recentStageFailures } = await supabase.from('stage_results').select('passed').eq('user_id', studentId).eq('stage_number', stageNumber).order('created_at', { ascending: false }).limit(3);
+          if (recentStageFailures?.length === 3 && recentStageFailures.every((attempt) => !attempt.passed)) {
+            const { data: studentData } = await supabase.from('students').select('classroom_id').eq('id', studentId).maybeSingle();
+            const { data: existingAlert } = await supabase.from('intervention_alerts').select('id').eq('student_id', studentId).eq('alert_type', 'STAGE_FAIL_3X').eq('is_resolved', false).maybeSingle();
+            if (!existingAlert && studentData?.classroom_id) {
+              await supabase.from('intervention_alerts').insert([{
+                student_id: studentId, classroom_id: studentData.classroom_id, alert_type: 'STAGE_FAIL_3X', alert_level: 'HIGH',
+                description: `ไม่ผ่านด่าน ${stageNumber} ติดต่อกัน 3 ครั้ง`, teacher_recommendation: 'ทบทวนคำศัพท์ใน Study Camp และฝึกคำที่ตอบผิดก่อนลองใหม่',
+              }]);
+            }
+          }
+        }
+
+        // Rank Update
+        await updateAdaptiveRank(studentId);
+
+        // Team Score Event Logging
+        if (passed) {
+          const isBoss = stageNumber % 10 === 0;
+          await createTeamScoreEvent({ userId: studentId, eventType: isBoss ? 'boss_completed' : 'stage_completed', points: isBoss ? 30 : 10, metadata: { stageNumber, accuracy: result.accuracy } });
+          if (result.accuracy >= 100) await createTeamScoreEvent({ userId: studentId, eventType: 'perfect_bonus', points: 25 });
+          else if (result.accuracy >= 90) await createTeamScoreEvent({ userId: studentId, eventType: 'accuracy_bonus', points: 15 });
+          else if (result.accuracy >= 80) await createTeamScoreEvent({ userId: studentId, eventType: 'accuracy_bonus', points: 10 });
+          else if (result.accuracy >= 70) await createTeamScoreEvent({ userId: studentId, eventType: 'accuracy_bonus', points: 5 });
+        }
+
+      } catch (err) {
+        console.error("Background analytics error:", err);
       }
-    }
+    })();
 
     return {
       passed,

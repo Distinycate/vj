@@ -199,7 +199,8 @@ export default function Game() {
       if (lives - (isCorrect ? 0 : 1) > 0 && currentIndex + 1 < words.length) {
         setCurrentIndex(c => c + 1);
       } else {
-        setGameState('reflection');
+        setGameState('reflection'); // We'll repurpose this as a processing state
+        handleProcessResults();
       }
     }, 2000);
   }
@@ -255,7 +256,7 @@ export default function Game() {
     }
   };
 
-  const handleSaveReflection = async () => {
+  const handleProcessResults = async () => {
     const stageNum = progress?.current_stage || 1;
     const avgResponseTime = responseTimes.length > 0 
       ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length 
@@ -264,18 +265,7 @@ export default function Game() {
     const accuracyVal = Math.round((score / words.length) * 100);
 
     try {
-      // 1. Submit reflection details
-      if (currentStageId) {
-        await supabase.from('reflections').upsert([{
-          student_id: student.id,
-          stage_id: currentStageId,
-          words_learned: refWordsLearned || 'คำศัพท์ทั่วไป',
-          hardest_word: refHardestWord || null,
-          feeling: refFeeling
-        }], { onConflict: 'student_id,stage_id' });
-      }
-
-      // 2. Call completeStage from adaptive engine
+      // 1. Call completeStage from adaptive engine
       const completeReport = await completeStage(student.id, stageNum, {
         score,
         accuracy: accuracyVal,
@@ -290,31 +280,19 @@ export default function Game() {
 
       setPassReport(completeReport);
 
-      // 3. Fetch latest progress to refresh state
-      const { data: latestPath } = await supabase
-        .from('learning_paths')
-        .select('*')
-        .eq('student_id', student.id)
-        .single();
+      // 2. Fetch latest progress and attempts (Fire-and-forget to avoid blocking)
+      supabase.from('learning_paths').select('*').eq('student_id', student.id).single().then(({ data }) => {
+        if (data) setProgress(data);
+      }, e => console.error(e));
       
-      if (latestPath) {
-        setProgress(latestPath);
-      }
-
-      // 4. Fetch previous attempts to show progress graph
       if (currentStageId) {
-        const { data: pastAttempts } = await supabase
-          .from('stage_results')
-          .select('*')
-          .eq('user_id', student.id)
-          .eq('stage_number', stageNum)
-          .order('created_at', { ascending: true });
-        
-        setPreviousAttempts(pastAttempts || []);
+        supabase.from('stage_results').select('*').eq('user_id', student.id).eq('stage_number', stageNum).order('created_at', { ascending: true }).then(({ data }) => {
+          setPreviousAttempts(data || []);
+        }, e => console.error(e));
       }
 
     } catch (err) {
-      console.error('Error submitting stage reflection:', err);
+      console.error('Error submitting stage result:', err);
     }
 
     setGameState('results');
@@ -355,51 +333,13 @@ export default function Game() {
     );
   }
 
-  // STEP 1: REFLECTION SCREEN
+  // PROCESSING SCREEN
   if (gameState === 'reflection') {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 relative overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] bg-emerald-500/5 rounded-full filter blur-[80px] pointer-events-none"></div>
-        
-        <motion.div 
-          initial={{ opacity: 0, y: 15 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl relative z-10"
-        >
-          <div className="text-center mb-6">
-            <Sparkles className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-            <h2 className="text-2xl font-black text-white">บันทึกสะท้อนคิดส่วนตัว</h2>
-            <p className="text-slate-400 text-sm mt-1">วันนี้คุณได้เรียนรู้อะไรบ้าง? เขียนสรุปความเข้าใจของคุณ</p>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">คำศัพท์ที่คุณจำได้แม่นยำ</label>
-              <input type="text" value={refWordsLearned} onChange={e => setRefWordsLearned(e.target.value)} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500" placeholder="เช่น elephant, word" />
-            </div>
-
-            <div>
-              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">คำศัพท์ที่คุณรู้สึกว่ายากที่สุด</label>
-              <input type="text" value={refHardestWord} onChange={e => setRefHardestWord(e.target.value)} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500" placeholder="คำศัพท์ที่สะกดผิดบ่อย" />
-            </div>
-
-            <div>
-              <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">ทัศนคติต่อโจทย์ของด่านนี้</label>
-              <select value={refFeeling} onChange={e => setRefFeeling(e.target.value)} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500">
-                <option value="😊 สนุกและเข้าใจง่าย">😊 สนุกและเข้าใจง่าย</option>
-                <option value="😐 ปานกลาง ท้าทายดี">😐 ปานกลาง ท้าทายดี</option>
-                <option value="😓 ยากเกินไป จำไม่ได้">😓 ยากเกินไป จำไม่ได้</option>
-              </select>
-            </div>
-          </div>
-
-          <button 
-            onClick={handleSaveReflection}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg shadow-emerald-500/20 mt-8 hover:scale-[1.02] transition-all"
-          >
-            ประมวลผลด่านความยาก ➡️
-          </button>
-        </motion.div>
+        <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
+        <h2 className="text-xl font-black text-white mb-2">กำลังประมวลผลด่านความยาก...</h2>
+        <p className="text-slate-400 text-sm">Adaptive Engine กำลังคำนวณและปรับลด-เพิ่มความยากสำหรับคุณ</p>
       </div>
     );
   }
