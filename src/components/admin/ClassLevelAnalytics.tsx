@@ -1,14 +1,15 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { 
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine,
   BarChart, Bar, Cell
 } from 'recharts';
 import { Download, BrainCircuit, Users } from 'lucide-react';
+import { supabase } from '@/utils/supabase/client';
 
 interface ClassLevelAnalyticsProps {
   studentsList: any[];
-  weakestSkill?: string; // e.g. "verb" or "noun"
+  weakestSkill?: string;
 }
 
 export default function ClassLevelAnalytics({ studentsList, weakestSkill }: ClassLevelAnalyticsProps) {
@@ -27,11 +28,11 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
       else if (accuracy < 60 && effort >= 50) category = 'Needs Intervention (High Effort)';
       else category = 'At Risk (Low Effort)';
 
-      let fill = '#94a3b8'; // slate-400
-      if (category === 'High Achievers') fill = '#10b981'; // emerald
-      else if (category === 'Fast Learners') fill = '#3b82f6'; // blue
-      else if (category === 'Needs Intervention (High Effort)') fill = '#f59e0b'; // amber
-      else if (category === 'At Risk (Low Effort)') fill = '#f43f5e'; // rose
+      let fill = '#94a3b8'; 
+      if (category === 'High Achievers') fill = '#10b981'; 
+      else if (category === 'Fast Learners') fill = '#3b82f6'; 
+      else if (category === 'Needs Intervention (High Effort)') fill = '#f59e0b'; 
+      else if (category === 'At Risk (Low Effort)') fill = '#f43f5e'; 
 
       return {
         id: s.id,
@@ -45,16 +46,44 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
   }, [studentsList]);
 
   // 2. Skill Gap Analysis Data
-  const skillGapData = useMemo(() => {
-    // Ideally we aggregate this from item_analysis. We use a mock representation here based on weakestSkill
-    return [
-      { category: weakestSkill || 'verb', errorRate: 68 },
-      { category: 'adverb', errorRate: 55 },
-      { category: 'adjective', errorRate: 42 },
-      { category: 'noun', errorRate: 35 },
-      { category: 'preposition', errorRate: 20 },
-    ].sort((a, b) => b.errorRate - a.errorRate);
-  }, [weakestSkill]);
+  const [skillGapData, setSkillGapData] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadSkillGap() {
+      if (!studentsList.length) return;
+      const studentIds = studentsList.map(s => s.id);
+      
+      const { data } = await supabase
+        .from('wrong_words')
+        .select('vocabulary(part_of_speech)')
+        .in('user_id', studentIds);
+
+      if (data) {
+        const errorCounts: Record<string, number> = {};
+        let totalErrors = 0;
+        
+        data.forEach((w: any) => {
+          let pos = w.vocabulary?.part_of_speech || 'Other';
+          errorCounts[pos] = (errorCounts[pos] || 0) + 1;
+          totalErrors++;
+        });
+
+        const formatted = Object.keys(errorCounts).map(pos => ({
+          category: pos,
+          errorRate: totalErrors > 0 ? Math.round((errorCounts[pos] / totalErrors) * 100) : 0
+        })).sort((a, b) => b.errorRate - a.errorRate).slice(0, 5); // top 5 gaps
+
+        if (formatted.length > 0) {
+          setSkillGapData(formatted);
+        } else {
+           // Fallback to empty if no errors ever
+          setSkillGapData([{category: 'ไม่มีประวัติ', errorRate: 0}]);
+        }
+      }
+    }
+    loadSkillGap();
+  }, [studentsList]);
+
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -82,12 +111,13 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
     setInsightLoading(true);
     setInsight('');
     try {
+      const actualWeakest = skillGapData[0]?.category || 'ไม่มี';
       const res = await fetch('/api/ai-insight', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           avgAccuracy: studentsList.reduce((a, c) => a + (c.analytics_summary?.[0]?.success_rate || 0), 0) / (studentsList.length || 1),
-          weakestSkill: weakestSkill || 'verb',
+          weakestSkill: actualWeakest,
           atRiskCount: clusteringData.filter(d => d.category === 'At Risk (Low Effort)').length
         })
       });
@@ -95,14 +125,13 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
       if (data.insight) setInsight(data.insight);
       else setInsight('พบข้อผิดพลาดในการเรียก AI กรุณาตรวจสอบ API Key');
     } catch (e) {
-      setInsight('ไม่สามารถเชื่อมต่อกับ AI ได้');
+      setInsight('ไม่สามารถเชื่อมต่อกับ AI ได้ (อาจต้องตั้งค่า OPENAI_API_KEY ก่อน)');
     } finally {
       setInsightLoading(false);
     }
   };
 
   const exportReport = () => {
-    // Calling the API endpoint which returns the Excel file
     window.location.href = '/api/export-report';
   };
 
@@ -149,14 +178,11 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis type="number" dataKey="effort" name="Effort" stroke="#64748b" fontSize={12} tickLine={false} label={{ value: 'Effort (Attempts)', position: 'bottom', fill: '#64748b', fontSize: 10 }} />
-                <YAxis type="number" dataKey="accuracy" name="Accuracy" stroke="#64748b" fontSize={12} tickLine={false} label={{ value: 'Accuracy (%)', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 10 }} />
-                <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
-                
-                {/* Quadrant Lines */}
-                <ReferenceLine x={50} stroke="#475569" strokeDasharray="3 3" />
-                <ReferenceLine y={60} stroke="#475569" strokeDasharray="3 3" />
-                
+                <XAxis type="number" dataKey="effort" name="Effort (Attempts)" stroke="#64748b" fontSize={12} label={{ value: 'Effort', position: 'insideBottom', offset: -10, fill: '#64748b' }} />
+                <YAxis type="number" dataKey="accuracy" name="Accuracy (%)" stroke="#64748b" fontSize={12} label={{ value: 'Accuracy', angle: -90, position: 'insideLeft', fill: '#64748b' }} />
+                <RechartsTooltip content={<CustomTooltip />} />
+                <ReferenceLine x={50} stroke="#334155" strokeDasharray="5 5" />
+                <ReferenceLine y={60} stroke="#334155" strokeDasharray="5 5" />
                 <Scatter name="Students" data={clusteringData}>
                   {clusteringData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -165,24 +191,27 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
               </ScatterChart>
             </ResponsiveContainer>
           </div>
+          <div className="flex justify-center gap-4 mt-4 flex-wrap">
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div><span className="text-xs text-slate-400">High Achievers</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div><span className="text-xs text-slate-400">Fast Learners</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-500"></div><span className="text-xs text-slate-400">Needs Intervention</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-rose-500"></div><span className="text-xs text-slate-400">At Risk</span></div>
+          </div>
         </div>
 
-        {/* Skill Gap Analysis Horizontal Bar Chart */}
+        {/* Skill Gap Analysis Bar Chart */}
         <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl">
-          <h3 className="text-lg font-black text-white mb-2">Skill Gap Analysis</h3>
-          <p className="text-xs text-slate-400 mb-6">5 หมวดหมู่คำศัพท์ที่นักเรียนในห้องตอบผิดมากที่สุด (Error Rate %)</p>
+          <h3 className="text-lg font-black text-white mb-2">Skill Gap Analysis (จุดอ่อน)</h3>
+          <p className="text-xs text-slate-400 mb-6">ความถี่ของการตอบผิดแยกตามหมวดหมู่ Part of Speech 5 อันดับแรก</p>
           
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={skillGapData} layout="vertical" margin={{ top: 5, right: 30, bottom: 5, left: 30 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={true} vertical={false} />
-                <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} hide />
-                <YAxis dataKey="category" type="category" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} width={80} />
-                <RechartsTooltip 
-                  cursor={{ fill: '#1e293b' }}
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }}
-                />
-                <Bar dataKey="errorRate" radius={[0, 8, 8, 0]} barSize={24}>
+              <BarChart data={skillGapData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
+                <XAxis type="number" stroke="#64748b" fontSize={12} unit="%" />
+                <YAxis type="category" dataKey="category" stroke="#94a3b8" fontSize={12} width={80} />
+                <RechartsTooltip cursor={{ fill: '#1e293b' }} contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }} />
+                <Bar dataKey="errorRate" name="Error Rate" radius={[0, 8, 8, 0]}>
                   {skillGapData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={index === 0 ? '#f43f5e' : index === 1 ? '#f59e0b' : '#3b82f6'} />
                   ))}
