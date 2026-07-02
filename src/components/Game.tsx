@@ -178,6 +178,7 @@ export default function Game() {
     setIsAnswered(true);
     setSelectedAnswer(answer);
 
+    const elapsed = Math.round((Date.now() - questionStartTime) / 1000);
     const finalResponseTimes = [...responseTimes, elapsed];
     setResponseTimes(finalResponseTimes);
 
