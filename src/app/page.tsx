@@ -43,8 +43,7 @@ export default function Home() {
   // Register State
   const [regStudentId, setRegStudentId] = useState(''); // This will store เลขที่ (Seat Number)
   const [regName, setRegName] = useState('');
-  const [regGrade, setRegGrade] = useState('');
-  const [regRoom, setRegRoom] = useState('1'); // Default to room 1 since there is only 1 room per grade
+  const [regGrade, setRegGrade] = useState('ม.1');
   const [regYear, setRegYear] = useState('2569'); // Default academic year to 2569
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
@@ -131,7 +130,7 @@ export default function Home() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regStudentId || !regName || !regGrade || !regRoom || !regUsername || !regPassword) {
+    if (!regStudentId || !regName || !regGrade || !regUsername || !regPassword) {
       return setError('กรุณากรอกข้อมูลให้ครบถ้วน');
     }
     setIsLoading(true);
@@ -139,7 +138,7 @@ export default function Home() {
 
     try {
       // 1. Resolve Classroom dynamically
-      const className = `${regGrade.trim()}/${regRoom.trim()}`;
+      const className = regGrade.trim();
       let classroomId = null;
 
       const { data: existingClass } = await supabase
@@ -318,7 +317,11 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">ชั้น</label>
-                <input type="text" value={regGrade} onChange={(e) => setRegGrade(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="ม.1" />
+                <select value={regGrade} onChange={(e) => setRegGrade(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input">
+                  <option value="ม.1">ม.1</option>
+                  <option value="ม.2">ม.2</option>
+                  <option value="ม.3">ม.3</option>
+                </select>
               </div>
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">เลขที่</label>

@@ -1,4 +1,5 @@
 import { supabase } from '@/utils/supabase/client';
+import { createTeamScoreEvent } from '@/utils/teamBattleEngine';
 import { ADAPTIVE_RANK_CONFIG, RankConfig, getWorldForStage } from './adaptiveConfig';
 import {
   filterDistractors,
@@ -680,6 +681,26 @@ export async function completeStage(studentId: string, stageNumber: number, resu
     // 6. Update dynamic Adaptive Rank
     await updateAdaptiveRank(studentId);
 
+    // 7. Team Battle Scoring Hook
+    if (passed) {
+      const isBoss = stageNumber % 10 === 0;
+      await createTeamScoreEvent({
+        userId: studentId,
+        eventType: isBoss ? 'boss_completed' : 'stage_completed',
+        points: isBoss ? 30 : 10,
+        metadata: { stageNumber, accuracy: result.accuracy }
+      });
+      if (result.accuracy >= 100) {
+        await createTeamScoreEvent({ userId: studentId, eventType: 'perfect_bonus', points: 25 });
+      } else if (result.accuracy >= 90) {
+        await createTeamScoreEvent({ userId: studentId, eventType: 'accuracy_bonus', points: 15 });
+      } else if (result.accuracy >= 80) {
+        await createTeamScoreEvent({ userId: studentId, eventType: 'accuracy_bonus', points: 10 });
+      } else if (result.accuracy >= 70) {
+        await createTeamScoreEvent({ userId: studentId, eventType: 'accuracy_bonus', points: 5 });
+      }
+    }
+
     return {
       passed,
       targetPassScore: passScore
@@ -693,16 +714,16 @@ export async function completeStage(studentId: string, stageNumber: number, resu
 // 4. ADAPTIVE RANK UPDATER (ANALYZE PROGRESS AND SCALE SKILL LEVEL)
 export async function updateAdaptiveRank(studentId: string) {
   try {
-    // 1. Fetch 5 most recent stage results
+    // 1. Fetch 3 most recent stage results
     const { data: recentResults, error } = await supabase
       .from('stage_results')
       .select('accuracy, passed, response_time_avg')
       .eq('user_id', studentId)
       .order('created_at', { ascending: false })
-      .limit(5);
+      .limit(3);
 
-    if (error || !recentResults || recentResults.length < 5) {
-      // Need at least 5 records to auto-tune rank
+    if (error || !recentResults || recentResults.length < 3) {
+      // Need at least 3 records to auto-tune rank
       return;
     }
 
@@ -718,21 +739,20 @@ export async function updateAdaptiveRank(studentId: string) {
 
     // 3. Evaluate Rank changes
     const passedCount = recentResults.filter(r => r.passed).length;
-    const avgAccuracy = recentResults.reduce((sum, r) => sum + r.accuracy, 0) / 5;
-    const avgResponseTime = recentResults.reduce((sum, r) => sum + r.response_time_avg, 0) / 5;
+    const avgAccuracy = recentResults.reduce((sum, r) => sum + r.accuracy, 0) / 3;
 
     let newRank = currentRank;
     let reason = '';
 
-    // Up-rank Condition: Pass 5/5 latest, average accuracy > 90%, and average response time < 8s
-    if (passedCount === 5 && avgAccuracy >= 90 && avgResponseTime < 8.0 && currentRank < 5) {
+    // Up-rank Condition: Pass 3/3 latest, average accuracy >= 80%
+    if (passedCount === 3 && avgAccuracy >= 80 && currentRank < 5) {
       newRank = currentRank + 1;
-      reason = `ผ่านด่าน 5 ครั้งรวดความถูกต้องเฉลี่ย ${avgAccuracy.toFixed(1)}% (ตอบสนองเร็วเฉลี่ย ${avgResponseTime.toFixed(1)}s)`;
+      reason = `ทำคะแนนดีต่อเนื่อง ความถูกต้องเฉลี่ย ${avgAccuracy.toFixed(1)}% (ผ่าน 3 ด่านติด)`;
     }
-    // Down-rank Condition: Failed at least 3/5 times, or average accuracy < 50%
-    else if ((passedCount <= 2 || avgAccuracy < 50) && currentRank > 1) {
+    // Down-rank Condition: Failed at least 2/3 times, or average accuracy < 50%
+    else if ((passedCount <= 1 || avgAccuracy < 50) && currentRank > 1) {
       newRank = currentRank - 1;
-      reason = `ทำผลคะแนนเฉลี่ยหล่นมาที่ ${avgAccuracy.toFixed(1)}% (ผ่านน้อยกว่า 3 ด่านจาก 5 ด่านล่าสุด)`;
+      reason = `ความแม่นยำลดลงเหลือ ${avgAccuracy.toFixed(1)}% (ไม่ผ่าน 2 ใน 3 ด่านล่าสุด)`;
     }
 
     // 4. Save and audit rank history

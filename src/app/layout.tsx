@@ -30,6 +30,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-slate-950">
         <NetworkStatus />
         {children}
+        <script dangerouslySetInnerHTML={{ __html: `document.addEventListener('contextmenu', event => event.preventDefault());` }} />
       </body>
     </html>
   );

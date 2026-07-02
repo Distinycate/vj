@@ -21,6 +21,20 @@ body {
   color: var(--foreground);
   font-family: 'Outfit', system-ui, sans-serif;
   overflow-x: hidden;
+  
+  /* Anti-Cheat: Prevent Google Lens / Translate by blocking text selection and long-press callouts */
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Old versions of Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+}
+
+/* Allow selection in inputs and textareas so user can still type and edit */
+input, textarea, select {
+  -webkit-user-select: auto;
+  user-select: auto;
 }
 
 /* Custom premium scrollbar */

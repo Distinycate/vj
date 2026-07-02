@@ -11,17 +11,21 @@ import { playWordAudio } from '@/utils/audio';
 import { STORY_WORLDS, ADAPTIVE_RANK_CONFIG, getWorldForStage } from '@/utils/adaptiveConfig';
 import AvatarDisplay from '@/components/AvatarDisplay';
 import ShopModal from '@/components/ShopModal';
+import { autoAssignTeamForStudent, calculateTeamScore } from '@/utils/teamBattleEngine';
+import { Users } from 'lucide-react';
 
 export default function Dashboard() {
   const { student, progress, logout, setScreen, setProgress } = useAppStore();
   const [reviewWords, setReviewWords] = useState<any[]>([]);
   const [wordCollection, setWordCollection] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({ xp: 0, level: 1 });
-  const [activeTab, setActiveTab] = useState<'roadmap' | 'review' | 'stats' | 'collection' | 'profile'>('roadmap');
+  const [activeTab, setActiveTab] = useState<'roadmap' | 'review' | 'stats' | 'collection' | 'profile' | 'teams'>('roadmap');
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [expandedWorld, setExpandedWorld] = useState<number | null>(1);
   const [aiTeacherMessage, setAiTeacherMessage] = useState('');
   const [showShop, setShowShop] = useState(false);
+  const [myTeams, setMyTeams] = useState<any[]>([]);
+  const [teamScores, setTeamScores] = useState<Record<string, any>>({});
 
   // Classroom stats calculations
   const [classroomStats, setClassroomStats] = useState({
@@ -111,6 +115,25 @@ export default function Dashboard() {
           averageStage: Math.round(totalStage / leadData.length),
           highestLevel: maxLevel,
         });
+      }
+
+      // 5. Team Battle
+      await autoAssignTeamForStudent(student.id);
+      const { data: teamsData } = await supabase
+        .from('team_members')
+        .select('team_id, teams(*)')
+        .eq('user_id', student.id)
+        .eq('is_active', true);
+
+      if (teamsData) {
+        const tList = teamsData.map((d: any) => d.teams).filter(Boolean);
+        setMyTeams(tList);
+        
+        const scores: Record<string, any> = {};
+        for (const t of tList) {
+          scores[t.id] = await calculateTeamScore(t.id);
+        }
+        setTeamScores(scores);
       }
     }
 
@@ -290,6 +313,15 @@ export default function Dashboard() {
           >
             <Trophy className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span className="text-[10px] sm:text-sm font-black">แรงกิ้ง</span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('teams')} 
+            className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+              activeTab === 'teams' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Users className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+            <span className="text-[10px] sm:text-sm font-black">ทีมของฉัน</span>
           </button>
           <button 
             onClick={() => setActiveTab('profile')} 
@@ -639,6 +671,81 @@ export default function Dashboard() {
                     </table>
                   </div>
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB: TEAMS (CROSS-CLASS BATTLE) */}
+          {activeTab === 'teams' as any && (
+            <motion.div 
+              key="teams" 
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6 text-left"
+            >
+              <div className="glass-card p-6 sm:p-8 rounded-3xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-8 h-8 text-fuchsia-400" />
+                    <div>
+                      <h3 className="text-2xl font-black text-white">ทีมของฉัน (Team Battle)</h3>
+                      <p className="text-slate-400 text-sm mt-0.5">เล่นวันนี้เพื่อช่วยทีมของคุณเก็บคะแนนข้ามห้องเรียน!</p>
+                    </div>
+                  </div>
+                  <button onClick={() => alert('กำลังพัฒนาระบบ Leaderboard เร็วๆ นี้!')} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl border border-slate-700 transition-all shadow-md">
+                    🏆 ดู Team Leaderboard
+                  </button>
+                </div>
+
+                {/* Team Goals */}
+                <div className="bg-gradient-to-r from-fuchsia-500/10 to-purple-500/10 border border-fuchsia-500/20 p-5 rounded-2xl mb-6">
+                  <h4 className="text-fuchsia-400 font-bold mb-3 flex items-center gap-2">🎯 เป้าหมายทีมวันนี้</h4>
+                  <ul className="space-y-2 text-sm text-slate-300">
+                    <li className="flex items-center gap-2">✅ ช่วยกันผ่านด่านรวม 20 ด่าน</li>
+                    <li className="flex items-center gap-2">✅ ให้สมาชิกกลับมาเล่น (Active) เกิน 70% เพื่อรับโบนัส x1.25!</li>
+                  </ul>
+                  <p className="text-xs text-slate-400 mt-4 italic">"ถ้าสมาชิกช่วยกันเล่นหลายคน ทีมจะได้โบนัสคะแนนเพิ่มพิเศษ อย่าปล่อยให้เพื่อนแบกคนเดียวนะ!"</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {myTeams.map(team => {
+                    const ts = teamScores[team.id];
+                    return (
+                      <div key={team.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 hover:border-fuchsia-500/30 transition-colors">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shrink-0 border border-slate-800" style={{ backgroundColor: `${team.team_color}20`, borderColor: `${team.team_color}40` }}>
+                            {team.team_icon}
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full mb-1 inline-block" style={{ backgroundColor: `${team.team_color}20`, color: team.team_color }}>
+                              {team.team_type === 'school' ? 'ทีมแข่งขันโรงเรียน' : 'ทีมประจำห้อง'}
+                            </span>
+                            <h4 className="text-xl font-black text-white">{team.team_name}</h4>
+                            <p className="text-xs text-slate-400">สมาชิกตื่นตัว: {ts?.activeMembersRate || 0}% ({ts?.activeMembersCount || 0}/{ts?.totalMembers || 0} คน)</p>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-950 rounded-xl p-4 flex justify-between items-center border border-slate-900 shadow-inner">
+                          <div>
+                            <span className="text-xs text-slate-500 font-bold block mb-1">คะแนนรวมทีม</span>
+                            <strong className="text-2xl text-white font-black">{ts?.finalScore || 0}</strong>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs text-slate-500 font-bold block mb-1">ผลงาน (Events)</span>
+                            <strong className="text-lg text-fuchsia-400 font-bold">{ts?.eventsCount || 0} ครั้ง</strong>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {myTeams.length === 0 && (
+                  <div className="text-center py-10">
+                    <p className="text-slate-400">กำลังค้นหาทีมของคุณ...</p>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

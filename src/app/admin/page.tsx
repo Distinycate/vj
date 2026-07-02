@@ -1,11 +1,22 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
-import { BookOpen, Users, BarChart3, AlertTriangle, FileSpreadsheet, Plus, Edit2, ShieldAlert, Sparkles, LogOut, Check, X, Shield, Eye, Trophy } from 'lucide-react';
+import { 
+  BarChart3, Users, AlertTriangle, FileSpreadsheet, Plus, LogOut, Shield, 
+  Trophy, BookOpen, Activity, TrendingUp, AlertCircle, Sparkles, User, BrainCircuit, ArrowRight
+} from 'lucide-react';
 import Papa from 'papaparse';
+import { 
+  LineChart, Line, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+} from 'recharts';
+import { calculateLearningGain, calculateRiskScore, getRiskLevel, getProgressTrend, calculateClassroomWeakestSkill, calculateStudentSkillRadar } from '@/utils/analyticsUtils';
+import { generateClassroomInsight, generateStudentInsight, generateItemInsight } from '@/utils/aiTeacherInsight';
 
-type AdminTab = 'students' | 'item-analysis' | 'heatmap' | 'assignments' | 'alerts' | 'content-builder';
+import TeamLeaderboard from '@/components/TeamLeaderboard';
+
+type AdminTab = 'overview' | 'students' | 'student-detail' | 'classroom' | 'school' | 'item-analysis' | 'intervention' | 'reports' | 'team-battle';
 
 export default function AdminPage() {
   const [teacher, setTeacher] = useState<any>(null);
@@ -14,56 +25,29 @@ export default function AdminPage() {
   const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Dashboard state
-  const [activeTab, setActiveTab] = useState<AdminTab>('students');
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [classrooms, setClassrooms] = useState<any[]>([]);
   const [selectedClassroom, setSelectedClassroom] = useState<string>('');
   
-  // Data lists
+  // Data
   const [studentsList, setStudentsList] = useState<any[]>([]);
   const [vocabList, setVocabList] = useState<any[]>([]);
-  const [alerts, setAlerts] = useState<any[]>([]);
-  const [assignments, setAssignments] = useState<any[]>([]);
-  const [attempts, setAttempts] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [itemAnalysisByWord, setItemAnalysisByWord] = useState<Record<string, any>>({});
-  const [wrongCountByWord, setWrongCountByWord] = useState<Record<string, number>>({});
+  const [itemAnalysis, setItemAnalysis] = useState<any[]>([]);
+  const [wrongWords, setWrongWords] = useState<any[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
-  // Content Builder forms
-  const [wordInput, setWordInput] = useState('');
-  const [meaningInput, setMeaningInput] = useState('');
-  const [exampleInput, setExampleInput] = useState('');
-  const [posInput, setPosInput] = useState('noun');
-  const [rankInput, setRankInput] = useState(1);
-  const [stageInput, setStageInput] = useState(1);
-  const [catInput, setCatInput] = useState('');
-  const [editingWordId, setEditingWordId] = useState<string | null>(null);
+  // Authentication
+  useEffect(() => {
+    const saved = localStorage.getItem('vocab_journey_teacher');
+    if (saved) setTeacher(JSON.parse(saved));
+  }, []);
 
-  // Assignment forms
-  const [assignTitle, setAssignTitle] = useState('');
-  const [assignCat, setAssignCat] = useState('');
-  const [assignStart, setAssignStart] = useState(1);
-  const [assignEnd, setAssignEnd] = useState(5);
-  const [assignDue, setAssignDue] = useState('');
-
-  // 1. Teacher credentials check
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) {
-      return setLoginError('กรุณากรอก Username และ Password');
-    }
-    setIsLoading(true);
-    setLoginError('');
-
+    if (!username.trim() || !password.trim()) return setLoginError('กรุณากรอก Username และ Password');
+    setIsLoading(true); setLoginError('');
     try {
-      // 1. Authenticate by querying the teachers table directly
-      const { data, error } = await supabase
-        .from('teachers')
-        .select('*')
-        .eq('username', username.trim())
-        .eq('password', password.trim())
-        .maybeSingle();
-
+      const { data, error } = await supabase.from('teachers').select('*').eq('username', username.trim()).eq('password', password.trim()).maybeSingle();
       if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านครูไม่ถูกต้อง');
       setTeacher(data);
       localStorage.setItem('vocab_journey_teacher', JSON.stringify(data));
@@ -74,68 +58,40 @@ export default function AdminPage() {
     }
   };
 
-  useEffect(() => {
-    const saved = localStorage.getItem('vocab_journey_teacher');
-    if (saved) {
-      setTeacher(JSON.parse(saved));
-    }
-  }, []);
-
-  // 2. Fetch Data once logged in
+  // Fetch Core Data
   useEffect(() => {
     if (!teacher) return;
-
-    async function loadAdminData() {
-      // Fetch Classrooms
-      const { data: classData } = await supabase.from('classrooms').select('*');
-      if (classData && classData.length > 0) {
-        setClassrooms(classData);
-        setSelectedClassroom(classData[0].id);
+    async function loadInitialData() {
+      // 1. Fetch Classrooms for this teacher (or all if admin)
+      let classQuery = supabase.from('classrooms').select('*');
+      if (teacher.role === 'TEACHER') {
+        classQuery = classQuery.eq('teacher_id', teacher.id);
+      }
+      const { data: classData } = await classQuery;
+      
+      // Filter out non M.1 - M.3 rooms if any slipped through
+      const validClasses = (classData || []).filter(c => c.class_name.includes('ม.1') || c.class_name.includes('ม.2') || c.class_name.includes('ม.3'));
+      
+      if (validClasses.length > 0) {
+        setClassrooms(validClasses);
+        setSelectedClassroom(validClasses[0].id);
       }
 
-      // Fetch Vocabulary Categories
-      const { data: catData } = await supabase.from('vocabulary_categories').select('*');
-      if (catData) {
-        setCategories(catData);
-        setAssignCat(catData[0]?.id || '');
-        setCatInput(catData[0]?.id || '');
-      }
-
-      // Fetch Vocabularies
-      const { data: vData } = await supabase.from('vocabulary').select('*, vocabulary_categories(*)');
+      // Fetch Vocab and Item Analysis
+      const { data: vData } = await supabase.from('vocabulary').select('*');
       if (vData) setVocabList(vData);
 
-      const { data: itemAnalysisData } = await supabase
-        .from('item_analysis')
-        .select('*');
-      if (itemAnalysisData) {
-        setItemAnalysisByWord(
-          Object.fromEntries(itemAnalysisData.map((item) => [item.word_id, item]))
-        );
-      }
-
-      // Fetch Alerts
-      const { data: alertData } = await supabase
-        .from('intervention_alerts')
-        .select('*, students(*)')
-        .eq('is_resolved', false);
-      if (alertData) setAlerts(alertData);
-
-      // Fetch Assignments
-      const { data: assignData } = await supabase
-        .from('assignments')
-        .select('*, classrooms(*), vocabulary_categories(*)');
-      if (assignData) setAssignments(assignData);
+      const { data: iData } = await supabase.from('item_analysis').select('*');
+      if (iData) setItemAnalysis(iData);
     }
-
-    loadAdminData();
+    loadInitialData();
   }, [teacher]);
 
-  // 3. Fetch Students & Attempts when classroom changes
+  // Fetch Classroom Specific Data
   useEffect(() => {
     if (!teacher || !selectedClassroom) return;
-
-    async function loadClassroomStudents() {
+    async function loadClassroomData() {
+      // Fetch students with analytics and paths
       const { data: students } = await supabase
         .from('students')
         .select('*, analytics_summary(*), learning_paths(*)')
@@ -143,188 +99,105 @@ export default function AdminPage() {
       
       if (students) setStudentsList(students);
 
-      const studentIds = (students || []).map((student) => student.id);
+      const studentIds = (students || []).map(s => s.id);
       if (studentIds.length > 0) {
-        const { data: reviewData } = await supabase
-          .from('user_review_words')
-          .select('word_id, wrong_count')
-          .in('user_id', studentIds);
-
-        const wrongCounts: Record<string, number> = {};
-        (reviewData || []).forEach((row) => {
-          wrongCounts[row.word_id] =
-            (wrongCounts[row.word_id] || 0) + Number(row.wrong_count || 0);
-        });
-        setWrongCountByWord(wrongCounts);
+        const { data: wwData } = await supabase.from('user_review_words').select('*, vocabulary(*)').in('user_id', studentIds);
+        if (wwData) setWrongWords(wwData);
       } else {
-        setWrongCountByWord({});
-      }
-
-      const { data: attData } = await supabase
-        .from('attempts')
-        .select('*, students(*), stages(*)')
-        .eq('is_passed', true);
-      
-      if (attData) {
-        // filter by classroom
-        const classAttempts = attData.filter(a => a.students.classroom_id === selectedClassroom);
-        setAttempts(classAttempts);
+        setWrongWords([]);
       }
     }
-
-    loadClassroomStudents();
+    loadClassroomData();
   }, [selectedClassroom, teacher]);
 
-  const handleCreateAssignment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!assignTitle || !assignCat || !assignDue) return;
+  // Derived Analytics Computations
+  const classroomMetrics = useMemo(() => {
+    if (!studentsList.length) return null;
+    
+    let totalPre = 0, totalPost = 0, totalGain = 0, totalAcc = 0, activeToday = 0;
+    const now = new Date();
 
-    try {
-      await supabase.from('assignments').insert([{
-        classroom_id: selectedClassroom,
-        teacher_id: teacher.id,
-        title: assignTitle,
-        category_id: assignCat,
-        start_stage: assignStart,
-        end_stage: assignEnd,
-        due_date: new Date(assignDue).toISOString()
-      }]);
+    const studentsWithMetrics = studentsList.map(s => {
+      const pre = s.analytics_summary?.pretest_score || 0;
+      const post = s.analytics_summary?.posttest_score || 0;
+      const { gain, percentage } = calculateLearningGain(pre, post);
+      const acc = s.analytics_summary?.success_rate || 0;
+      
+      const lastActive = s.learning_paths?.last_active_date ? new Date(s.learning_paths.last_active_date) : null;
+      const daysInactive = lastActive ? Math.floor((now.getTime() - lastActive.getTime()) / (1000 * 3600 * 24)) : 999;
+      if (daysInactive === 0) activeToday++;
 
-      // Reload
-      const { data: assignData } = await supabase
-        .from('assignments')
-        .select('*, classrooms(*), vocabulary_categories(*)');
-      if (assignData) setAssignments(assignData);
+      const sReviewWords = wrongWords.filter(w => w.user_id === s.id).length;
+      const riskScore = calculateRiskScore({ accuracy: acc, daysInactive, reviewWords: sReviewWords, stageStagnationDays: daysInactive });
+      const riskLevel = getRiskLevel(riskScore);
+      const trend = getProgressTrend(percentage, riskLevel);
 
-      setAssignTitle('');
-      alert('สร้างงานมอบหมายวิจัยเรียบร้อยแล้ว!');
-    } catch (err) {
-      console.error(err);
-    }
-  };
+      totalPre += pre; totalPost += post; totalGain += percentage; totalAcc += acc;
 
-  const handleSaveWord = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!wordInput || !meaningInput || !catInput) return;
+      return { ...s, pre, post, gainPercent: percentage, acc, daysInactive, reviewWordsCount: sReviewWords, riskScore, riskLevel, trend };
+    });
 
-    try {
-      if (editingWordId) {
-        await supabase
-          .from('vocabulary')
-          .update({
-            word: wordInput,
-            meaning: meaningInput,
-            meaning_th: meaningInput,
-            example: exampleInput,
-            example_sentence: exampleInput,
-            part_of_speech: posInput,
-            category_id: catInput,
-            rank: rankInput,
-            stage: stageInput,
-            stage_number: stageInput
-          })
-          .eq('id', editingWordId);
-        alert('แก้ไขคำศัพท์เรียบร้อย!');
-      } else {
-        await supabase.from('vocabulary').insert([{
-          word_id: `M1-NEW-${Math.floor(Math.random() * 1000)}`,
-          word: wordInput,
-          meaning: meaningInput,
-          meaning_th: meaningInput,
-          example: exampleInput,
-          example_sentence: exampleInput,
-          part_of_speech: posInput,
-          category_id: catInput,
-          rank: rankInput,
-          stage: stageInput,
-          stage_number: stageInput,
-          difficulty_level: rankInput >= 5 ? 'expert' : rankInput >= 4 ? 'hard' : rankInput >= 2 ? 'normal' : 'easy',
-          is_active: true,
-        }]);
-        alert('เพิ่มคำศัพท์สำเร็จ!');
-      }
+    const len = studentsList.length;
+    return {
+      totalStudents: len,
+      activeToday,
+      avgPre: totalPre / len,
+      avgPost: totalPost / len,
+      avgGain: totalGain / len,
+      avgAcc: totalAcc / len,
+      weakestSkill: calculateClassroomWeakestSkill(itemAnalysis, vocabList),
+      students: studentsWithMetrics,
+      highRiskCount: studentsWithMetrics.filter(s => s.riskLevel === 'High' || s.riskLevel === 'Critical').length
+    };
+  }, [studentsList, wrongWords, itemAnalysis, vocabList]);
 
-      // Reload vocab
-      const { data: vData } = await supabase.from('vocabulary').select('*, vocabulary_categories(*)');
-      if (vData) setVocabList(vData);
-
-      // Reset
-      setWordInput('');
-      setMeaningInput('');
-      setExampleInput('');
-      setEditingWordId(null);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const resolveAlert = async (id: string) => {
-    await supabase.from('intervention_alerts').update({ is_resolved: true, resolved_at: new Date().toISOString() }).eq('id', id);
-    setAlerts(a => a.filter(item => item.id !== id));
-  };
-
-  // Export Analytics Summary to CSV
   const handleExportCSV = () => {
-    const classroomName =
-      classrooms.find((classroom) => classroom.id === selectedClassroom)?.class_name ||
-      selectedClassroom;
-    const dataToExport = studentsList.map(s => ({
+    const className = classrooms.find(c => c.id === selectedClassroom)?.class_name || 'Classroom';
+    const dataToExport = classroomMetrics?.students.map(s => ({
       'รหัสนักเรียน': s.student_id,
-      'ชื่อ-นามสกุล': s.student_name,
-      'ระดับชั้น': classroomName,
-      'คะแนน Pre-Test': s.analytics_summary?.pretest_score || 0,
-      'ด่านปัจจุบัน': s.learning_paths?.current_stage || 1,
-      'ระดับ Rank': s.learning_paths?.current_rank || 1,
-      'อัตราตอบถูก (%)': s.analytics_summary?.success_rate || 0,
-      'จำนวนครั้งท้าทาย': s.analytics_summary?.attempt_count || 0
-    }));
+      'ชื่อ': s.student_name,
+      'ชั้น/ห้อง': className,
+      'Pre-Test': s.pre,
+      'Post-Test': s.post,
+      'Learning Gain (%)': s.gainPercent,
+      'ความแม่นยำ (%)': s.acc,
+      'จำนวนคำศัพท์ที่ต้องทบทวน': s.reviewWordsCount,
+      'ระดับความเสี่ยง': s.riskLevel,
+      'แนวโน้ม': s.trend
+    })) || [];
 
     const csv = Papa.unparse(dataToExport);
     const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `VocabJourney_Analytics_${selectedClassroom}.csv`);
+    link.setAttribute('download', `VocabJourney_${className}_Analytics.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // 4. MOCK LOGIN SCREEN
   if (!teacher) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-indigo-500/20 rounded-full mix-blend-screen filter blur-[128px]"></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-500/20 rounded-full mix-blend-screen filter blur-[128px]"></div>
-
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }} 
-          animate={{ opacity: 1, scale: 1 }} 
-          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl relative z-10"
-        >
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl relative z-10">
           <div className="text-center mb-6">
             <Shield className="w-14 h-14 text-indigo-400 mx-auto mb-3" />
-            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-300 mb-2">
-              Teacher Analytics
-            </h1>
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-300 mb-2">Teacher Analytics</h1>
             <p className="text-slate-400">ระบบแดชบอร์ดวัดและประเมินผลสำหรับครู</p>
           </div>
-
           {loginError && <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-3 rounded-xl mb-6 text-sm text-center">{loginError}</div>}
-
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <div>
               <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">ชื่อผู้ใช้ (ครู)</label>
-              <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500" placeholder="เช่น teacher" />
+              <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500" />
             </div>
-            
             <div>
               <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">รหัสผ่าน</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500" placeholder="เช่น teacher123" />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500" />
             </div>
-
             <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 text-white font-bold py-4 rounded-xl shadow-lg mt-4 disabled:opacity-50">
-              {isLoading ? 'กำลังโหลด...' : 'ลงชื่อเข้าใช้ระบบประเมิน 🔒'}
+              {isLoading ? 'กำลังโหลด...' : 'ลงชื่อเข้าใช้ระบบ 🔒'}
             </button>
           </form>
         </motion.div>
@@ -332,169 +205,181 @@ export default function AdminPage() {
     );
   }
 
+  const renderTabNavigation = () => (
+    <div className="flex bg-slate-900 border border-slate-900 rounded-2xl p-1 mb-6 overflow-x-auto custom-scrollbar">
+      {[
+        { id: 'overview', icon: Activity, label: 'Overview' },
+        { id: 'students', icon: Users, label: 'Student Analytics' },
+        { id: 'classroom', icon: BarChart3, label: 'Classroom' },
+        { id: 'item-analysis', icon: BookOpen, label: 'Item Analysis' },
+        { id: 'intervention', icon: AlertTriangle, label: 'Intervention' },
+        { id: 'team-battle', icon: Trophy, label: 'Team Battle' },
+        { id: 'reports', icon: FileSpreadsheet, label: 'Reports & Export' },
+      ].map(tab => (
+        <button key={tab.id} onClick={() => { setActiveTab(tab.id as AdminTab); setSelectedStudent(null); }}
+          className={`flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 whitespace-nowrap transition-all ${activeTab === tab.id ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+          <tab.icon className="w-4 h-4" /> {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 pb-20 relative overflow-hidden">
-      
-      {/* Ambient backgrounds */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-500/5 rounded-full filter blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-500/5 rounded-full filter blur-[120px] pointer-events-none"></div>
-
       <div className="max-w-7xl mx-auto relative z-10">
-        
-        {/* Top Navbar */}
-        <header className="flex flex-col md:flex-row justify-between items-center mb-8 bg-slate-900 border border-slate-900 p-6 rounded-3xl gap-4">
+        <header className="flex flex-col md:flex-row justify-between items-center mb-6 bg-slate-900 border border-slate-900 p-6 rounded-3xl gap-4">
           <div className="flex items-center gap-3">
-            <BarChart3 className="w-8 h-8 text-indigo-400" />
+            <BrainCircuit className="w-8 h-8 text-indigo-400" />
             <div>
-              <h1 className="text-2xl font-black text-white">ระบบนวัตกรรมคลังข้อมูลวิจัยครู</h1>
-              <p className="text-slate-400 text-sm">เข้าใช้งานในนาม: {teacher.name}</p>
+              <h1 className="text-2xl font-black text-white">Learning Analytics Dashboard</h1>
+              <p className="text-slate-400 text-sm">ผู้สอน: {teacher.name}</p>
             </div>
           </div>
-          
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-            {/* Classroom selector */}
-            <select 
-              value={selectedClassroom}
-              onChange={e => setSelectedClassroom(e.target.value)}
-              className="bg-slate-950 border border-slate-800 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-indigo-500 w-full md:w-auto"
-            >
-              {classrooms.map(c => (
-                <option key={c.id} value={c.id}>{c.class_name}</option>
-              ))}
+          <div className="flex flex-wrap items-center gap-3">
+            <select value={selectedClassroom} onChange={e => setSelectedClassroom(e.target.value)} className="bg-slate-950 border border-slate-800 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+              {classrooms.map(c => <option key={c.id} value={c.id}>{c.class_name}</option>)}
             </select>
-
-            <button 
-              onClick={() => { localStorage.removeItem('vocab_journey_teacher'); setTeacher(null); }}
-              className="px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl flex items-center justify-center gap-2 hover:scale-102 transition-all w-full md:w-auto font-bold"
-            >
+            <button onClick={() => { localStorage.removeItem('vocab_journey_teacher'); setTeacher(null); }} className="px-4 py-2.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl font-bold flex items-center gap-2 hover:bg-rose-500/20">
               <LogOut className="w-4 h-4" /> ออกจากระบบ
             </button>
           </div>
         </header>
 
-        {/* Tab links */}
-        <div className="flex bg-slate-900 border border-slate-900 rounded-2xl p-1 mb-8 overflow-x-auto">
-          <button onClick={() => setActiveTab('students')} className={`flex-1 py-3 px-5 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all whitespace-nowrap ${activeTab === 'students' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-            <Users className="w-4 h-4" /> วิเคราะห์พัฒนาการผู้เรียน
-          </button>
-          <button onClick={() => setActiveTab('item-analysis')} className={`flex-1 py-3 px-5 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all whitespace-nowrap ${activeTab === 'item-analysis' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-            <BarChart3 className="w-4 h-4" /> Item Analysis ($p, d$)
-          </button>
-          <button onClick={() => setActiveTab('heatmap')} className={`flex-1 py-3 px-5 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all whitespace-nowrap ${activeTab === 'heatmap' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-            <BookOpen className="w-4 h-4" /> Heatmap คลังคำศัพท์
-          </button>
-          <button onClick={() => setActiveTab('assignments')} className={`flex-1 py-3 px-5 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all whitespace-nowrap ${activeTab === 'assignments' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-            <FileSpreadsheet className="w-4 h-4" /> ระบบมอบหมายงาน
-          </button>
-          <button onClick={() => setActiveTab('alerts')} className={`flex-1 py-3 px-5 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all whitespace-nowrap ${activeTab === 'alerts' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-            <AlertTriangle className="w-4 h-4" /> ระบบเตือนซ่อมเสริม ({alerts.length})
-          </button>
-          <button onClick={() => setActiveTab('content-builder')} className={`flex-1 py-3 px-5 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all whitespace-nowrap ${activeTab === 'content-builder' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-            <Plus className="w-4 h-4" /> จัดการคำศัพท์
-          </button>
-        </div>
+        {renderTabNavigation()}
 
-        {/* Tab panels */}
         <AnimatePresence mode="wait">
-          
-          {/* TAB 1: STUDENT DEVELOPMENT & CSV EXPORT */}
-          {activeTab === 'students' && (
-            <motion.div key="students" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-              <div className="flex justify-between items-center bg-slate-900/40 p-6 rounded-3xl border border-slate-900">
-                <div>
-                  <h2 className="text-xl font-bold text-white">รายงานผลสัมฤทธิ์พัฒนาการนักเรียน</h2>
-                  <p className="text-slate-400 text-sm mt-0.5">วิเคราะห์สถิติจริงจากคลังคะแนนของนักเรียนแต่ละคน</p>
+          {/* TAB 1: OVERVIEW */}
+          {activeTab === 'overview' && classroomMetrics && (
+            <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl">
+                  <span className="text-sm text-slate-400 block mb-1">นักเรียนทั้งหมด</span>
+                  <div className="text-3xl font-black text-white">{classroomMetrics.totalStudents} คน</div>
                 </div>
-                <button 
-                  onClick={handleExportCSV}
-                  className="px-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/10 hover:scale-102"
-                >
-                  <FileSpreadsheet className="w-5 h-5" /> ส่งออกผลการเรียนเป็น CSV
-                </button>
+                <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl">
+                  <span className="text-sm text-slate-400 block mb-1">ความแม่นยำเฉลี่ย (Accuracy)</span>
+                  <div className="text-3xl font-black text-indigo-400">{Math.round(classroomMetrics.avgAcc)}%</div>
+                </div>
+                <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl">
+                  <span className="text-sm text-slate-400 block mb-1">Learning Gain เฉลี่ย</span>
+                  <div className="text-3xl font-black text-emerald-400">+{Math.round(classroomMetrics.avgGain)}%</div>
+                </div>
+                <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl">
+                  <span className="text-sm text-slate-400 block mb-1">นักเรียนกลุ่มเสี่ยง (Risk)</span>
+                  <div className="text-3xl font-black text-rose-400">{classroomMetrics.highRiskCount} คน</div>
+                </div>
               </div>
 
-              {/* Leaderboard Podium for Teachers */}
-              {studentsList.length > 0 && (
-                <div className="bg-slate-900/30 border border-slate-900 p-6 rounded-3xl space-y-4">
-                  <h3 className="text-lg font-black text-white flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-amber-400" /> ทำเนียบนักเรียนคะแนนสูงสุด (Class Leaderboard)
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[...studentsList]
-                      .sort((a, b) => (b.learning_paths?.exp || 0) - (a.learning_paths?.exp || 0) || (b.learning_paths?.coins || 0) - (a.learning_paths?.coins || 0))
-                      .slice(0, 3)
-                      .map((stud, idx) => {
-                        const cardStyles = [
-                          'from-amber-500/20 to-yellow-500/5 border-amber-500/30 text-amber-300 shadow-lg shadow-amber-500/5',
-                          'from-slate-400/20 to-slate-500/5 border-slate-400/30 text-slate-300',
-                          'from-amber-700/20 to-amber-800/5 border-amber-700/30 text-amber-600'
-                        ];
-                        const badges = ['🥇 อันดับ 1', '🥈 อันดับ 2', '🥉 อันดับ 3'];
-                        return (
-                          <div 
-                            key={stud.id} 
-                            className={`bg-gradient-to-br ${cardStyles[idx]} border p-5 rounded-2xl flex items-center justify-between transition-all hover:scale-[1.01]`}
-                          >
-                            <div className="min-w-0">
-                              <span className="text-[10px] font-black uppercase tracking-wider block opacity-70">{badges[idx]}</span>
-                              <h4 className="text-base font-black text-white mt-1 truncate">{stud.student_name}</h4>
-                              <p className="text-xs text-slate-400 mt-0.5">
-                                เลเวล {Math.floor((stud.learning_paths?.exp || 0) / 100) + 1} • {stud.learning_paths?.coins || 0} เหรียญ
-                              </p>
-                            </div>
-                            <div className="text-right shrink-0">
-                              <span className="text-xl font-black text-white block">ด่าน {stud.learning_paths?.current_stage || 1}</span>
-                              <span className="text-[10px] text-slate-500 font-medium">ตำแหน่งปัจจุบัน</span>
-                            </div>
-                          </div>
-                        );
-                      })}
+              <div className="bg-indigo-500/10 border border-indigo-500/20 p-6 rounded-3xl flex gap-4 items-start">
+                <div className="bg-indigo-500/20 p-3 rounded-full"><Sparkles className="w-6 h-6 text-indigo-400" /></div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">AI Teacher Insight</h3>
+                  <p className="text-indigo-200">
+                    {generateClassroomInsight({
+                      avgGain: classroomMetrics.avgGain,
+                      lowAccuracyCount: classroomMetrics.highRiskCount,
+                      weakestSkill: classroomMetrics.weakestSkill,
+                      classroomName: classrooms.find(c => c.id === selectedClassroom)?.class_name || ''
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              {/* Chart section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-3xl">
+                  <h3 className="text-lg font-bold text-white mb-4">Pre-Test vs Post-Test (คะแนนเฉลี่ย)</h3>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={[{ name: 'Class Average', PreTest: classroomMetrics.avgPre, PostTest: classroomMetrics.avgPost }]}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <XAxis dataKey="name" stroke="#94a3b8" />
+                        <YAxis stroke="#94a3b8" />
+                        <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} />
+                        <Legend />
+                        <Bar dataKey="PreTest" fill="#64748b" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="PostTest" fill="#10b981" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
-              )}
+                
+                <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-3xl">
+                  <h3 className="text-lg font-bold text-white mb-4">การกระจายตัวของระดับความเสี่ยง</h3>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={[
+                        { level: 'Low Risk', count: classroomMetrics.students.filter(s => s.riskLevel === 'Low').length, fill: '#10b981' },
+                        { level: 'Medium Risk', count: classroomMetrics.students.filter(s => s.riskLevel === 'Medium').length, fill: '#f59e0b' },
+                        { level: 'High Risk', count: classroomMetrics.students.filter(s => s.riskLevel === 'High').length, fill: '#f43f5e' },
+                        { level: 'Critical', count: classroomMetrics.students.filter(s => s.riskLevel === 'Critical').length, fill: '#9f1239' }
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <XAxis dataKey="level" stroke="#94a3b8" />
+                        <YAxis stroke="#94a3b8" />
+                        <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} />
+                        <Bar dataKey="count" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
-              {/* Student progress table */}
-              <div className="bg-slate-900/60 border border-slate-900 rounded-3xl overflow-hidden shadow-xl">
+          {/* TAB 2: STUDENT ANALYTICS (TABLE) */}
+          {activeTab === 'students' && classroomMetrics && (
+            <motion.div key="students" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+              <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-950 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                        <th className="p-5">รหัสนักเรียน</th>
-                        <th className="p-5">ชื่อ-นามสกุล</th>
-                        <th className="p-5 text-center">ด่านปัจจุบัน</th>
-                        <th className="p-5 text-center">ระดับ Rank</th>
-                        <th className="p-5 text-center">คะแนน Pre-Test</th>
-                        <th className="p-5 text-center">อัตราสำเร็จ (%)</th>
-                        <th className="p-5 text-center">เวลาเรียนทั้งหมด</th>
+                        <th className="p-4">นักเรียน</th>
+                        <th className="p-4 text-center">ด่านปัจจุบัน</th>
+                        <th className="p-4 text-center">Pre / Post</th>
+                        <th className="p-4 text-center">Learning Gain</th>
+                        <th className="p-4 text-center">Accuracy</th>
+                        <th className="p-4 text-center">Review Words</th>
+                        <th className="p-4 text-center">Risk Level</th>
+                        <th className="p-4 text-center">Trend</th>
+                        <th className="p-4"></th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-900 text-slate-200">
-                      {studentsList.map((stud) => {
-                        const scoreRate = stud.analytics_summary?.success_rate || 0;
-                        const durationSec = stud.analytics_summary?.total_time_on_task_sec || 0;
-                        const durationMin = Math.round(durationSec / 60);
-                        
+                    <tbody className="divide-y divide-slate-900/50 text-sm text-slate-200">
+                      {classroomMetrics.students.map(s => {
+                        const riskColor = s.riskLevel === 'Critical' || s.riskLevel === 'High' ? 'text-rose-400 bg-rose-500/10' : s.riskLevel === 'Medium' ? 'text-amber-400 bg-amber-500/10' : 'text-emerald-400 bg-emerald-500/10';
+                        const trendColor = s.trend === 'Improving' ? 'text-emerald-400' : s.trend === 'Declining' ? 'text-rose-400' : 'text-slate-400';
                         return (
-                          <tr key={stud.id} className="hover:bg-slate-900/35 transition-colors">
-                            <td className="p-5 font-mono">{stud.student_id}</td>
-                            <td className="p-5 font-bold text-white">{stud.student_name}</td>
-                            <td className="p-5 text-center font-bold text-indigo-400">ด่าน {stud.learning_paths?.current_stage || 1}</td>
-                            <td className="p-5 text-center">
-                              <span className="bg-amber-500/10 text-amber-400 font-extrabold px-3 py-1 rounded-full text-xs border border-amber-500/10">
-                                Rank {stud.learning_paths?.current_rank || 1}
-                              </span>
+                          <tr key={s.id} className="hover:bg-slate-900/35 transition-colors">
+                            <td className="p-4 font-bold">
+                              <div className="flex items-center gap-3">
+                                <img src={`https://api.dicebear.com/9.x/adventurer/svg?seed=${s.learning_paths?.avatar_seed || s.id}`} alt="Avatar" className="w-8 h-8 rounded-full bg-slate-800" />
+                                <div>
+                                  <div>{s.student_name}</div>
+                                  <div className="text-xs text-slate-500 font-mono">{s.student_id}</div>
+                                </div>
+                              </div>
                             </td>
-                            <td className="p-5 text-center text-emerald-400 font-bold">{stud.analytics_summary?.pretest_score || 0} / 25</td>
-                            <td className="p-5 text-center font-bold">{scoreRate}%</td>
-                            <td className="p-5 text-center text-slate-400">{durationMin} นาที</td>
+                            <td className="p-4 text-center font-bold text-indigo-400">{s.learning_paths?.current_stage || 1}</td>
+                            <td className="p-4 text-center font-bold">{s.pre} / {s.post}</td>
+                            <td className="p-4 text-center font-bold text-emerald-400">+{s.gainPercent}%</td>
+                            <td className="p-4 text-center font-bold">{Math.round(s.acc)}%</td>
+                            <td className="p-4 text-center font-bold text-amber-400">{s.reviewWordsCount}</td>
+                            <td className="p-4 text-center">
+                              <span className={`px-3 py-1 rounded-full text-xs font-bold border border-transparent ${riskColor}`}>{s.riskLevel}</span>
+                            </td>
+                            <td className={`p-4 text-center font-bold ${trendColor}`}>{s.trend}</td>
+                            <td className="p-4 text-right">
+                              <button onClick={() => { setSelectedStudent(s); setActiveTab('student-detail'); }} className="px-3 py-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded-lg text-xs font-bold transition-all">
+                                ดูรายละเอียด
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
-                      {studentsList.length === 0 && (
-                        <tr>
-                          <td colSpan={7} className="p-8 text-center text-slate-500 italic">ไม่มีข้อมูลนักเรียนในห้องเรียนนี้</td>
-                        </tr>
+                      {classroomMetrics.students.length === 0 && (
+                        <tr><td colSpan={9} className="p-8 text-center text-slate-500">ไม่มีข้อมูลนักเรียน</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -503,335 +388,230 @@ export default function AdminPage() {
             </motion.div>
           )}
 
-          {/* TAB 2: ITEM ANALYSIS RESEARCH */}
+          {/* TAB 3: STUDENT DETAIL */}
+          {activeTab === 'student-detail' && selectedStudent && (
+            <motion.div key="student-detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+              <button onClick={() => setActiveTab('students')} className="text-slate-400 hover:text-white flex items-center gap-2 text-sm font-bold mb-2">
+                &larr; กลับไปหน้ารายชื่อนักเรียน
+              </button>
+              
+              <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-3xl flex items-center gap-6">
+                <img src={`https://api.dicebear.com/9.x/adventurer/svg?seed=${selectedStudent.learning_paths?.avatar_seed || selectedStudent.id}`} alt="Avatar" className="w-24 h-24 rounded-full bg-slate-800" />
+                <div>
+                  <h2 className="text-2xl font-black text-white">{selectedStudent.student_name}</h2>
+                  <p className="text-slate-400 font-mono mb-2">ID: {selectedStudent.student_id} | ด่านปัจจุบัน: {selectedStudent.learning_paths?.current_stage || 1}</p>
+                  <div className="flex gap-2">
+                    <span className="px-3 py-1 bg-slate-800 text-slate-300 rounded-full text-xs font-bold">EXP: {selectedStudent.learning_paths?.exp || 0}</span>
+                    <span className="px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full text-xs font-bold">Coins: {selectedStudent.learning_paths?.coins || 0}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-indigo-500/10 border border-indigo-500/20 p-6 rounded-3xl flex gap-4 items-start">
+                <div className="bg-indigo-500/20 p-3 rounded-full"><Sparkles className="w-6 h-6 text-indigo-400" /></div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">AI Teacher Insight สำหรับนักเรียนคนนี้</h3>
+                  <p className="text-indigo-200">
+                    {generateStudentInsight({
+                      gainPercent: selectedStudent.gainPercent,
+                      accuracy: selectedStudent.acc,
+                      weakestSkill: classroomMetrics?.weakestSkill || 'Listening',
+                      reviewCount: selectedStudent.reviewWordsCount,
+                      inactiveDays: selectedStudent.daysInactive
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-3xl">
+                  <h3 className="text-lg font-bold text-white mb-4">Skill Radar (ความถนัดแต่ละทักษะ)</h3>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart cx="50%" cy="50%" outerRadius="80%" data={[
+                        { subject: 'Meaning', A: calculateStudentSkillRadar(selectedStudent.acc, wrongWords.filter(w => w.user_id === selectedStudent.id)).Meaning, fullMark: 100 },
+                        { subject: 'Listening', A: calculateStudentSkillRadar(selectedStudent.acc, wrongWords.filter(w => w.user_id === selectedStudent.id)).Listening, fullMark: 100 },
+                        { subject: 'Context', A: calculateStudentSkillRadar(selectedStudent.acc, wrongWords.filter(w => w.user_id === selectedStudent.id)).Context, fullMark: 100 },
+                        { subject: 'Spelling', A: calculateStudentSkillRadar(selectedStudent.acc, wrongWords.filter(w => w.user_id === selectedStudent.id)).Spelling, fullMark: 100 },
+                        { subject: 'Word Recog', A: calculateStudentSkillRadar(selectedStudent.acc, wrongWords.filter(w => w.user_id === selectedStudent.id))['Word Recog'], fullMark: 100 },
+                      ]}>
+                        <PolarGrid stroke="#334155" />
+                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                        <Radar name="Student Skills" dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-3xl">
+                  <h3 className="text-lg font-bold text-white mb-4">คำศัพท์ที่ผิดบ่อย (Review Burden)</h3>
+                  <div className="space-y-3 h-64 overflow-y-auto custom-scrollbar pr-2">
+                    {wrongWords.filter(w => w.user_id === selectedStudent.id).slice(0, 8).map(w => (
+                      <div key={w.id} className="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl">
+                        <span className="font-bold text-white uppercase">{w.vocabulary?.word}</span>
+                        <span className="text-xs bg-rose-500/20 text-rose-400 px-2 py-1 rounded-md">ผิด {w.wrong_count} ครั้ง</span>
+                      </div>
+                    ))}
+                    {wrongWords.filter(w => w.user_id === selectedStudent.id).length === 0 && (
+                      <div className="text-slate-500 text-center py-10">ไม่มีคำศัพท์ที่ต้องทบทวนพิเศษ</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB 6: ITEM ANALYSIS */}
           {activeTab === 'item-analysis' && (
             <motion.div key="item-analysis" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
               <div className="bg-slate-900/40 p-6 rounded-3xl border border-slate-900">
-                <h2 className="text-xl font-bold text-white">Item Analysis (การวิเคราะห์ตัวบ่งชี้ข้อสอบรายข้อ)</h2>
-                <p className="text-slate-400 text-sm mt-0.5">ใช้ระบุความยาก ($p$-value) และค่าอำนาจจำแนก ($d$-value) ของข้อสอบคำศัพท์แต่ละคำ เพื่อนำไปเขียนงานวิจัยนวัตกรรม</p>
+                <h2 className="text-xl font-bold text-white">Item Analysis & Vocabulary Insights</h2>
+                <p className="text-slate-400 text-sm mt-0.5">วิเคราะห์จุดอ่อนของคำศัพท์แต่ละคำ เพื่อปรับแนวทางการสอน</p>
               </div>
 
-              <div className="bg-slate-900/60 border border-slate-900 rounded-3xl overflow-hidden shadow-xl">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-950 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                        <th className="p-5">คำศัพท์</th>
-                        <th className="p-5">หมวดหมู่</th>
-                        <th className="p-5 text-center">ค่าความยาก ($p$)</th>
-                        <th className="p-5 text-center">ค่าอำนาจจำแนก ($d$)</th>
-                        <th className="p-5 text-center">สถานะความเหมาะสม</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-900 text-slate-200">
-                      {vocabList.slice(0, 15).map((v) => {
-                        const analysis = itemAnalysisByWord[v.id];
-                        const pVal = Number(analysis?.p_value || 0);
-                        const dVal = Number(analysis?.d_value || 0);
-                        const attemptCount = Number(analysis?.attempt_count || 0);
-                        
-                        let statusText = 'ข้อมูลยังไม่เพียงพอ';
-                        let statusColor = 'text-slate-400';
-                        if (attemptCount >= 10 && pVal < 0.2) {
-                          statusText = 'ยากเกินไป ควรแก้ไข';
-                          statusColor = 'text-rose-400';
-                        } else if (attemptCount >= 10 && pVal > 0.8) {
-                          statusText = 'ง่ายเกินไป';
-                          statusColor = 'text-amber-400';
-                        } else if (attemptCount >= 10) {
-                          statusText = 'ระดับความยากเหมาะสม';
-                          statusColor = 'text-emerald-400';
-                        }
-
-                        return (
-                          <tr key={v.id} className="hover:bg-slate-900/35 transition-colors">
-                            <td className="p-5 font-bold uppercase text-white">{v.word}</td>
-                            <td className="p-5 text-slate-400">{v.vocabulary_categories?.display_name_th || 'ทั่วไป'}</td>
-                            <td className="p-5 text-center font-bold">{attemptCount > 0 ? pVal.toFixed(2) : '—'}</td>
-                            <td className="p-5 text-center font-bold">{attemptCount >= 20 && dVal !== 0 ? dVal.toFixed(2) : 'รอข้อมูล'}</td>
-                            <td className={`p-5 text-center font-bold ${statusColor}`}>{statusText}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* TAB 3: VISUAL VOCABULARY ERROR HEATMAP */}
-          {activeTab === 'heatmap' && (
-            <motion.div key="heatmap" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-              <div className="bg-slate-900/40 p-6 rounded-3xl border border-slate-900">
-                <h2 className="text-xl font-bold text-white">Heatmap ความหนาแน่นของคำศัพท์ที่ผิดบ่อย (Hotspots)</h2>
-                <p className="text-slate-400 text-sm mt-0.5">ตารางคลังคำศัพท์ที่ถูกมาร์กสีตามอัตราข้อผิดพลาด เพื่อให้คุณครูระบุจุดอ่อนของนักเรียนได้ทันที</p>
-              </div>
-
-              <div className="bg-slate-900/60 border border-slate-900 p-8 rounded-3xl shadow-xl">
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-                  {vocabList.slice(0, 48).map((v) => {
-                    const errorWeight = wrongCountByWord[v.id] || 0;
-                    
-                    let bg = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
-                    if (errorWeight >= 2) bg = 'bg-amber-500/10 border-amber-500/30 text-amber-400';
-                    if (errorWeight >= 5) bg = 'bg-rose-500/15 border-rose-500/40 text-rose-400';
-
-                    return (
-                      <div 
-                        key={v.id} 
-                        className={`p-3 rounded-xl border text-center font-bold text-sm select-none transition-all hover:scale-105 ${bg}`}
-                      >
-                        <span className="uppercase block text-xs">{v.word}</span>
-                        <span className="text-[10px] text-slate-500 block mt-1">ผิด {errorWeight} ครั้ง</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* TAB 4: ASSIGNMENTS CREATION */}
-          {activeTab === 'assignments' && (
-            <motion.div key="assignments" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Form panel */}
-              <div className="bg-slate-900 border border-slate-900 p-6 rounded-3xl shadow-xl h-fit">
-                <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
-                  <Plus className="w-5 h-5 text-indigo-400" /> มอบหมายภารกิจใหม่
-                </h3>
-
-                <form onSubmit={handleCreateAssignment} className="space-y-4">
-                  <div>
-                    <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">หัวข้อภารกิจ</label>
-                    <input type="text" value={assignTitle} onChange={e => setAssignTitle(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white" placeholder="เช่น ทำภารกิจก่อนกลางภาค" />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">เลือกหมวดหมู่คำศัพท์</label>
-                    <select value={assignCat} onChange={e => setAssignCat(e.target.value)} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5">
-                      {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.display_name_th}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">เริ่มด่าน</label>
-                      <input type="number" value={assignStart} onChange={e => setAssignStart(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5" />
-                    </div>
-                    <div>
-                      <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">ถึงด่าน</label>
-                      <input type="number" value={assignEnd} onChange={e => setAssignEnd(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">วันกำหนดส่ง</label>
-                    <input type="date" value={assignDue} onChange={e => setAssignDue(e.target.value)} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5" />
-                  </div>
-
-                  <button type="submit" className="w-full py-3.5 bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-xl shadow-lg mt-4 transition-all">
-                    ยืนยันมอบหมายงาน 📢
-                  </button>
-                </form>
-              </div>
-
-              {/* Assignment status list panel */}
-              <div className="lg:col-span-2 space-y-4">
-                <div className="bg-slate-900/40 border border-slate-900 p-6 rounded-3xl">
-                  <h3 className="text-lg font-bold text-white mb-2">ภารกิจที่มอบหมายในขณะนี้</h3>
-                  <p className="text-slate-400 text-sm">รายการงานมอบหมายที่ครูได้มอบหมายให้ห้องเรียนนี้</p>
-                </div>
-
-                <div className="space-y-3">
-                  {assignments.filter((as) => as.classroom_id === selectedClassroom).map((as) => (
-                    <div key={as.id} className="bg-slate-900/60 border border-slate-900 p-5 rounded-2xl flex justify-between items-center">
-                      <div>
-                        <h4 className="text-lg font-bold text-white">{as.title}</h4>
-                        <p className="text-sm text-slate-400">หมวดหมู่: {as.vocabulary_categories?.display_name_th} (ด่าน {as.start_stage} - {as.end_stage})</p>
-                        <p className="text-xs text-rose-400 mt-2 font-bold">ครบกำหนด: {new Date(as.due_date).toLocaleDateString()}</p>
-                      </div>
-                      
-                      <div className="text-right">
-                        <span className="text-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full font-bold">
-                          มอบหมายแล้ว
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                  {assignments.filter((as) => as.classroom_id === selectedClassroom).length === 0 && (
-                    <p className="text-slate-600 text-center py-12 italic">ยังไม่มีงานมอบหมายสร้างไว้ในประวัติ</p>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* TAB 5: INTERVENTION ALERTS DESK */}
-          {activeTab === 'alerts' && (
-            <motion.div key="alerts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-              <div className="bg-slate-900/40 p-6 rounded-3xl border border-slate-900">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <ShieldAlert className="w-6 h-6 text-rose-500 animate-pulse" /> ศูนย์เฝ้าระวังซ่อมเสริมนักเรียน
-                </h2>
-                <p className="text-slate-400 text-sm mt-0.5">ระบบจะแจ้งเตือนอัตโนมัติเมื่อตรวจพบนักเรียนที่มีคะแนนตกต่ำ Inactive นานผิดปกติ หรือเล่นเกมไม่ผ่านต่อเนื่อง</p>
-              </div>
-
-              <div className="space-y-3">
-                {alerts.map((al) => (
-                  <div key={al.id} className="bg-rose-950/10 border border-rose-500/20 p-5 rounded-2xl flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-rose-500/10 rounded-full flex items-center justify-center text-2xl">
-                        ⚠️
-                      </div>
-                      <div>
-                        <h4 className="text-lg font-bold text-white">{al.students?.student_name}</h4>
-                        <p className="text-sm text-rose-300 font-medium">{al.description}</p>
-                        <p className="text-xs text-slate-500 mt-1">ตรวจพบเมื่อ: {new Date(al.created_at).toLocaleString()}</p>
-                      </div>
-                    </div>
-                    
-                    <button 
-                      onClick={() => resolveAlert(al.id)}
-                      className="px-4 py-2 bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold rounded-lg text-sm transition-all shadow-md"
-                    >
-                      รับทราบ & ดำเนินการแล้ว
-                    </button>
-                  </div>
-                ))}
-
-                {alerts.length === 0 && (
-                  <div className="text-center bg-slate-900/40 border border-slate-900 py-12 rounded-3xl">
-                    <p className="text-slate-300 font-bold text-lg">สภาวะปกติ ✨</p>
-                    <p className="text-slate-500 text-sm mt-1">นักเรียนทุกคนในห้องผ่านเกณฑ์การประเมินและไม่มีการแจ้งเตือน</p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-
-          {/* TAB 6: VOCABULARY CONTENT BUILDER */}
-          {activeTab === 'content-builder' && (
-            <motion.div key="content-builder" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Form Panel */}
-              <div className="bg-slate-900 border border-slate-900 p-6 rounded-3xl shadow-xl h-fit">
-                <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
-                  {editingWordId ? <Edit2 className="w-5 h-5 text-indigo-400" /> : <Plus className="w-5 h-5 text-indigo-400" />}
-                  {editingWordId ? 'แก้ไขข้อมูลคำศัพท์' : 'เพิ่มคำศัพท์ในคลัง'}
-                </h3>
-
-                <form onSubmit={handleSaveWord} className="space-y-4">
-                  <div>
-                    <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">คำศัพท์ภาษาอังกฤษ</label>
-                    <input type="text" value={wordInput} onChange={e => setWordInput(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white" placeholder="เช่น elephant" />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">คำแปลภาษาไทย</label>
-                    <input type="text" value={meaningInput} onChange={e => setMeaningInput(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white" placeholder="เช่น ช้าง" />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">ตัวอย่างประโยค</label>
-                    <textarea value={exampleInput} onChange={e => setExampleInput(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm" placeholder="เช่น The elephant has a long trunk."></textarea>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">ประเภทคำ (POS)</label>
-                      <select value={posInput} onChange={e => setPosInput(e.target.value)} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5">
-                        <option value="noun">noun</option>
-                        <option value="verb">verb</option>
-                        <option value="adjective">adjective</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">หมวดหมู่คำศัพท์</label>
-                      <select value={catInput} onChange={e => setCatInput(e.target.value)} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5">
-                        {categories.map(c => (
-                          <option key={c.id} value={c.id}>{c.display_name_th}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">ระดับ Rank (1-5)</label>
-                      <input type="number" min={1} max={5} value={rankInput} onChange={e => setRankInput(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5" />
-                    </div>
-                    <div>
-                      <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">ด่านประเมิน (Stage)</label>
-                      <input type="number" min={1} max={100} value={stageInput} onChange={e => setStageInput(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5" />
-                    </div>
-                  </div>
-
-                  <button type="submit" className="w-full py-3.5 bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-xl shadow-lg mt-4 transition-all">
-                    บันทึกข้อมูลคำศัพท์ 💾
-                  </button>
-                  
-                  {editingWordId && (
-                    <button type="button" onClick={() => { setWordInput(''); setMeaningInput(''); setExampleInput(''); setEditingWordId(null); }} className="w-full py-2 bg-slate-850 text-slate-400 rounded-xl mt-2 hover:bg-slate-800 transition-colors">
-                      ยกเลิกการแก้ไข
-                    </button>
-                  )}
-                </form>
-              </div>
-
-              {/* Vocab Table Panel */}
-              <div className="lg:col-span-2 space-y-4">
-                <div className="bg-slate-900/60 border border-slate-900 rounded-3xl overflow-hidden shadow-xl max-h-[600px] overflow-y-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-950 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider sticky top-0">
-                        <th className="p-4">คำศัพท์</th>
-                        <th className="p-4">คำแปล</th>
-                        <th className="p-4 text-center">Rank</th>
-                        <th className="p-4 text-center">Stage</th>
-                        <th className="p-4 text-center">จัดการ</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-900 text-slate-200">
-                      {vocabList.slice(0, 50).map((v) => (
+              <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-950 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                      <th className="p-5">คำศัพท์</th>
+                      <th className="p-5">หมวดหมู่</th>
+                      <th className="p-5 text-center">ระดับความยาก (Difficulty)</th>
+                      <th className="p-5 text-center">อัตราข้อผิดพลาด (Error Rate)</th>
+                      <th className="p-5">คำแนะนำ AI</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-900 text-slate-200">
+                    {[...vocabList].sort((a, b) => {
+                      const analysisA = itemAnalysis.find(i => i.word_id === a.id);
+                      const analysisB = itemAnalysis.find(i => i.word_id === b.id);
+                      const errorA = Math.min(100, Math.max(0, 100 - (analysisA?.success_rate || 100)));
+                      const errorB = Math.min(100, Math.max(0, 100 - (analysisB?.success_rate || 100)));
+                      return errorB - errorA;
+                    }).slice(0, 30).map((v) => {
+                      const analysis = itemAnalysis.find(i => i.word_id === v.id);
+                      const errorRate = Math.min(100, Math.max(0, 100 - (analysis?.success_rate || 100)));
+                      return (
                         <tr key={v.id} className="hover:bg-slate-900/35 transition-colors">
-                          <td className="p-4 font-bold uppercase text-white">{v.word}</td>
-                          <td className="p-4 text-slate-300 font-bold">{v.meaning_th || v.meaning}</td>
-                          <td className="p-4 text-center">
-                            <span className="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full text-xs font-bold border border-amber-500/10">
-                              Rank {v.rank}
-                            </span>
+                          <td className="p-5 font-bold uppercase text-white">{v.word}</td>
+                          <td className="p-5 text-slate-400">{v.difficulty_level || 'Normal'}</td>
+                          <td className="p-5 text-center font-bold">
+                            {analysis ? (Number(analysis.p_value) < 0.3 ? 'ยากมาก' : 'ปานกลาง') : 'รอข้อมูล'}
                           </td>
-                          <td className="p-4 text-center font-bold text-indigo-400">ด่าน {v.stage_number || v.stage}</td>
-                          <td className="p-4 text-center">
-                            <button 
-                              onClick={() => {
-                                setEditingWordId(v.id);
-                                setWordInput(v.word);
-                                setMeaningInput(v.meaning_th || v.meaning);
-                                setExampleInput(v.example_sentence || v.example || '');
-                                setPosInput(v.part_of_speech || 'noun');
-                                setCatInput(v.category_id || '');
-                                setRankInput(v.rank || 1);
-                                setStageInput(v.stage_number || v.stage || 1);
-                              }}
-                              className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-indigo-400"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
+                          <td className="p-5 text-center font-bold text-rose-400">{errorRate}%</td>
+                          <td className="p-5 text-xs text-slate-400 line-clamp-2">
+                            {errorRate > 60 ? generateItemInsight(v.word, errorRate, 'ม.ต้น') : 'อยู่ในเกณฑ์ปกติ'}
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB 7: INTERVENTION DASHBOARD */}
+          {activeTab === 'intervention' && classroomMetrics && (
+            <motion.div key="intervention" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+              <div className="bg-slate-900/40 p-6 rounded-3xl border border-slate-900">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <AlertTriangle className="w-6 h-6 text-rose-500" /> ระบบแจ้งเตือนสอนเสริม (Intervention)
+                </h2>
+                <p className="text-slate-400 text-sm mt-0.5">จำแนกกลุ่มนักเรียนอัตโนมัติตามความเสี่ยง เพื่อให้ครูจัดการสอนเสริมได้ตรงจุด</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* High Risk Group */}
+                <div className="bg-rose-950/20 border border-rose-500/20 p-6 rounded-3xl">
+                  <h3 className="text-lg font-bold text-rose-400 mb-4 flex items-center gap-2">เร่งด่วน (High / Critical Risk)</h3>
+                  <div className="space-y-3">
+                    {classroomMetrics.students.filter(s => s.riskLevel === 'High' || s.riskLevel === 'Critical').map(s => (
+                      <div key={s.id} className="bg-slate-900 p-4 rounded-xl">
+                        <div className="font-bold text-white">{s.student_name}</div>
+                        <div className="text-sm text-slate-400 mt-1">Accuracy: {Math.round(s.acc)}% | ไม่เข้าเรียน: {s.daysInactive} วัน</div>
+                        <div className="text-xs text-rose-300 mt-2 bg-rose-500/10 p-2 rounded">
+                          คำแนะนำ: เรียกพบเพื่อพูดคุย และมอบหมายภารกิจทบทวนคำศัพท์พื้นฐาน
+                        </div>
+                      </div>
+                    ))}
+                    {classroomMetrics.students.filter(s => s.riskLevel === 'High' || s.riskLevel === 'Critical').length === 0 && (
+                      <div className="text-slate-500 italic">ไม่มีนักเรียนกลุ่มเสี่ยงสูง</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Normal/Fast Progress Group */}
+                <div className="bg-emerald-950/20 border border-emerald-500/20 p-6 rounded-3xl">
+                  <h3 className="text-lg font-bold text-emerald-400 mb-4 flex items-center gap-2">ก้าวหน้าเร็ว (Fast Progress)</h3>
+                  <div className="space-y-3">
+                    {classroomMetrics.students.filter(s => s.trend === 'Improving').map(s => (
+                      <div key={s.id} className="bg-slate-900 p-4 rounded-xl">
+                        <div className="font-bold text-white">{s.student_name}</div>
+                        <div className="text-sm text-slate-400 mt-1">Learning Gain: +{s.gainPercent}% | Accuracy: {Math.round(s.acc)}%</div>
+                        <div className="text-xs text-emerald-300 mt-2 bg-emerald-500/10 p-2 rounded">
+                          คำแนะนำ: เพิ่มความท้าทายด้วยคำศัพท์ที่ยากขึ้น (Expert Level)
+                        </div>
+                      </div>
+                    ))}
+                    {classroomMetrics.students.filter(s => s.trend === 'Improving').length === 0 && (
+                      <div className="text-slate-500 italic">ยังไม่มีนักเรียนที่มีพัฒนาการก้าวกระโดด</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
           )}
 
-        </AnimatePresence>
+          {/* TAB 8: REPORTS & EXPORT */}
+          {activeTab === 'reports' && (
+            <motion.div key="reports" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+              <div className="bg-slate-900/60 p-8 rounded-3xl border border-slate-800 text-center">
+                <FileSpreadsheet className="w-16 h-16 text-indigo-400 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-white mb-2">ระบบออกรายงาน Learning Analytics</h2>
+                <p className="text-slate-400 max-w-md mx-auto mb-8">ส่งออกข้อมูลดิบ (Raw Data) และข้อมูลสรุปการวิเคราะห์ (Analytics) เป็นไฟล์ CSV เพื่อนำไปทำวิจัยหรือรายงานต่อผู้บริหาร</p>
+                
+                <div className="flex flex-col sm:flex-row justify-center gap-4">
+                  <button onClick={handleExportCSV} className="px-6 py-4 bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg">
+                    ดาวน์โหลดรายงานนักเรียนรายห้อง (CSV)
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+          
+          {/* TAB 9: TEAM BATTLE */}
+          {activeTab === 'team-battle' && (
+            <motion.div key="team-battle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+              <div className="bg-slate-900/40 p-6 rounded-3xl border border-slate-900 flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Trophy className="w-6 h-6 text-fuchsia-500" /> Cross-Class Team Battle
+                  </h2>
+                  <p className="text-slate-400 text-sm mt-0.5">กระตุ้นให้นักเรียนเกิดความร่วมมือกันทั้งภายในห้องเรียนและข้ามระดับชั้น</p>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-bold border border-slate-700 transition-all">
+                    ⚖️ จัดสมดุลทีม (Rebalance)
+                  </button>
+                  <button className="px-4 py-2 bg-fuchsia-500 hover:bg-fuchsia-400 text-white rounded-xl text-sm font-bold shadow-lg transition-all">
+                    🏁 เริ่ม Season ใหม่
+                  </button>
+                </div>
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <TeamLeaderboard scope="class" />
+                </div>
+                <div>
+                  <TeamLeaderboard scope="school" />
+                </div>
+              </div>
+            </motion.div>
+          )}
+          
+        </AnimatePresence>
       </div>
     </div>
   );
