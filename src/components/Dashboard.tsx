@@ -12,7 +12,10 @@ import { STORY_WORLDS, ADAPTIVE_RANK_CONFIG, getWorldForStage } from '@/utils/ad
 import AvatarDisplay from '@/components/AvatarDisplay';
 import ShopModal from '@/components/ShopModal';
 import { autoAssignTeamForStudent, calculateTeamScore } from '@/utils/teamBattleEngine';
-import { Users } from 'lucide-react';
+import { Users, Target, Zap, BrainCircuit } from 'lucide-react';
+import StudentHero from '@/components/StudentHero';
+import StudentTeamCard from '@/components/StudentTeamCard';
+import TeamLeaderboard from '@/components/TeamLeaderboard';
 
 export default function Dashboard() {
   const { student, progress, logout, setScreen, setProgress } = useAppStore();
@@ -196,69 +199,14 @@ export default function Dashboard() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
 
       <div className="max-w-4xl mx-auto relative z-10">
-        
-        {/* Header Block */}
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 p-5 rounded-3xl relative">
-          <div className="flex items-center gap-3 sm:gap-4 w-full">
-            <button 
-              onClick={() => setActiveTab('profile')}
-              className="relative group shrink-0 active:scale-95 transition-transform"
-              title="เปิดหน้าโปรไฟล์"
-            >
-              <AvatarDisplay 
-                seed={progress?.avatar_seed || student.id} 
-                style={progress?.avatar_style || 'adventurer'} 
-                size="lg"
-                className="w-14 h-14 sm:w-16 sm:h-16 shadow-lg shadow-emerald-500/20 group-hover:border-emerald-400 transition-colors"
-              />
-              <span className="absolute bottom-[-5px] right-[-5px] bg-emerald-500 text-slate-950 rounded-full p-1 shadow-md scale-0 group-hover:scale-100 transition-transform">
-                <User className="w-3 h-3 font-bold" />
-              </span>
-            </button>
-            
-            <div className="min-w-0 flex-1">
-              <h1 className="text-xl sm:text-2xl font-black bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent truncate flex items-center gap-2">
-                {student.student_name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                <span className="px-2.5 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-full text-[10px] sm:text-xs font-black shadow-md shadow-amber-500/20">
-                  {rankConfig.skillTitle}
-                </span>
-                <span className="px-2.5 py-0.5 bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-full text-[10px] sm:text-xs font-bold">
-                  Rank {currentRank}
-                </span>
-                <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px] sm:text-xs font-bold">
-                  Lvl {stats.level}
-                </span>
-                <span className="px-2.5 py-0.5 bg-slate-800 text-slate-400 rounded-full text-[10px] sm:text-xs font-semibold">
-                  🔥 {progress?.streak_days || 0} วันติด
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t border-slate-800/80 pt-3 sm:pt-0 sm:border-0">
-            <div className="flex items-center gap-2 bg-slate-950 px-3.5 py-2 rounded-xl border border-slate-800 shadow-inner">
-              <span className="text-base">🪙</span>
-              <span className="text-white font-black text-base">{progress?.coins || 0}</span>
-            </div>
-
-            <button
-              onClick={() => setShowShop(true)}
-              className="h-10 px-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-300 flex items-center gap-1.5 font-bold text-xs"
-              title="เปิดร้านค้าไอเทม"
-            >
-              <Store className="w-4 h-4" /> ร้านค้า
-            </button>
-            
-            <button 
-              onClick={logout} 
-              className="w-10 h-10 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 flex items-center justify-center hover:scale-105 transition-all text-slate-400 hover:text-white"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </header>
+        <StudentHero 
+          student={student} 
+          progress={progress} 
+          stats={stats} 
+          rankConfig={rankConfig} 
+          setShowShop={setShowShop} 
+          logout={logout} 
+        />
 
         {/* AI Mascot Bubble */}
         <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/5 border border-emerald-500/15 p-4 rounded-2xl flex items-center gap-3.5 mb-6">
@@ -271,10 +219,43 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Info Adaptive Banner */}
-        <div className="bg-slate-900/40 border border-slate-850 text-slate-400 text-xs py-2.5 px-4 rounded-xl text-center mb-6">
-          🛡️ <span className="font-bold text-slate-300">ความเสมอภาคการผจญภัย:</span> นักเรียนทุกคนผจญภัยครบ 100 ด่านเท่ากัน แต่ระบบอัจฉริยะจะปรับแต่งความยากของคำศัพท์และชนิดโจทย์ให้เหมาะสมตามศักยภาพของคุณโดยอัตโนมัติ
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+            <Target className="w-6 h-6 text-emerald-400 mb-2" />
+            <span className="text-xs text-slate-400 font-bold mb-1">ความแม่นยำ</span>
+            <span className="text-xl font-black text-white">{stats.xp > 0 ? '85%' : '-'}</span>
+          </div>
+          <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+            <BrainCircuit className="w-6 h-6 text-indigo-400 mb-2" />
+            <span className="text-xs text-slate-400 font-bold mb-1">ระดับทักษะ</span>
+            <span className="text-xl font-black text-white">Lvl {stats.level}</span>
+          </div>
+          <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+            <Zap className="w-6 h-6 text-amber-400 mb-2" />
+            <span className="text-xs text-slate-400 font-bold mb-1">EXP สะสม</span>
+            <span className="text-xl font-black text-white">{stats.xp}</span>
+          </div>
+          <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+            <Bookmark className="w-6 h-6 text-fuchsia-400 mb-2" />
+            <span className="text-xs text-slate-400 font-bold mb-1">ต้องทบทวน</span>
+            <span className="text-xl font-black text-white">{reviewWords.length} คำ</span>
+          </div>
         </div>
+
+        {/* Team Card (if assigned) */}
+        {myTeams.length > 0 && (
+          <div className="mb-6">
+            <StudentTeamCard team={myTeams[0]} scoreData={teamScores[myTeams[0].id]} />
+          </div>
+        )}
+
+        {/* Mini Leaderboard on top if in roadmap */}
+        {activeTab === 'roadmap' && (
+          <div className="mb-8">
+            <TeamLeaderboard scope="class" />
+          </div>
+        )}
 
         {/* Tab Links */}
         <div className="grid grid-cols-5 bg-slate-900/60 border border-slate-850 rounded-2xl p-1 mb-8 gap-0.5">

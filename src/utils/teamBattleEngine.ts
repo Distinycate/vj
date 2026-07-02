@@ -38,9 +38,13 @@ export async function autoAssignTeamForStudent(userId: string) {
         const counts = classTeams.map(t => ({
           id: t.id,
           count: membersCount?.filter(m => m.team_id === t.id).length || 0
-        })).sort((a, b) => a.count - b.count);
+        }));
         
-        await supabase.from('team_members').insert([{ team_id: counts[0].id, user_id: userId }]);
+        const minCount = Math.min(...counts.map(c => c.count));
+        const lowestTeams = counts.filter(c => c.count === minCount);
+        const randomTeam = lowestTeams[Math.floor(Math.random() * lowestTeams.length)];
+        
+        await supabase.from('team_members').insert([{ team_id: randomTeam.id, user_id: userId }]);
       }
     }
 
@@ -53,9 +57,13 @@ export async function autoAssignTeamForStudent(userId: string) {
         const counts = schoolTeams.map(t => ({
           id: t.id,
           count: membersCount?.filter(m => m.team_id === t.id).length || 0
-        })).sort((a, b) => a.count - b.count);
+        }));
         
-        await supabase.from('team_members').insert([{ team_id: counts[0].id, user_id: userId }]);
+        const minCount = Math.min(...counts.map(c => c.count));
+        const lowestTeams = counts.filter(c => c.count === minCount);
+        const randomTeam = lowestTeams[Math.floor(Math.random() * lowestTeams.length)];
+        
+        await supabase.from('team_members').insert([{ team_id: randomTeam.id, user_id: userId }]);
       }
     }
   } catch (err) {

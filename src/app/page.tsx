@@ -19,6 +19,15 @@ const generateUUID = () => {
   });
 };
 
+const generateRandomStudentId = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = 'ST-';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
 export default function Home() {
   const { student, progress, setStudent, setProgress, currentScreen } = useAppStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -130,13 +139,24 @@ export default function Home() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regStudentId || !regName || !regGrade || !regUsername || !regPassword) {
+    if (!regName || !regGrade || !regUsername || !regPassword) {
       return setError('กรุณากรอกข้อมูลให้ครบถ้วน');
     }
     setIsLoading(true);
     setError('');
 
     try {
+      // 0. Check for duplicate username first to give a friendly error
+      const { data: existingUser } = await supabase
+        .from('students')
+        .select('id')
+        .eq('username', regUsername.trim())
+        .maybeSingle();
+
+      if (existingUser) {
+        throw new Error('ชื่อผู้ใช้นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
+      }
+
       // 1. Resolve Classroom dynamically
       const className = regGrade.trim();
       let classroomId = null;
@@ -159,26 +179,57 @@ export default function Home() {
         if (newClass) classroomId = newClass.id;
       }
 
-      // 2. Create Student profile row directly in database (no Supabase Auth)
+      // 2. Insert Student with Retry Logic for Unique Constraints
       const newStudentUuid = generateUUID();
-      const computedStudentId = `${className}-${regStudentId.trim()}`; // e.g. "ม.1/1-12"
-      
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .insert([{ 
-          id: newStudentUuid,
-          student_id: computedStudentId,
-          student_name: regName.trim(),
-          username: regUsername.trim(),
-          password: regPassword.trim(),
-          classroom_id: classroomId,
-          academic_year: regYear.trim()
-        }])
-        .select()
-        .single();
+      let studentData = null;
+      let isRegistered = false;
+      let lastError = null;
 
-      if (studentError || !studentData) {
-        throw new Error(studentError?.message || 'สมัครสมาชิกไม่สำเร็จ (อาจมี Username หรือเลขที่ซ้ำในระบบ)');
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+          const candidateStudentId = generateRandomStudentId();
+          
+          const { data: insertedStudent, error: studentError } = await supabase
+            .from('students')
+            .insert([{ 
+              id: newStudentUuid,
+              student_id: candidateStudentId,
+              student_name: regName.trim(),
+              username: regUsername.trim(),
+              password: regPassword.trim(),
+              classroom_id: classroomId,
+              academic_year: regYear.trim()
+            }])
+            .select()
+            .single();
+
+          if (studentError) {
+            // Check if it's a unique constraint violation (code 23505)
+            if (studentError.code === '23505' || studentError.message.includes('duplicate key')) {
+              // If the duplicate is on username, break immediately because a random student_id won't fix it
+              if (studentError.message.includes('username')) {
+                throw new Error('ชื่อผู้ใช้นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
+              }
+              lastError = studentError;
+              continue; // Try next iteration with new random ID
+            }
+            throw studentError; // Other errors, break loop and fail
+          }
+
+          studentData = insertedStudent;
+          isRegistered = true;
+          break; // Success! Exit loop
+
+        } catch (err: any) {
+          if (err.message === 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น') throw err;
+          lastError = err;
+          // If it's not a known unique constraint error, we probably shouldn't retry
+          if (err.code !== '23505') throw err;
+        }
+      }
+
+      if (!isRegistered || !studentData) {
+        throw new Error('ไม่สามารถสร้างบัญชีได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง');
       }
 
       // 3. Initialize Learning Path with basic stats
@@ -213,7 +264,16 @@ export default function Home() {
       
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'เกิดข้อผิดพลาด');
+      
+      // Log error to registration_logs if possible (don't block UI if this fails)
+      supabase.from('registration_logs').insert([{
+        username: regUsername.trim(),
+        error_code: err.code || 'UNKNOWN',
+        error_message: err.message,
+        device_info: navigator.userAgent
+      }]).then(() => {}, () => {});
+
+      setError(err.message || 'ข้อมูลนี้มีอยู่ในระบบแล้ว หรือเกิดข้อผิดพลาด');
     } finally {
       setIsLoading(false);
     }
@@ -299,7 +359,7 @@ export default function Home() {
             </div>
             <div>
               <label className="text-slate-300 text-sm font-bold block mb-1.5">Password</label>
-              <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors glass-input" placeholder="กรอกรหัสผ่าน" />
+              <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-all transform active:scale-95" placeholder="กรอกรหัสผ่าน" />
             </div>
             <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg mt-4 disabled:opacity-50 transition-all transform active:scale-95">
               {isLoading ? 'กำลังโหลด...' : 
