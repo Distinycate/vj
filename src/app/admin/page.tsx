@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { 
-  Users, AlertTriangle, LogOut, Shield, 
+  Users, AlertTriangle, LogOut, Shield, CheckCircle2,
   Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home
 } from 'lucide-react';
 import { 
@@ -41,6 +41,7 @@ export default function AdminPage() {
   // Student Detail Modal
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [studentTab, setStudentTab] = useState<'overview' | 'skills' | 'wrong-words'>('overview');
+  const [isPurging, setIsPurging] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('vocab_journey_teacher');
@@ -62,6 +63,32 @@ export default function AdminPage() {
       setIsLoading(false);
     }
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem('vocab_journey_teacher');
+    window.location.reload();
+  };
+
+  const handlePurgeUnverified = async () => {
+    if (!teacher || !selectedClassroom) return;
+    if (!window.confirm("คุณแน่ใจหรือไม่ที่จะลบบัญชีนักเรียนที่ยังไม่ยืนยันตัวตนในห้องนี้ทั้งหมด? ข้อมูลจะถูกลบทิ้งและไม่สามารถกู้คืนได้")) return;
+    
+    setIsPurging(true);
+    try {
+      const { data, error } = await supabase.rpc('teacher_purge_unverified', {
+        p_teacher_id: teacher.id,
+        p_classroom_id: selectedClassroom
+      });
+      if (error) throw error;
+      alert(`ลบบัญชีที่ไม่ยืนยันตัวตนสำเร็จจำนวน ${data} บัญชี`);
+      window.location.reload();
+    } catch (err: any) {
+      alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + err.message);
+    } finally {
+      setIsPurging(false);
+    }
+  };
+
 
   useEffect(() => {
     if (!teacher) return;
@@ -229,7 +256,7 @@ export default function AdminPage() {
             <button onClick={() => window.location.href = '/'} className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold">
               <Home className="w-4 h-4" /> หน้าเข้าใช้งาน
             </button>
-            <button onClick={() => { localStorage.removeItem('vocab_journey_teacher'); window.location.reload(); }} className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
+            <button onClick={handleLogout} className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
@@ -341,7 +368,21 @@ export default function AdminPage() {
 
           {/* TAB: STUDENTS */}
           {activeTab === 'students' && classroomMetrics && (
-            <motion.div key="students" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+            <motion.div key="students" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-4">
+              
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-lg font-black text-white">รายชื่อนักเรียนในห้อง</h2>
+                <button 
+                  onClick={handlePurgeUnverified}
+                  disabled={isPurging}
+                  className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all disabled:opacity-50"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  {isPurging ? 'กำลังลบข้อมูล...' : 'ล้างบัญชีขยะ (ยังไม่ยืนยัน)'}
+                </button>
+              </div>
+
+              <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -357,7 +398,14 @@ export default function AdminPage() {
                     {classroomMetrics.students.map(s => (
                       <tr key={s.id} className="hover:bg-slate-900/35 transition-colors">
                         <td className="p-4">
-                          <div className="font-bold text-white">{s.student_name}</div>
+                          <div className="font-bold text-white flex items-center gap-2">
+                            {s.student_name}
+                            {s.is_verified && (
+                              <span title="ยืนยันตัวตนแล้ว" className="text-emerald-400">
+                                <CheckCircle2 className="w-4 h-4" />
+                              </span>
+                            )}
+                          </div>
                           <div className="text-xs text-slate-500 font-mono">{s.student_id}</div>
                         </td>
                         <td className="p-4 text-center font-bold text-indigo-400">{s.learning_paths?.current_stage || 1}</td>
@@ -378,6 +426,7 @@ export default function AdminPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
               </div>
             </motion.div>
           )}

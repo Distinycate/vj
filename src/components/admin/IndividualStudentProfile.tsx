@@ -4,7 +4,7 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import { User, Activity, Clock, FileText, Plus, X } from 'lucide-react';
+import { User, Activity, Clock, FileText, Plus, X, Trash2 } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 
 interface IndividualStudentProfileProps {
@@ -18,6 +18,30 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
   const [logs, setLogs] = useState<any[]>([]);
   const [newLog, setNewLog] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteStudent = async () => {
+    const saved = localStorage.getItem('vocab_journey_teacher');
+    if (!saved) return alert('ไม่พบข้อมูลครู');
+    const teacher = JSON.parse(saved);
+    
+    if (!window.confirm(`คุณแน่ใจหรือไม่ที่จะลบบัญชีนักเรียน: ${student.student_name}? ข้อมูลทุกอย่างจะถูกลบและไม่สามารถกู้คืนได้`)) return;
+
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase.rpc('teacher_delete_student_account', {
+        p_teacher_id: teacher.id,
+        p_student_id: student.id
+      });
+      if (error) throw error;
+      alert('ลบบัญชีสำเร็จ');
+      window.location.reload();
+    } catch (err: any) {
+      alert("เกิดข้อผิดพลาด: " + err.message);
+      setIsDeleting(false);
+    }
+  };
+
 
   useEffect(() => {
     async function fetchRealData() {
@@ -158,9 +182,19 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
               <p className="text-sm text-slate-400">Student ID: {student.student_id} | Class: {student.classrooms?.class_name || 'N/A'}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleDeleteStudent} 
+              disabled={isDeleting}
+              className="p-3 bg-slate-800 hover:bg-rose-500/20 text-rose-400 border border-transparent hover:border-rose-500/30 rounded-xl transition-all disabled:opacity-50"
+              title="ลบบัญชีนักเรียนนี้"
+            >
+              <Trash2 className="w-6 h-6" />
+            </button>
+            <button onClick={onClose} className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {loading ? (

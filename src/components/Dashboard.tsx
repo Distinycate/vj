@@ -10,6 +10,7 @@ import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
 import { STORY_WORLDS, ADAPTIVE_RANK_CONFIG, getWorldForStage } from '@/utils/adaptiveConfig';
 import AvatarDisplay from '@/components/AvatarDisplay';
+import StudentVerificationModal from '@/components/StudentVerificationModal';
 import ShopModal from '@/components/ShopModal';
 import { autoAssignTeamForStudent, calculateTeamScore } from '@/utils/teamBattleEngine';
 import { Users, Target, Zap, BrainCircuit } from 'lucide-react';
@@ -837,6 +838,7 @@ export default function Dashboard() {
         </AnimatePresence>
 
       </div>
+      <StudentVerificationModal />
       {showShop && <ShopModal onClose={() => setShowShop(false)} />}
       {showCardCenter && <CardCenterModal onClose={() => setShowCardCenter(false)} />}
     </div>
