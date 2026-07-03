@@ -13,6 +13,8 @@ export default function VerbMasterPlayer() {
   const [inputValue, setInputValue] = useState('');
   const [hearts, setHearts] = useState(3);
   const [score, setScore] = useState(0);
+  const [comboCount, setComboCount] = useState(0);
+  const [showComboAnim, setShowComboAnim] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'warning' | null, message: string }>({ type: null, message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -103,6 +105,15 @@ export default function VerbMasterPlayer() {
       if (isCorrect) {
         setFeedback({ type: 'success', message });
         setScore(s => s + scoreEarned);
+        
+        if (attemptNo === 1) {
+          setComboCount(c => c + 1);
+          setShowComboAnim(true);
+          setTimeout(() => setShowComboAnim(false), 1000);
+        } else {
+          setComboCount(0);
+        }
+        
         setTimeout(() => {
           setQuestionNo(q => q + 1);
           if (questionNo >= 20) { // Let's say 20 is max for now
@@ -115,10 +126,12 @@ export default function VerbMasterPlayer() {
       } else if (isNearMiss) {
         setFeedback({ type: 'warning', message });
         setAttemptNo(a => a + 1);
+        setComboCount(0);
         setIsSubmitting(false);
       } else {
         setFeedback({ type: 'error', message });
         setAttemptNo(a => a + 1);
+        setComboCount(0);
         if (heartsRemaining <= 0) {
           setTimeout(() => { finishGame(attemptId, student.id); }, 1500);
         }
@@ -144,9 +157,29 @@ export default function VerbMasterPlayer() {
           <p className="text-slate-400 mb-2">คุณทำคะแนนได้: <span className="text-emerald-400 font-bold text-xl">{score}</span></p>
           {finalResult && (
             <div className="mb-6">
+               <div className="mb-4">
+                 <p className="text-slate-400 mb-1">Rank</p>
+                 <div className={`text-6xl font-black italic tracking-wider ${
+                    finalResult.grade === 'SSS' ? 'text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 drop-shadow-[0_0_15px_rgba(251,191,36,0.8)]' :
+                    finalResult.grade === 'S' ? 'text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]' :
+                    finalResult.grade === 'A' ? 'text-emerald-400' :
+                    finalResult.grade === 'B' ? 'text-blue-400' :
+                    finalResult.grade === 'C' ? 'text-purple-400' :
+                    'text-red-500'
+                 }`}>
+                   {finalResult.grade}
+                 </div>
+               </div>
                <p className="text-slate-400">ความแม่นยำ: <span className="text-blue-400">{finalResult.accuracy}%</span></p>
                <p className="text-slate-400">เหรียญที่ได้: <span className="text-yellow-400">+{finalResult.coinsEarned}</span></p>
                <p className="text-slate-400">EXP ที่ได้: <span className="text-purple-400">+{finalResult.expEarned}</span></p>
+               
+               {finalResult.droppedTickets > 0 && (
+                 <div className="mt-6 p-4 bg-gradient-to-r from-amber-500/20 to-yellow-600/20 border border-yellow-500/50 rounded-2xl animate-pulse">
+                   <p className="text-yellow-400 font-bold text-lg mb-1">🎉 JACKPOT! 🎉</p>
+                   <p className="text-white text-sm">คุณได้รับตั๋วสุ่มการ์ดฟรี {finalResult.droppedTickets} ใบ!</p>
+                 </div>
+               )}
             </div>
           )}
           <Link 
@@ -197,6 +230,16 @@ export default function VerbMasterPlayer() {
         <div className="bg-slate-800 p-8 md:p-12 rounded-3xl border border-slate-700 shadow-2xl w-full text-center relative overflow-hidden">
           {/* Subtle background glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-purple-600/10 blur-3xl rounded-full pointer-events-none"></div>
+
+          {/* Combo Animation */}
+          {comboCount >= 2 && (
+            <div className={`absolute top-4 right-8 pointer-events-none transition-all duration-300 ${showComboAnim ? 'scale-125 opacity-100' : 'scale-100 opacity-90'}`}>
+               <p className="text-sm text-yellow-500 font-bold uppercase tracking-widest mb-[-8px]">Combo</p>
+               <p className="text-5xl font-black italic text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-orange-600 drop-shadow-lg">
+                 x{comboCount}!
+               </p>
+            </div>
+          )}
 
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-10 leading-tight">
             {currentQ.prompt}

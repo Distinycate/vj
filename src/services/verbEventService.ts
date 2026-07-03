@@ -1,7 +1,7 @@
 import { supabase } from '../utils/supabase/client';
 import { generateVerbQuestion, QuestionType, VerbData } from '../utils/verbQuestionGenerator';
 import { checkCompoundTypingAnswer, checkTypingAnswer } from '../utils/answerCheck';
-import { calculateAttemptScore } from '../utils/eventScoring';
+import { calculateAttemptScore, calculateGrade } from '../utils/eventScoring';
 
 const QUESTION_TYPES = new Set<QuestionType>([
   'v1_to_v2', 'v1_to_v3', 'fill_v2', 'fill_v3', 'full_table',
@@ -183,7 +183,14 @@ export async function finishAttempt(attemptId: string, eventId: string, studentI
   if (attempt.status !== 'in_progress') throw new Error('รอบการเล่นนี้จบไปแล้ว');
 
   const accuracy = attempt.total_questions > 0 ? Math.round((attempt.correct_count / attempt.total_questions) * 100) : 0;
-  const coinsEarned = Math.min(50, Math.floor(Number(attempt.score || 0) / 100) * 5);
+  const grade = calculateGrade(Number(attempt.score || 0), attempt.correct_count, attempt.total_questions);
+  
+  let baseCoins = Math.min(15, Math.floor(Number(attempt.score || 0) / 200) * 2);
+  if (grade === 'SSS') baseCoins += 10;
+  else if (grade === 'S') baseCoins += 5;
+  else if (grade === 'A') baseCoins += 2;
+  const coinsEarned = Math.min(25, baseCoins);
+  
   const expEarned = Number(attempt.score || 0);
   const { error } = await supabase.from('event_attempts').update({
     status: 'completed', finished_at: new Date().toISOString(), accuracy,
@@ -191,14 +198,22 @@ export async function finishAttempt(attemptId: string, eventId: string, studentI
   }).eq('id', attemptId).eq('user_id', studentId);
   if (error) throw error;
 
-  if (coinsEarned > 0) {
-    const { data: path } = await supabase.from('learning_paths').select('coins, exp').eq('student_id', studentId).maybeSingle();
+  let droppedTickets = 0;
+  if (grade === 'SSS' && Math.random() < 0.10) {
+    droppedTickets = 1;
+  } else if (grade === 'S' && Math.random() < 0.02) {
+    droppedTickets = 1;
+  }
+
+  if (coinsEarned > 0 || droppedTickets > 0) {
+    const { data: path } = await supabase.from('learning_paths').select('coins, exp, free_pull_tickets').eq('student_id', studentId).maybeSingle();
     if (path) {
       await supabase.from('learning_paths').update({
         coins: Number(path.coins || 0) + coinsEarned,
         exp: Number(path.exp || 0) + expEarned,
+        free_pull_tickets: Number(path.free_pull_tickets || 0) + droppedTickets,
       }).eq('student_id', studentId);
     }
   }
-  return { accuracy, coinsEarned, expEarned, score: Number(attempt.score || 0) };
+  return { accuracy, coinsEarned, expEarned, score: Number(attempt.score || 0), grade, droppedTickets };
 }

@@ -42,3 +42,16 @@ export function calculateAttemptScore(
 
   return { scoreEarned: baseScore, heartsRemaining: currentHearts };
 }
+
+export function calculateGrade(score: number, correctCount: number, totalQuestions: number): string {
+  if (totalQuestions === 0) return 'F';
+  const accuracy = (correctCount / totalQuestions) * 100;
+  const avgScore = score / totalQuestions;
+
+  if (accuracy === 100 && avgScore >= 95) return 'SSS';
+  if (accuracy >= 90 || avgScore >= 80) return 'S';
+  if (accuracy >= 80) return 'A';
+  if (accuracy >= 70) return 'B';
+  if (accuracy >= 50) return 'C';
+  return 'F';
+}
