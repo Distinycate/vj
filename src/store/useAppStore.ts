@@ -15,6 +15,8 @@ interface AppState {
   setInventory: (inventory: any[]) => void;
   setRecommendations: (recommendations: any[]) => void;
   setReviewMode: (isReview: boolean) => void;
+  hasStudiedCurrentStage: boolean;
+  setStudiedCurrentStage: (studied: boolean) => void;
   logout: () => void;
 }
 
@@ -26,6 +28,7 @@ export const useAppStore = create<AppState>((set) => ({
   inventory: [],
   recommendations: [],
   isReviewMode: false,
+  hasStudiedCurrentStage: false,
   setStudent: (student) => set({ student }),
   setProgress: (newProgress) => set((state) => ({ 
     progress: state.progress && newProgress ? { ...state.progress, ...newProgress } : newProgress 
@@ -35,6 +38,7 @@ export const useAppStore = create<AppState>((set) => ({
   setInventory: (inventory) => set({ inventory }),
   setRecommendations: (recommendations) => set({ recommendations }),
   setReviewMode: (isReviewMode) => set({ isReviewMode }),
+  setStudiedCurrentStage: (hasStudiedCurrentStage) => set({ hasStudiedCurrentStage }),
   logout: () => set({ 
     student: null, 
     progress: null, 
@@ -42,6 +46,7 @@ export const useAppStore = create<AppState>((set) => ({
     currentCategory: null,
     inventory: [],
     recommendations: [],
-    isReviewMode: false
+    isReviewMode: false,
+    hasStudiedCurrentStage: false
   }),
 }));

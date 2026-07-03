@@ -34,7 +34,7 @@ function getRareCardStatus(inventory: any) {
 }
 
 export default function Dashboard() {
-  const { student, progress, logout, setScreen, setProgress } = useAppStore();
+  const { student, progress, logout, setScreen, setProgress, hasStudiedCurrentStage, setStudiedCurrentStage } = useAppStore();
   const [reviewWords, setReviewWords] = useState<any[]>([]);
   const [wordCollection, setWordCollection] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({ xp: 0, level: 1 });
@@ -179,6 +179,13 @@ export default function Dashboard() {
 
     loadDashboardData();
   }, [student, setProgress]);
+
+  // Reset studied stage state when advancing to a new stage
+  useEffect(() => {
+    if (progress?.current_stage) {
+      setStudiedCurrentStage(false);
+    }
+  }, [progress?.current_stage, setStudiedCurrentStage]);
 
   // AI Teacher Speech Generator
   useEffect(() => {
@@ -492,9 +499,18 @@ export default function Dashboard() {
                   </button>
                   <button 
                     onClick={() => setScreen('game')} 
-                    className="w-full sm:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-all text-sm"
+                    disabled={!hasStudiedCurrentStage}
+                    className={`w-full sm:w-auto px-8 py-4 font-black rounded-2xl flex items-center justify-center gap-2 transition-all text-sm ${
+                      hasStudiedCurrentStage 
+                        ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 hover:scale-[1.02]' 
+                        : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                    }`}
                   >
-                    <Play className="w-4 h-4 fill-slate-950" /> เริ่มเกมท้าทาย ➡️
+                    {hasStudiedCurrentStage ? (
+                      <><Play className="w-4 h-4 fill-slate-950" /> เริ่มเกมท้าทาย ➡️</>
+                    ) : (
+                      <>🔒 ต้องเข้าเรียนคำศัพท์ก่อน</>
+                    )}
                   </button>
                 </div>
               </div>

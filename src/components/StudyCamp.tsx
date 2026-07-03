@@ -8,11 +8,17 @@ import { playWordAudio } from '@/utils/audio';
 import { getWorldForStage } from '@/utils/adaptiveConfig';
 
 export default function StudyCamp() {
-  const { setScreen, progress } = useAppStore();
+  const { setScreen, progress, setStudiedCurrentStage } = useAppStore();
   const [words, setWords] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [buffGranted, setBuffGranted] = useState(false);
+
+  useEffect(() => {
+    if (words.length > 0 && currentIndex === words.length) {
+      setStudiedCurrentStage(true);
+    }
+  }, [currentIndex, words.length, setStudiedCurrentStage]);
 
   useEffect(() => {
     async function fetchWords() {
