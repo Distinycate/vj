@@ -4,6 +4,13 @@ export const GACHA_COIN_COST = 200;
 
 export type CardEffectType = 'ATTACK' | 'DEFENSE' | 'REFLECT' | 'BUFF' | 'DUD';
 export type CardLogStatus = 'PENDING' | 'COUNTER_PHASE' | 'RESOLVED' | 'REJECTED';
+export type BehaviorCategory =
+  | 'POSITIVE_BEHAVIOR'
+  | 'RESPONSIBILITY'
+  | 'VOLUNTEER'
+  | 'DISCIPLINE'
+  | 'RULE_VIOLATION'
+  | 'OTHER';
 
 export interface BattleCard {
   id: string;
@@ -33,6 +40,8 @@ export function getRpcErrorMessage(message?: string) {
     INSUFFICIENT_TICKETS: 'ตั๋วของนักเรียนไม่เพียงพอ',
     INSUFFICIENT_AVAILABLE_CARDS: 'การ์ดพร้อมใช้ไม่เพียงพอ บางใบอาจถูกจองในคำขอ',
     CARD_NOT_FOUND_IN_INVENTORY: 'ไม่พบการ์ดนี้ในคลังของนักเรียน',
+    INSUFFICIENT_COINS: 'เหรียญของนักเรียนไม่เพียงพอ',
+    USERNAME_ALREADY_EXISTS: 'ชื่อผู้ใช้นี้ถูกใช้แล้ว',
     SEASON_ALREADY_REWARDED: 'ฤดูกาลนี้แจกรางวัลแล้ว',
     NO_ELIGIBLE_TEAM: 'ไม่พบทีมที่เข้าเกณฑ์ในฤดูกาลนี้',
   };
@@ -106,12 +115,14 @@ export async function adjustStudentTickets(
   studentId: string,
   amount: number,
   reason: string,
+  category: BehaviorCategory = amount > 0 ? 'POSITIVE_BEHAVIOR' : 'DISCIPLINE',
 ) {
-  const { data, error } = await supabase.rpc('teacher_adjust_free_pull_tickets', {
+  const { data, error } = await supabase.rpc('teacher_adjust_student_tickets', {
     p_teacher_id: teacherId,
     p_student_id: studentId,
     p_amount: amount,
     p_reason: reason,
+    p_behavior_category: category,
   });
   if (error) throw new Error(getRpcErrorMessage(error.message));
   return data;
@@ -123,13 +134,43 @@ export async function removeStudentCard(
   cardId: string,
   amount = 1,
   reason = 'ครูริบการ์ดตามระเบียบ',
+  category: BehaviorCategory = 'DISCIPLINE',
 ) {
-  const { data, error } = await supabase.rpc('teacher_remove_student_card', {
+  const { data, error } = await supabase.rpc('teacher_remove_student_card_categorized', {
     p_teacher_id: teacherId,
     p_student_id: studentId,
     p_card_id: cardId,
     p_amount: amount,
     p_reason: reason,
+    p_behavior_category: category,
+  });
+  if (error) throw new Error(getRpcErrorMessage(error.message));
+  return data;
+}
+
+export async function adjustStudentCoins(
+  teacherId: string,
+  studentId: string,
+  amount: number,
+  reason: string,
+  category: BehaviorCategory,
+) {
+  const { data, error } = await supabase.rpc('teacher_adjust_student_coins', {
+    p_teacher_id: teacherId,
+    p_student_id: studentId,
+    p_amount: amount,
+    p_reason: reason,
+    p_behavior_category: category,
+  });
+  if (error) throw new Error(getRpcErrorMessage(error.message));
+  return data;
+}
+
+export async function registerCardTeacher(name: string, username: string, password: string) {
+  const { data, error } = await supabase.rpc('register_card_teacher', {
+    p_name: name,
+    p_username: username,
+    p_password: password,
   });
   if (error) throw new Error(getRpcErrorMessage(error.message));
   return data;

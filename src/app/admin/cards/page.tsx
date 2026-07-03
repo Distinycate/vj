@@ -9,7 +9,8 @@ export default function CardAdminPage() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('vocab_journey_teacher');
+      const saved = localStorage.getItem('vocab_journey_card_teacher')
+        || localStorage.getItem('vocab_journey_teacher');
       setTeacher(saved ? JSON.parse(saved) : null);
     } catch {
       setTeacher(null);
@@ -25,9 +26,9 @@ export default function CardAdminPage() {
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center">
           <h1 className="text-2xl font-black">กรุณาเข้าใช้งานในฐานะครู</h1>
-          <p className="text-slate-400 mt-2">เข้าสู่ระบบจากหน้าแรก แล้วเลือกบทบาทครูผู้สอน</p>
-          <button onClick={() => window.location.href = '/'} className="w-full mt-6 py-3 bg-indigo-500 rounded-xl font-bold flex items-center justify-center gap-2">
-            <LogIn className="w-5 h-5" /> ไปหน้าเข้าใช้งาน
+          <p className="text-slate-400 mt-2">เข้าสู่ระบบหรือสมัครบัญชีครูสำหรับจัดการการ์ด</p>
+          <button onClick={() => window.location.href = '/card-teacher'} className="w-full mt-6 py-3 bg-fuchsia-500 rounded-xl font-bold flex items-center justify-center gap-2">
+            <LogIn className="w-5 h-5" /> ไประบบการ์ดสำหรับครู
           </button>
           <button onClick={() => window.location.href = '/'} className="w-full mt-2 py-3 bg-slate-800 rounded-xl font-bold flex items-center justify-center gap-2">
             <Home className="w-5 h-5" /> หน้าแรก

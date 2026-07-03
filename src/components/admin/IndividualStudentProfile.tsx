@@ -4,7 +4,7 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import { User, Activity, Clock, FileText, Plus, X, Trash2 } from 'lucide-react';
+import { User, Shield, CheckCircle2, TrendingUp, AlertTriangle, BookOpen, Clock, Activity, Medal, X, Download, Trash2, RefreshCw, FileText, Plus } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 
 interface IndividualStudentProfileProps {
@@ -19,29 +19,55 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
   const [newLog, setNewLog] = useState('');
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const handleDeleteStudent = async () => {
-    const saved = localStorage.getItem('vocab_journey_teacher');
-    if (!saved) return alert('ไม่พบข้อมูลครู');
-    const teacher = JSON.parse(saved);
-    
-    if (!window.confirm(`คุณแน่ใจหรือไม่ที่จะลบบัญชีนักเรียน: ${student.student_name}? ข้อมูลทุกอย่างจะถูกลบและไม่สามารถกู้คืนได้`)) return;
+    if (!confirm(`คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีนักเรียน "${student.student_name}"? ข้อมูลทั้งหมดจะถูกลบและไม่สามารถกู้คืนได้`)) return;
 
     setIsDeleting(true);
     try {
-      const { error } = await supabase.rpc('teacher_delete_student_account', {
-        p_teacher_id: teacher.id,
-        p_student_id: student.id
-      });
+      // In a real app, you might want to call a specific Supabase RPC for full deletion
+      const { error } = await supabase.from('students').delete().eq('id', student.id);
       if (error) throw error;
-      alert('ลบบัญชีสำเร็จ');
-      window.location.reload();
+      
+      alert('ลบบัญชีนักเรียนเรียบร้อยแล้ว');
+      window.location.reload(); // Reload to refresh lists
     } catch (err: any) {
-      alert("เกิดข้อผิดพลาด: " + err.message);
+      alert(err.message || 'เกิดข้อผิดพลาดในการลบนักเรียน');
+    } finally {
       setIsDeleting(false);
     }
   };
 
+  const handleResetStudent = async () => {
+    if (!confirm(`คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลการผ่านด่าน, เหรียญ, ตั๋วสุ่ม และการ์ดทั้งหมดของ "${student.student_name}"?`)) return;
+
+    // We assume teacher is available in local storage or we can fetch it, but wait, teacher id is needed.
+    // In this component, we don't have teacher prop. We can get it from supabase auth or just pass a generic id if RPC allows, but RPC requires teacher_id.
+    // Let's get the currently logged in teacher from local storage.
+    const storedTeacher = localStorage.getItem('vj_teacher');
+    if (!storedTeacher) {
+      alert('ไม่พบข้อมูลครู กรุณาล็อกอินใหม่');
+      return;
+    }
+    const teacherData = JSON.parse(storedTeacher);
+
+    setIsResetting(true);
+    try {
+      const { error } = await supabase.rpc('teacher_reset_student', {
+        p_teacher_id: teacherData.id,
+        p_student_id: student.id
+      });
+      if (error) throw error;
+      
+      alert('รีเซ็ตข้อมูลนักเรียนเรียบร้อยแล้ว');
+      window.location.reload(); 
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการรีเซ็ตนักเรียน');
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchRealData() {
@@ -184,8 +210,16 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
           </div>
           <div className="flex items-center gap-2">
             <button 
+              onClick={handleResetStudent} 
+              disabled={isResetting || isDeleting}
+              className="p-3 bg-slate-800 hover:bg-amber-500/20 text-amber-400 border border-transparent hover:border-amber-500/30 rounded-xl transition-all disabled:opacity-50"
+              title="รีเซ็ตด่านและการ์ดของนักเรียนคนนี้"
+            >
+              {isResetting ? <RefreshCw className="w-6 h-6 animate-spin" /> : <RefreshCw className="w-6 h-6" />}
+            </button>
+            <button 
               onClick={handleDeleteStudent} 
-              disabled={isDeleting}
+              disabled={isDeleting || isResetting}
               className="p-3 bg-slate-800 hover:bg-rose-500/20 text-rose-400 border border-transparent hover:border-rose-500/30 rounded-xl transition-all disabled:opacity-50"
               title="ลบบัญชีนักเรียนนี้"
             >

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { 
   Users, AlertTriangle, LogOut, Shield, CheckCircle2,
-  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home
+  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings
 } from 'lucide-react';
 import { 
   BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -19,7 +19,7 @@ import SchoolLevelDashboard from '@/components/admin/SchoolLevelDashboard';
 import ClassLevelAnalytics from '@/components/admin/ClassLevelAnalytics';
 import IndividualStudentProfile from '@/components/admin/IndividualStudentProfile';
 
-type AdminTab = 'school-overview' | 'overview' | 'students' | 'teams' | 'weak-words' | 'risks';
+type AdminTab = 'school-overview' | 'overview' | 'students' | 'teams' | 'weak-words' | 'risks' | 'settings';
 
 export default function AdminPage() {
   const [teacher, setTeacher] = useState<any>(null);
@@ -27,6 +27,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isResettingAll, setIsResettingAll] = useState(false);
 
   const [activeTab, setActiveTab] = useState<AdminTab>('school-overview');
   const [classrooms, setClassrooms] = useState<any[]>([]);
@@ -86,6 +87,34 @@ export default function AdminPage() {
       alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + err.message);
     } finally {
       setIsPurging(false);
+    }
+  };
+
+  const handleResetAllStudents = async () => {
+    if (!teacher) return;
+    
+    if (!confirm('คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตข้อมูลนักเรียน "ทุกคน" ทั้งด่านและการ์ด? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
+      return;
+    }
+
+    const userInput = prompt('พิมพ์ "RESET ALL" เพื่อยืนยันการล้างข้อมูลทั้งหมด');
+    if (userInput !== 'RESET ALL') {
+      alert('การพิมพ์ยืนยันไม่ถูกต้อง ยกเลิกการรีเซ็ต');
+      return;
+    }
+
+    setIsResettingAll(true);
+    try {
+      const { error } = await supabase.rpc('teacher_reset_all_students', {
+        p_teacher_id: teacher.id
+      });
+      if (error) throw error;
+      alert('รีเซ็ตข้อมูลนักเรียนทุกคนสำเร็จแล้ว');
+      window.location.reload();
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการรีเซ็ตข้อมูล');
+    } finally {
+      setIsResettingAll(false);
     }
   };
 
@@ -273,7 +302,8 @@ export default function AdminPage() {
             { id: 'students', icon: <Users className="w-4 h-4"/>, label: 'นักเรียน' },
             { id: 'teams', icon: <Trophy className="w-4 h-4"/>, label: 'ทีม (Team Battle)' },
             { id: 'weak-words', icon: <BookOpen className="w-4 h-4"/>, label: 'คำที่ผิดบ่อย' },
-            { id: 'risks', icon: <AlertTriangle className="w-4 h-4"/>, label: 'กลุ่มเสี่ยง' }
+            { id: 'risks', icon: <AlertTriangle className="w-4 h-4"/>, label: 'กลุ่มเสี่ยง' },
+            { id: 'settings', icon: <Settings className="w-4 h-4"/>, label: 'ตั้งค่าระบบ' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -448,7 +478,34 @@ export default function AdminPage() {
               <TeamLeaderboard scope="school" />
             </motion.div>
           )}
+        </AnimatePresence>
 
+        <AnimatePresence mode="wait">
+          {/* TAB: SETTINGS */}
+          {activeTab === 'settings' && (
+            <motion.div key="settings" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
+              <div className="bg-slate-900/40 border border-rose-500/20 rounded-3xl p-6">
+                <h3 className="text-xl font-black text-rose-400 mb-6 flex items-center gap-3">
+                  <AlertTriangle className="w-6 h-6" /> Danger Zone (โซนอันตราย)
+                </h3>
+                
+                <div className="bg-slate-800/50 p-5 rounded-2xl border border-rose-500/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <div>
+                    <h4 className="text-white font-bold text-lg mb-1">รีเซ็ตข้อมูลนักเรียนทุกคน (Reset All Students)</h4>
+                    <p className="text-slate-400 text-sm">การดำเนินการนี้จะล้างข้อมูลการผ่านด่าน, เหรียญ, ตั๋วสุ่ม และ **การ์ดทั้งหมด** ของนักเรียนทุกคนในระบบ ข้อมูลจะไม่สามารถกู้คืนได้</p>
+                  </div>
+                  <button 
+                    onClick={handleResetAllStudents}
+                    disabled={isResettingAll}
+                    className="w-full sm:w-auto whitespace-nowrap px-6 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-rose-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isResettingAll ? <RefreshCw className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+                    รีเซ็ตทุกคน
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 

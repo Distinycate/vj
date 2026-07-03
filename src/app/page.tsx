@@ -405,6 +405,13 @@ export default function Home() {
             </button>
           </form>
         )}
+        <button
+          type="button"
+          onClick={() => window.location.href = '/card-teacher'}
+          className="w-full mt-5 py-3 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/20 text-fuchsia-300 rounded-xl font-bold text-sm"
+        >
+          🃏 ระบบการ์ดสำหรับคุณครู (สมัคร/เข้าใช้)
+        </button>
       </motion.div>
     </div>
   );
