@@ -353,7 +353,15 @@ export default function PreTest() {
       >
         <div className="text-center mb-12">
           <span className="text-slate-500 text-sm tracking-widest uppercase block mb-2">คำศัพท์</span>
-          <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight notranslate break-all" translate="no">{currentQ.word}</h2>
+          <h2 
+            className="text-3xl sm:text-5xl font-black text-white tracking-tight notranslate break-all pointer-events-none select-none" 
+            translate="no"
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            {currentQ.word.split('').map((char, i) => (
+              <span key={i}>{char}&#8203;</span>
+            ))}
+          </h2>
           <button 
             onClick={() => playWordAudio(currentQ.word)}
             className="mt-3 text-emerald-400 hover:text-emerald-300 font-bold flex items-center justify-center gap-1.5 mx-auto transition-colors"

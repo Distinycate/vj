@@ -564,7 +564,15 @@ export default function Game() {
             {qType === 'MEANING_MC' && (
               <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">แปลศัพท์สเปกตรัม</span>
-                <h2 className="text-4xl sm:text-5xl font-black text-white mb-2 notranslate break-all" translate="no">{currentWord.word}</h2>
+                <h2 
+                  className="text-4xl sm:text-5xl font-black text-white mb-2 notranslate break-all pointer-events-none select-none" 
+                  translate="no"
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  {currentWord.word.split('').map((char, i) => (
+                    <span key={i}>{char}&#8203;</span>
+                  ))}
+                </h2>
                 <p className="text-slate-400 text-base sm:text-lg">แปลว่าอะไรในภาษาไทย?</p>
               </div>
             )}
