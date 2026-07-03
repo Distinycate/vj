@@ -71,7 +71,14 @@ export default function AdminPage() {
       if (teacher.role === 'TEACHER') {
         classQuery = classQuery.eq('teacher_id', teacher.id);
       }
-      const { data: classData } = await classQuery;
+      let { data: classData } = await classQuery;
+      
+      // Fallback for prototype: if teacher has no classrooms assigned, show all classrooms
+      if (teacher.role === 'TEACHER' && (!classData || classData.length === 0)) {
+        const { data: allClassData } = await supabase.from('classrooms').select('*');
+        classData = allClassData;
+      }
+      
       const validClasses = (classData || []).filter(c => c.class_name.includes('ม.1') || c.class_name.includes('ม.2') || c.class_name.includes('ม.3'));
       
       if (validClasses.length > 0) {
@@ -298,7 +305,7 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-5">
                   <h3 className="text-lg font-black text-white mb-4">🏆 ทีมนำอยู่ (Classroom)</h3>
-                  <TeamLeaderboard scope="class" />
+                  <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
                 </div>
                 
                 <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-3xl p-6">
@@ -398,7 +405,7 @@ export default function AdminPage() {
       {/* STUDENT DETAIL MODAL */}
       <AnimatePresence>
         {selectedStudent && (
-          <IndividualStudentProfile student={selectedStudent} onClose={() => setSelectedStudent(null)} />
+          <IndividualStudentProfile student={selectedStudent} teacher={teacher} onClose={() => setSelectedStudent(null)} />
         )}
       </AnimatePresence>
     </div>

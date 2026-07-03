@@ -31,6 +31,7 @@ Current O2O balance specification:
 ## Files owned by this feature
 
 - `MIGRATION_CARD_BATTLE.sql`
+- `MIGRATION_TEAM_BATTLE_FIX.sql`
 - `src/utils/cardBattle.ts`
 - `src/components/CardCenterModal.tsx`
 - `src/components/admin/CardWorkflowPanel.tsx`
@@ -43,6 +44,9 @@ Integration points intentionally changed:
 - `src/components/Dashboard.tsx`
 - `src/app/admin/page.tsx`
 - `src/components/admin/SeasonManager.tsx`
+- `src/components/TeamLeaderboard.tsx`
+- `src/components/StudentTeamCard.tsx`
+- `src/utils/teamBattleEngine.ts`
 - `package.json` test glob
 
 ## Database mapping
@@ -102,19 +106,24 @@ reimplement them as a sequence of client-side updates.
 ## Deployment steps for the next AI
 
 1. Review `git diff` and preserve unrelated user changes.
-2. Run `MIGRATION_CARD_BATTLE.sql` once in the Supabase SQL editor or migration runner.
+2. Run `MIGRATION_TEAM_BATTLE_FIX.sql` first. The production tables currently exist but
+   contain zero teams, zero memberships, zero seasons, and zero score events.
+   Do not run `scripts/setup_teams.sql` or `scripts/setup_teams.cjs`: those scripts delete all
+   existing memberships and only recreate school-team assignments, which removes classroom
+   teams and can silently duplicate seasons.
+3. Run `MIGRATION_CARD_BATTLE.sql` once in the Supabase SQL editor or migration runner.
    This migration has intentionally not been applied by the current agent; the UI depends on
    it and must not be smoke-tested against production before this step succeeds.
-3. Verify these tables exist: `cards`, `card_inventory`, `card_logs`, `gacha_pulls`,
+4. Verify these tables exist: `cards`, `card_inventory`, `card_logs`, `gacha_pulls`,
    `card_notifications`, `season_reward_distributions`.
-4. Verify `learning_paths.free_pull_tickets` exists.
-5. Verify seeded cards total 6 and their total `drop_weight` is 100.
-6. Verify Realtime includes `card_logs` and `card_notifications`.
-7. Run:
+5. Verify `learning_paths.free_pull_tickets` exists.
+6. Verify seeded cards total 6 and their total `drop_weight` is 100.
+7. Verify Realtime includes `card_logs` and `card_notifications`.
+8. Run:
    - `npm run typecheck`
    - `npm test`
    - `npm run build`
-8. Smoke test with two students in the same classroom and one teacher:
+9. Smoke test with two students in the same classroom and one teacher:
    - award ticket,
    - pull card,
    - submit attack,
@@ -122,9 +131,9 @@ reimplement them as a sequence of client-side updates.
    - counter within 60 seconds,
    - resolve,
    - confirm both quantities and reservations.
-9. Create an active school season and confirm stage completion creates score events with that
+10. Create an active school season and confirm stage completion creates score events with that
    season before testing the reward button.
-10. Confirm the student classroom leaderboard shows badges for owned SR, SSR, and UR cards.
+11. Confirm the student classroom leaderboard shows badges for owned SR, SSR, and UR cards.
 
 ## Coordination warning
 

@@ -35,25 +35,16 @@ export default function SeasonManager() {
 
     setIsCreating(true);
     try {
-      // 1. Deactivate all current school seasons
-      await supabase
-        .from('team_battle_seasons')
-        .update({ is_active: false })
-        .eq('scope', 'school');
-
-      // 2. Create new season
-      await supabase
-        .from('team_battle_seasons')
-        .insert([{
-          season_name: newSeasonName,
-          scope: 'school',
-          is_active: true
-        }]);
+      const { error } = await supabase.rpc('start_school_team_season', {
+        p_season_name: newSeasonName.trim(),
+      });
+      if (error) throw error;
 
       setNewSeasonName('');
       await loadSeasons();
     } catch (err) {
       console.error('Failed to create season', err);
+      setMessage(err instanceof Error ? err.message : 'สร้างฤดูกาลไม่สำเร็จ');
     } finally {
       setIsCreating(false);
     }

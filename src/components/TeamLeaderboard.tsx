@@ -1,13 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase/client';
-import { Trophy, Users, Star, Activity, Crown } from 'lucide-react';
+import { Crown } from 'lucide-react';
 import { calculateTeamScore } from '@/utils/teamBattleEngine';
 
 export default function TeamLeaderboard({ scope = 'school', classroomId }: { scope?: 'class' | 'school', classroomId?: string }) {
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSeasonName, setActiveSeasonName] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     async function loadLeaderboard() {
@@ -17,7 +18,7 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
         try {
           const parsed = JSON.parse(cached);
           // Check if cache is less than 5 minutes old
-          if (Date.now() - parsed.timestamp < 5 * 60 * 1000) {
+          if (Date.now() - parsed.timestamp < 5 * 60 * 1000 && parsed.data?.length > 0) {
             setTeams(parsed.data);
             setLoading(false);
             return;
@@ -28,13 +29,16 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
       }
 
       setLoading(true);
+      setLoadError('');
       try {
         // Fetch active season
         const { data: season } = await supabase
           .from('team_battle_seasons')
-          .select('season_name')
+          .select('id, season_name')
           .eq('scope', 'school')
           .eq('is_active', true)
+          .order('start_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
         
         if (season) setActiveSeasonName(season.season_name);
@@ -43,17 +47,17 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
           query = query.eq('classroom_id', classroomId);
         }
         
-        const { data: dbTeams } = await query;
+        const { data: dbTeams, error: teamsError } = await query;
+        if (teamsError) throw teamsError;
           
         if (dbTeams) {
-          const scoredTeams = [];
-          for (const team of dbTeams) {
-            const scoreData = await calculateTeamScore(team.id);
-            scoredTeams.push({
+          const scoredTeams = await Promise.all(dbTeams.map(async (team) => {
+            const scoreData = await calculateTeamScore(team.id, season?.id || null);
+            return {
               ...team,
               ...scoreData
-            });
-          }
+            };
+          }));
           // Sort by final score
           scoredTeams.sort((a, b) => b.finalScore - a.finalScore);
           setTeams(scoredTeams);
@@ -66,15 +70,20 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
         }
       } catch (e) {
         console.error(e);
+        setLoadError(e instanceof Error ? e.message : 'โหลดข้อมูลทีมไม่สำเร็จ');
       } finally {
         setLoading(false);
       }
     }
     loadLeaderboard();
-  }, [scope]);
+  }, [scope, classroomId]);
 
   if (loading) {
     return <div className="text-center py-10 text-slate-400">กำลังโหลดข้อมูล Team Leaderboard...</div>;
+  }
+
+  if (loadError) {
+    return <div className="text-center py-8 text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-2xl">{loadError}</div>;
   }
 
   return (

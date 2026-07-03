@@ -49,11 +49,13 @@ export async function createCardAction(
   attackerId: string,
   cardId: string,
   targetId?: string | null,
+  metadata?: any
 ) {
   const { data, error } = await supabase.rpc('create_card_action', {
     p_attacker_id: attackerId,
     p_card_id: cardId,
     p_target_id: targetId || null,
+    p_metadata: metadata || {}
   });
   if (error) throw new Error(getRpcErrorMessage(error.message));
   return data;
@@ -92,5 +94,21 @@ export async function resolveCardAction(
     p_final_result_text: resultText || null,
   });
   if (error) throw new Error(getRpcErrorMessage(error.message));
+  return data;
+}
+
+export async function removeStudentCard(
+  teacherId: string,
+  studentId: string,
+  cardId: string,
+  amount: number = 1
+) {
+  const { data, error } = await supabase.rpc('teacher_remove_student_card', {
+    p_teacher_id: teacherId,
+    p_student_id: studentId,
+    p_card_id: cardId,
+    p_amount: amount,
+  });
+  if (error) throw new Error(error.message);
   return data;
 }

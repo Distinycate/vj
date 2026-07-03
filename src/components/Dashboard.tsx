@@ -45,6 +45,7 @@ export default function Dashboard() {
   const [showCardCenter, setShowCardCenter] = useState(false);
   const [myTeams, setMyTeams] = useState<any[]>([]);
   const [teamScores, setTeamScores] = useState<Record<string, any>>({});
+  const [teamError, setTeamError] = useState('');
 
   // Classroom stats calculations
   const [classroomStats, setClassroomStats] = useState({
@@ -149,22 +150,29 @@ export default function Dashboard() {
       }
 
       // 5. Team Battle
-      await autoAssignTeamForStudent(student.id);
-      const { data: teamsData } = await supabase
-        .from('team_members')
-        .select('team_id, teams(*)')
-        .eq('user_id', student.id)
-        .eq('is_active', true);
+      try {
+        setTeamError('');
+        await autoAssignTeamForStudent(student.id);
+        const { data: teamsData, error: teamsError } = await supabase
+          .from('team_members')
+          .select('team_id, teams(*)')
+          .eq('user_id', student.id)
+          .eq('is_active', true);
+        if (teamsError) throw teamsError;
 
-      if (teamsData) {
-        const tList = teamsData.map((d: any) => d.teams).filter(Boolean);
-        setMyTeams(tList);
-        
-        const scores: Record<string, any> = {};
-        for (const t of tList) {
-          scores[t.id] = await calculateTeamScore(t.id);
+        if (teamsData) {
+          const tList = teamsData.map((d: any) => d.teams).filter(Boolean);
+          setMyTeams(tList);
+
+          const scoreEntries = await Promise.all(tList.map(async (team: any) => [
+            team.id,
+            await calculateTeamScore(team.id),
+          ] as const));
+          setTeamScores(Object.fromEntries(scoreEntries));
         }
-        setTeamScores(scores);
+      } catch (error) {
+        console.error('Team Battle load failed:', error);
+        setTeamError(error instanceof Error ? error.message : 'โหลดระบบทีมไม่สำเร็จ');
       }
     }
 
@@ -273,6 +281,11 @@ export default function Dashboard() {
         </div>
 
         {/* Team Card (if assigned) */}
+        {teamError && (
+          <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-300 text-sm">
+            ระบบทีมยังไม่พร้อม: {teamError}
+          </div>
+        )}
         {myTeams.length > 0 && (
           <div className="mb-6">
             <StudentTeamCard team={myTeams[0]} scoreData={teamScores[myTeams[0].id]} />
@@ -723,9 +736,6 @@ export default function Dashboard() {
                       <p className="text-slate-400 text-sm mt-0.5">เล่นวันนี้เพื่อช่วยทีมของคุณเก็บคะแนนข้ามห้องเรียน!</p>
                     </div>
                   </div>
-                  <button onClick={() => alert('กำลังพัฒนาระบบ Leaderboard เร็วๆ นี้!')} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl border border-slate-700 transition-all shadow-md">
-                    🏆 ดู Team Leaderboard
-                  </button>
                 </div>
 
                 {/* Team Goals */}
@@ -776,6 +786,11 @@ export default function Dashboard() {
                     <p className="text-slate-400">กำลังค้นหาทีมของคุณ...</p>
                   </div>
                 )}
+              </div>
+
+              {/* Show Leaderboard in Teams tab */}
+              <div className="mt-8">
+                <TeamLeaderboard scope="school" />
               </div>
             </motion.div>
           )}

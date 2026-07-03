@@ -122,6 +122,11 @@ export default function CardWorkflowPanel({ teacher, classroomId }: { teacher: a
             <div>
               <div className="font-black text-white">
                 {log.attacker?.student_name} → {log.target?.student_name || 'ตัวเอง'}
+                {log.metadata?.additionalTargets && log.metadata.additionalTargets.length > 0 && (
+                  <span className="text-sm text-slate-400 font-normal ml-2">
+                    (และ {log.metadata.additionalTargets.map((t: any) => t.name).join(', ')})
+                  </span>
+                )}
               </div>
               <div className="text-fuchsia-300 mt-1">
                 {log.played_card?.image_url} {log.played_card?.name}

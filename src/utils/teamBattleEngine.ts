@@ -3,72 +3,11 @@ import { supabase } from './supabase/client';
 export type TeamScoreEvent = 'stage_completed' | 'boss_completed' | 'accuracy_bonus' | 'perfect_bonus' | 'review_completed' | 'wrong_word_mastered' | 'streak_bonus' | 'participation_bonus';
 
 export async function autoAssignTeamForStudent(userId: string) {
-  try {
-    // 1. Get Student Info
-    const { data: student } = await supabase.from('students').select('*, classrooms(*)').eq('id', userId).single();
-    if (!student || !student.classroom_id) return;
-    const gradeLevel = student.classrooms?.class_name?.substring(0, 3) || 'ม.1';
-
-    // 2. Check if already assigned
-    const { data: existingMemberships } = await supabase.from('team_members').select('*, teams(team_type)').eq('user_id', userId);
-    const hasClassTeam = existingMemberships?.some(m => m.teams?.team_type === 'class');
-    const hasSchoolTeam = existingMemberships?.some(m => m.teams?.team_type === 'school');
-
-    if (hasClassTeam && hasSchoolTeam) return; // Already fully assigned
-
-    // --- ASSIGN CLASS TEAM ---
-    if (!hasClassTeam) {
-      let { data: classTeams } = await supabase.from('teams').select('*').eq('team_type', 'class').eq('classroom_id', student.classroom_id);
-      
-      if (!classTeams || classTeams.length === 0) {
-        // Create 4 initial class teams
-        const newTeams = [
-          { team_name: 'Lion', team_icon: '🦁', team_color: '#fbbf24', team_type: 'class', classroom_id: student.classroom_id, grade_level: gradeLevel },
-          { team_name: 'Eagle', team_icon: '🦅', team_color: '#38bdf8', team_type: 'class', classroom_id: student.classroom_id, grade_level: gradeLevel },
-          { team_name: 'Dragon', team_icon: '🐉', team_color: '#ef4444', team_type: 'class', classroom_id: student.classroom_id, grade_level: gradeLevel },
-          { team_name: 'Tiger', team_icon: '🐯', team_color: '#f97316', team_type: 'class', classroom_id: student.classroom_id, grade_level: gradeLevel },
-        ];
-        const { data: created } = await supabase.from('teams').insert(newTeams).select();
-        classTeams = created || [];
-      }
-
-      if (classTeams && classTeams.length > 0) {
-        // Find team with least members
-        const { data: membersCount } = await supabase.from('team_members').select('team_id');
-        const counts = classTeams.map(t => ({
-          id: t.id,
-          count: membersCount?.filter(m => m.team_id === t.id).length || 0
-        }));
-        
-        const minCount = Math.min(...counts.map(c => c.count));
-        const lowestTeams = counts.filter(c => c.count === minCount);
-        const randomTeam = lowestTeams[Math.floor(Math.random() * lowestTeams.length)];
-        
-        await supabase.from('team_members').insert([{ team_id: randomTeam.id, user_id: userId }]);
-      }
-    }
-
-    // --- ASSIGN SCHOOL TEAM ---
-    if (!hasSchoolTeam) {
-      const { data: schoolTeams } = await supabase.from('teams').select('*').eq('team_type', 'school');
-      if (schoolTeams && schoolTeams.length > 0) {
-        // Find team with least members
-        const { data: membersCount } = await supabase.from('team_members').select('team_id');
-        const counts = schoolTeams.map(t => ({
-          id: t.id,
-          count: membersCount?.filter(m => m.team_id === t.id).length || 0
-        }));
-        
-        const minCount = Math.min(...counts.map(c => c.count));
-        const lowestTeams = counts.filter(c => c.count === minCount);
-        const randomTeam = lowestTeams[Math.floor(Math.random() * lowestTeams.length)];
-        
-        await supabase.from('team_members').insert([{ team_id: randomTeam.id, user_id: userId }]);
-      }
-    }
-  } catch (err) {
-    console.error("Error in autoAssignTeamForStudent:", err);
-  }
+  const { data, error } = await supabase.rpc('ensure_student_team_memberships', {
+    p_student_id: userId,
+  });
+  if (error) throw new Error(`TEAM_ASSIGNMENT_FAILED: ${error.message}`);
+  return data;
 }
 
 export async function createTeamScoreEvent(params: {
@@ -77,40 +16,44 @@ export async function createTeamScoreEvent(params: {
   points: number;
   metadata?: any;
 }) {
-  try {
-    // Get active season
-    const { data: season } = await supabase.from('team_battle_seasons').select('id').eq('is_active', true).eq('scope', 'school').maybeSingle();
-    
-    // Get user's teams
-    const { data: memberships } = await supabase.from('team_members').select('team_id').eq('user_id', params.userId).eq('is_active', true);
-    
-    if (!memberships || memberships.length === 0) return;
-
-    const events = memberships.map(m => ({
-      team_id: m.team_id,
-      user_id: params.userId,
-      season_id: season ? season.id : null,
-      event_type: params.eventType,
-      points: params.points,
-      metadata: params.metadata || {}
-    }));
-
-    await supabase.from('team_score_events').insert(events);
-  } catch (err) {
-    console.error("Error creating team score event:", err);
-  }
+  const { data, error } = await supabase.rpc('record_team_score_event', {
+    p_student_id: params.userId,
+    p_event_type: params.eventType,
+    p_points: params.points,
+    p_metadata: params.metadata || {},
+  });
+  if (error) throw new Error(`TEAM_SCORE_FAILED: ${error.message}`);
+  return data;
 }
 
-export async function calculateTeamScore(teamId: string) {
+export async function calculateTeamScore(teamId: string, seasonId?: string | null) {
   try {
-    const { data: season } = await supabase.from('team_battle_seasons').select('id').eq('is_active', true).eq('scope', 'school').maybeSingle();
+    let resolvedSeasonId = seasonId;
+    if (resolvedSeasonId === undefined) {
+      const { data: season, error: seasonError } = await supabase
+        .from('team_battle_seasons')
+        .select('id')
+        .eq('is_active', true)
+        .eq('scope', 'school')
+        .order('start_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (seasonError) throw seasonError;
+      resolvedSeasonId = season?.id || null;
+    }
     let query = supabase.from('team_score_events').select('*').eq('team_id', teamId);
-    if (season) query = query.eq('season_id', season.id);
+    if (resolvedSeasonId) query = query.eq('season_id', resolvedSeasonId);
     
-    const { data: events } = await query;
+    const { data: events, error: eventsError } = await query;
+    if (eventsError) throw eventsError;
     if (!events) return { totalScore: 0, finalScore: 0, activeMembersRate: 0 };
 
-    const { data: members } = await supabase.from('team_members').select('user_id').eq('team_id', teamId);
+    const { data: members, error: membersError } = await supabase
+      .from('team_members')
+      .select('user_id')
+      .eq('team_id', teamId)
+      .eq('is_active', true);
+    if (membersError) throw membersError;
     const totalMembers = members?.length || 1;
 
     let totalScore = 0;
@@ -147,6 +90,6 @@ export async function calculateTeamScore(teamId: string) {
     };
   } catch (err) {
     console.error("Error calculating team score:", err);
-    return { totalScore: 0, finalScore: 0, activeMembersRate: 0 };
+    throw err;
   }
 }

@@ -1,13 +1,9 @@
 import React from 'react';
-import { Target, Users, Zap } from 'lucide-react';
+import { Activity, Users } from 'lucide-react';
 
 export default function StudentTeamCard({ team, scoreData }: { team: any, scoreData: any }) {
   if (!team || !scoreData) return null;
   
-  // Fake calculation for "Points to next rank" just for UI demo since we don't have the full sorted list here
-  // In a real app we'd pass the actual gap
-  const gap = Math.floor(Math.random() * 200) + 50;
-
   return (
     <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
       <div className="absolute top-[-50%] right-[-10%] w-64 h-64 rounded-full mix-blend-screen filter blur-[80px] opacity-20 pointer-events-none transition-all group-hover:opacity-40" style={{ backgroundColor: team.team_color }}></div>
@@ -35,12 +31,15 @@ export default function StudentTeamCard({ team, scoreData }: { team: any, scoreD
       </div>
       
       <div className="mt-6 pt-5 border-t border-slate-800/80">
-        <div className="flex justify-between items-end mb-2">
-          <div className="text-sm font-bold text-slate-300 flex items-center gap-2"><Target className="w-4 h-4 text-emerald-400" /> เป้าหมายแซงอันดับถัดไป</div>
-          <div className="text-xs font-bold text-emerald-400">ขาดอีก {gap} แต้ม</div>
-        </div>
-        <div className="h-3 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-          <div className="h-full rounded-full transition-all duration-1000" style={{ width: '75%', backgroundColor: team.team_color, boxShadow: `0 0 10px ${team.team_color}80` }}></div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-slate-900/70 rounded-xl p-3">
+            <div className="text-xs text-slate-500">คะแนนกิจกรรมจริง</div>
+            <div className="text-lg font-black text-white mt-1">{scoreData.totalScore || 0}</div>
+          </div>
+          <div className="bg-slate-900/70 rounded-xl p-3">
+            <div className="text-xs text-slate-500 flex items-center gap-1"><Activity className="w-3 h-3" /> เหตุการณ์สะสม</div>
+            <div className="text-lg font-black text-white mt-1">{scoreData.eventsCount || 0}</div>
+          </div>
         </div>
       </div>
     </div>

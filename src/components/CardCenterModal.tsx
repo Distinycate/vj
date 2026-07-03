@@ -39,6 +39,8 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
   const [incoming, setIncoming] = useState<any[]>([]);
   const [selectedCard, setSelectedCard] = useState<InventoryRow | null>(null);
   const [selectedTarget, setSelectedTarget] = useState('');
+  const [selectedTarget2, setSelectedTarget2] = useState('');
+  const [selectedTarget3, setSelectedTarget3] = useState('');
   const [latestPull, setLatestPull] = useState<BattleCard | null>(null);
   const [latestPullWasPity, setLatestPullWasPity] = useState(false);
   const [message, setMessage] = useState('');
@@ -135,12 +137,36 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       setMessage('กรุณาเลือกเพื่อนที่ต้องการใช้การ์ด');
       return;
     }
+    const isCleanRoom = selectedCard.cards.card_code === 'CLEAN_ROOM';
+    if (isCleanRoom && (!selectedTarget || !selectedTarget2 || !selectedTarget3)) {
+      setMessage('การ์ดใบนี้ต้องเลือกเพื่อนให้ครบ 3 คน');
+      return;
+    }
+    
+    // Prevent duplicate targets if needed
+    if (isCleanRoom && (selectedTarget === selectedTarget2 || selectedTarget === selectedTarget3 || selectedTarget2 === selectedTarget3)) {
+      setMessage('ห้ามเลือกเพื่อนซ้ำกัน');
+      return;
+    }
+
     setBusy(true);
     try {
-      await createCardAction(student.id, selectedCard.cards.id, needsTarget ? selectedTarget : null);
+      let metadata: any = {};
+      if (isCleanRoom) {
+         const t2 = classmates.find(c => c.id === selectedTarget2);
+         const t3 = classmates.find(c => c.id === selectedTarget3);
+         metadata.additionalTargets = [
+           { id: t2?.id, name: t2?.student_name },
+           { id: t3?.id, name: t3?.student_name }
+         ];
+      }
+
+      await createCardAction(student.id, selectedCard.cards.id, needsTarget ? selectedTarget : null, metadata);
       setMessage('ส่งคำขอแล้ว การ์ดถูกจองไว้จนกว่าครูจะตัดสิน');
       setSelectedCard(null);
       setSelectedTarget('');
+      setSelectedTarget2('');
+      setSelectedTarget3('');
       await loadData();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'ใช้การ์ดไม่สำเร็จ');
@@ -276,7 +302,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {inventory.map((row) => {
                 const available = row.quantity - row.reserved_quantity;
-                const canStart = row.cards.effect_type !== 'REFLECT';
+                const canStart = row.cards.effect_type !== 'REFLECT' && row.cards.effect_type !== 'DUD';
                 return (
                   <button
                     key={row.id}
@@ -292,7 +318,8 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                     <div className="text-xs text-slate-400 mt-1">
                       พร้อมใช้ {available}/{row.quantity} ใบ
                     </div>
-                    {!canStart && <div className="text-xs mt-2">ใช้ได้เมื่อถูกโจมตี</div>}
+                    {!canStart && row.cards.effect_type !== 'DUD' && <div className="text-xs mt-2">ใช้ได้เมื่อถูกโจมตี</div>}
+                    {row.cards.effect_type === 'DUD' && <div className="text-xs mt-2 text-slate-500">ไม่มีผลใดๆ ไม่สามารถใช้งานได้</div>}
                     {row.cards.effect_type === 'DEFENSE' && (
                       <div className="text-xs mt-2">ใช้ป้องกันเมื่อถูกโจมตี หรือส่งให้ครูอนุมัติเป็นสิทธิ์กันแบน</div>
                     )}
@@ -318,16 +345,43 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
             </h3>
             <p className="text-slate-400 text-sm mt-2">{selectedCard.cards.description}</p>
             {selectedCard.cards.effect_type === 'ATTACK' && (
-              <select
-                value={selectedTarget}
-                onChange={(event) => setSelectedTarget(event.target.value)}
-                className="w-full mt-5 bg-slate-950 border border-slate-700 text-white rounded-xl p-3"
-              >
-                <option value="">เลือกเพื่อนในห้อง</option>
-                {classmates.map((classmate) => (
-                  <option key={classmate.id} value={classmate.id}>{classmate.student_name}</option>
-                ))}
-              </select>
+              <div className="space-y-3 mt-5">
+                <select
+                  value={selectedTarget}
+                  onChange={(event) => setSelectedTarget(event.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3"
+                >
+                  <option value="">{selectedCard.cards.card_code === 'CLEAN_ROOM' ? 'เลือกเพื่อนในห้อง (คนที่ 1)' : 'เลือกเพื่อนในห้อง'}</option>
+                  {classmates.map((classmate) => (
+                    <option key={classmate.id} value={classmate.id}>{classmate.student_name}</option>
+                  ))}
+                </select>
+
+                {selectedCard.cards.card_code === 'CLEAN_ROOM' && (
+                  <>
+                    <select
+                      value={selectedTarget2}
+                      onChange={(event) => setSelectedTarget2(event.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3"
+                    >
+                      <option value="">เลือกเพื่อนในห้อง (คนที่ 2)</option>
+                      {classmates.map((classmate) => (
+                        <option key={classmate.id} value={classmate.id}>{classmate.student_name}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={selectedTarget3}
+                      onChange={(event) => setSelectedTarget3(event.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3"
+                    >
+                      <option value="">เลือกเพื่อนในห้อง (คนที่ 3)</option>
+                      {classmates.map((classmate) => (
+                        <option key={classmate.id} value={classmate.id}>{classmate.student_name}</option>
+                      ))}
+                    </select>
+                  </>
+                )}
+              </div>
             )}
             <div className="grid grid-cols-2 gap-3 mt-6">
               <button onClick={() => setSelectedCard(null)} className="py-3 bg-slate-800 rounded-xl font-bold">
