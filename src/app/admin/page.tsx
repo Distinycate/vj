@@ -18,8 +18,9 @@ import SeasonManager from '@/components/admin/SeasonManager';
 import SchoolLevelDashboard from '@/components/admin/SchoolLevelDashboard';
 import ClassLevelAnalytics from '@/components/admin/ClassLevelAnalytics';
 import IndividualStudentProfile from '@/components/admin/IndividualStudentProfile';
+import EventAnalyticsTab from '@/components/admin/EventAnalyticsTab';
 
-type AdminTab = 'school-overview' | 'overview' | 'students' | 'teams' | 'weak-words' | 'risks' | 'settings';
+type AdminTab = 'school-overview' | 'overview' | 'students' | 'teams' | 'weak-words' | 'risks' | 'events' | 'settings';
 
 export default function AdminPage() {
   const [teacher, setTeacher] = useState<any>(null);
@@ -346,6 +347,7 @@ export default function AdminPage() {
             { id: 'overview', icon: <Activity className="w-4 h-4"/>, label: 'ภาพรวมห้องเรียน' },
             { id: 'students', icon: <Users className="w-4 h-4"/>, label: 'นักเรียน' },
             { id: 'teams', icon: <Trophy className="w-4 h-4"/>, label: 'ทีม (Team Battle)' },
+            { id: 'events', icon: <Sparkles className="w-4 h-4"/>, label: 'กิจกรรม (Events)' },
             { id: 'weak-words', icon: <BookOpen className="w-4 h-4"/>, label: 'คำที่ผิดบ่อย' },
             { id: 'risks', icon: <AlertTriangle className="w-4 h-4"/>, label: 'กลุ่มเสี่ยง' },
             { id: 'settings', icon: <Settings className="w-4 h-4"/>, label: 'ตั้งค่าระบบ' }
@@ -655,6 +657,13 @@ export default function AdminPage() {
                   <TeamLeaderboard scope="school" />
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {/* TAB: EVENTS */}
+          {activeTab === 'events' && (
+            <motion.div key="events" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
+               <EventAnalyticsTab />
             </motion.div>
           )}
         </AnimatePresence>

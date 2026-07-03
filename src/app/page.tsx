@@ -7,6 +7,7 @@ import Dashboard from '@/components/Dashboard';
 import StudyCamp from '@/components/StudyCamp';
 import Game from '@/components/Game';
 import PreTest from '@/components/PreTest';
+import { saveStudentSession } from '@/utils/studentSession';
 
 const generateUUID = () => {
   if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
@@ -98,6 +99,7 @@ export default function Home() {
         const pretestDate = hasCompleted5Pretests && pretestList && pretestList.length > 0 ? pretestList[0].created_at : null;
 
         setStudent(studentData);
+        saveStudentSession(studentData);
         setProgress({ 
           ...progressData, 
           pretest_date: pretestDate 
@@ -260,6 +262,7 @@ export default function Home() {
 
       // Auto-login after register
       setStudent(studentData);
+      saveStudentSession(studentData);
       setProgress(progressData);
       
     } catch (err: any) {

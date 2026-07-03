@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { clearStudentSession } from '@/utils/studentSession';
 
 interface AppState {
   student: any;
@@ -39,7 +40,9 @@ export const useAppStore = create<AppState>((set) => ({
   setRecommendations: (recommendations) => set({ recommendations }),
   setReviewMode: (isReviewMode) => set({ isReviewMode }),
   setStudiedCurrentStage: (hasStudiedCurrentStage) => set({ hasStudiedCurrentStage }),
-  logout: () => set({ 
+  logout: () => {
+    clearStudentSession();
+    set({
     student: null, 
     progress: null, 
     currentScreen: 'dashboard',
@@ -48,5 +51,6 @@ export const useAppStore = create<AppState>((set) => ({
     recommendations: [],
     isReviewMode: false,
     hasStudiedCurrentStage: false
-  }),
+    });
+  },
 }));
