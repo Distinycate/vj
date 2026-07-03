@@ -18,7 +18,7 @@ export interface RankConfig {
 
 export const ADAPTIVE_RANK_CONFIG: Record<number, RankConfig> = {
   1: {
-    skillTitle: 'Novice Explorer (ผู้เริ่มต้นฝึกฝน)',
+    skillTitle: 'Bronze (ทองแดง)',
     difficultyMix: { easy: 80, normal: 20, hard: 0, expert: 0 },
     questionTypes: ['meaning_mc', 'word_mc'],
     questionCount: 10,
@@ -27,7 +27,7 @@ export const ADAPTIVE_RANK_CONFIG: Record<number, RankConfig> = {
     hintMode: 'unlimited'
   },
   2: {
-    skillTitle: 'Vanguard Scholar (นักคิดบุกเบิก)',
+    skillTitle: 'Silver (เงิน)',
     difficultyMix: { easy: 60, normal: 35, hard: 5, expert: 0 },
     questionTypes: ['meaning_mc', 'word_mc', 'listening_mc'],
     questionCount: 12,
@@ -36,7 +36,7 @@ export const ADAPTIVE_RANK_CONFIG: Record<number, RankConfig> = {
     hintMode: 'limited'
   },
   3: {
-    skillTitle: 'Elite Quester (นักผจญภัยระดับยอดฝีมือ)',
+    skillTitle: 'Gold (ทอง)',
     difficultyMix: { easy: 35, normal: 45, hard: 20, expert: 0 },
     questionTypes: ['meaning_mc', 'word_mc', 'listening_mc', 'context_mc'],
     questionCount: 15,
@@ -45,7 +45,7 @@ export const ADAPTIVE_RANK_CONFIG: Record<number, RankConfig> = {
     hintMode: 'limited'
   },
   4: {
-    skillTitle: 'Grand Archmage (จอมเวทย์ภาษาอังกฤษ)',
+    skillTitle: 'Platinum (แพลตตินัม)',
     difficultyMix: { easy: 15, normal: 50, hard: 35, expert: 0 },
     questionTypes: ['meaning_mc', 'word_mc', 'listening_mc', 'context_mc', 'spelling'],
     questionCount: 18,
@@ -54,7 +54,7 @@ export const ADAPTIVE_RANK_CONFIG: Record<number, RankConfig> = {
     hintMode: 'limited'
   },
   5: {
-    skillTitle: 'Mythic Overlord (ตำนานผู้ไร้พ่าย)',
+    skillTitle: 'Diamond (เพชร)',
     difficultyMix: { easy: 0, normal: 20, hard: 50, expert: 30 },
     questionTypes: ['meaning_mc', 'word_mc', 'listening_mc', 'context_mc', 'spelling', 'mixed_challenge'],
     questionCount: 20,

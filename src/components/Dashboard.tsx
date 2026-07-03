@@ -819,7 +819,9 @@ export default function Dashboard() {
                   </div>
                   
                   <h4 className="text-3xl font-black text-white mb-2">{student.student_name}</h4>
-                  <p className="text-emerald-400 font-bold mb-8">Level {stats.level} • {rankConfig.skillTitle}</p>
+                  <p className="text-emerald-400 font-bold mb-8">
+                    Level {stats.level} • {currentRank === 1 ? '🥉' : currentRank === 2 ? '🥈' : currentRank === 3 ? '🥇' : currentRank === 4 ? '💎' : currentRank === 5 ? '👑' : '🛡️'} {rankConfig.skillTitle}
+                  </p>
                   
                   <button 
                     onClick={handleRandomizeAvatar}

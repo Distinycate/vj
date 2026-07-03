@@ -522,23 +522,33 @@ export async function completeStage(studentId: string, stageNumber: number, resu
 
     // 4. Calculate coins & EXP rewards (only if passed)
     if (passed) {
-      // Rank Multipliers: Rank 1: x1, Rank 2: x1.2, Rank 3: x1.4, Rank 4: x1.7, Rank 5: x2
+      // Fetch path data first to check for replay
+      const { data: pathData } = await supabase.from('learning_paths').select('coins, exp, total_exp, current_stage, streak_days, last_active_date').eq('student_id', studentId).single();
+      
+      const isReplay = pathData && stageNumber < (pathData.current_stage || 1);
+
+      // Rank Multipliers for EXP only (Coins use absolute base now)
       const rankMultipliers = [1, 1, 1.2, 1.4, 1.7, 2];
-      const baseCoins = 20;
+      const rankBaseCoins = [0, 30, 40, 50, 60, 70];
+      
+      const baseCoins = rankBaseCoins[rank] || 30;
       const baseExp = 15;
       const rankMult = rankMultipliers[rank] || 1;
       
-      let earnedCoins = baseCoins * rankMult;
+      let earnedCoins = baseCoins;
       let earnedExp = baseExp * rankMult;
 
       if (isBoss) { earnedCoins *= 2; earnedExp *= 2; }
       if (usedHints === 0) { earnedCoins *= 1.2; earnedExp *= 1.2; }
       if (accuracy === 100) { earnedCoins *= 1.3; earnedExp *= 1.3; }
 
+      // Apply 10% Replay Penalty
+      if (isReplay) {
+        earnedCoins *= 0.1;
+      }
+
       earnedCoins = Math.round(earnedCoins);
       earnedExp = Math.round(earnedExp);
-
-      const { data: pathData } = await supabase.from('learning_paths').select('coins, exp, total_exp, current_stage, streak_days, last_active_date').eq('student_id', studentId).single();
 
       if (pathData) {
         const newCoins = (pathData.coins || 0) + earnedCoins;

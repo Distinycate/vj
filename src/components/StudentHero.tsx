@@ -13,8 +13,10 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
           <div className="text-center sm:text-left">
             <h1 className="text-3xl font-black text-white mb-2">{student.student_name}</h1>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <span className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-full text-xs font-black shadow-md">{rankConfig.skillTitle}</span>
-              <span className="px-3 py-1 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full text-xs font-bold">Rank {progress?.current_rank || 1}</span>
+              <span className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-full text-xs font-black shadow-md flex items-center gap-1">
+                {progress?.current_rank === 1 ? '🥉' : progress?.current_rank === 2 ? '🥈' : progress?.current_rank === 3 ? '🥇' : progress?.current_rank === 4 ? '💎' : progress?.current_rank === 5 ? '👑' : '🛡️'}
+                {rankConfig.skillTitle}
+              </span>
               <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-bold">Lvl {stats.level}</span>
             </div>
           </div>

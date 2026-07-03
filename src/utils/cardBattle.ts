@@ -1,6 +1,6 @@
 import { supabase } from './supabase/client';
 
-export const GACHA_COIN_COST = 500;
+export const GACHA_COIN_COST = 200;
 
 export type CardEffectType = 'ATTACK' | 'DEFENSE' | 'REFLECT' | 'BUFF' | 'DUD';
 export type CardLogStatus = 'PENDING' | 'COUNTER_PHASE' | 'RESOLVED' | 'REJECTED';
