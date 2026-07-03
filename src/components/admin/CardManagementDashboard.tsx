@@ -7,10 +7,12 @@ import {
   Ticket, Trash2, UserRound, X,
 } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
-import { adjustStudentTickets, removeStudentCard } from '@/utils/cardBattle';
+import {
+  adjustStudentCoins, adjustStudentTickets, BehaviorCategory, removeStudentCard,
+} from '@/utils/cardBattle';
 import CardWorkflowPanel from './CardWorkflowPanel';
 
-type CardPageTab = 'overview' | 'workflow' | 'history';
+type CardPageTab = 'overview' | 'behavior' | 'workflow' | 'history';
 
 interface StudentSummary {
   id: string;
@@ -18,12 +20,28 @@ interface StudentSummary {
   student_name: string;
   classroom_id: string;
   tickets: number;
+  coins: number;
   currentCards: number;
   reservedCards: number;
   cardsReceived: number;
   ticketsAwarded: number;
   ticketsRemoved: number;
   cardsRemoved: number;
+  coinsAwarded: number;
+  coinsRemoved: number;
+}
+
+const BEHAVIOR_CATEGORIES: Array<{ value: BehaviorCategory; label: string }> = [
+  { value: 'POSITIVE_BEHAVIOR', label: 'ความประพฤติเชิงบวก' },
+  { value: 'RESPONSIBILITY', label: 'ความรับผิดชอบ' },
+  { value: 'VOLUNTEER', label: 'จิตอาสา/ช่วยเหลือส่วนรวม' },
+  { value: 'DISCIPLINE', label: 'วินัย' },
+  { value: 'RULE_VIOLATION', label: 'ไม่ปฏิบัติตามข้อตกลง' },
+  { value: 'OTHER', label: 'อื่น ๆ' },
+];
+
+function categoryLabel(value: string) {
+  return BEHAVIOR_CATEGORIES.find((category) => category.value === value)?.label || 'อื่น ๆ';
 }
 
 function getRelationObject(value: any) {
@@ -31,8 +49,8 @@ function getRelationObject(value: any) {
 }
 
 function behaviorSignal(student: StudentSummary) {
-  const positive = student.ticketsAwarded;
-  const deductions = student.ticketsRemoved + student.cardsRemoved;
+  const positive = student.ticketsAwarded + student.coinsAwarded;
+  const deductions = student.ticketsRemoved + student.cardsRemoved + student.coinsRemoved;
   if (positive === 0 && deductions === 0) {
     return { label: 'ยังไม่มีข้อมูล', style: 'bg-slate-500/10 text-slate-400 border-slate-500/20' };
   }
@@ -59,6 +77,8 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
   const [message, setMessage] = useState('');
   const [reason, setReason] = useState('');
   const [ticketAmount, setTicketAmount] = useState(1);
+  const [coinAmount, setCoinAmount] = useState(100);
+  const [behaviorCategory, setBehaviorCategory] = useState<BehaviorCategory>('POSITIVE_BEHAVIOR');
 
   useEffect(() => {
     async function loadClassrooms() {
@@ -83,7 +103,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     setMessage('');
     const studentsResult = await supabase
       .from('students')
-      .select('id, student_id, student_name, classroom_id, learning_paths(free_pull_tickets)')
+      .select('id, student_id, student_name, classroom_id, learning_paths(free_pull_tickets, coins)')
       .eq('classroom_id', classroomId)
       .eq('is_active', true)
       .order('student_name');
@@ -142,12 +162,15 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
       return {
         ...student,
         tickets: getRelationObject(student.learning_paths)?.free_pull_tickets || 0,
+        coins: getRelationObject(student.learning_paths)?.coins || 0,
         currentCards: studentInventory.reduce((sum, row) => sum + Number(row.quantity || 0), 0),
         reservedCards: studentInventory.reduce((sum, row) => sum + Number(row.reserved_quantity || 0), 0),
         cardsReceived: pullRows.filter((pull) => pull.student_id === student.id).length,
         ticketsAwarded: sumAction('TICKET_AWARD'),
         ticketsRemoved: sumAction('TICKET_REMOVAL'),
         cardsRemoved: sumAction('CARD_REMOVAL'),
+        coinsAwarded: sumAction('COIN_AWARD'),
+        coinsRemoved: sumAction('COIN_REMOVAL'),
       };
     }));
     setLoading(false);
@@ -161,7 +184,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     currentCards: summary.currentCards + student.currentCards,
     cardsReceived: summary.cardsReceived + student.cardsReceived,
     ticketsAwarded: summary.ticketsAwarded + student.ticketsAwarded,
-    deductions: summary.deductions + student.ticketsRemoved + student.cardsRemoved,
+    deductions: summary.deductions + student.ticketsRemoved + student.cardsRemoved + student.coinsRemoved,
   }), { currentCards: 0, cardsReceived: 0, ticketsAwarded: 0, deductions: 0 }), [students]);
 
   const filteredStudents = useMemo(() => {
@@ -186,6 +209,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
         selectedStudent.id,
         direction * ticketAmount,
         reason.trim(),
+        behaviorCategory,
       );
       setReason('');
       setMessage(direction > 0 ? 'มอบตั๋วและบันทึกเหตุผลแล้ว' : 'หักตั๋วและบันทึกเหตุผลแล้ว');
@@ -193,6 +217,28 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
       setSelectedStudent(null);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'ปรับตั๋วไม่สำเร็จ');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function adjustCoins(direction: 1 | -1) {
+    if (!selectedStudent || !reason.trim() || coinAmount < 1 || busy) return;
+    setBusy(true);
+    try {
+      await adjustStudentCoins(
+        teacher.id,
+        selectedStudent.id,
+        direction * coinAmount,
+        reason.trim(),
+        behaviorCategory,
+      );
+      setReason('');
+      setMessage(direction > 0 ? 'มอบเหรียญและบันทึกคุณลักษณะแล้ว' : 'หักเหรียญและบันทึกเหตุผลแล้ว');
+      await loadData();
+      setSelectedStudent(null);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'ปรับเหรียญไม่สำเร็จ');
     } finally {
       setBusy(false);
     }
@@ -209,6 +255,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
         row.card_id,
         1,
         reason.trim(),
+        behaviorCategory,
       );
       setReason('');
       setMessage('ริบการ์ดและบันทึกเหตุผลแล้ว');
@@ -233,16 +280,19 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
             <p className="text-sm text-slate-400 mt-1">แยกจากผลการเรียนและสถิติการเล่นคำศัพท์</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => window.location.href = '/admin'} className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" /> Analytics ครู
-            </button>
+            {teacher.role !== 'CARD_TEACHER' && (
+              <button onClick={() => window.location.href = '/admin'} className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold flex items-center gap-2">
+                <ArrowLeft className="w-4 h-4" /> Analytics ครู
+              </button>
+            )}
             <button onClick={() => window.location.href = '/'} className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold flex items-center gap-2">
               <Home className="w-4 h-4" /> หน้าเข้าใช้งาน
             </button>
             <button
               onClick={() => {
                 localStorage.removeItem('vocab_journey_teacher');
-                window.location.href = '/';
+                localStorage.removeItem('vocab_journey_card_teacher');
+                window.location.href = teacher.role === 'CARD_TEACHER' ? '/card-teacher' : '/';
               }}
               className="px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 rounded-xl text-sm font-bold flex items-center gap-2"
             >
@@ -257,6 +307,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
           <nav className="flex gap-2 overflow-x-auto pb-1">
             {[
               { id: 'overview', label: 'ภาพรวมและคลังรายบุคคล', icon: BarChart3 },
+              { id: 'behavior', label: 'สรุปคุณลักษณะ', icon: CheckCircle2 },
               { id: 'workflow', label: 'คำขอใช้การ์ด', icon: ClipboardList },
               { id: 'history', label: 'ประวัติครู', icon: ShieldAlert },
             ].map((item) => (
@@ -317,6 +368,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                       <th className="text-center p-4">สุ่มได้</th>
                       <th className="text-center p-4">คงเหลือ</th>
                       <th className="text-center p-4">ตั๋วปัจจุบัน</th>
+                      <th className="text-center p-4">เหรียญ</th>
                       <th className="text-center p-4">ครูมอบ</th>
                       <th className="text-center p-4">หัก/ริบ</th>
                       <th className="text-center p-4">ข้อมูลติดตาม</th>
@@ -335,6 +387,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                           <td className="text-center p-4">{student.cardsReceived}</td>
                           <td className="text-center p-4">{student.currentCards}{student.reservedCards > 0 && <span className="text-amber-400 text-xs"> ({student.reservedCards} จอง)</span>}</td>
                           <td className="text-center p-4 text-sky-300 font-bold">{student.tickets}</td>
+                          <td className="text-center p-4 text-amber-300 font-bold">{student.coins}</td>
                           <td className="text-center p-4 text-emerald-300">{student.ticketsAwarded}</td>
                           <td className="text-center p-4 text-rose-300">{student.ticketsRemoved + student.cardsRemoved}</td>
                           <td className="text-center p-4"><span className={`px-2 py-1 border rounded-full text-[10px] font-bold ${signal.style}`}>{signal.label}</span></td>
@@ -355,6 +408,42 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
           </div>
         )}
 
+        {tab === 'behavior' && (
+          <div className="space-y-5">
+            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 text-sm text-indigo-200">
+              สรุปนี้นับจากรายการที่ครูบันทึกในระบบการ์ดเท่านั้น ควรใช้ร่วมกับการสังเกตและหลักฐานอื่นก่อนประเมินคุณลักษณะอันพึงประสงค์
+            </div>
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {students.map((student) => {
+                const studentActions = actions.filter((action) => action.student_id === student.id);
+                const positiveActions = studentActions.filter((action) =>
+                  ['COIN_AWARD', 'TICKET_AWARD'].includes(action.action_type)
+                );
+                const correctiveActions = studentActions.filter((action) =>
+                  ['COIN_REMOVAL', 'TICKET_REMOVAL', 'CARD_REMOVAL'].includes(action.action_type)
+                );
+                return (
+                  <div key={student.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
+                    <h3 className="font-black text-white">{student.student_name}</h3>
+                    <p className="text-xs text-slate-500">{student.student_id}</p>
+                    <div className="grid grid-cols-2 gap-2 mt-4">
+                      <div className="bg-emerald-500/10 rounded-xl p-3"><div className="text-xs text-emerald-300">เชิงบวก</div><div className="text-2xl font-black">{positiveActions.length}</div></div>
+                      <div className="bg-rose-500/10 rounded-xl p-3"><div className="text-xs text-rose-300">ควรติดตาม</div><div className="text-2xl font-black">{correctiveActions.length}</div></div>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      {BEHAVIOR_CATEGORIES.map((category) => {
+                        const count = studentActions.filter((action) => action.behavior_category === category.value).length;
+                        if (count === 0) return null;
+                        return <div key={category.value} className="flex justify-between text-xs text-slate-400"><span>{category.label}</span><span>{count} ครั้ง</span></div>;
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {tab === 'workflow' && <CardWorkflowPanel teacher={teacher} classroomId={classroomId} />}
 
         {tab === 'history' && (
@@ -366,11 +455,19 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
             <div className="divide-y divide-slate-800">
               {actions.map((action) => (
                 <div key={action.id} className="p-4 grid md:grid-cols-[1.3fr_1fr_2fr_auto] gap-3 text-sm">
-                  <div><div className="font-bold text-white">{action.students?.student_name}</div><div className="text-xs text-slate-500">{new Date(action.created_at).toLocaleString('th-TH')}</div></div>
-                  <div className={action.action_type === 'TICKET_AWARD' ? 'text-emerald-300' : 'text-rose-300'}>
-                    {action.action_type === 'TICKET_AWARD' ? `มอบตั๋ว +${action.amount}` : action.action_type === 'TICKET_REMOVAL' ? `หักตั๋ว -${action.amount}` : `ริบ ${action.cards?.name || 'การ์ด'} ${action.amount} ใบ`}
+                  <div>
+                    <div className="font-bold text-white">{action.students?.student_name}</div>
+                    <div className="text-xs text-indigo-300 mt-0.5">โดยครู {action.teachers?.name || 'ไม่พบชื่อครู'}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">{new Date(action.created_at).toLocaleString('th-TH')}</div>
                   </div>
-                  <div className="text-slate-300">{action.reason}</div>
+                  <div className={['TICKET_AWARD', 'COIN_AWARD'].includes(action.action_type) ? 'text-emerald-300' : 'text-rose-300'}>
+                    {action.action_type === 'COIN_AWARD' ? `มอบเหรียญ +${action.amount}` :
+                      action.action_type === 'COIN_REMOVAL' ? `หักเหรียญ -${action.amount}` :
+                      action.action_type === 'TICKET_AWARD' ? `มอบตั๋ว +${action.amount}` :
+                      action.action_type === 'TICKET_REMOVAL' ? `หักตั๋ว -${action.amount}` :
+                      `ริบ ${action.cards?.name || 'การ์ด'} ${action.amount} ใบ`}
+                  </div>
+                  <div><div className="text-slate-300">{action.reason}</div><div className="text-xs text-slate-500 mt-1">{categoryLabel(action.behavior_category)}</div></div>
                   <div className="text-xs text-slate-500">{action.balance_before} → {action.balance_after}</div>
                 </div>
               ))}
@@ -392,8 +489,22 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
             </div>
             <div className="p-5 space-y-6">
               <div>
+                <label className="text-xs font-bold text-slate-400">หมวดคุณลักษณะ</label>
+                <select value={behaviorCategory} onChange={(event) => setBehaviorCategory(event.target.value as BehaviorCategory)} className="w-full mt-2 bg-slate-950 border border-slate-700 rounded-xl p-3">
+                  {BEHAVIOR_CATEGORIES.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
+                </select>
+              </div>
+              <div>
                 <label className="text-xs font-bold text-slate-400">เหตุผลที่มอบหรือหัก (จำเป็น)</label>
                 <textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="เช่น ช่วยงานส่วนรวม / ไม่ปฏิบัติตามข้อตกลงของชั้นเรียน" className="w-full mt-2 bg-slate-950 border border-slate-700 rounded-xl p-3 min-h-20" />
+              </div>
+              <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">
+                <h3 className="font-black flex items-center gap-2">🪙 เหรียญ: {selectedStudent.coins}</h3>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <input type="number" min={1} max={10000} value={coinAmount} onChange={(event) => setCoinAmount(Math.max(1, Number(event.target.value)))} className="w-28 bg-slate-900 border border-slate-700 rounded-xl px-3" />
+                  <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(1)} className="px-4 py-2 bg-amber-400 text-slate-950 disabled:opacity-40 rounded-xl font-bold">มอบเหรียญ</button>
+                  <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(-1)} className="px-4 py-2 bg-rose-500/15 text-rose-300 disabled:opacity-40 rounded-xl font-bold">หักเหรียญ</button>
+                </div>
               </div>
               <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">
                 <h3 className="font-black flex items-center gap-2"><Ticket className="w-4 h-4 text-sky-300" /> ตั๋วสุ่มฟรี: {selectedStudent.tickets}</h3>

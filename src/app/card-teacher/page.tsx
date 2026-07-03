@@ -36,7 +36,7 @@ export default function CardTeacherAccessPage() {
         teacher = data;
       }
       localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(teacher));
-      window.location.href = '/admin/cards';
+      window.location.href = '/card-teacher/dashboard';
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'ไม่สามารถเข้าใช้งานได้');
     } finally {

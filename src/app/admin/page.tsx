@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { 
   Users, AlertTriangle, LogOut, Shield, CheckCircle2,
-  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings
+  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings, Gift
 } from 'lucide-react';
 import { 
   BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -56,6 +56,9 @@ export default function AdminPage() {
     try {
       const { data, error } = await supabase.from('teachers').select('*').eq('username', username.trim()).eq('password', password.trim()).maybeSingle();
       if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านครูไม่ถูกต้อง');
+      if (!['TEACHER', 'ADMIN'].includes(data.role)) {
+        throw new Error('บัญชีนี้ใช้ได้เฉพาะระบบการ์ด กรุณาเข้าผ่านเมนูระบบการ์ดสำหรับคุณครู');
+      }
       setTeacher(data);
       localStorage.setItem('vocab_journey_teacher', JSON.stringify(data));
     } catch (err: any) {
@@ -285,7 +288,12 @@ export default function AdminPage() {
             <button onClick={() => window.location.href = '/'} className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold">
               <Home className="w-4 h-4" /> หน้าเข้าใช้งาน
             </button>
-            <button onClick={handleLogout} className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
+
+            <button onClick={() => window.open('/admin/cards', '_blank')} className="hidden md:flex items-center gap-2 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-300 border border-fuchsia-500/30 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-lg">
+              <Gift className="w-4 h-4" /> แจกเหรียญและตั๋ว
+            </button>
+
+            <button onClick={handleLogout} className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl transition-colors">
               <LogOut className="w-4 h-4" />
             </button>
           </div>

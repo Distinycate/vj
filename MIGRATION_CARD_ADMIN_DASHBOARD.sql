@@ -31,6 +31,28 @@ CREATE TABLE IF NOT EXISTS public.card_admin_actions (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Upgrade installations that already have the first audit-table version.
+ALTER TABLE public.card_admin_actions
+  ADD COLUMN IF NOT EXISTS behavior_category text NOT NULL DEFAULT 'OTHER';
+ALTER TABLE public.card_admin_actions
+  DROP CONSTRAINT IF EXISTS card_admin_actions_action_type_check;
+ALTER TABLE public.card_admin_actions
+  ADD CONSTRAINT card_admin_actions_action_type_check CHECK (
+    action_type IN (
+      'COIN_AWARD', 'COIN_REMOVAL',
+      'TICKET_AWARD', 'TICKET_REMOVAL', 'CARD_REMOVAL'
+    )
+  );
+ALTER TABLE public.card_admin_actions
+  DROP CONSTRAINT IF EXISTS card_admin_actions_behavior_category_check;
+ALTER TABLE public.card_admin_actions
+  ADD CONSTRAINT card_admin_actions_behavior_category_check CHECK (
+    behavior_category IN (
+      'POSITIVE_BEHAVIOR', 'RESPONSIBILITY', 'VOLUNTEER',
+      'DISCIPLINE', 'RULE_VIOLATION', 'OTHER'
+    )
+  );
+
 CREATE INDEX IF NOT EXISTS card_admin_actions_student_created_idx
   ON public.card_admin_actions(student_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS card_admin_actions_teacher_created_idx
@@ -51,8 +73,8 @@ BEGIN
   IF length(trim(p_username)) < 4 THEN RAISE EXCEPTION 'INVALID_USERNAME'; END IF;
   IF length(p_password) < 4 THEN RAISE EXCEPTION 'INVALID_PASSWORD'; END IF;
 
-  INSERT INTO public.teachers(name, username, password, role, is_active)
-  VALUES (trim(p_name), lower(trim(p_username)), p_password, 'CARD_TEACHER', true)
+  INSERT INTO public.teachers(id, name, username, password, role, is_active)
+  VALUES (gen_random_uuid(), trim(p_name), lower(trim(p_username)), p_password, 'CARD_TEACHER', true)
   RETURNING * INTO v_teacher;
 
   RETURN jsonb_build_object(

@@ -16,6 +16,18 @@ Current O2O balance specification:
 - Drop weights: N 55, R-cleaning 20, R-meditation 15, SR-defense 5,
   SSR-reflect 4, UR-early-home 1.
 
+Card-only teacher portal:
+
+- Access path: `/card-teacher`
+- Card-teacher management path: `/card-teacher/dashboard`
+- Admin management path: `/admin/cards`
+- Self-registered teachers receive role `CARD_TEACHER`.
+- `CARD_TEACHER` must not be allowed into `/admin` learning analytics.
+- `CARD_TEACHER` session key is `vocab_journey_card_teacher`; it must not reuse the admin
+  session key `vocab_journey_teacher`.
+- Card teachers can award/deduct coins and tickets, confiscate available cards, and record a
+  behavior category plus reason. Every change must remain in `card_admin_actions`.
+
 ## Important ownership boundaries
 
 - Do not create a new `users` table. Student identity remains `public.students`; teacher
@@ -142,6 +154,8 @@ reimplement them as a sequence of client-side updates.
 12. Confirm the student classroom leaderboard shows badges for owned SR, SSR, and UR cards.
 13. Open `/admin/cards`, award and remove tickets, remove an available card, and verify every
     operation appears in `card_admin_actions` with teacher, reason, and before/after balance.
+14. Register a new teacher at `/card-teacher`; verify the role is `CARD_TEACHER`, the account
+    can open `/admin/cards`, and the same credentials are rejected by `/admin`.
 
 ## Coordination warning
 
