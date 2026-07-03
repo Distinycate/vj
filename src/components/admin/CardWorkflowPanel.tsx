@@ -1,16 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { CheckCircle, Clock, Gift, Megaphone, RefreshCw, XCircle } from 'lucide-react';
+import { CheckCircle, Clock, Megaphone, RefreshCw, XCircle } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { announceCardAction, resolveCardAction } from '@/utils/cardBattle';
 
 export default function CardWorkflowPanel({ teacher, classroomId }: { teacher: any; classroomId: string }) {
   const [logs, setLogs] = useState<any[]>([]);
-  const [students, setStudents] = useState<any[]>([]);
-  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [resultText, setResultText] = useState<Record<string, string>>({});
-  const [ticketAmount, setTicketAmount] = useState(1);
   const [message, setMessage] = useState('');
   const [busyId, setBusyId] = useState('');
 
@@ -22,7 +19,6 @@ export default function CardWorkflowPanel({ teacher, classroomId }: { teacher: a
       .eq('classroom_id', classroomId)
       .eq('is_active', true)
       .order('student_name');
-    setStudents(studentData || []);
     const ids = (studentData || []).map((student) => student.id);
     if (ids.length === 0) {
       setLogs([]);
@@ -62,54 +58,9 @@ export default function CardWorkflowPanel({ teacher, classroomId }: { teacher: a
     }
   }
 
-  async function awardTickets() {
-    if (selectedStudents.length === 0) return setMessage('กรุณาเลือกนักเรียนอย่างน้อย 1 คน');
-    const { data, error } = await supabase.rpc('award_free_pull_tickets', {
-      p_teacher_id: teacher.id,
-      p_student_ids: selectedStudents,
-      p_amount: ticketAmount,
-      p_reason: 'รางวัลความดีจากครู',
-    });
-    setMessage(error ? error.message : `มอบตั๋วสำเร็จ ${data} คน`);
-    if (!error) setSelectedStudents([]);
-  }
-
   return (
     <div className="space-y-6">
       {message && <div className="p-3 bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-xl">{message}</div>}
-
-      <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
-        <h2 className="text-xl font-black text-white flex items-center gap-2">
-          <Gift className="text-fuchsia-400" /> แจกตั๋วสุ่มฟรี
-        </h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-4">
-          {students.map((student) => (
-            <label key={student.id} className="flex gap-2 items-center p-3 bg-slate-950 rounded-xl text-sm text-slate-300">
-              <input
-                type="checkbox"
-                checked={selectedStudents.includes(student.id)}
-                onChange={(event) => setSelectedStudents((current) =>
-                  event.target.checked ? [...current, student.id] : current.filter((id) => id !== student.id)
-                )}
-              />
-              {student.student_name}
-            </label>
-          ))}
-        </div>
-        <div className="flex gap-3 mt-4">
-          <input
-            type="number"
-            min={1}
-            max={100}
-            value={ticketAmount}
-            onChange={(event) => setTicketAmount(Number(event.target.value))}
-            className="w-24 bg-slate-950 border border-slate-700 rounded-xl p-3 text-white"
-          />
-          <button onClick={awardTickets} className="px-5 bg-fuchsia-500 hover:bg-fuchsia-400 rounded-xl text-white font-bold">
-            มอบตั๋ว
-          </button>
-        </div>
-      </div>
 
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-black text-white">รายการรอครูดำเนินการ</h2>

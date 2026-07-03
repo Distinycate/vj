@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { 
   Users, AlertTriangle, LogOut, Shield, 
-  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw
+  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home
 } from 'lucide-react';
 import { 
   BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -18,9 +18,8 @@ import SeasonManager from '@/components/admin/SeasonManager';
 import SchoolLevelDashboard from '@/components/admin/SchoolLevelDashboard';
 import ClassLevelAnalytics from '@/components/admin/ClassLevelAnalytics';
 import IndividualStudentProfile from '@/components/admin/IndividualStudentProfile';
-import CardWorkflowPanel from '@/components/admin/CardWorkflowPanel';
 
-type AdminTab = 'school-overview' | 'overview' | 'students' | 'teams' | 'cards' | 'weak-words' | 'risks';
+type AdminTab = 'school-overview' | 'overview' | 'students' | 'teams' | 'weak-words' | 'risks';
 
 export default function AdminPage() {
   const [teacher, setTeacher] = useState<any>(null);
@@ -184,6 +183,9 @@ export default function AdminPage() {
             <button type="submit" disabled={isLoading} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg mt-2">
               {isLoading ? 'กำลังโหลด...' : 'เข้าสู่ระบบ'}
             </button>
+            <button type="button" onClick={() => window.location.href = '/'} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl flex items-center justify-center gap-2">
+              <Home className="w-4 h-4" /> กลับหน้าเข้าใช้งาน
+            </button>
           </form>
         </div>
       </div>
@@ -221,6 +223,12 @@ export default function AdminPage() {
             <button onClick={() => window.location.reload()} className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold">
               <RefreshCw className="w-4 h-4" /> รีเฟรช
             </button>
+            <button onClick={() => window.location.href = '/admin/cards'} className="p-2.5 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/20 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold">
+              <Sparkles className="w-4 h-4" /> จัดการการ์ด
+            </button>
+            <button onClick={() => window.location.href = '/'} className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold">
+              <Home className="w-4 h-4" /> หน้าเข้าใช้งาน
+            </button>
             <button onClick={() => { localStorage.removeItem('vocab_journey_teacher'); window.location.reload(); }} className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
               <LogOut className="w-4 h-4" />
             </button>
@@ -237,7 +245,6 @@ export default function AdminPage() {
             { id: 'overview', icon: <Activity className="w-4 h-4"/>, label: 'ภาพรวมห้องเรียน' },
             { id: 'students', icon: <Users className="w-4 h-4"/>, label: 'นักเรียน' },
             { id: 'teams', icon: <Trophy className="w-4 h-4"/>, label: 'ทีม (Team Battle)' },
-            { id: 'cards', icon: <Sparkles className="w-4 h-4"/>, label: 'อนุมัติการ์ด' },
             { id: 'weak-words', icon: <BookOpen className="w-4 h-4"/>, label: 'คำที่ผิดบ่อย' },
             { id: 'risks', icon: <AlertTriangle className="w-4 h-4"/>, label: 'กลุ่มเสี่ยง' }
           ].map(tab => (
@@ -393,19 +400,13 @@ export default function AdminPage() {
             </motion.div>
           )}
 
-          {activeTab === 'cards' && (
-            <motion.div key="cards" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}}>
-              <CardWorkflowPanel teacher={teacher} classroomId={selectedClassroom} />
-            </motion.div>
-          )}
-          
         </AnimatePresence>
       </div>
 
       {/* STUDENT DETAIL MODAL */}
       <AnimatePresence>
         {selectedStudent && (
-          <IndividualStudentProfile student={selectedStudent} teacher={teacher} onClose={() => setSelectedStudent(null)} />
+          <IndividualStudentProfile student={selectedStudent} onClose={() => setSelectedStudent(null)} />
         )}
       </AnimatePresence>
     </div>

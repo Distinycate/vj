@@ -4,23 +4,19 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import { User, Activity, Clock, FileText, Plus, X, Sparkles, Trash2 } from 'lucide-react';
+import { User, Activity, Clock, FileText, Plus, X } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
-import { removeStudentCard } from '@/utils/cardBattle';
 
 interface IndividualStudentProfileProps {
   student: any;
-  teacher?: any;
   onClose: () => void;
 }
 
-export default function IndividualStudentProfile({ student, teacher, onClose }: IndividualStudentProfileProps) {
+export default function IndividualStudentProfile({ student, onClose }: IndividualStudentProfileProps) {
   const [masteryData, setMasteryData] = useState<any[]>([]);
   const [retentionData, setRetentionData] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
   const [newLog, setNewLog] = useState('');
-  const [inventory, setInventory] = useState<any[]>([]);
-  const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -89,7 +85,7 @@ export default function IndividualStudentProfile({ student, teacher, onClose }: 
       // Calculate Retention Curve based on mastery level distribution
       // Level 1: ~100% on Day 1, drops fast
       // Level 5: ~100% on Day 30
-      let levels = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      const levels = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
       if (userWords) {
         userWords.forEach((w: any) => {
           if (w.mastery_level >= 1 && w.mastery_level <= 5) {
@@ -134,38 +130,11 @@ export default function IndividualStudentProfile({ student, teacher, onClose }: 
       ];
       setLogs(initLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
 
-      // 4. Card Inventory
-      await fetchInventory();
-
       setLoading(false);
     }
 
     fetchRealData();
   }, [student]);
-
-  const fetchInventory = async () => {
-    if (!student?.id) return;
-    const { data: invData } = await supabase
-      .from('card_inventory')
-      .select('id, quantity, reserved_quantity, cards(*)')
-      .eq('student_id', student.id)
-      .gt('quantity', 0);
-    setInventory(invData || []);
-  };
-
-  const handleRemoveCard = async (cardId: string) => {
-    if (!teacher || !student || busy) return;
-    if (!confirm('ยืนยันการริบการ์ดใบนี้?')) return;
-    setBusy(true);
-    try {
-      await removeStudentCard(teacher.id, student.id, cardId, 1);
-      await fetchInventory();
-    } catch (error: any) {
-      alert(error.message || 'เกิดข้อผิดพลาดในการลบการ์ด');
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const addLog = () => {
     if (!newLog.trim()) return;
@@ -315,43 +284,6 @@ export default function IndividualStudentProfile({ student, teacher, onClose }: 
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              {/* Card Inventory Manager */}
-              <div className="bg-slate-950/50 p-6 rounded-2xl border border-slate-800">
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-5 h-5 text-fuchsia-400" />
-                  <h3 className="text-lg font-black text-white">คลังการ์ด (Card Inventory)</h3>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                  {inventory.map((row) => (
-                    <div key={row.id} className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="text-3xl">{row.cards.image_url}</div>
-                        <div>
-                          <div className="font-bold text-white text-sm">{row.cards.name}</div>
-                          <div className="text-xs text-slate-400">มี {row.quantity} ใบ</div>
-                        </div>
-                      </div>
-                      {teacher && (
-                        <button 
-                          onClick={() => handleRemoveCard(row.cards.id)}
-                          disabled={busy}
-                          className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
-                          title="ริบการ์ด"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {inventory.length === 0 && (
-                    <div className="col-span-full text-center text-slate-500 py-4 text-sm">
-                      ไม่มีการ์ดในคลัง
-                    </div>
-                  )}
                 </div>
               </div>
 

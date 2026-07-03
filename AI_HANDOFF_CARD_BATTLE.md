@@ -32,9 +32,12 @@ Current O2O balance specification:
 
 - `MIGRATION_CARD_BATTLE.sql`
 - `MIGRATION_TEAM_BATTLE_FIX.sql`
+- `MIGRATION_CARD_ADMIN_DASHBOARD.sql`
 - `src/utils/cardBattle.ts`
 - `src/components/CardCenterModal.tsx`
 - `src/components/admin/CardWorkflowPanel.tsx`
+- `src/components/admin/CardManagementDashboard.tsx`
+- `src/app/admin/cards/page.tsx`
 - `src/lib/cardBattleContracts.test.ts`
 - `AI_HANDOFF_CARD_BATTLE.md`
 
@@ -114,16 +117,19 @@ reimplement them as a sequence of client-side updates.
 3. Run `MIGRATION_CARD_BATTLE.sql` once in the Supabase SQL editor or migration runner.
    This migration has intentionally not been applied by the current agent; the UI depends on
    it and must not be smoke-tested against production before this step succeeds.
-4. Verify these tables exist: `cards`, `card_inventory`, `card_logs`, `gacha_pulls`,
+4. Run `MIGRATION_CARD_ADMIN_DASHBOARD.sql` to add audited teacher card/ticket management.
+   Do not run `scripts/add_teacher_card_management.sql`; it has no audit trail and can violate
+   reserved-card workflow expectations.
+5. Verify these tables exist: `cards`, `card_inventory`, `card_logs`, `gacha_pulls`,
    `card_notifications`, `season_reward_distributions`.
-5. Verify `learning_paths.free_pull_tickets` exists.
-6. Verify seeded cards total 6 and their total `drop_weight` is 100.
-7. Verify Realtime includes `card_logs` and `card_notifications`.
-8. Run:
+6. Verify `learning_paths.free_pull_tickets` exists.
+7. Verify seeded cards total 6 and their total `drop_weight` is 100.
+8. Verify Realtime includes `card_logs` and `card_notifications`.
+9. Run:
    - `npm run typecheck`
    - `npm test`
    - `npm run build`
-9. Smoke test with two students in the same classroom and one teacher:
+10. Smoke test with two students in the same classroom and one teacher:
    - award ticket,
    - pull card,
    - submit attack,
@@ -131,9 +137,11 @@ reimplement them as a sequence of client-side updates.
    - counter within 60 seconds,
    - resolve,
    - confirm both quantities and reservations.
-10. Create an active school season and confirm stage completion creates score events with that
+11. Create an active school season and confirm stage completion creates score events with that
    season before testing the reward button.
-11. Confirm the student classroom leaderboard shows badges for owned SR, SSR, and UR cards.
+12. Confirm the student classroom leaderboard shows badges for owned SR, SSR, and UR cards.
+13. Open `/admin/cards`, award and remove tickets, remove an available card, and verify every
+    operation appears in `card_admin_actions` with teacher, reason, and before/after balance.
 
 ## Coordination warning
 

@@ -29,6 +29,10 @@ export function getRpcErrorMessage(message?: string) {
     DEFENSE_MUST_TARGET_SELF: 'การ์ดกันแบนใช้เป็นสิทธิ์ของตนเอง หรือใช้ตอนสวนกลับเท่านั้น',
     LOG_ALREADY_FINAL: 'รายการนี้ได้รับการตัดสินแล้ว',
     ACTION_NOT_ANNOUNCED: 'ต้องประกาศรายการก่อนจึงจะอนุมัติผลได้',
+    REASON_REQUIRED: 'กรุณาระบุเหตุผล',
+    INSUFFICIENT_TICKETS: 'ตั๋วของนักเรียนไม่เพียงพอ',
+    INSUFFICIENT_AVAILABLE_CARDS: 'การ์ดพร้อมใช้ไม่เพียงพอ บางใบอาจถูกจองในคำขอ',
+    CARD_NOT_FOUND_IN_INVENTORY: 'ไม่พบการ์ดนี้ในคลังของนักเรียน',
     SEASON_ALREADY_REWARDED: 'ฤดูกาลนี้แจกรางวัลแล้ว',
     NO_ELIGIBLE_TEAM: 'ไม่พบทีมที่เข้าเกณฑ์ในฤดูกาลนี้',
   };
@@ -97,18 +101,36 @@ export async function resolveCardAction(
   return data;
 }
 
+export async function adjustStudentTickets(
+  teacherId: string,
+  studentId: string,
+  amount: number,
+  reason: string,
+) {
+  const { data, error } = await supabase.rpc('teacher_adjust_free_pull_tickets', {
+    p_teacher_id: teacherId,
+    p_student_id: studentId,
+    p_amount: amount,
+    p_reason: reason,
+  });
+  if (error) throw new Error(getRpcErrorMessage(error.message));
+  return data;
+}
+
 export async function removeStudentCard(
   teacherId: string,
   studentId: string,
   cardId: string,
-  amount: number = 1
+  amount = 1,
+  reason = 'ครูริบการ์ดตามระเบียบ',
 ) {
   const { data, error } = await supabase.rpc('teacher_remove_student_card', {
     p_teacher_id: teacherId,
     p_student_id: studentId,
     p_card_id: cardId,
     p_amount: amount,
+    p_reason: reason,
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(getRpcErrorMessage(error.message));
   return data;
 }
