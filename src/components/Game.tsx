@@ -569,7 +569,7 @@ export default function Game() {
                   translate="no"
                   onContextMenu={(e) => e.preventDefault()}
                 >
-                  {currentWord.word.split('').map((char, i) => (
+                  {currentWord.word.split('').map((char: string, i: number) => (
                     <span key={i}>{char}&#8203;</span>
                   ))}
                 </h2>

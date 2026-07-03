@@ -358,7 +358,7 @@ export default function PreTest() {
             translate="no"
             onContextMenu={(e) => e.preventDefault()}
           >
-            {currentQ.word.split('').map((char, i) => (
+            {String(currentQ.word).split('').map((char: string, i: number) => (
               <span key={i}>{char}&#8203;</span>
             ))}
           </h2>

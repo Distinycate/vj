@@ -22,7 +22,7 @@ BEGIN
   UPDATE public.learning_paths
   SET current_stage = 1, current_rank = 1, exp = 0, total_exp = 0,
       coins = 0, free_pull_tickets = 0, paid_gacha_pulls = 0,
-      streak_days = 0, pretest_date = NULL, pretest_score = NULL
+      streak_days = 0
   WHERE student_id = p_student_id;
 
   -- Clear pre_tests for this student
@@ -30,10 +30,10 @@ BEGIN
   UPDATE public.analytics_summary SET pretest_score = 0 WHERE student_id = p_student_id;
 
   -- Clear inventory (cards)
-  DELETE FROM public.inventory WHERE student_id = p_student_id;
-
-  -- Clear purchases
-  DELETE FROM public.student_purchases WHERE student_id = p_student_id;
+  DELETE FROM public.card_inventory WHERE student_id = p_student_id;
+  DELETE FROM public.gacha_pulls WHERE student_id = p_student_id;
+  DELETE FROM public.card_logs WHERE attacker_id = p_student_id OR target_id = p_student_id;
+  DELETE FROM public.card_notifications WHERE student_id = p_student_id;
 END;
 $$;
 
@@ -55,17 +55,18 @@ BEGIN
   UPDATE public.learning_paths
   SET current_stage = 1, current_rank = 1, exp = 0, total_exp = 0,
       coins = 0, free_pull_tickets = 0, paid_gacha_pulls = 0,
-      streak_days = 0, pretest_date = NULL, pretest_score = NULL;
+      streak_days = 0
+  WHERE student_id IS NOT NULL;
 
   -- Clear pre_tests
   TRUNCATE TABLE public.pre_tests CASCADE;
-  UPDATE public.analytics_summary SET pretest_score = 0;
+  UPDATE public.analytics_summary SET pretest_score = 0 WHERE student_id IS NOT NULL;
 
   -- Clear inventory (cards)
-  TRUNCATE TABLE public.inventory CASCADE;
-
-  -- Clear purchases
-  TRUNCATE TABLE public.student_purchases CASCADE;
+  TRUNCATE TABLE public.card_inventory CASCADE;
+  TRUNCATE TABLE public.gacha_pulls CASCADE;
+  TRUNCATE TABLE public.card_logs CASCADE;
+  TRUNCATE TABLE public.card_notifications CASCADE;
 END;
 $$;
 
