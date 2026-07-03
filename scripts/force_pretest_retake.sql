@@ -1,12 +1,12 @@
 -- Script: Force Pretest Retake
--- Sets pretest_date and pretest_score to NULL for all students.
--- This forces everyone to retake the 100-question pretest upon next login.
+-- Deletes all records from pre_tests.
+-- This forces everyone to retake the pretest upon next login because their pretest count will be 0.
 
 BEGIN;
 
-UPDATE public.learning_paths
-SET 
-    pretest_date = NULL,
-    pretest_score = NULL;
+TRUNCATE TABLE public.pre_tests CASCADE;
+
+-- Also reset any summary metrics if needed
+UPDATE public.analytics_summary SET pretest_score = 0 WHERE pretest_score IS NOT NULL;
 
 COMMIT;
