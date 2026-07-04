@@ -30,7 +30,7 @@ export default function ChristmasReview() {
       const { data: mastery } = await supabase.from('event_vocab_mastery')
         .select('wrong_count, vocabulary_id')
         .eq('event_id', event.id)
-        .eq('user_id', session.id)
+        .eq('user_id', session!.id)
         .gt('wrong_count', 0)
         .order('wrong_count', { ascending: false });
 
