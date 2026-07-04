@@ -20,11 +20,11 @@ export default function StudyCamp() {
     }
   }, [currentIndex, words.length, setStudiedCurrentStage]);
 
+  const stage = progress?.current_stage || 1;
+  const isBoss = stage % 10 === 0;
+
   useEffect(() => {
     async function fetchWords() {
-      const stage = progress?.current_stage || 1;
-      const isBoss = stage % 10 === 0;
-
       let wordsQuery = supabase.from('vocabulary').select('*').eq('is_active', true);
 
       if (isBoss) {
@@ -160,12 +160,25 @@ export default function StudyCamp() {
           </div>
           <p className="text-slate-500 text-sm mt-0.5">คำศัพท์ลำดับที่ {currentIndex + 1} / {words.length}</p>
         </div>
-        <button 
-          onClick={() => setScreen('dashboard')} 
-          className="px-4 py-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-white rounded-xl flex items-center gap-1.5 transition-all text-xs font-bold"
-        >
-          <X className="w-4 h-4 text-rose-400" /> ปิดค่าย
-        </button>
+        <div className="flex gap-2">
+          {isBoss && (
+            <button 
+              onClick={() => {
+                setStudiedCurrentStage(true);
+                setScreen('game');
+              }} 
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl flex items-center gap-1.5 transition-all text-xs font-bold"
+            >
+              ข้ามไปลุยบอส ➡️
+            </button>
+          )}
+          <button 
+            onClick={() => setScreen('dashboard')} 
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-white rounded-xl flex items-center gap-1.5 transition-all text-xs font-bold"
+          >
+            <X className="w-4 h-4 text-rose-400" /> ปิดค่าย
+          </button>
+        </div>
       </div>
 
       {/* Progress bar */}
