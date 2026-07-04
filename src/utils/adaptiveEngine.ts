@@ -98,18 +98,49 @@ export async function generateStageQuestions(studentId: string, stageNumber: num
     const hardCount = Math.round(targetCount * (difficultyMix.hard / 100));
     const expertCount = Math.round(targetCount * (difficultyMix.expert / 100));
 
-    // Sample from categories
     let selectedWords: any[] = [];
-    selectedWords.push(...sample(easyPool, easyCount));
-    selectedWords.push(...sample(normalPool, normalCount));
-    selectedWords.push(...sample(hardPool, hardCount));
-    selectedWords.push(...sample(expertPool, expertCount));
 
-    // Fill in from general pool if selected words count is less than target (due to rounding or empty pools)
-    if (selectedWords.length < targetCount) {
-      const remainingCount = targetCount - selectedWords.length;
-      const unselected = stageWords.filter(sw => !selectedWords.some(w => w.id === sw.id));
-      selectedWords.push(...sample(unselected, remainingCount));
+    if (isBoss) {
+      // Boss Stage: Guarantee coverage across all stages in the world
+      const world = getWorldForStage(stageNumber);
+      const stagesInWorld = world.stageRange[1] - world.stageRange[0] + 1;
+      
+      // Calculate how many words we can safely take from each stage as a baseline
+      const basePerStage = Math.max(1, Math.floor(targetCount / stagesInWorld));
+      
+      // Group words by stage_number
+      const wordsByStage: Record<number, any[]> = {};
+      stageWords.forEach(w => {
+         if (!wordsByStage[w.stage_number]) wordsByStage[w.stage_number] = [];
+         wordsByStage[w.stage_number].push(w);
+      });
+      
+      // 1. Pick base coverage from each stage to test overall knowledge
+      for (let s = world.stageRange[0]; s <= world.stageRange[1]; s++) {
+         if (wordsByStage[s] && wordsByStage[s].length > 0) {
+            selectedWords.push(...sample(wordsByStage[s], basePerStage));
+         }
+      }
+      
+      // 2. Fill the rest to meet targetCount using random sample from remaining words
+      if (selectedWords.length < targetCount) {
+         const remainingCount = targetCount - selectedWords.length;
+         const unselected = stageWords.filter(sw => !selectedWords.some(w => w.id === sw.id));
+         selectedWords.push(...sample(unselected, remainingCount));
+      }
+    } else {
+      // Normal Stage: Sample from categories based on difficulty mix
+      selectedWords.push(...sample(easyPool, easyCount));
+      selectedWords.push(...sample(normalPool, normalCount));
+      selectedWords.push(...sample(hardPool, hardCount));
+      selectedWords.push(...sample(expertPool, expertCount));
+
+      // Fill in from general pool if selected words count is less than target (due to rounding or empty pools)
+      if (selectedWords.length < targetCount) {
+        const remainingCount = targetCount - selectedWords.length;
+        const unselected = stageWords.filter(sw => !selectedWords.some(w => w.id === sw.id));
+        selectedWords.push(...sample(unselected, remainingCount));
+      }
     }
 
     // Mix in the Spaced Repetition wrong words (replacing general words, prioritizing them)
