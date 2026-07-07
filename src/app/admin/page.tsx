@@ -122,6 +122,34 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteStudent = async (studentId: string, studentName: string) => {
+    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลของนักเรียน: ${studentName}? การกระทำนี้ไม่สามารถย้อนกลับได้`)) {
+      return;
+    }
+    try {
+      const { error } = await supabase.from('students').delete().eq('id', studentId);
+      if (error) throw error;
+      setStudentsList(prev => prev.filter(s => s.id !== studentId));
+      alert(`ลบข้อมูลนักเรียน ${studentName} เรียบร้อยแล้ว`);
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการลบข้อมูล');
+    }
+  };
+
+  const handleVerifyStudent = async (studentId: string, studentName: string) => {
+    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการยืนยันตัวตนให้นักเรียน: ${studentName}?`)) {
+      return;
+    }
+    try {
+      const { error } = await supabase.from('students').update({ is_verified: true }).eq('id', studentId);
+      if (error) throw error;
+      setStudentsList(prev => prev.map(s => s.id === studentId ? { ...s, is_verified: true } : s));
+      alert(`ยืนยันตัวตนนักเรียน ${studentName} เรียบร้อยแล้ว`);
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการยืนยันตัวตน');
+    }
+  };
+
 
   useEffect(() => {
     if (!teacher) return;
@@ -494,9 +522,17 @@ export default function AdminPage() {
                             'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
                           }`}>{s.riskLevel}</span>
                         </td>
-                        <td className="p-4 text-right">
+                        <td className="p-4 text-right flex justify-end gap-2">
                           <button onClick={() => setSelectedStudent(s)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all shadow-md">
                             ดูข้อมูล
+                          </button>
+                          {!s.is_verified && (
+                            <button onClick={() => handleVerifyStudent(s.id, s.student_name)} className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all shadow-md">
+                              ยืนยัน
+                            </button>
+                          )}
+                          <button onClick={() => handleDeleteStudent(s.id, s.student_name)} className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all shadow-md">
+                            ลบ
                           </button>
                         </td>
                       </tr>
@@ -610,9 +646,17 @@ export default function AdminPage() {
                             <td className="p-4 text-center">
                               {s.daysInactive >= 999 ? 'ยังไม่เคยเข้าใช้งาน' : `${s.daysInactive} วัน`}
                             </td>
-                            <td className="p-4 text-right">
+                            <td className="p-4 text-right flex justify-end gap-2">
                               <button onClick={() => setSelectedStudent(s)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all shadow-md">
                                 ดูข้อมูล
+                              </button>
+                              {!s.is_verified && (
+                                <button onClick={() => handleVerifyStudent(s.id, s.student_name)} className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all shadow-md">
+                                  ยืนยัน
+                                </button>
+                              )}
+                              <button onClick={() => handleDeleteStudent(s.id, s.student_name)} className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all shadow-md">
+                                ลบ
                               </button>
                             </td>
                           </tr>
