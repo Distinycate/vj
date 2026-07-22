@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { 
   Users, AlertTriangle, LogOut, Shield, CheckCircle2,
-  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings, Gift
+  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings, Gift, Star
 } from 'lucide-react';
 import { 
   BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -39,6 +39,8 @@ export default function AdminPage() {
   const [vocabList, setVocabList] = useState<any[]>([]);
   const [itemAnalysis, setItemAnalysis] = useState<any[]>([]);
   const [wrongWords, setWrongWords] = useState<any[]>([]);
+  const [totalStars, setTotalStars] = useState(0);
+  const [totalThefts, setTotalThefts] = useState(0);
   
   // Student Detail Modal
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
@@ -196,8 +198,20 @@ export default function AdminPage() {
       if (studentIds.length > 0) {
         const { data: wData } = await supabase.from('wrong_words').select('*, vocabulary(*)').in('student_id', studentIds);
         if (wData) setWrongWords(wData);
+        
+        const { data: sData } = await supabase.from('stage_results').select('stars').in('user_id', studentIds);
+        if (sData) {
+           setTotalStars(sData.reduce((acc, curr) => acc + (curr.stars || 0), 0));
+        }
+
+        const { data: tData } = await supabase.from('card_transactions').select('id').in('actor_user_id', studentIds).in('action_type', ['random_card_stolen', 'selected_card_stolen']);
+        if (tData) {
+           setTotalThefts(tData.length);
+        }
       } else {
         setWrongWords([]);
+        setTotalStars(0);
+        setTotalThefts(0);
       }
     }
     loadClassroomData();
@@ -407,8 +421,8 @@ export default function AdminPage() {
           {activeTab === 'overview' && classroomMetrics && (
             <motion.div key="overview" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
               
-              {/* 6 KPI Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {/* 8 KPI Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
                 <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
                   <Users className="w-5 h-5 text-indigo-400 mb-2" />
                   <span className="text-xs text-slate-400 font-bold">นักเรียนทั้งหมด</span>
@@ -438,6 +452,16 @@ export default function AdminPage() {
                   <BrainCircuit className="w-5 h-5 text-fuchsia-400 mb-2" />
                   <span className="text-xs text-slate-400 font-bold">จุดอ่อนห้อง</span>
                   <span className="text-sm font-black text-fuchsia-400 uppercase">{classroomMetrics.weakestSkill}</span>
+                </div>
+                <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                  <Star className="w-5 h-5 text-yellow-400 mb-2" />
+                  <span className="text-xs text-slate-400 font-bold">ดาวสะสมรวม</span>
+                  <span className="text-xl font-black text-yellow-400">{totalStars}</span>
+                </div>
+                <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                  <Shield className="w-5 h-5 text-blue-400 mb-2" />
+                  <span className="text-xs text-slate-400 font-bold">กิจกรรมขโมย</span>
+                  <span className="text-xl font-black text-blue-400">{totalThefts} ครั้ง</span>
                 </div>
               </div>
 

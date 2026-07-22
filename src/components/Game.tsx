@@ -15,7 +15,7 @@ import { useAntiCheat } from '@/hooks/useAntiCheat';
 type GameStep = 'play' | 'reflection' | 'results';
 
 export default function Game() {
-  const { setScreen, progress, student, setProgress } = useAppStore();
+  const { setScreen, progress, student, setProgress, missionLevel } = useAppStore();
   const [words, setWords] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -103,7 +103,7 @@ export default function Game() {
       setTimeLeft(diffConfig.timeLimit || 15);
 
       // 3. Generate adaptive questions
-      const generatedQuestions = await generateStageQuestions(student.id, stageNum);
+      const generatedQuestions = await generateStageQuestions(student.id, stageNum, missionLevel);
       
       if (generatedQuestions && generatedQuestions.length > 0) {
         setWords(generatedQuestions);
@@ -300,7 +300,7 @@ export default function Game() {
         totalQuestions: words.length,
         usedHints: usedHintsCount,
         assistedWords: [...new Set(assistedWords)]
-      });
+      }, missionLevel);
 
       setPassReport(completeReport);
 

@@ -18,6 +18,7 @@ import StudentHero from '@/components/StudentHero';
 import StudentTeamCard from '@/components/StudentTeamCard';
 import TeamLeaderboard from '@/components/TeamLeaderboard';
 import CardCenterModal from '@/components/CardCenterModal';
+import MissionSelectionModal from '@/components/MissionSelectionModal';
 
 const CARD_RARITY_RANK: Record<string, number> = { N: 0, R: 1, SR: 2, SSR: 3, UR: 4 };
 
@@ -34,7 +35,7 @@ function getRareCardStatus(inventory: any) {
 }
 
 export default function Dashboard() {
-  const { student, progress, logout, setScreen, setProgress, hasStudiedCurrentStage, setStudiedCurrentStage } = useAppStore();
+  const { student, progress, logout, setScreen, setProgress, hasStudiedCurrentStage, setStudiedCurrentStage, setMissionLevel } = useAppStore();
   const [reviewWords, setReviewWords] = useState<any[]>([]);
   const [wordCollection, setWordCollection] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({ xp: 0, level: 1 });
@@ -47,6 +48,7 @@ export default function Dashboard() {
   const [myTeams, setMyTeams] = useState<any[]>([]);
   const [teamScores, setTeamScores] = useState<Record<string, any>>({});
   const [teamError, setTeamError] = useState('');
+  const [isMissionModalOpen, setIsMissionModalOpen] = useState(false);
 
   // Classroom stats calculations
   const [classroomStats, setClassroomStats] = useState({
@@ -241,6 +243,22 @@ export default function Dashboard() {
       {/* Ambient backgrounds */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
+
+      {showCardCenter && (
+        <CardCenterModal
+          onClose={() => setShowCardCenter(false)}
+        />
+      )}
+
+      <MissionSelectionModal 
+        isOpen={isMissionModalOpen} 
+        onClose={() => setIsMissionModalOpen(false)} 
+        onSelect={(level) => {
+          setMissionLevel(level);
+          setIsMissionModalOpen(false);
+          setScreen('game');
+        }} 
+      />
 
       <div className="max-w-4xl mx-auto relative z-10">
         <StudentHero 
@@ -498,7 +516,7 @@ export default function Dashboard() {
                     <BookOpen className="w-4 h-4 text-emerald-400" /> ท่องศัพท์ด่านนี้
                   </button>
                   <button 
-                    onClick={() => setScreen('game')} 
+                    onClick={() => setIsMissionModalOpen(true)} 
                     disabled={!hasStudiedCurrentStage}
                     className={`w-full sm:w-auto px-8 py-4 font-black rounded-2xl flex items-center justify-center gap-2 transition-all text-sm ${
                       hasStudiedCurrentStage 

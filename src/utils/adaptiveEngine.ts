@@ -31,11 +31,20 @@ export async function getAdaptiveDifficulty(studentId: string, stageNumber: numb
 }
 
 // 2. GENERATE STAGE QUESTIONS (ADAPTIVE QUESTION GENERATION ENGINE)
-export async function generateStageQuestions(studentId: string, stageNumber: number): Promise<any[]> {
+export async function generateStageQuestions(studentId: string, stageNumber: number, missionLevel: number = 1): Promise<any[]> {
   try {
     // 1. Fetch current rank configuration
     const diffInfo = await getAdaptiveDifficulty(studentId, stageNumber);
-    const { rank, difficultyMix, questionTypes, questionCount } = diffInfo;
+    let { rank, difficultyMix, questionTypes, questionCount } = diffInfo;
+    
+    // Override questionTypes based on missionLevel (Stars)
+    if (missionLevel === 1) {
+       questionTypes = ['meaning_mc', 'word_mc', 'context_mc'];
+    } else if (missionLevel === 2) {
+       questionTypes = ['listening_mc', 'meaning_mc', 'word_mc'];
+    } else if (missionLevel === 3) {
+       questionTypes = ['spelling', 'context_mc'];
+    }
     const isBoss = stageNumber % 10 === 0;
     const targetCount = isBoss ? Math.round(questionCount * 1.5) : questionCount;
 
@@ -437,7 +446,7 @@ function calculateStreak(lastActiveDate: string | null, currentStreak: number): 
   return 1;
 }
 
-export async function completeStage(studentId: string, stageNumber: number, result: CompleteStageResult) {
+export async function completeStage(studentId: string, stageNumber: number, result: CompleteStageResult, missionLevel: number = 1) {
   try {
     const {
       score,
@@ -468,7 +477,8 @@ export async function completeStage(studentId: string, stageNumber: number, resu
       accuracy,
       response_time_avg: responseTimeAvg,
       passed,
-      used_hints: usedHints
+      used_hints: usedHints,
+      stars: passed ? missionLevel : 0
     }]);
 
     const { data: stageData } = await supabase
@@ -573,10 +583,28 @@ export async function completeStage(studentId: string, stageNumber: number, resu
       if (usedHints === 0) { earnedCoins *= 1.2; earnedExp *= 1.2; }
       if (accuracy === 100) { earnedCoins *= 1.3; earnedExp *= 1.3; }
 
-      // Apply 10% Replay Penalty
-      if (isReplay) {
-        earnedCoins *= 0.1;
-      }
+      // Fetch previous max stars for this stage
+      const { data: previousStages } = await supabase
+        .from('stage_results')
+        .select('stars')
+        .eq('user_id', studentId)
+        .eq('stage_number', stageNumber);
+      
+      const previousMaxStars = previousStages 
+        ? Math.max(0, ...previousStages.map(s => s.stars || 0))
+        : 0;
+
+      const currentStars = missionLevel;
+
+      // Calculate star-based rewards
+      let starMultiplier = 1;
+      if (currentStars === 1 && previousMaxStars === 0) starMultiplier = 1.0;
+      else if (currentStars === 2 && previousMaxStars < 2) starMultiplier = 0.3;
+      else if (currentStars === 3 && previousMaxStars < 3) starMultiplier = 0.5;
+      else if (isReplay) starMultiplier = 0.1; // Replay without star upgrade
+
+      earnedCoins *= starMultiplier;
+      earnedExp *= starMultiplier;
 
       earnedCoins = Math.round(earnedCoins);
       earnedExp = Math.round(earnedExp);
@@ -676,7 +704,7 @@ export async function completeStage(studentId: string, stageNumber: number, resu
         }
 
         // Rank Update
-        await updateAdaptiveRank(studentId);
+        await recalculateStudentRank(studentId);
 
         // Team Score Event Logging
         if (passed) {
@@ -704,65 +732,90 @@ export async function completeStage(studentId: string, stageNumber: number, resu
 }
 
 // 4. ADAPTIVE RANK UPDATER (ANALYZE PROGRESS AND SCALE SKILL LEVEL)
-export async function updateAdaptiveRank(studentId: string) {
+export async function recalculateStudentRank(studentId: string) {
   try {
-    // 1. Fetch 3 most recent stage results
-    const { data: recentResults, error } = await supabase
-      .from('stage_results')
-      .select('accuracy, passed, response_time_avg')
-      .eq('user_id', studentId)
-      .order('created_at', { ascending: false })
-      .limit(3);
-
-    if (error || !recentResults || recentResults.length < 3) {
-      // Need at least 3 records to auto-tune rank
-      return;
-    }
-
-    // 2. Fetch current learning path rank
-    const { data: pathData } = await supabase
-      .from('learning_paths')
-      .select('current_rank')
-      .eq('student_id', studentId)
-      .single();
-
+    // 1. Fetch data for calculations
+    const { data: pathData } = await supabase.from('learning_paths').select('current_stage, streak_days, current_rank, rank_score').eq('student_id', studentId).single();
     if (!pathData) return;
     const currentRank = pathData.current_rank || 1;
+    const currentScore = pathData.rank_score || 0;
 
-    // 3. Evaluate Rank changes
-    const passedCount = recentResults.filter(r => r.passed).length;
-    const avgAccuracy = recentResults.reduce((sum, r) => sum + r.accuracy, 0) / 3;
+    // Stage Progress (35%)
+    const highestCompletedStage = (pathData.current_stage || 1) - 1;
+    const progressScore = Math.min(100, (highestCompletedStage / 100) * 100);
 
+    // Accuracy (30%) - last 10 stages
+    const { data: recentResults } = await supabase.from('stage_results').select('accuracy').eq('user_id', studentId).order('created_at', { ascending: false }).limit(10);
+    let recentAccuracy = 0;
+    if (recentResults && recentResults.length > 0) {
+      recentAccuracy = recentResults.reduce((sum, r) => sum + r.accuracy, 0) / recentResults.length;
+    }
+
+    // Stage Stars (20%)
+    const { data: allStages } = await supabase.from('stage_results').select('stage_number, stars').eq('user_id', studentId);
+    let totalStars = 0;
+    if (allStages) {
+      const maxStarsPerStage = new Map<number, number>();
+      allStages.forEach(s => {
+        const existing = maxStarsPerStage.get(s.stage_number) || 0;
+        if ((s.stars || 0) > existing) maxStarsPerStage.set(s.stage_number, s.stars);
+      });
+      maxStarsPerStage.forEach(stars => { totalStars += stars; });
+    }
+    const starScore = Math.min(100, (totalStars / 300) * 100);
+
+    // Boss Performance (10%)
+    // Check if stage 10, 20, etc. were passed
+    const { data: bossResults } = await supabase.from('stage_results').select('passed').eq('user_id', studentId).eq('passed', true).in('stage_number', [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]).limit(1);
+    let bossScore = 0;
+    if (bossResults && bossResults.length > 0) {
+      bossScore = 100;
+    }
+
+    // Consistency (5%)
+    const consistencyScore = Math.min(100, (pathData.streak_days || 0) * 10);
+
+    // Calculate Total Rank Score
+    const rankScore = Number(((progressScore * 0.35) + (recentAccuracy * 0.30) + (starScore * 0.20) + (bossScore * 0.10) + (consistencyScore * 0.05)).toFixed(2));
+
+    // Rank Bands: Rank 1: 0-39, Rank 2: 40-54, Rank 3: 55-69, Rank 4: 70-84, Rank 5: 85-100
+    // Hysteresis: +2 to rank up, -3 to rank down
     let newRank = currentRank;
     let reason = '';
+    
+    // Thresholds
+    const thresholds = { 1: 0, 2: 40, 3: 55, 4: 70, 5: 85 };
+    const nextRankThreshold = thresholds[(currentRank + 1) as keyof typeof thresholds] || 101;
+    const currentRankThreshold = thresholds[currentRank as keyof typeof thresholds];
 
-    // Up-rank Condition: Pass 3/3 latest, average accuracy >= 80%
-    if (passedCount === 3 && avgAccuracy >= 80 && currentRank < 5) {
+    if (currentRank < 5 && rankScore >= nextRankThreshold + 2) {
       newRank = currentRank + 1;
-      reason = `ทำคะแนนดีต่อเนื่อง ความถูกต้องเฉลี่ย ${avgAccuracy.toFixed(1)}% (ผ่าน 3 ด่านติด)`;
-    }
-    // Down-rank Condition: Failed at least 2/3 times, or average accuracy < 50%
-    else if ((passedCount <= 1 || avgAccuracy < 50) && currentRank > 1) {
+      reason = `Rank Score เพิ่มเป็น ${rankScore} ทะลุเกณฑ์ Rank ${newRank}`;
+    } else if (currentRank > 1 && rankScore <= currentRankThreshold - 3) {
       newRank = currentRank - 1;
-      reason = `ความแม่นยำลดลงเหลือ ${avgAccuracy.toFixed(1)}% (ไม่ผ่าน 2 ใน 3 ด่านล่าสุด)`;
+      reason = `Rank Score ลดเหลือ ${rankScore} ต่ำกว่าเกณฑ์ Rank ${currentRank}`;
+    } else if (Math.abs(rankScore - currentScore) >= 1) {
+       reason = `Rank Score เปลี่ยนเป็น ${rankScore}`;
     }
 
-    // 4. Save and audit rank history
-    if (newRank !== currentRank) {
+    if (newRank !== currentRank || Math.abs(rankScore - currentScore) >= 0.5) {
       await supabase.from('learning_paths').update({
-        current_rank: newRank
+        current_rank: newRank,
+        rank_score: rankScore,
+        rank_updated_at: new Date().toISOString()
       }).eq('student_id', studentId);
 
-      await supabase.from('rank_history').insert([{
-        user_id: studentId,
-        old_rank: currentRank,
-        new_rank: newRank,
-        reason
-      }]);
-
-      console.log(`Rank Updated automatically for ${studentId}: Rank ${currentRank} -> Rank ${newRank}. Reason: ${reason}`);
+      if (newRank !== currentRank) {
+        await supabase.from('rank_history').insert([{
+          user_id: studentId,
+          old_rank: currentRank,
+          new_rank: newRank,
+          rank_score: rankScore,
+          reason
+        }]);
+      }
     }
   } catch (err) {
-    console.error("Error updating adaptive rank:", err);
+    console.error("Error recalculating rank:", err);
   }
 }
