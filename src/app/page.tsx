@@ -75,8 +75,8 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (!loginUsername.trim() || !loginPassword.trim()) return setError('กรุณากรอก Username และ Password');
     setIsLoading(true);
     setError('');
@@ -153,8 +153,8 @@ export default function Home() {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRegister = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (!isRegistrationOpen) return setError('ระบบปิดรับลงทะเบียนชั่วคราว กรุณาติดต่อคุณครู');
     if (!regFirstName || !regLastName || !regGrade || !regRoom || !regUsername || !regPassword) {
       return setError('กรุณากรอกข้อมูลให้ครบถ้วน');
@@ -378,7 +378,7 @@ export default function Home() {
         )}
 
         {mode === 'login' ? (
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4" onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(e); }}>
             <div>
               <label className="text-slate-300 text-sm font-bold block mb-1.5">Username</label>
               <input type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors glass-input" placeholder="กรอกชื่อผู้ใช้งาน" />
@@ -387,20 +387,20 @@ export default function Home() {
               <label className="text-slate-300 text-sm font-bold block mb-1.5">Password</label>
               <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-all transform active:scale-95" placeholder="กรอกรหัสผ่าน" />
             </div>
-            <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg mt-4 disabled:opacity-50 transition-all transform active:scale-95">
+            <button type="button" onClick={handleLogin} disabled={isLoading} className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg mt-4 disabled:opacity-50 transition-all transform active:scale-95">
               {isLoading ? 'กำลังโหลด...' : 
                loginRole === 'student' ? 'เข้าสู่ระบบผจญภัย 🚀' : 
                loginRole === 'teacher' ? 'เข้าสู่ระบบจัดการเรียนรู้ 👨‍🏫' : 
                'เข้าสู่ระบบรายงานผู้บริหาร 📊'}
             </button>
-          </form>
+          </div>
         ) : mode === 'register' && !isRegistrationOpen ? (
           <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-6 rounded-2xl text-center mb-4">
             <h3 className="font-bold text-lg mb-2">ปิดรับลงทะเบียน</h3>
             <p className="text-sm">ระบบถูกปิดรับการลงทะเบียนชั่วคราว<br/>กรุณาติดต่อคุณครูผู้สอนครับ</p>
           </div>
         ) : mode === 'register' ? (
-          <form onSubmit={handleRegister} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4" onKeyDown={(e) => { if (e.key === 'Enter') handleRegister(e); }}>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">ชื่อจริง</label>
@@ -450,10 +450,10 @@ export default function Home() {
               <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="รหัสผ่านเข้าสู่ระบบ" />
             </div>
  
-            <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg mt-4 disabled:opacity-50 transition-all transform active:scale-95">
+            <button type="button" onClick={handleRegister} disabled={isLoading} className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg mt-4 disabled:opacity-50 transition-all transform active:scale-95">
               {isLoading ? 'กำลังโหลด...' : 'ลงทะเบียนและเริ่มผจญภัย 🎉'}
             </button>
-          </form>
+          </div>
         ) : null}
         <button
           type="button"
