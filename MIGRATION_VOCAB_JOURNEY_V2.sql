@@ -85,6 +85,11 @@ ADD COLUMN IF NOT EXISTS rank_updated_at timestamp with time zone DEFAULT timezo
 ALTER TABLE public.stage_results
 ADD COLUMN IF NOT EXISTS stars integer DEFAULT 0 CHECK (stars BETWEEN 0 AND 3);
 
+-- Update existing records to 1 star for legacy passed stages (assuming score >= 75 is a pass)
+UPDATE public.stage_results 
+SET stars = 1 
+WHERE stars = 0 AND score >= 75;
+
 ALTER TABLE public.rank_history
 ADD COLUMN IF NOT EXISTS rank_score numeric(5,2) DEFAULT 0.00;
 
