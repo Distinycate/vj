@@ -49,6 +49,7 @@ export default function Dashboard() {
   const [teamScores, setTeamScores] = useState<Record<string, any>>({});
   const [teamError, setTeamError] = useState('');
   const [isMissionModalOpen, setIsMissionModalOpen] = useState(false);
+  const [stageStars, setStageStars] = useState<Record<number, number>>({});
 
   // Classroom stats calculations
   const [classroomStats, setClassroomStats] = useState({
@@ -475,7 +476,19 @@ export default function Dashboard() {
                                       {stageNum}
                                     </span>
                                     <div>
-                                      <span className="text-xs block font-bold text-white">ด่านที่ {stageNum}</span>
+                                      <span className="text-xs font-bold text-white flex flex-col sm:flex-row sm:items-center gap-1">
+                                        ด่านที่ {stageNum}
+                                        {stageState === 'completed' && (
+                                          <span className="flex">
+                                            {Array.from({ length: 3 }).map((_, i) => (
+                                              <Star 
+                                                key={i} 
+                                                className={`w-3 h-3 ${i < (stageStars[stageNum] || 1) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-600'}`} 
+                                              />
+                                            ))}
+                                          </span>
+                                        )}
+                                      </span>
                                       <span className="text-[10px] text-slate-500 tracking-wider">
                                         {isBossStage ? '👹 ด่านบอสข้ามโลก' : '🧭 โจทย์ระดับปกติ'}
                                       </span>
