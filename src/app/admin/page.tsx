@@ -19,6 +19,8 @@ import SchoolLevelDashboard from '@/components/admin/SchoolLevelDashboard';
 import ClassLevelAnalytics from '@/components/admin/ClassLevelAnalytics';
 import IndividualStudentProfile from '@/components/admin/IndividualStudentProfile';
 import EventAnalyticsTab from '@/components/admin/EventAnalyticsTab';
+import SettingsTab from '@/components/admin/SettingsTab';
+import EditStudentModal from '@/components/admin/EditStudentModal';
 
 type AdminTab = 'school-overview' | 'overview' | 'students' | 'teams' | 'weak-words' | 'risks' | 'events' | 'settings';
 
@@ -44,6 +46,7 @@ export default function AdminPage() {
   
   // Student Detail Modal
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [editingStudent, setEditingStudent] = useState<any>(null);
   const [studentTab, setStudentTab] = useState<'overview' | 'skills' | 'wrong-words'>('overview');
   const [isPurging, setIsPurging] = useState(false);
 
@@ -217,6 +220,15 @@ export default function AdminPage() {
     loadClassroomData();
   }, [teacher, selectedClassroom]);
 
+  const groupedClassrooms = useMemo(() => {
+    return classrooms.reduce((acc, c) => {
+      const grade = c.grade_level || (c.class_name.includes('/') ? c.class_name.split('/')[0] : 'อื่นๆ');
+      if (!acc[grade]) acc[grade] = [];
+      acc[grade].push(c);
+      return acc;
+    }, {} as Record<string, any[]>);
+  }, [classrooms]);
+
   const classroomMetrics = useMemo(() => {
     if (studentsList.length === 0) return null;
     
@@ -354,8 +366,12 @@ export default function AdminPage() {
                 onChange={(e) => setSelectedClassroom(e.target.value)}
                 className="bg-transparent text-white text-sm font-bold p-2 focus:outline-none cursor-pointer"
               >
-                {classrooms.map(c => (
-                  <option key={c.id} value={c.id} className="bg-slate-900">{c.class_name}</option>
+                {Object.entries(groupedClassrooms).map(([grade, rooms]) => (
+                  <optgroup key={grade} label={grade} className="bg-slate-900 text-indigo-400 font-bold">
+                    {(rooms as any[]).map((c: any) => (
+                      <option key={c.id} value={c.id} className="text-white font-normal">{c.class_name}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
@@ -547,6 +563,9 @@ export default function AdminPage() {
                           }`}>{s.riskLevel}</span>
                         </td>
                         <td className="p-4 text-right flex justify-end gap-2">
+                          <button onClick={() => setEditingStudent(s)} className="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all shadow-md">
+                            แก้ไข
+                          </button>
                           <button onClick={() => setSelectedStudent(s)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all shadow-md">
                             ดูข้อมูล
                           </button>
@@ -762,6 +781,13 @@ export default function AdminPage() {
               </div>
             </motion.div>
           )}
+          {/* TAB: SETTINGS */}
+          {activeTab === 'settings' && (
+            <motion.div key="settings" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
+              <SettingsTab teacher={teacher} />
+            </motion.div>
+          )}
+
         </AnimatePresence>
       </div>
 
@@ -769,6 +795,16 @@ export default function AdminPage() {
       <AnimatePresence>
         {selectedStudent && (
           <IndividualStudentProfile student={selectedStudent} onClose={() => setSelectedStudent(null)} />
+        )}
+        {editingStudent && (
+          <EditStudentModal
+            student={editingStudent}
+            onClose={() => setEditingStudent(null)}
+            onSave={(updatedStudent) => {
+              setStudentsList(prev => prev.map(s => s.id === updatedStudent.id ? { ...s, ...updatedStudent } : s));
+              setEditingStudent(null);
+            }}
+          />
         )}
       </AnimatePresence>
     </div>

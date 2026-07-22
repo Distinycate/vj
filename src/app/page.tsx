@@ -51,12 +51,26 @@ export default function Home() {
   const [loginPassword, setLoginPassword] = useState('');
   
   // Register State
-  const [regStudentId, setRegStudentId] = useState(''); // This will store เลขที่ (Seat Number)
-  const [regName, setRegName] = useState('');
+  const [regFirstName, setRegFirstName] = useState('');
+  const [regLastName, setRegLastName] = useState('');
   const [regGrade, setRegGrade] = useState('ม.1');
-  const [regYear, setRegYear] = useState('2569'); // Default academic year to 2569
+  const [regRoom, setRegRoom] = useState('1');
+  const [regStudentId, setRegStudentId] = useState('');
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [regYear, setRegYear] = useState(new Date().getFullYear().toString());
+
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
+
+  useEffect(() => {
+    async function checkRegistration() {
+      const { data } = await supabase.from('schools').select('is_registration_open').limit(1).single();
+      if (data && data.is_registration_open !== null) {
+        setIsRegistrationOpen(data.is_registration_open);
+      }
+    }
+    checkRegistration();
+  }, []);
   const [loginRole, setLoginRole] = useState<'student' | 'teacher' | 'executive'>('student');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -141,11 +155,14 @@ export default function Home() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regName || !regGrade || !regUsername || !regPassword) {
+    if (!isRegistrationOpen) return setError('ระบบปิดรับลงทะเบียนชั่วคราว กรุณาติดต่อคุณครู');
+    if (!regFirstName || !regLastName || !regGrade || !regRoom || !regUsername || !regPassword) {
       return setError('กรุณากรอกข้อมูลให้ครบถ้วน');
     }
     setIsLoading(true);
     setError('');
+    
+    const fullName = `${regFirstName.trim()} ${regLastName.trim()}`;
 
     try {
       // 0. Check for duplicate username first to give a friendly error
@@ -160,7 +177,9 @@ export default function Home() {
       }
 
       // 1. Resolve Classroom dynamically
-      const className = regGrade.trim();
+      const gradeStr = regGrade.trim();
+      const roomStr = regRoom.trim();
+      const className = `${gradeStr}/${roomStr}`;
       let classroomId = null;
 
       const { data: existingClass } = await supabase
@@ -174,7 +193,7 @@ export default function Home() {
       } else {
         const { data: newClass, error: classError } = await supabase
           .from('classrooms')
-          .insert([{ class_name: className }])
+          .insert([{ class_name: className, grade_level: gradeStr, room_number: roomStr }])
           .select()
           .single();
         if (classError) throw classError;
@@ -196,7 +215,11 @@ export default function Home() {
             .insert([{ 
               id: newStudentUuid,
               student_id: candidateStudentId,
-              student_name: regName.trim(),
+              student_name: fullName,
+              first_name: regFirstName.trim(),
+              last_name: regLastName.trim(),
+              grade_level: gradeStr,
+              room_number: roomStr,
               username: regUsername.trim(),
               password: regPassword.trim(),
               classroom_id: classroomId,
@@ -371,20 +394,44 @@ export default function Home() {
                'เข้าสู่ระบบรายงานผู้บริหาร 📊'}
             </button>
           </form>
-        ) : (
+        ) : mode === 'register' && !isRegistrationOpen ? (
+          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-6 rounded-2xl text-center mb-4">
+            <h3 className="font-bold text-lg mb-2">ปิดรับลงทะเบียน</h3>
+            <p className="text-sm">ระบบถูกปิดรับการลงทะเบียนชั่วคราว<br/>กรุณาติดต่อคุณครูผู้สอนครับ</p>
+          </div>
+        ) : mode === 'register' ? (
           <form onSubmit={handleRegister} className="flex flex-col gap-4">
-            <div>
-              <label className="text-slate-300 text-sm font-bold block mb-1.5">ชื่อ-นามสกุล</label>
-              <input type="text" value={regName} onChange={(e) => setRegName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="เช่น เด็กชายส้ม สมมติ" />
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-slate-300 text-sm font-bold block mb-1.5">ชั้น</label>
+                <label className="text-slate-300 text-sm font-bold block mb-1.5">ชื่อจริง</label>
+                <input type="text" value={regFirstName} onChange={(e) => setRegFirstName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="สมชาย" />
+              </div>
+              <div>
+                <label className="text-slate-300 text-sm font-bold block mb-1.5">นามสกุล</label>
+                <input type="text" value={regLastName} onChange={(e) => setRegLastName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="ใจดี" />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-slate-300 text-sm font-bold block mb-1.5">ระดับชั้น</label>
                 <select value={regGrade} onChange={(e) => setRegGrade(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input">
+                  <option value="ป.1">ป.1</option>
+                  <option value="ป.2">ป.2</option>
+                  <option value="ป.3">ป.3</option>
+                  <option value="ป.4">ป.4</option>
+                  <option value="ป.5">ป.5</option>
+                  <option value="ป.6">ป.6</option>
                   <option value="ม.1">ม.1</option>
                   <option value="ม.2">ม.2</option>
                   <option value="ม.3">ม.3</option>
+                  <option value="ม.4">ม.4</option>
+                  <option value="ม.5">ม.5</option>
+                  <option value="ม.6">ม.6</option>
                 </select>
+              </div>
+              <div>
+                <label className="text-slate-300 text-sm font-bold block mb-1.5">ห้อง</label>
+                <input type="text" value={regRoom} onChange={(e) => setRegRoom(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="1" />
               </div>
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">เลขที่</label>
@@ -407,7 +454,7 @@ export default function Home() {
               {isLoading ? 'กำลังโหลด...' : 'ลงทะเบียนและเริ่มผจญภัย 🎉'}
             </button>
           </form>
-        )}
+        ) : null}
         <button
           type="button"
           onClick={() => window.location.href = '/card-teacher'}
