@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Settings, CheckCircle2, AlertTriangle } from 'lucide-react';
