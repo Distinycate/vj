@@ -55,17 +55,22 @@ export default function PreTest() {
   const fetchPretestData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch completed pretest count
-      const { data: pretestHistory, count } = await supabase
-        .from('pre_tests')
-        .select('*', { count: 'exact' })
-        .eq('student_id', student.id)
-        .order('created_at', { ascending: true });
-      
-      setPretestCount(count || 0);
-      setPreviousPretests(pretestHistory || []);
+      if (useDemoStore.getState().isDemoMode) {
+        setPretestCount(0);
+        setPreviousPretests([]);
+      } else {
+        // 1. Fetch completed pretest count
+        const { data: pretestHistory, count } = await supabase
+          .from('pre_tests')
+          .select('*', { count: 'exact' })
+          .eq('student_id', student.id)
+          .order('created_at', { ascending: true });
+        
+        setPretestCount(count || 0);
+        setPreviousPretests(pretestHistory || []);
+      }
 
-      // Fetch 25 random vocabulary words
+      // Fetch 25 random vocabulary words (Read-only is fine for demo)
       const { data: vocab } = await supabase
         .from('vocabulary')
         .select('*')
@@ -253,7 +258,7 @@ export default function PreTest() {
     const isAllCompleted = currentAttemptNum >= 5;
 
     return (
-      <div className="min-h-screen bg-slate-950 flex justify-center items-center p-4">
+      <div data-demo-guide="pretest-result" className="min-h-screen bg-slate-950 flex justify-center items-center p-4">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
@@ -339,6 +344,7 @@ export default function PreTest() {
 
   return (
     <div 
+      data-demo-guide="pretest-start"
       className="min-h-screen bg-slate-950 p-6 flex flex-col justify-center items-center relative overflow-hidden select-none"
       onContextMenu={(e) => e.preventDefault()}
     >

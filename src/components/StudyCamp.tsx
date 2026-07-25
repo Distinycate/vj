@@ -137,6 +137,7 @@ export default function StudyCamp() {
 
   return (
     <div 
+      data-demo-guide="study-camp"
       className="min-h-screen bg-slate-950 text-white p-4 md:p-8 flex flex-col items-center select-none relative overflow-hidden"
       onContextMenu={(e) => e.preventDefault()}
     >

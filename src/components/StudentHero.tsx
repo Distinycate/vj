@@ -30,7 +30,7 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
             </div>
             
             {/* Rank Score Progress Bar */}
-            <div className="mt-3 w-full max-w-xs group cursor-pointer" onClick={() => setShowRankInfo(true)}>
+            <div data-demo-guide="rank-score" className="mt-3 w-full max-w-xs group cursor-pointer" onClick={() => setShowRankInfo(true)}>
               <div className="flex justify-between items-center text-[10px] text-slate-400 mb-1 font-semibold px-1">
                 <span>Rank Score: {rankScore.toFixed(1)}</span>
                 <span className="flex items-center gap-1 hover:text-emerald-400 transition-colors">
@@ -97,7 +97,7 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
             <span className="text-xl">🪙</span>
             <span className="text-white font-black text-xl">{progress?.coins || 0}</span>
           </div>
-          <div className="flex gap-2">
+          <div data-demo-guide="card-system" className="flex gap-2">
             <button onClick={() => setShowCardCenter(true)} className="flex-1 md:flex-none px-4 py-2 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/30 text-fuchsia-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all">
               <Sparkles className="w-4 h-4" /> การ์ด
             </button>

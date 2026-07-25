@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import NetworkStatus from "@/components/NetworkStatus";
 import DemoToolbar from "@/components/demo/DemoToolbar";
+import DemoGuidedTour from "@/components/demo/DemoGuidedTour";
+import DemoWelcomeModal from "@/components/demo/DemoWelcomeModal";
 
 export const metadata: Metadata = {
   title: "Vocab Journey 🚀",
@@ -30,6 +32,8 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-slate-950">
         <DemoToolbar />
+        <DemoGuidedTour />
+        <DemoWelcomeModal />
         <NetworkStatus />
         {children}
         <script dangerouslySetInnerHTML={{ __html: `document.addEventListener('contextmenu', event => event.preventDefault());` }} />

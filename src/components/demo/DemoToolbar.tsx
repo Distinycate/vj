@@ -2,12 +2,17 @@
 
 import { useDemoStore } from '@/store/useDemoStore';
 import { useRouter, usePathname } from 'next/navigation';
-import { Sparkles, XCircle, SkipForward, RefreshCw, MessageCircleOff, MessageCircle } from 'lucide-react';
+import { Sparkles, XCircle, SkipForward, RefreshCw, MessageCircleOff, MessageCircle, HelpCircle } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import { useDemoGuideStore } from '@/store/useDemoGuideStore';
+import { useState } from 'react';
+import DemoGuideMenu from './DemoGuideMenu';
 
 export default function DemoToolbar() {
   const { isDemoMode, showExplanations, toggleExplanations, resetDemo } = useDemoStore();
   const { logout, setScreen } = useAppStore();
+  const { startTour, isActive, resetTour, currentStepIndex } = useDemoGuideStore();
+  const [showMenu, setShowMenu] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -29,7 +34,10 @@ export default function DemoToolbar() {
   };
 
   return (
-    <div className="fixed top-0 left-0 w-full z-[100] bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg border-b border-purple-400">
+    <div 
+      data-demo-guide="demo-toolbar"
+      className="fixed top-0 left-0 w-full z-[100] bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg border-b border-purple-400"
+    >
       <div className="max-w-7xl mx-auto px-4 h-12 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Sparkles className="w-5 h-5 text-yellow-300" />
@@ -48,14 +56,13 @@ export default function DemoToolbar() {
           )}
 
           <button 
-            onClick={toggleExplanations}
-            className={`px-3 py-1 flex items-center gap-1 rounded text-xs font-bold transition-colors ${showExplanations ? 'bg-indigo-500/80 hover:bg-indigo-500' : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300'}`}
+            onClick={() => setShowMenu(true)}
+            className={`px-3 py-1 flex items-center gap-1 rounded text-xs font-bold transition-colors ${isActive ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-500/80 hover:bg-emerald-500'}`}
           >
-            {showExplanations ? (
-              <><MessageCircle className="w-3 h-3" /> <span className="hidden sm:inline">ซ่อนคำอธิบาย</span></>
-            ) : (
-              <><MessageCircleOff className="w-3 h-3" /> <span className="hidden sm:inline">เปิดคำอธิบาย</span></>
-            )}
+            <HelpCircle className="w-4 h-4" /> 
+            <span className="hidden sm:inline">
+              {isActive ? 'กำลังนำชม...' : '? แนะนำการใช้งาน'}
+            </span>
           </button>
 
           <button 
@@ -67,6 +74,8 @@ export default function DemoToolbar() {
           </button>
         </div>
       </div>
+      
+      {showMenu && <DemoGuideMenu onClose={() => setShowMenu(false)} />}
     </div>
   );
 }

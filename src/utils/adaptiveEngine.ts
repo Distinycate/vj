@@ -15,14 +15,18 @@ import { validateQuestion, logQuestionValidationError } from '@/utils/questionVa
 
 // 1. GET ADAPTIVE DIFFICULTY PARAMETERS
 export async function getAdaptiveDifficulty(studentId: string, stageNumber: number): Promise<RankConfig & { rank: number }> {
-  // Query student's current rank from learning_paths
-  const { data: pathData } = await supabase
-    .from('learning_paths')
-    .select('current_rank')
-    .eq('student_id', studentId)
-    .maybeSingle();
-
-  const rank = pathData?.current_rank || 1;
+  let rank = 1;
+  if (useDemoStore.getState().isDemoMode) {
+    rank = useDemoStore.getState().demoProgress?.current_rank || 1;
+  } else {
+    // Query student's current rank from learning_paths
+    const { data: pathData } = await supabase
+      .from('learning_paths')
+      .select('current_rank')
+      .eq('student_id', studentId)
+      .maybeSingle();
+    rank = pathData?.current_rank || 1;
+  }
   const config = ADAPTIVE_RANK_CONFIG[rank] || ADAPTIVE_RANK_CONFIG[1];
   
   return {

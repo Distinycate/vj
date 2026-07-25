@@ -50,7 +50,7 @@ export default function DemoCenter() {
   if (!isDemoMode) return null; // Avoid flicker
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 p-6 sm:p-12 pb-24 relative overflow-hidden">
+    <div data-demo-guide="demo-center" className="min-h-screen bg-slate-950 text-slate-200 p-6 sm:p-12 pb-24 relative overflow-hidden">
       {/* Background Orbs */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-500/10 rounded-full mix-blend-screen filter blur-[128px] pointer-events-none"></div>
       

@@ -26,6 +26,7 @@ export default function MissionSelectionModal({ isOpen, onClose, onSelect }: Mis
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          data-demo-guide="stage-stars"
           className="relative bg-slate-900 border border-slate-700/50 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
         >
           {/* Header */}
@@ -49,6 +50,7 @@ export default function MissionSelectionModal({ isOpen, onClose, onSelect }: Mis
             {/* Level 1: Basic */}
             <button 
               onClick={() => onSelect(1)}
+              data-demo-guide="stage-1-star"
               className="w-full text-left bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-emerald-500/50 p-5 rounded-2xl transition-all group relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/10 group-hover:to-transparent transition-all" />

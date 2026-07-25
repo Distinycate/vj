@@ -8,8 +8,8 @@ export default function StudentVerificationModal() {
   const { student, setStudent } = useAppStore();
   const [loading, setLoading] = useState(false);
 
-  // Only show if logged in as student and not yet verified
-  if (!student || student.is_verified) return null;
+  // Only show if logged in as student and not yet verified, and not a demo account
+  if (!student || student.is_verified || student.is_demo_account) return null;
 
   const handleVerify = async () => {
     setLoading(true);

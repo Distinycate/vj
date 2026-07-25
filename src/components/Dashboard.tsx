@@ -8,6 +8,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
+import { useDemoStore } from '@/store/useDemoStore';
 import { STORY_WORLDS, ADAPTIVE_RANK_CONFIG, getWorldForStage } from '@/utils/adaptiveConfig';
 import AvatarDisplay from '@/components/AvatarDisplay';
 import StudentVerificationModal from '@/components/StudentVerificationModal';
@@ -62,6 +63,43 @@ export default function Dashboard() {
     if (!student) return;
     
     async function loadDashboardData() {
+      if (student.is_demo_account || useDemoStore.getState().isDemoMode) {
+        const demoStore = useDemoStore.getState();
+        const demoExp = demoStore.demoProgress?.total_exp || 3400;
+        setReviewWords([
+            { id: 1, english_word: 'Demonstrate', thai_meaning: 'สาธิต', part_of_speech: 'v.' },
+            { id: 2, english_word: 'Evaluation', thai_meaning: 'การประเมิน', part_of_speech: 'n.' }
+        ]);
+        setWordCollection([
+            { mastery_level: 4, vocabulary: { english_word: 'Example', thai_meaning: 'ตัวอย่าง', part_of_speech: 'n.' } },
+            { mastery_level: 2, vocabulary: { english_word: 'Mock', thai_meaning: 'จำลอง', part_of_speech: 'adj.' } }
+        ]);
+        setStats({ xp: demoExp, level: Math.floor(demoExp / 100) + 1 });
+        setLeaderboard([
+            { 
+              id: student.id, 
+              name: student.student_name, 
+              avatar_seed: student.id, 
+              avatar_style: 'adventurer', 
+              coins: demoStore.demoProgress?.coins || 1250, 
+              exp: demoExp, 
+              stage: demoStore.demoProgress?.current_stage || 35, 
+              rareCardStatus: { rarity: 'SSR', icon: '✨', label: 'ผู้ครอบครอง SSR' }, 
+              isSelf: true 
+            },
+            { id: 'mock2', name: 'เด็กชาย ขยันเรียน', avatar_seed: 'mock2', avatar_style: 'avataaars', coins: 950, exp: 2800, stage: 28, rareCardStatus: { rarity: 'SR', icon: '🛡️', label: 'ผู้ครอบครอง SR' }, isSelf: false },
+            { id: 'mock3', name: 'เด็กหญิง ตั้งใจ', avatar_seed: 'mock3', avatar_style: 'bottts', coins: 450, exp: 1500, stage: 15, isSelf: false }
+        ]);
+        setClassroomStats({
+          totalCoins: (demoStore.demoProgress?.coins || 1250) + 950 + 450,
+          averageStage: Math.round(((demoStore.demoProgress?.current_stage || 35) + 28 + 15) / 3),
+          highestLevel: Math.floor(demoExp / 100) + 1,
+        });
+        setMyTeams([]);
+        setTeamScores({});
+        return;
+      }
+
       // 1. Fetch Spaced Repetition Due Words
       const { data: repData } = await supabase
         .from('user_review_words')
@@ -240,7 +278,7 @@ export default function Dashboard() {
   const currentWorld = getWorldForStage(currentStage);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-8 pb-24 relative overflow-hidden">
+    <div data-demo-guide="student-dashboard" className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-8 pb-24 relative overflow-hidden">
       {/* Ambient backgrounds */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
@@ -284,7 +322,7 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div data-demo-guide="coin-exp" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
             <Target className="w-6 h-6 text-emerald-400 mb-2" />
             <span className="text-xs text-slate-400 font-bold mb-1">ความแม่นยำ</span>
@@ -321,7 +359,7 @@ export default function Dashboard() {
 
         {/* Mini Leaderboard on top if in roadmap */}
         {activeTab === 'roadmap' && (
-          <div className="mb-8">
+          <div data-demo-guide="leaderboard" className="mb-8">
             <TeamLeaderboard scope="class" classroomId={student?.classroom_id} />
           </div>
         )}
@@ -403,7 +441,7 @@ export default function Dashboard() {
               className="space-y-6 text-left"
             >
               {/* World roadmap navigation */}
-              <div className="space-y-4">
+              <div data-demo-guide="stage-map" className="space-y-4">
                 {STORY_WORLDS.map((world) => {
                   const isCurrentWorld = currentStage >= world.stageRange[0] && currentStage <= world.stageRange[1];
                   const isUnlockedWorld = currentStage >= world.stageRange[0];
@@ -461,6 +499,7 @@ export default function Dashboard() {
                               return (
                                 <div 
                                   key={stageNum}
+                                  data-demo-guide={isBossStage ? 'final-boss' : (stageState === 'completed' && stageNum === currentStage - 1 ? 'replay-stage' : undefined)}
                                   className={`p-3.5 rounded-2xl flex items-center justify-between border ${
                                     stageState === 'completed' ? 'bg-slate-900/40 border-slate-850 text-slate-300' :
                                     stageState === 'current' ? 'bg-gradient-to-r from-emerald-500/10 to-teal-500/5 border-emerald-500/30 text-emerald-400 font-extrabold shadow-inner' :
@@ -572,7 +611,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="glass-card p-6 sm:p-8 rounded-3xl">
+              <div data-demo-guide="review-stage" className="glass-card p-6 sm:p-8 rounded-3xl">
                 <div className="flex items-center gap-3 mb-6">
                   <Bookmark className="w-8 h-8 text-emerald-400" />
                   <div>

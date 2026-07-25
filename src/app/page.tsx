@@ -9,6 +9,7 @@ import StudyCamp from '@/components/StudyCamp';
 import Game from '@/components/Game';
 import PreTest from '@/components/PreTest';
 import { saveStudentSession } from '@/utils/studentSession';
+import { useDemoStore } from '@/store/useDemoStore';
 
 const generateUUID = () => {
   if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
@@ -85,6 +86,16 @@ export default function Home() {
 
     try {
       if (loginRole === 'student') {
+        // Intercept demo.judge
+        if (loginUsername.trim().toLowerCase() === 'demo.judge') {
+          useDemoStore.getState().startDemo();
+          const demoStore = useDemoStore.getState();
+          setStudent(demoStore.demoStudent);
+          saveStudentSession(demoStore.demoStudent);
+          setProgress(demoStore.demoProgress);
+          return;
+        }
+
         // 1. Authenticate student by querying the students table directly
         const { data: studentData, error: studentError } = await supabase
           .from('students')

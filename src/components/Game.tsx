@@ -112,15 +112,24 @@ export default function Game() {
       }
 
       // 4. Fetch student inventory
-      const { data: userInventory } = await supabase
-        .from('student_inventory')
-        .select('*, items(*)')
-        .eq('student_id', student.id);
-      
-      if (userInventory) {
-        setInventory(
-          userInventory.filter((item) => item.items && Number(item.quantity || 0) > 0)
-        );
+      if (useDemoStore.getState().isDemoMode) {
+        setInventory([
+          { id: 'mock-item-1', student_id: student.id, item_id: 'item-1', quantity: 3, items: { item_code: 'TIME_FREEZE', item_name: 'Time Freeze', item_type: 'powerup', description: 'เพิ่มเวลา 10 วินาที', icon_url: '⏳' } },
+          { id: 'mock-item-2', student_id: student.id, item_id: 'item-2', quantity: 2, items: { item_code: 'FIFTY_FIFTY', item_name: '50/50', item_type: 'powerup', description: 'ตัดตัวเลือกผิด 2 ข้อ', icon_url: '✨' } },
+          { id: 'mock-item-3', student_id: student.id, item_id: 'item-3', quantity: 5, items: { item_code: 'EXTRA_LIFE', item_name: 'Extra Life', item_type: 'powerup', description: 'เพิ่มพลังชีวิต 1 ดวง', icon_url: '❤️' } },
+          { id: 'mock-item-4', student_id: student.id, item_id: 'item-4', quantity: 10, items: { item_code: 'HINT', item_name: 'Hint', item_type: 'powerup', description: 'แสดงคำใบ้', icon_url: '💡' } }
+        ]);
+      } else {
+        const { data: userInventory } = await supabase
+          .from('student_inventory')
+          .select('*, items(*)')
+          .eq('student_id', student.id);
+        
+        if (userInventory) {
+          setInventory(
+            userInventory.filter((item) => item.items && Number(item.quantity || 0) > 0)
+          );
+        }
       }
 
       setLoading(false);
@@ -229,26 +238,28 @@ export default function Game() {
     if (!inventoryItem || inventoryItem.quantity <= 0) return;
 
     try {
-      // 1. Consume item in Database
-      if (inventoryItem.quantity > 1) {
-        await supabase
-          .from('student_inventory')
-          .update({ quantity: inventoryItem.quantity - 1 })
-          .eq('id', inventoryItem.id);
-      } else {
-        await supabase
-          .from('student_inventory')
-          .delete()
-          .eq('id', inventoryItem.id);
-      }
+      if (!useDemoStore.getState().isDemoMode) {
+        // 1. Consume item in Database
+        if (inventoryItem.quantity > 1) {
+          await supabase
+            .from('student_inventory')
+            .update({ quantity: inventoryItem.quantity - 1 })
+            .eq('id', inventoryItem.id);
+        } else {
+          await supabase
+            .from('student_inventory')
+            .delete()
+            .eq('id', inventoryItem.id);
+        }
 
-      // 2. Insert item usage log
-      await supabase.from('item_usage_logs').insert([{
-        student_id: student.id,
-        item_id: inventoryItem.item_id,
-        stage_id: currentStageId,
-        question_word: words[currentIndex]?.word || null
-      }]);
+        // 2. Insert item usage log
+        await supabase.from('item_usage_logs').insert([{
+          student_id: student.id,
+          item_id: inventoryItem.item_id,
+          stage_id: currentStageId,
+          question_word: words[currentIndex]?.word || null
+        }]);
+      }
 
       // 3. Trigger item effect
       if (itemCode === 'TIME_FREEZE') {
@@ -527,6 +538,7 @@ export default function Game() {
               key={invItem.id} 
               onClick={() => applyPowerup(itemCode)} 
               disabled={isUsed}
+              data-demo-guide={itemCode === 'HINT' ? 'hint-button' : undefined}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border font-bold text-xs transition-all ${
                 isUsed 
                   ? 'opacity-40 bg-slate-950 border-slate-900 text-slate-600' 
@@ -651,7 +663,7 @@ export default function Game() {
 
         {/* Options grid for multiple choices quiz types */}
         {qType.includes('_MC') && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div data-demo-guide="feedback-result" className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {choices.map((choice, idx) => {
               if (!choice || choice.hidden) return <div key={`hidden-${idx}`} className="opacity-0 pointer-events-none"></div>;
 
@@ -687,7 +699,7 @@ export default function Game() {
 
         {/* Feedback block for spelling input mode */}
         {isAnswered && qType === 'FILL_BLANK' && (
-          <div className="text-center mt-6">
+          <div data-demo-guide="feedback-result" className="text-center mt-6">
             {typeof selectedAnswer === 'string' && normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.correct_answer) ? (
               <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-lg">
                 <CheckCircle className="w-5 h-5" /> ถูกต้องสมบูรณ์แบบ!
