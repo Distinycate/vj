@@ -22,7 +22,9 @@ const initialDemoStudent = {
   grade_level: 'ม.2',
   room: '1',
   classroom_id: 'demo-classroom',
-  is_demo_account: true
+  is_demo_account: true,
+  is_verified: true,
+  role: 'STUDENT'
 };
 
 const initialDemoProgress = {
