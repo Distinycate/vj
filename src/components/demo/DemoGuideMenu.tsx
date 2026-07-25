@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { useDemoGuideStore } from '@/store/useDemoGuideStore';
 import { DEMO_GUIDE_STEPS } from '@/content/demo-guide.th';

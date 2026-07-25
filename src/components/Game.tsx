@@ -8,6 +8,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
+import { useDemoStore } from '@/store/useDemoStore';
 import { generateStageQuestions, completeStage, getAdaptiveDifficulty } from '@/utils/adaptiveEngine';
 import { normalizeAnswer, QuizChoice } from '@/lib/quizUtils';
 import { useAntiCheat } from '@/hooks/useAntiCheat';

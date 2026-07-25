@@ -1,3 +1,4 @@
+'use client';
 import React, { useEffect } from 'react';
 import { useDemoGuideStore } from '@/store/useDemoGuideStore';
 import { useDemoStore } from '@/store/useDemoStore';
