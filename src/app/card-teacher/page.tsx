@@ -27,7 +27,7 @@ export default function CardTeacherAccessPage() {
         const { data, error } = await supabase
           .from('teachers')
           .select('id, name, username, role, is_active')
-          .eq('username', username.trim().toLowerCase())
+          .ilike('username', username.trim())
           .eq('password', password)
           .eq('is_active', true)
           .in('role', ['CARD_TEACHER', 'TEACHER', 'ADMIN'])

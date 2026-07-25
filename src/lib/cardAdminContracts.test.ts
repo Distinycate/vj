@@ -51,6 +51,11 @@ test('card-teacher and admin sessions use separate dashboard entry points', () =
   assert.doesNotMatch(adminCardPage, /vocab_journey_card_teacher/);
 });
 
+test('card-teacher login accepts existing teacher usernames case-insensitively', () => {
+  assert.match(cardTeacherAccess, /\.ilike\('username', username\.trim\(\)\)/);
+  assert.doesNotMatch(cardTeacherAccess, /\.eq\('username', username\.trim\(\)\.toLowerCase\(\)\)/);
+});
+
 test('coin awards and deductions use the learning path balance and audit log', () => {
   assert.match(migration, /FUNCTION public\.teacher_adjust_student_coins\(/);
   assert.match(migration, /v_after := v_path\.coins \+ p_amount/);
