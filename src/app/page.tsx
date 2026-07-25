@@ -425,7 +425,7 @@ export default function Home() {
                 <div>
                   <p className="text-xs font-black text-indigo-300 uppercase tracking-widest">Innovator Profile</p>
                   <h3 className="text-2xl font-black text-white mt-2">นายณัฐภัทร พรมปรุ</h3>
-                  <p className="text-slate-400 text-sm mt-1">Mr. Natthaphat Phrompru</p>
+                  <p className="text-slate-400 text-sm mt-1">Mr. Nattapat Prompru</p>
                 </div>
                 <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 text-sm text-emerald-200 font-bold">
                   ตำแหน่ง: ครู

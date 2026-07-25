@@ -16,7 +16,7 @@ test('landing page explains Vocab Journey and presents the innovator profile', (
   assert.match(homeSource, /Ebbinghaus Forgetting Curve/);
   assert.match(homeSource, /ประวัติและข้อมูลผู้จัดทำนวัตกรรม/);
   assert.match(homeSource, /นายณัฐภัทร พรมปรุ/);
-  assert.match(homeSource, /Mr\. Natthaphat Phrompru/);
+  assert.match(homeSource, /Mr\. Nattapat Prompru/);
   assert.match(homeSource, /โรงเรียนบ้านโคกยาง/);
   assert.match(homeSource, /สำนักงานเขตพื้นที่การศึกษาประถมศึกษาบุรีรัมย์ เขต 3/);
   assert.match(homeSource, /Head of Personnel Administration/);
