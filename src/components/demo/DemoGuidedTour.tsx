@@ -34,15 +34,19 @@ export default function DemoGuidedTour() {
       setIsWaiting(true);
       // If navigating to '/', set the correct screen and student data first
       if (step.route === '/') {
+        // Ensure demo is initialized
         const demoStore = useDemoStore.getState();
-        if (demoStore.demoStudent) {
-          setStudent(demoStore.demoStudent);
-          // For pretest step, clear pretest_date so PreTest renders
+        if (!demoStore.isDemoMode) demoStore.startDemo();
+        const ds = useDemoStore.getState();
+        if (ds.demoStudent) {
+          setStudent(ds.demoStudent);
           if (step.appScreen === 'pretest') {
-            setProgress({ ...demoStore.demoProgress, pretest_date: null });
+            setProgress({ ...ds.demoProgress, pretest_date: null });
+            sessionStorage.setItem('demo_screen', 'pretest');
           } else {
-            setProgress(demoStore.demoProgress);
+            setProgress(ds.demoProgress);
             setScreen(step.appScreen || 'dashboard');
+            sessionStorage.setItem('demo_screen', step.appScreen || 'dashboard');
           }
         }
       }
