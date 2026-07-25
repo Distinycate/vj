@@ -1,19 +1,21 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDemoGuideStore } from '@/store/useDemoGuideStore';
-import { DEMO_GUIDE_STEPS, DemoGuideStep } from '@/content/demo-guide.th';
+import { DEMO_GUIDE_STEPS } from '@/content/demo-guide.th';
 import { useDemoStore } from '@/store/useDemoStore';
-import { ChevronLeft, ChevronRight, X, Play, RefreshCw, List } from 'lucide-react';
+import { useAppStore } from '@/store/useAppStore';
+import { ChevronLeft, ChevronRight, X, RefreshCw, List } from 'lucide-react';
 import DemoGuideMenu from './DemoGuideMenu';
 
 export default function DemoGuidedTour() {
   const router = useRouter();
   const pathname = usePathname();
-  const { isDemoMode } = useDemoStore();
-  const { isActive, currentStepIndex, nextStep, prevStep, stopTour, resetTour, goToStep } = useDemoGuideStore();
+  const { isDemoMode, demoStudent, demoProgress } = useDemoStore();
+  const { isActive, currentStepIndex, nextStep, prevStep, stopTour, goToStep } = useDemoGuideStore();
+  const { setScreen, setStudent, setProgress } = useAppStore();
 
   const [targetRect, setTargetRect] = useState<{top: number, left: number, width: number, height: number, bottom: number, viewportTop: number, viewportBottom: number} | null>(null);
   const [showMenu, setShowMenu] = useState(false);
@@ -30,10 +32,28 @@ export default function DemoGuidedTour() {
     // Handle cross-route navigation
     if (pathname !== step.route) {
       setIsWaiting(true);
+      // If navigating to '/', set the correct screen and student data first
+      if (step.route === '/') {
+        const demoStore = useDemoStore.getState();
+        if (demoStore.demoStudent) {
+          setStudent(demoStore.demoStudent);
+          // For pretest step, clear pretest_date so PreTest renders
+          if (step.appScreen === 'pretest') {
+            setProgress({ ...demoStore.demoProgress, pretest_date: null });
+          } else {
+            setProgress(demoStore.demoProgress);
+            setScreen(step.appScreen || 'dashboard');
+          }
+        }
+      }
       router.push(step.route);
       return;
     }
 
+    // On '/', also ensure the right screen is shown even if we're already there
+    if (step.route === '/' && step.appScreen && step.appScreen !== 'pretest') {
+      setScreen(step.appScreen);
+    }
     // Look for target element
     let timeoutId: NodeJS.Timeout;
     let animationFrameId: number;
