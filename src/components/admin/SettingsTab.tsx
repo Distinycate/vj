@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Settings, CheckCircle2, AlertTriangle } from 'lucide-react';
 
+const DEFAULT_SCHOOL_ID = '00000000-0000-0000-0000-000000000001';
+
 export default function SettingsTab({ teacher }: { teacher: any }) {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
   const [schoolId, setSchoolId] = useState<string | null>(null);
@@ -11,31 +13,55 @@ export default function SettingsTab({ teacher }: { teacher: any }) {
 
   useEffect(() => {
     async function loadSettings() {
-      // Fetch the first school in the system to manage global settings
-      const { data, error } = await supabase.from('schools').select('id, is_registration_open').limit(1).single();
+      const { data, error } = await supabase
+        .from('schools')
+        .select('id, is_registration_open')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        setMessage(`อ่านค่าสถานะลงทะเบียนไม่ได้: ${error.message}`);
+        return;
+      }
       
       if (data) {
         setSchoolId(data.id);
         setIsRegistrationOpen(data.is_registration_open !== false); // default true
+      } else {
+        setSchoolId(null);
+        setIsRegistrationOpen(true);
       }
     }
     loadSettings();
   }, []);
 
   const handleToggleRegistration = async () => {
-    if (!schoolId) return;
     setIsSaving(true);
     setMessage('');
     
     try {
       const newValue = !isRegistrationOpen;
-      const { error } = await supabase
-        .from('schools')
-        .update({ is_registration_open: newValue })
-        .eq('id', schoolId);
+
+      const { data: rpcData, error: rpcError } = await supabase.rpc('teacher_set_registration_open', {
+        p_teacher_id: teacher.id,
+        p_is_open: newValue
+      });
+
+      if (rpcError) {
+        const { data: updatedRows, error: updateError } = await supabase
+          .from('schools')
+          .update({ is_registration_open: newValue })
+          .eq('id', schoolId || DEFAULT_SCHOOL_ID)
+          .select('id, is_registration_open');
+
+        if (updateError) throw updateError;
+        if (!updatedRows || updatedRows.length === 0) throw rpcError;
+        setSchoolId(updatedRows[0].id);
+      } else if (rpcData && typeof rpcData === 'object' && 'school_id' in rpcData) {
+        setSchoolId(String(rpcData.school_id));
+      }
         
-      if (error) throw error;
-      
       setIsRegistrationOpen(newValue);
       setMessage(newValue ? 'เปิดระบบลงทะเบียนเรียบร้อยแล้ว' : 'ปิดระบบลงทะเบียนเรียบร้อยแล้ว');
       setTimeout(() => setMessage(''), 3000);
@@ -78,7 +104,7 @@ export default function SettingsTab({ teacher }: { teacher: any }) {
             
             <button
               onClick={handleToggleRegistration}
-              disabled={isSaving || !schoolId}
+              disabled={isSaving}
               className={`px-6 py-3 rounded-xl font-bold text-sm shadow-lg transition-all min-w-[140px] ${
                 isRegistrationOpen 
                   ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20' 

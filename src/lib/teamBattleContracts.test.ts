@@ -29,3 +29,10 @@ test('starting a season closes the previous season in one transaction', () => {
   assert.match(migration, /FUNCTION public\.start_school_team_season\(/);
   assert.match(migration, /UPDATE public\.team_battle_seasons\s+SET is_active = false/);
 });
+
+test('team season migration only writes statuses allowed by the database constraint', () => {
+  assert.doesNotMatch(migration, /INACTIVE/);
+  assert.match(migration, /'ACTIVE'/);
+  assert.match(migration, /'CLOSED'/);
+  assert.match(migration, /'REWARDED'/);
+});

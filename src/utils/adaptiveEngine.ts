@@ -40,7 +40,8 @@ export async function generateStageQuestions(studentId: string, stageNumber: num
   try {
     // 1. Fetch current rank configuration
     const diffInfo = await getAdaptiveDifficulty(studentId, stageNumber);
-    let { rank, difficultyMix, questionTypes, questionCount } = diffInfo;
+    const { difficultyMix, questionCount } = diffInfo;
+    let { questionTypes } = diffInfo;
     
     // Override questionTypes based on missionLevel (Stars)
     if (missionLevel === 1) {
@@ -505,8 +506,10 @@ export async function completeStage(studentId: string, stageNumber: number, resu
     const { rank, passScore } = diffInfo;
     const passed = accuracy >= passScore;
 
-    // 2. Save result to stage_results
-    await supabase.from('stage_results').insert([{
+    // 2. Save result to stage_results when available. Do not block the stage
+    // completion pipeline because some live databases still rely on attempts
+    // as the historical gameplay source.
+    const { error: stageResultError } = await supabase.from('stage_results').insert([{
       user_id: studentId,
       stage_number: stageNumber,
       rank_at_play: rank,
@@ -517,6 +520,9 @@ export async function completeStage(studentId: string, stageNumber: number, resu
       used_hints: usedHints,
       stars: passed ? missionLevel : 0
     }]);
+    if (stageResultError) {
+      console.warn('stage_results insert skipped:', stageResultError.message);
+    }
 
     const { data: stageData } = await supabase
       .from('stages')
@@ -781,32 +787,81 @@ export async function recalculateStudentRank(studentId: string) {
     const highestCompletedStage = (pathData.current_stage || 1) - 1;
     const progressScore = Math.min(100, (highestCompletedStage / 100) * 100);
 
-    // Accuracy (30%) - last 10 stages
+    // Accuracy (30%) - last 10 stage plays. Prefer stage_results, fallback to attempts
+    // because older/live data may have attempts only.
     const { data: recentResults } = await supabase.from('stage_results').select('accuracy').eq('user_id', studentId).order('created_at', { ascending: false }).limit(10);
     let recentAccuracy = 0;
     if (recentResults && recentResults.length > 0) {
       recentAccuracy = recentResults.reduce((sum, r) => sum + r.accuracy, 0) / recentResults.length;
+    } else {
+      const { data: recentAttempts } = await supabase
+        .from('attempts')
+        .select('score, total_questions')
+        .eq('student_id', studentId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (recentAttempts && recentAttempts.length > 0) {
+        const attemptAccuracies = recentAttempts
+          .map((attempt) => {
+            const totalQuestions = Number(attempt.total_questions || 0);
+            return totalQuestions > 0 ? (Number(attempt.score || 0) / totalQuestions) * 100 : null;
+          })
+          .filter((value): value is number => value !== null);
+        if (attemptAccuracies.length > 0) {
+          recentAccuracy = attemptAccuracies.reduce((sum, value) => sum + value, 0) / attemptAccuracies.length;
+        }
+      }
     }
 
-    // Stage Stars (20%)
+    // Stage Stars (20%). Fallback derives conservative stars from passed attempts.
     const { data: allStages } = await supabase.from('stage_results').select('stage_number, stars').eq('user_id', studentId);
     let totalStars = 0;
-    if (allStages) {
+    if (allStages && allStages.length > 0) {
       const maxStarsPerStage = new Map<number, number>();
       allStages.forEach(s => {
         const existing = maxStarsPerStage.get(s.stage_number) || 0;
         if ((s.stars || 0) > existing) maxStarsPerStage.set(s.stage_number, s.stars);
       });
       maxStarsPerStage.forEach(stars => { totalStars += stars; });
+    } else {
+      const { data: attemptStages } = await supabase
+        .from('attempts')
+        .select('score, total_questions, is_passed, stages(stage_number)')
+        .eq('student_id', studentId)
+        .eq('is_passed', true);
+      const maxStarsPerStage = new Map<number, number>();
+      for (const attempt of attemptStages || []) {
+        const stageRelation = Array.isArray(attempt.stages) ? attempt.stages[0] : attempt.stages;
+        const stageNumber = Number(stageRelation?.stage_number || 0);
+        const totalQuestions = Number(attempt.total_questions || 0);
+        if (!stageNumber || totalQuestions <= 0) continue;
+        const accuracy = (Number(attempt.score || 0) / totalQuestions) * 100;
+        const derivedStars = accuracy >= 90 ? 3 : accuracy >= 75 ? 2 : 1;
+        const existing = maxStarsPerStage.get(stageNumber) || 0;
+        if (derivedStars > existing) maxStarsPerStage.set(stageNumber, derivedStars);
+      }
+      maxStarsPerStage.forEach(stars => { totalStars += stars; });
     }
     const starScore = Math.min(100, (totalStars / 300) * 100);
 
     // Boss Performance (10%)
     // Check if stage 10, 20, etc. were passed
-    const { data: bossResults } = await supabase.from('stage_results').select('passed').eq('user_id', studentId).eq('passed', true).in('stage_number', [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]).limit(1);
+    const bossStageNumbers = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    const { data: bossResults } = await supabase.from('stage_results').select('passed').eq('user_id', studentId).eq('passed', true).in('stage_number', bossStageNumbers).limit(1);
     let bossScore = 0;
     if (bossResults && bossResults.length > 0) {
       bossScore = 100;
+    } else {
+      const { data: bossAttempts } = await supabase
+        .from('attempts')
+        .select('is_passed, stages(stage_number)')
+        .eq('student_id', studentId)
+        .eq('is_passed', true);
+      const hasBossAttempt = (bossAttempts || []).some((attempt) => {
+        const stageRelation = Array.isArray(attempt.stages) ? attempt.stages[0] : attempt.stages;
+        return bossStageNumbers.includes(Number(stageRelation?.stage_number || 0));
+      });
+      if (hasBossAttempt) bossScore = 100;
     }
 
     // Consistency (5%)

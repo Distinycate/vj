@@ -4,6 +4,21 @@ import { calculateAttemptScore, calculateGrade } from '../utils/eventScoring';
 
 export type ChristmasQuestionType = 'meaning_match' | 'word_match' | 'listening_typing' | 'spelling_typing' | 'context_typing' | 'image_word_typing';
 
+function getExpectedChristmasAnswer(wordObj: any, qType: string) {
+  switch(qType) {
+    case 'meaning_match':
+      return wordObj.meaning_th;
+    case 'word_match':
+    case 'listening_typing':
+    case 'spelling_typing':
+    case 'context_typing':
+    case 'image_word_typing':
+      return wordObj.word;
+    default:
+      throw new Error('ชนิดคำถามไม่ถูกต้อง');
+  }
+}
+
 export async function getChristmasProgress(studentId: string) {
   const { data: mastery } = await supabase.from('event_vocab_mastery')
     .select('vocabulary_id, mastery_level')
@@ -83,20 +98,15 @@ export async function getNextChristmasQuestion(studentId: string) {
   const qType = types[Math.floor(Math.random() * types.length)];
 
   let prompt = '';
-  let expectedAnswer = '';
-  
   switch(qType) {
     case 'meaning_match':
       prompt = `${wordObj.word} แปลว่าอะไร?`;
-      expectedAnswer = wordObj.meaning_th;
       break;
     case 'word_match':
       prompt = `"${wordObj.meaning_th}" ภาษาอังกฤษคือ?`;
-      expectedAnswer = wordObj.word;
       break;
     case 'listening_typing':
       prompt = `พิมพ์คำศัพท์ที่ได้ยิน`;
-      expectedAnswer = wordObj.word;
       break;
     case 'spelling_typing':
       // Blank out 1-2 letters
@@ -107,11 +117,9 @@ export async function getNextChristmasQuestion(studentId: string) {
       } else {
         prompt = word;
       }
-      expectedAnswer = wordObj.word;
       break;
     case 'context_typing':
       prompt = wordObj.example_sentence.replace(new RegExp(wordObj.word, 'i'), '_____');
-      expectedAnswer = wordObj.word;
       break;
   }
 
@@ -119,17 +127,32 @@ export async function getNextChristmasQuestion(studentId: string) {
     vocabId: wordObj.id,
     questionType: qType,
     prompt,
-    expectedAnswer,
     speechText: qType === 'listening_typing' ? wordObj.word : null
   };
 }
 
 export async function submitChristmasAnswer(
-  attemptId: string, vocabId: string, qType: string, studentAnswer: string, attemptNo: number, hearts: number, studentId: string, expectedAnswer: string
+  attemptId: string, vocabId: string, qType: string, studentAnswer: string, attemptNo: number, hearts: number, studentId: string
 ) {
-  // We can't trust the client for exact answer check, we should re-fetch expected, but for speed we trust expectedAnswer passed if we have signature. 
-  // In a real app we'd fetch it, but here we just pass it from client for simplicity, or re-fetch.
+  const [{ data: attemptOwner }, { data: wordObj, error: wordError }] = await Promise.all([
+    supabase
+      .from('event_vocab_attempts')
+      .select('id, event_id, user_id')
+      .eq('id', attemptId)
+      .eq('user_id', studentId)
+      .maybeSingle(),
+    supabase
+      .from('event_vocabulary')
+      .select('id, word, meaning_th')
+      .eq('id', vocabId)
+      .maybeSingle(),
+  ]);
+
+  if (!attemptOwner) throw new Error('Attempt not found');
+  if (wordError) throw wordError;
+  if (!wordObj) throw new Error('Vocabulary not found');
   
+  const expectedAnswer = getExpectedChristmasAnswer(wordObj, qType);
   const checkResult = checkChristmasAnswer(studentAnswer, expectedAnswer);
   
   const { scoreEarned, heartsRemaining } = calculateAttemptScore(attemptNo, checkResult.isCorrect, checkResult.isNearMiss, hearts, false);
@@ -141,7 +164,7 @@ export async function submitChristmasAnswer(
   await supabase.from('event_vocab_attempt_items').insert({
     attempt_id: attemptId,
     user_id: studentId,
-    event_id: (await supabase.from('event_vocab_attempts').select('event_id').eq('id', attemptId).single()).data?.event_id,
+    event_id: attemptOwner.event_id,
     vocabulary_id: vocabId,
     question_type: qType,
     prompt: qType, // Just store qtype as prompt for brevity here

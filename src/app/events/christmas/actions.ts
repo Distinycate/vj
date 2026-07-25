@@ -27,11 +27,10 @@ export async function actionSubmitChristmasAnswer(
   studentAnswer: string,
   attemptNo: number,
   hearts: number,
-  studentId: string,
-  expectedAnswer: string
+  studentId: string
 ) {
   try {
-    const result = await submitChristmasAnswer(attemptId, vocabId, qType, studentAnswer, attemptNo, hearts, studentId, expectedAnswer);
+    const result = await submitChristmasAnswer(attemptId, vocabId, qType, studentAnswer, attemptNo, hearts, studentId);
     return { success: true, result };
   } catch (error: any) {
     return { success: false, error: error.message };

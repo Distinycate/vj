@@ -80,7 +80,8 @@ export default function ExecutiveDashboard() {
     const now = new Date();
 
     const classStats = classroomsData.map(c => {
-      let cPre = 0, cPost = 0, cAcc = 0, cGain = 0, studentsCount = c.students?.length || 0;
+      let cPre = 0, cPost = 0, cAcc = 0, cGain = 0;
+      const studentsCount = c.students?.length || 0;
       
       (c.students || []).forEach((s: any) => {
         const stats = Array.isArray(s.analytics_summary) ? s.analytics_summary[0] : s.analytics_summary;

@@ -82,15 +82,22 @@ import verbData from '../../../data/verb-master-words.json';
 
 export async function actionSetupVerbMasterEvent() {
   try {
+    const { data: existingEvent } = await supabase
+      .from('events')
+      .select('id, status')
+      .eq('slug', 'verb-master')
+      .maybeSingle();
+
     const { data: event, error: eventError } = await supabase
       .from('events')
       .upsert({
+        ...(existingEvent?.id ? { id: existingEvent.id } : {}),
         slug: 'verb-master',
         title: 'Verb Master Challenge',
         description: 'ท้าทายความจำ พิมพ์กริยา 3 ช่องให้ถูกต้องเพื่อปลดล็อกเข็มกลัดแห่งกาลเวลา!',
         event_type: 'verb',
         theme: 'Castle of Time',
-        status: 'upcoming'
+        status: existingEvent?.status || 'upcoming'
       }, { onConflict: 'slug' })
       .select('id')
       .single();

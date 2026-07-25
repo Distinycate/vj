@@ -151,7 +151,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
 
     setBusy(true);
     try {
-      let metadata: any = {};
+      const metadata: any = {};
       if (isCleanRoom) {
          const t2 = classmates.find(c => c.id === selectedTarget2);
          const t3 = classmates.find(c => c.id === selectedTarget3);

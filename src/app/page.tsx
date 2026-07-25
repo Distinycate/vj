@@ -31,6 +31,22 @@ const generateRandomStudentId = () => {
   return result;
 };
 
+const fetchRegistrationOpen = async () => {
+  const { data, error } = await supabase
+    .from('schools')
+    .select('is_registration_open')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.warn('Unable to read registration status:', error.message);
+    return true;
+  }
+
+  return data?.is_registration_open !== false;
+};
+
 export default function Home() {
   const router = useRouter();
   const { student, progress, setStudent, setProgress, currentScreen } = useAppStore();
@@ -67,10 +83,8 @@ export default function Home() {
 
   useEffect(() => {
     async function checkRegistration() {
-      const { data } = await supabase.from('schools').select('is_registration_open').limit(1).single();
-      if (data && data.is_registration_open !== null) {
-        setIsRegistrationOpen(data.is_registration_open);
-      }
+      const isOpen = await fetchRegistrationOpen();
+      setIsRegistrationOpen(isOpen);
     }
     checkRegistration();
   }, []);
@@ -178,6 +192,12 @@ export default function Home() {
     const fullName = `${regFirstName.trim()} ${regLastName.trim()}`;
 
     try {
+      const latestRegistrationOpen = await fetchRegistrationOpen();
+      setIsRegistrationOpen(latestRegistrationOpen);
+      if (!latestRegistrationOpen) {
+        throw new Error('ระบบปิดรับลงทะเบียนชั่วคราว กรุณาติดต่อคุณครู');
+      }
+
       // 0. Check for duplicate username first to give a friendly error
       const { data: existingUser } = await supabase
         .from('students')

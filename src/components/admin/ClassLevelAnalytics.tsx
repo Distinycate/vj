@@ -12,6 +12,25 @@ interface ClassLevelAnalyticsProps {
   weakestSkill?: string;
 }
 
+function StudentClusterTooltip({ active, payload }: any) {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl shadow-xl">
+        <p className="font-bold text-white mb-1">{data.name}</p>
+        <p className="text-xs text-slate-400">Accuracy: <span className="text-emerald-400">{data.accuracy}%</span></p>
+        <p className="text-xs text-slate-400">Effort (Attempts): <span className="text-indigo-400">{data.effort}</span></p>
+        <div className="mt-2 pt-2 border-t border-slate-800">
+          <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: data.fill }}>
+            {data.category}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function ClassLevelAnalytics({ studentsList, weakestSkill }: ClassLevelAnalyticsProps) {
   
   // 1. Student Clustering Data
@@ -63,7 +82,7 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
         let totalErrors = 0;
         
         data.forEach((w: any) => {
-          let pos = w.vocabulary?.part_of_speech || 'Other';
+          const pos = w.vocabulary?.part_of_speech || 'Other';
           const count = w.error_count || 1;
           errorCounts[pos] = (errorCounts[pos] || 0) + count;
           totalErrors += count;
@@ -84,26 +103,6 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
     }
     loadSkillGap();
   }, [studentsList]);
-
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl shadow-xl">
-          <p className="font-bold text-white mb-1">{data.name}</p>
-          <p className="text-xs text-slate-400">Accuracy: <span className="text-emerald-400">{data.accuracy}%</span></p>
-          <p className="text-xs text-slate-400">Effort (Attempts): <span className="text-indigo-400">{data.effort}</span></p>
-          <div className="mt-2 pt-2 border-t border-slate-800">
-            <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: data.fill }}>
-              {data.category}
-            </span>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   const [insightLoading, setInsightLoading] = useState(false);
   const [insight, setInsight] = useState('');
@@ -184,7 +183,7 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis type="number" dataKey="effort" name="Effort (Attempts)" stroke="#64748b" fontSize={12} label={{ value: 'Effort', position: 'insideBottom', offset: -10, fill: '#64748b' }} />
                 <YAxis type="number" dataKey="accuracy" name="Accuracy (%)" stroke="#64748b" fontSize={12} label={{ value: 'Accuracy', angle: -90, position: 'insideLeft', fill: '#64748b' }} />
-                <RechartsTooltip content={<CustomTooltip />} />
+                <RechartsTooltip content={<StudentClusterTooltip />} />
                 <ReferenceLine x={50} stroke="#334155" strokeDasharray="5 5" />
                 <ReferenceLine y={60} stroke="#334155" strokeDasharray="5 5" />
                 <Scatter name="Students" data={clusteringData}>

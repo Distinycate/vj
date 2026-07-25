@@ -95,8 +95,7 @@ export default function ChristmasPlayer() {
       inputValue,
       attemptNo,
       hearts,
-      student.id,
-      currentQ.expectedAnswer
+      student.id
     );
 
     if (res.success && res.result) {

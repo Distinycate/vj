@@ -35,6 +35,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('school-overview');
   const [classrooms, setClassrooms] = useState<any[]>([]);
   const [selectedClassroom, setSelectedClassroom] = useState<string>('');
+  const [classroomStudentCounts, setClassroomStudentCounts] = useState<Record<string, number>>({});
   
   // Data
   const [studentsList, setStudentsList] = useState<any[]>([]);
@@ -176,6 +177,23 @@ export default function AdminPage() {
       if (validClasses.length > 0) {
         setClassrooms(validClasses);
         setSelectedClassroom(validClasses[0].id);
+
+        const { data: countRows } = await supabase
+          .from('students')
+          .select('id, classroom_id')
+          .in('classroom_id', validClasses.map(c => c.id));
+
+        const counts = (countRows || []).reduce((acc, studentRow) => {
+          if (studentRow.classroom_id) {
+            acc[studentRow.classroom_id] = (acc[studentRow.classroom_id] || 0) + 1;
+          }
+          return acc;
+        }, {} as Record<string, number>);
+        setClassroomStudentCounts(counts);
+      } else {
+        setClassrooms([]);
+        setSelectedClassroom('');
+        setClassroomStudentCounts({});
       }
 
       const { data: vData } = await supabase.from('vocabulary').select('*');
@@ -512,14 +530,17 @@ export default function AdminPage() {
           )}
 
           {/* TAB: STUDENTS */}
-          {activeTab === 'students' && classroomMetrics && (
+          {activeTab === 'students' && (
             <motion.div key="students" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-4">
               
-              <div className="flex justify-between items-center mb-2">
-                <h2 className="text-lg font-black text-white">รายชื่อนักเรียนในห้อง</h2>
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-2">
+                <div>
+                  <h2 className="text-lg font-black text-white">รายชื่อนักเรียน / ไอดี แยกตามห้อง</h2>
+                  <p className="text-sm text-slate-400">เลือกห้องเพื่อดูรหัสนักเรียน, Username และสถานะบัญชีแบบอ่านง่าย</p>
+                </div>
                 <button 
                   onClick={handlePurgeUnverified}
-                  disabled={isPurging}
+                  disabled={isPurging || !selectedClassroom}
                   className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all disabled:opacity-50"
                 >
                   <AlertTriangle className="w-4 h-4" />
@@ -527,12 +548,78 @@ export default function AdminPage() {
                 </button>
               </div>
 
+              <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-4">
+                <div className="flex items-center gap-2 text-slate-300 text-sm font-bold mb-3">
+                  <Filter className="w-4 h-4 text-indigo-400" />
+                  เลือกห้องเรียน
+                </div>
+                {Object.entries(groupedClassrooms).length === 0 ? (
+                  <div className="text-sm text-slate-500">ยังไม่มีข้อมูลห้องเรียนในระบบ</div>
+                ) : (
+                  <div className="space-y-3">
+                    {Object.entries(groupedClassrooms).map(([grade, rooms]) => (
+                      <div key={grade}>
+                        <div className="text-[11px] uppercase tracking-wider text-slate-500 font-black mb-2">{grade}</div>
+                        <div className="flex flex-wrap gap-2">
+                          {(rooms as any[]).map((room) => (
+                            <button
+                              key={room.id}
+                              type="button"
+                              onClick={() => setSelectedClassroom(room.id)}
+                              className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${
+                                selectedClassroom === room.id
+                                  ? 'bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20'
+                                  : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-indigo-500/50 hover:text-white'
+                              }`}
+                            >
+                              ห้อง {room.class_name}
+                              <span className={`ml-2 text-xs ${selectedClassroom === room.id ? 'text-indigo-100' : 'text-slate-500'}`}>
+                                {classroomStudentCounts[room.id] || 0} คน
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+                  <div className="text-xs text-slate-500 font-bold">ห้องที่เลือก</div>
+                  <div className="text-xl font-black text-white mt-1">
+                    {classrooms.find((room) => room.id === selectedClassroom)?.class_name || '-'}
+                  </div>
+                </div>
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+                  <div className="text-xs text-slate-500 font-bold">จำนวนนักเรียนในห้อง</div>
+                  <div className="text-xl font-black text-emerald-400 mt-1">{studentsList.length} คน</div>
+                </div>
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+                  <div className="text-xs text-slate-500 font-bold">ยังไม่ยืนยันตัวตน</div>
+                  <div className="text-xl font-black text-amber-400 mt-1">
+                    {studentsList.filter((studentItem) => !studentItem.is_verified).length} คน
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+              {studentsList.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Users className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-bold text-white mb-2">ยังไม่มีนักเรียนในห้องนี้</h3>
+                  <p className="text-slate-400 text-sm">เมื่อมีนักเรียนลงทะเบียนเข้าห้องนี้ รายชื่อและไอดีจะปรากฏที่นี่ทันที</p>
+                </div>
+              ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-950 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider">
                       <th className="p-4">นักเรียน</th>
+                      <th className="p-4">ห้อง</th>
+                      <th className="p-4">รหัสนักเรียน</th>
+                      <th className="p-4">Username</th>
                       <th className="p-4 text-center">ด่าน</th>
                       <th className="p-4 text-center">Acc</th>
                       <th className="p-4 text-center">Risk</th>
@@ -540,7 +627,7 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-900/50 text-sm text-slate-200">
-                    {classroomMetrics.students.map(s => (
+                    {(classroomMetrics?.students || []).map(s => (
                       <tr key={s.id} className="hover:bg-slate-900/35 transition-colors">
                         <td className="p-4">
                           <div className="font-bold text-white flex items-center gap-2">
@@ -551,7 +638,20 @@ export default function AdminPage() {
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-slate-500 font-mono">{s.student_id}</div>
+                          <div className="text-xs text-slate-500">{s.first_name} {s.last_name}</div>
+                        </td>
+                        <td className="p-4 text-slate-300 font-bold">
+                          {s.classrooms?.class_name || `${s.grade_level || '-'}${s.room_number ? `/${s.room_number}` : ''}`}
+                        </td>
+                        <td className="p-4">
+                          <span className="font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-slate-300">
+                            {s.student_id || '-'}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <span className="font-mono text-xs bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-2 py-1 text-indigo-300">
+                            {s.username || '-'}
+                          </span>
                         </td>
                         <td className="p-4 text-center font-bold text-indigo-400">{(Array.isArray(s.learning_paths) ? s.learning_paths[0] : s.learning_paths)?.current_stage || 1}</td>
                         <td className="p-4 text-center font-bold">{Math.round(s.acc)}%</td>
@@ -583,6 +683,7 @@ export default function AdminPage() {
                   </tbody>
                 </table>
               </div>
+              )}
               </div>
             </motion.div>
           )}
@@ -756,9 +857,9 @@ export default function AdminPage() {
         </AnimatePresence>
 
         <AnimatePresence mode="wait">
-          {/* TAB: SETTINGS */}
           {activeTab === 'settings' && (
             <motion.div key="settings" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
+              <SettingsTab teacher={teacher} />
               <div className="bg-slate-900/40 border border-rose-500/20 rounded-3xl p-6">
                 <h3 className="text-xl font-black text-rose-400 mb-6 flex items-center gap-3">
                   <AlertTriangle className="w-6 h-6" /> Danger Zone (โซนอันตราย)
@@ -767,7 +868,7 @@ export default function AdminPage() {
                 <div className="bg-slate-800/50 p-5 rounded-2xl border border-rose-500/10 flex flex-col sm:flex-row justify-between items-center gap-4">
                   <div>
                     <h4 className="text-white font-bold text-lg mb-1">รีเซ็ตข้อมูลนักเรียนทุกคน (Reset All Students)</h4>
-                    <p className="text-slate-400 text-sm">การดำเนินการนี้จะล้างข้อมูลการผ่านด่าน, เหรียญ, ตั๋วสุ่ม และ **การ์ดทั้งหมด** ของนักเรียนทุกคนในระบบ ข้อมูลจะไม่สามารถกู้คืนได้</p>
+                    <p className="text-slate-400 text-sm">การดำเนินการนี้จะล้างข้อมูลการผ่านด่าน, เหรียญ, ตั๋วสุ่ม และการ์ดทั้งหมดของนักเรียนทุกคนในระบบ ข้อมูลจะไม่สามารถกู้คืนได้</p>
                   </div>
                   <button 
                     onClick={handleResetAllStudents}
@@ -779,12 +880,6 @@ export default function AdminPage() {
                   </button>
                 </div>
               </div>
-            </motion.div>
-          )}
-          {/* TAB: SETTINGS */}
-          {activeTab === 'settings' && (
-            <motion.div key="settings" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
-              <SettingsTab teacher={teacher} />
             </motion.div>
           )}
 

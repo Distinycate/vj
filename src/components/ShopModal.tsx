@@ -12,7 +12,7 @@ interface ShopModalProps {
 export default function ShopModal({ onClose }: ShopModalProps) {
   const { student, progress, setProgress } = useAppStore();
   const [items, setItems] = useState<Record<string, any>[]>([]);
-  const [inventory, setInventory] = useState<string[]>([]);
+  const [inventory, setInventory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
@@ -22,9 +22,9 @@ export default function ShopModal({ onClose }: ShopModalProps) {
     if (shopItems) setItems(shopItems);
 
     // Fetch inventory
-    const { data: inv } = await supabase.from('student_inventory').select('item_id').eq('student_id', student.id);
+    const { data: inv } = await supabase.from('student_inventory').select('id, item_id, quantity').eq('student_id', student.id);
     if (inv) {
-        setInventory(inv.map(i => i.item_id));
+        setInventory(inv);
     }
     setLoading(false);
   };
@@ -34,7 +34,8 @@ export default function ShopModal({ onClose }: ShopModalProps) {
   }, []);
 
   const handleBuy = async (item: Record<string, any>) => {
-    if ((progress?.coins || 0) < item.price) {
+    const price = Number(item.price || 0);
+    if ((progress?.coins || 0) < price) {
       setMessage('เหรียญไม่พอ!');
       setTimeout(() => setMessage(''), 2000);
       return;
@@ -42,17 +43,25 @@ export default function ShopModal({ onClose }: ShopModalProps) {
 
     try {
       // Deduct coins
-      const newCoins = (progress?.coins || 0) - item.price;
+      const newCoins = (progress?.coins || 0) - price;
       const { error: coinError } = await supabase
         .from('learning_paths')
         .update({ coins: newCoins })
         .eq('student_id', student.id);
       if (coinError) throw coinError;
       
-      // Add to inventory
-      const { error: inventoryError } = await supabase
-        .from('student_inventory')
-        .insert([{ student_id: student.id, item_id: item.id }]);
+      // Add to inventory. If the item already exists, increase quantity instead
+      // of inserting a duplicate row.
+      const existingInventory = inventory.find((row) => row.item_id === item.id);
+      const inventoryMutation = existingInventory
+        ? supabase
+            .from('student_inventory')
+            .update({ quantity: Number(existingInventory.quantity || 0) + 1 })
+            .eq('id', existingInventory.id)
+        : supabase
+            .from('student_inventory')
+            .insert([{ student_id: student.id, item_id: item.id, quantity: 1 }]);
+      const { error: inventoryError } = await inventoryMutation;
       if (inventoryError) {
         await supabase
           .from('learning_paths')
@@ -64,16 +73,18 @@ export default function ShopModal({ onClose }: ShopModalProps) {
       // Update coins ledger
       await supabase.from('coins_transactions').insert([{
         student_id: student.id,
-        amount: -item.price,
+        amount: -price,
         source: `SHOP_BUY_${item.item_code}`
       }]);
 
       setProgress({ ...progress, coins: newCoins });
       
       // Update local inventory state
-      const newInv = [...inventory, item.id];
-      setInventory(newInv);
-      setMessage(`ซื้อ ${item.name} สำเร็จ!`);
+      setInventory((current) => existingInventory
+        ? current.map((row) => row.id === existingInventory.id ? { ...row, quantity: Number(row.quantity || 0) + 1 } : row)
+        : [...current, { id: `local-${item.id}`, item_id: item.id, quantity: 1 }]
+      );
+      setMessage(`ซื้อ ${item.name || item.item_name} สำเร็จ!`);
       setTimeout(() => setMessage(''), 2000);
       
     } catch (err) {
@@ -114,7 +125,9 @@ export default function ShopModal({ onClose }: ShopModalProps) {
           ) : (
             <div className="space-y-4">
               {items.map(item => {
-                const isBought = inventory.includes(item.id);
+                const owned = inventory.find((row) => row.item_id === item.id);
+                const ownedQuantity = Number(owned?.quantity || 0);
+                const price = Number(item.price || 0);
                 
                 return (
                   <div key={item.id} className="bg-slate-700/30 border border-slate-600 rounded-2xl p-4 flex justify-between items-center">
@@ -123,23 +136,22 @@ export default function ShopModal({ onClose }: ShopModalProps) {
                         {item.image_url}
                       </div>
                       <div>
-                        <h3 className="text-white font-bold text-lg">{item.name}</h3>
-                        <p className="text-slate-400 text-sm">ราคา {item.price} เหรียญ</p>
+                        <h3 className="text-white font-bold text-lg">{item.name || item.item_name}</h3>
+                        <p className="text-slate-400 text-sm">ราคา {price} เหรียญ</p>
+                        {ownedQuantity > 0 && <p className="text-xs text-emerald-400 mt-1">มีแล้ว {ownedQuantity} ชิ้น</p>}
                       </div>
                     </div>
                     
                     <button 
                       onClick={() => handleBuy(item)}
-                      disabled={isBought || (progress?.coins || 0) < item.price}
+                      disabled={(progress?.coins || 0) < price}
                       className={`px-6 py-3 rounded-xl font-bold transition-all ${
-                        isBought 
-                          ? 'bg-slate-600 text-slate-400 cursor-not-allowed' 
-                          : (progress?.coins || 0) < item.price
+                        (progress?.coins || 0) < price
                             ? 'bg-rose-500/20 text-rose-400 cursor-not-allowed'
                             : 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/20'
                       }`}
                     >
-                      {isBought ? 'ขายแล้ว' : 'ซื้อ'}
+                      ซื้อเพิ่ม
                     </button>
                   </div>
                 );

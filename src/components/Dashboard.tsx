@@ -19,7 +19,6 @@ import StudentHero from '@/components/StudentHero';
 import StudentTeamCard from '@/components/StudentTeamCard';
 import TeamLeaderboard from '@/components/TeamLeaderboard';
 import CardCenterModal from '@/components/CardCenterModal';
-import MissionSelectionModal from '@/components/MissionSelectionModal';
 
 const CARD_RARITY_RANK: Record<string, number> = { N: 0, R: 1, SR: 2, SSR: 3, UR: 4 };
 
@@ -49,8 +48,8 @@ export default function Dashboard() {
   const [myTeams, setMyTeams] = useState<any[]>([]);
   const [teamScores, setTeamScores] = useState<Record<string, any>>({});
   const [teamError, setTeamError] = useState('');
-  const [isMissionModalOpen, setIsMissionModalOpen] = useState(false);
   const [stageStars, setStageStars] = useState<Record<number, number>>({});
+  const [realAccuracy, setRealAccuracy] = useState<number | null>(null);
 
   // Classroom stats calculations
   const [classroomStats, setClassroomStats] = useState({
@@ -138,6 +137,62 @@ export default function Dashboard() {
         const level = Math.floor((pathData.total_exp || pathData.exp || 0) / 100) + 1;
         setStats({ xp: pathData.total_exp || pathData.exp || 0, level });
       }
+
+      // 3.1 Fetch real gameplay accuracy and stage stars.
+      // stage_results is the newer source, but the live DB has historical attempts
+      // without stage_results rows, so attempts is the safe fallback for display.
+      const [{ data: stageResultRows }, { data: attemptRows }] = await Promise.all([
+        supabase
+          .from('stage_results')
+          .select('stage_number, accuracy, stars, passed')
+          .eq('user_id', student.id),
+        supabase
+          .from('attempts')
+          .select('score, total_questions, is_passed, stages(stage_number)')
+          .eq('student_id', student.id),
+      ]);
+
+      const accuracySource = (stageResultRows && stageResultRows.length > 0)
+        ? stageResultRows.map((row: any) => ({
+            accuracy: Number(row.accuracy || 0),
+            totalQuestions: 1,
+          }))
+        : (attemptRows || []).map((row: any) => {
+            const totalQuestions = Number(row.total_questions || 0);
+            return {
+              accuracy: totalQuestions > 0 ? (Number(row.score || 0) / totalQuestions) * 100 : 0,
+              totalQuestions,
+            };
+          }).filter((row: any) => row.totalQuestions > 0);
+
+      if (accuracySource.length > 0) {
+        const averageAccuracy = accuracySource.reduce((sum: number, row: any) => sum + row.accuracy, 0) / accuracySource.length;
+        setRealAccuracy(Math.round(averageAccuracy));
+      } else {
+        setRealAccuracy(null);
+      }
+
+      const starsByStage: Record<number, number> = {};
+      for (const row of stageResultRows || []) {
+        const stageNumber = Number(row.stage_number || 0);
+        if (!stageNumber) continue;
+        const derivedStars = Number(row.stars || 0) || (row.passed ? 1 : 0);
+        starsByStage[stageNumber] = Math.max(starsByStage[stageNumber] || 0, derivedStars);
+      }
+
+      if (Object.keys(starsByStage).length === 0) {
+        for (const row of attemptRows || []) {
+          if (!row.is_passed) continue;
+          const stageRelation = Array.isArray(row.stages) ? row.stages[0] : row.stages;
+          const stageNumber = Number(stageRelation?.stage_number || 0);
+          const totalQuestions = Number(row.total_questions || 0);
+          if (!stageNumber || totalQuestions <= 0) continue;
+          const accuracy = (Number(row.score || 0) / totalQuestions) * 100;
+          const derivedStars = accuracy >= 90 ? 3 : accuracy >= 75 ? 2 : 1;
+          starsByStage[stageNumber] = Math.max(starsByStage[stageNumber] || 0, derivedStars);
+        }
+      }
+      setStageStars(starsByStage);
 
       // 4. Fetch Leaderboard for Classroom
       const { data: leadData } = await supabase
@@ -289,16 +344,6 @@ export default function Dashboard() {
         />
       )}
 
-      <MissionSelectionModal 
-        isOpen={isMissionModalOpen} 
-        onClose={() => setIsMissionModalOpen(false)} 
-        onSelect={(level) => {
-          setMissionLevel(level);
-          setIsMissionModalOpen(false);
-          setScreen('game');
-        }} 
-      />
-
       <div className="max-w-4xl mx-auto relative z-10">
         <StudentHero 
           student={student} 
@@ -326,7 +371,7 @@ export default function Dashboard() {
           <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
             <Target className="w-6 h-6 text-emerald-400 mb-2" />
             <span className="text-xs text-slate-400 font-bold mb-1">ความแม่นยำ</span>
-            <span className="text-xl font-black text-white">{stats.xp > 0 ? '85%' : '-'}</span>
+            <span className="text-xl font-black text-white">{realAccuracy === null ? '-' : `${realAccuracy}%`}</span>
           </div>
           <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
             <BrainCircuit className="w-6 h-6 text-indigo-400 mb-2" />
@@ -568,19 +613,13 @@ export default function Dashboard() {
                     <BookOpen className="w-4 h-4 text-emerald-400" /> ท่องศัพท์ด่านนี้
                   </button>
                   <button 
-                    onClick={() => setIsMissionModalOpen(true)} 
-                    disabled={!hasStudiedCurrentStage}
-                    className={`w-full sm:w-auto px-8 py-4 font-black rounded-2xl flex items-center justify-center gap-2 transition-all text-sm ${
-                      hasStudiedCurrentStage 
-                        ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 hover:scale-[1.02]' 
-                        : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
-                    }`}
+                    onClick={() => {
+                      setMissionLevel(1);
+                      setScreen('game');
+                    }}
+                    className="w-full sm:w-auto px-8 py-4 font-black rounded-2xl flex items-center justify-center gap-2 transition-all text-sm bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 hover:scale-[1.02]"
                   >
-                    {hasStudiedCurrentStage ? (
-                      <><Play className="w-4 h-4 fill-slate-950" /> เริ่มเกมท้าทาย ➡️</>
-                    ) : (
-                      <>🔒 ต้องเข้าเรียนคำศัพท์ก่อน</>
-                    )}
+                    <Play className="w-4 h-4 fill-slate-950" /> เริ่มเกมท้าทาย ➡️
                   </button>
                 </div>
               </div>

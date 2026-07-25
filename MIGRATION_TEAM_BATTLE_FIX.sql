@@ -66,6 +66,27 @@ CREATE UNIQUE INDEX IF NOT EXISTS one_active_school_season
   ON public.team_battle_seasons(scope)
   WHERE scope = 'school' AND is_active = true;
 
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'team_battle_seasons'
+      AND column_name = 'status'
+  ) THEN
+    EXECUTE $sql$
+      UPDATE public.team_battle_seasons
+      SET status = CASE
+        WHEN is_active = true THEN 'ACTIVE'
+        WHEN status = 'REWARDED' THEN 'REWARDED'
+        ELSE 'CLOSED'
+      END
+      WHERE scope = 'school'
+    $sql$;
+  END IF;
+END;
+$$;
+
 INSERT INTO public.teams(team_name, team_icon, team_color, team_type, is_active)
 VALUES
   ('Phoenix', '🔥', '#ef4444', 'school', true),
@@ -257,6 +278,18 @@ BEGIN
   UPDATE public.team_battle_seasons
   SET is_active = false
   WHERE scope = 'school' AND is_active = true;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'team_battle_seasons'
+      AND column_name = 'status'
+  ) THEN
+    EXECUTE $sql$
+      UPDATE public.team_battle_seasons
+      SET status = CASE WHEN status = 'REWARDED' THEN 'REWARDED' ELSE 'CLOSED' END
+      WHERE scope = 'school' AND is_active = false
+    $sql$;
+  END IF;
   INSERT INTO public.team_battle_seasons(
     season_name, scope, start_at, end_at, is_active
   )
@@ -264,6 +297,14 @@ BEGIN
     trim(p_season_name), 'school', now(), now() + interval '30 days', true
   )
   RETURNING * INTO v_season;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'team_battle_seasons'
+      AND column_name = 'status'
+  ) THEN
+    EXECUTE 'UPDATE public.team_battle_seasons SET status = ''ACTIVE'' WHERE id = $1' USING v_season.id;
+  END IF;
   RETURN v_season;
 END;
 $$;
