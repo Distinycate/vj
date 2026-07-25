@@ -16,7 +16,7 @@ import { useAntiCheat } from '@/hooks/useAntiCheat';
 type GameStep = 'play' | 'reflection' | 'results';
 
 export default function Game() {
-  const { setScreen, progress, student, setProgress, missionLevel } = useAppStore();
+  const { setScreen, progress, student, setProgress, missionLevel, selectedStageNumber, setSelectedStageNumber } = useAppStore();
   const [words, setWords] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -85,7 +85,7 @@ export default function Game() {
 
   useEffect(() => {
     async function initStage() {
-      const stageNum = progress?.current_stage || 1;
+      const stageNum = selectedStageNumber || progress?.current_stage || 1;
       const isDemoMode = useDemoStore.getState().isDemoMode;
 
       // --- DEMO MODE: Use mock data, skip all Supabase calls ---
@@ -185,7 +185,7 @@ export default function Game() {
       setLoading(false);
     }
     initStage();
-  }, [progress, student.id]);
+  }, [progress, selectedStageNumber, student.id, missionLevel]);
 
   useEffect(() => {
     if (gameState === 'play' && words.length > 0 && currentIndex < words.length) {
@@ -341,7 +341,7 @@ export default function Game() {
        return; // Block submission if speed hack is detected
     }
 
-    const stageNum = progress?.current_stage || 1;
+    const stageNum = selectedStageNumber || progress?.current_stage || 1;
     const avgResponseTime = finalResponseTimes.length > 0 
       ? finalResponseTimes.reduce((a, b) => a + b, 0) / finalResponseTimes.length 
       : 10;
@@ -384,6 +384,7 @@ export default function Game() {
   };
 
   const handleFinishGame = () => {
+    setSelectedStageNumber(null);
     setScreen('dashboard');
   };
 
@@ -408,7 +409,10 @@ export default function Game() {
           <h2 className="text-2xl font-black text-white mb-2">ยังเริ่มด่านไม่ได้</h2>
           <p className="text-slate-400 text-sm leading-relaxed mb-6">{loadError}</p>
           <button
-            onClick={() => setScreen('dashboard')}
+            onClick={() => {
+              setSelectedStageNumber(null);
+              setScreen('dashboard');
+            }}
             className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold"
           >
             กลับหน้าแผนที่
@@ -431,7 +435,7 @@ export default function Game() {
             ? 'ระบบตรวจพบการสลับหน้าจอ (พับแท็บ) เกิน 3 ครั้ง ซึ่งถือเป็นการผิดกฎการทดสอบในโหมดนี้'
             : 'ระบบตรวจพบการทำเวลาที่ผิดปกติ (Speed Hack) เวลาที่ใช้ในการทำข้อสอบน้อยเกินกว่าจะเป็นไปได้'}
         </p>
-        <button onClick={() => setScreen('dashboard')} className="px-8 py-4 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold">
+        <button onClick={handleFinishGame} className="px-8 py-4 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold">
           กลับสู่หน้าหลัก
         </button>
       </div>
@@ -570,7 +574,7 @@ export default function Game() {
         </div>
 
         <button 
-          onClick={() => setScreen('dashboard')} 
+          onClick={handleFinishGame} 
           className="px-3.5 py-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-white rounded-xl flex items-center gap-1.5 transition-all text-xs font-bold"
         >
           <X className="w-4 h-4 text-rose-400" /> ยอมแพ้

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Coins, Gift, Shield, Sparkles, Sword, Ticket, X } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
+import { useDemoStore } from '@/store/useDemoStore';
 import {
   BattleCard,
   GACHA_COIN_COST,
@@ -45,10 +46,69 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
   const [latestPullWasPity, setLatestPullWasPity] = useState(false);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
 
   const loadData = useCallback(async () => {
     if (!student) return;
+    setLoading(true);
+    setMessage('');
+
+    if (student.is_demo_account || useDemoStore.getState().isDemoMode) {
+      setInventory([
+        {
+          id: 'demo-card-shield',
+          quantity: 1,
+          reserved_quantity: 0,
+          cards: {
+            id: 'demo-shield-card',
+            card_code: 'SHIELD',
+            name: 'การ์ดกันแบน',
+            description: 'ใช้ป้องกันการลงโทษหรือการ์ดโจมตี โดยครูเป็นผู้ตัดสินผลสุดท้าย',
+            rarity: 'SR',
+            effect_type: 'DEFENSE',
+            image_url: '🛡️',
+          },
+        },
+        {
+          id: 'demo-card-reflect',
+          quantity: 1,
+          reserved_quantity: 0,
+          cards: {
+            id: 'demo-reflect-card',
+            card_code: 'REFLECT',
+            name: 'การ์ดย้อนกลับ',
+            description: 'ใช้เมื่อถูกโจมตีเพื่อสะท้อนผลกลับไปยังผู้เริ่มใช้การ์ด',
+            rarity: 'SSR',
+            effect_type: 'REFLECT',
+            image_url: '↩️',
+          },
+        },
+        {
+          id: 'demo-card-meditate',
+          quantity: 2,
+          reserved_quantity: 0,
+          cards: {
+            id: 'demo-meditate-card',
+            card_code: 'MEDITATE',
+            name: 'สั่งเพื่อน 1 คน นั่งสมาธิ 10 นาที',
+            description: 'เลือกเพื่อน 1 คนเพื่อส่งคำขอให้ครูประกาศและอนุมัติ',
+            rarity: 'R',
+            effect_type: 'ATTACK',
+            image_url: '🧘',
+          },
+        },
+      ]);
+      setClassmates([
+        { id: 'demo-classmate-1', student_name: 'นักเรียนตัวอย่าง A' },
+        { id: 'demo-classmate-2', student_name: 'นักเรียนตัวอย่าง B' },
+        { id: 'demo-classmate-3', student_name: 'นักเรียนตัวอย่าง C' },
+      ]);
+      setIncoming([]);
+      setLoading(false);
+      return;
+    }
+
     const [inventoryResult, classmatesResult, incomingResult, pathResult] = await Promise.all([
       supabase
         .from('card_inventory')
@@ -75,10 +135,25 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
         .single(),
     ]);
 
-    if (inventoryResult.data) setInventory(inventoryResult.data as unknown as InventoryRow[]);
+    const loadError = inventoryResult.error || classmatesResult.error || incomingResult.error;
+    if (loadError) {
+      setMessage(`โหลดศูนย์การ์ดไม่สำเร็จ: ${loadError.message}`);
+      setLoading(false);
+      return;
+    }
+
+    if (inventoryResult.data) {
+      setInventory((inventoryResult.data as any[]).map((row) => ({
+        ...row,
+        reserved_quantity: Number(row.reserved_quantity || 0),
+        quantity: Number(row.quantity || 0),
+        cards: Array.isArray(row.cards) ? row.cards[0] : row.cards,
+      })).filter((row) => row.cards) as InventoryRow[]);
+    }
     if (classmatesResult.data) setClassmates(classmatesResult.data);
     if (incomingResult.data) setIncoming(incomingResult.data);
     if (pathResult.data) setProgress(pathResult.data);
+    setLoading(false);
   }, [setProgress, student]);
 
   useEffect(() => {
@@ -113,6 +188,22 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
     setBusy(true);
     setMessage('');
     try {
+      if (student.is_demo_account || useDemoStore.getState().isDemoMode) {
+        const demoCard: BattleCard = {
+          id: 'demo-pull-ur',
+          card_code: 'EARLY_HOME',
+          name: 'กลับบ้านก่อน',
+          description: 'การ์ดตัวอย่างระดับ UR สำหรับแสดงผลการสุ่มในโหมดสาธิต',
+          rarity: 'UR',
+          effect_type: 'BUFF',
+          image_url: '🏠',
+        };
+        setLatestPull(demoCard);
+        setLatestPullWasPity(false);
+        setMessage('โหมดสาธิต: สุ่มการ์ดตัวอย่างสำเร็จ ข้อมูลจริงไม่ถูกเปลี่ยน');
+        return;
+      }
+
       const result = await pullGachaCard(student.id);
       setLatestPull(result.card);
       setLatestPullWasPity(Boolean(result.is_pity));
@@ -151,6 +242,15 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
 
     setBusy(true);
     try {
+      if (student.is_demo_account || useDemoStore.getState().isDemoMode) {
+        setMessage('โหมดสาธิต: ส่งคำขอใช้การ์ดตัวอย่างแล้ว ข้อมูลจริงไม่ถูกบันทึก');
+        setSelectedCard(null);
+        setSelectedTarget('');
+        setSelectedTarget2('');
+        setSelectedTarget3('');
+        return;
+      }
+
       const metadata: any = {};
       if (isCleanRoom) {
          const t2 = classmates.find(c => c.id === selectedTarget2);
@@ -179,6 +279,11 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
     if (!student || busy) return;
     setBusy(true);
     try {
+      if (student.is_demo_account || useDemoStore.getState().isDemoMode) {
+        setMessage('โหมดสาธิต: ส่งการ์ดสวนกลับตัวอย่างแล้ว');
+        return;
+      }
+
       await counterCardAction(logId, student.id, cardId);
       setMessage('ส่งการ์ดสวนกลับแล้ว รอครูยืนยันผล');
       await loadData();
@@ -222,7 +327,13 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
             </div>
           )}
 
-          {incoming.map((log) => {
+          {loading && (
+            <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-6 text-center text-slate-400 text-sm">
+              กำลังโหลดคลังการ์ดของคุณ...
+            </div>
+          )}
+
+          {!loading && incoming.map((log) => {
             const seconds = log.counter_deadline
               ? Math.max(0, Math.ceil((new Date(log.counter_deadline).getTime() - now) / 1000))
               : 0;
@@ -257,7 +368,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
             );
           })}
 
-          <section className="grid md:grid-cols-[1fr_1.4fr] gap-5">
+          {!loading && <section className="grid md:grid-cols-[1fr_1.4fr] gap-5">
             <div className="bg-gradient-to-br from-fuchsia-500/15 to-indigo-500/10 border border-fuchsia-500/20 rounded-2xl p-5 text-center">
               <Gift className="w-12 h-12 text-fuchsia-400 mx-auto mb-3" />
               <h3 className="text-xl font-black text-white">สุ่มการ์ด</h3>
@@ -295,9 +406,9 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                 <span className="text-slate-500">การ์ดที่สุ่มได้จะแสดงที่นี่</span>
               )}
             </div>
-          </section>
+          </section>}
 
-          <section>
+          {!loading && <section>
             <h3 className="text-lg font-black text-white mb-3">คลังการ์ดของฉัน</h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {inventory.map((row) => {
@@ -332,7 +443,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                 </div>
               )}
             </div>
-          </section>
+          </section>}
         </div>
       </motion.div>
 

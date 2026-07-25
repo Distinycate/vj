@@ -35,7 +35,7 @@ function getRareCardStatus(inventory: any) {
 }
 
 export default function Dashboard() {
-  const { student, progress, logout, setScreen, setProgress, hasStudiedCurrentStage, setStudiedCurrentStage, setMissionLevel } = useAppStore();
+  const { student, progress, logout, setScreen, setProgress, setStudiedCurrentStage, setMissionLevel, setSelectedStageNumber } = useAppStore();
   const [reviewWords, setReviewWords] = useState<any[]>([]);
   const [wordCollection, setWordCollection] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({ xp: 0, level: 1 });
@@ -338,12 +338,6 @@ export default function Dashboard() {
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
 
-      {showCardCenter && (
-        <CardCenterModal
-          onClose={() => setShowCardCenter(false)}
-        />
-      )}
-
       <div className="max-w-4xl mx-auto relative z-10">
         <StudentHero 
           student={student} 
@@ -541,15 +535,28 @@ export default function Dashboard() {
                               if (isCompletedStage) stageState = 'completed';
                               if (isCurrentStage) stageState = 'current';
 
+                              const canPlayStage = stageState === 'completed' || stageState === 'current';
+                              const stageActionLabel = stageState === 'completed' ? 'เล่นซ้ำ' : stageState === 'current' ? 'เล่นเลย' : 'ล็อก';
+
+                              const handleStageClick = () => {
+                                if (!canPlayStage) return;
+                                setMissionLevel(1);
+                                setSelectedStageNumber(stageState === 'current' ? null : stageNum);
+                                setScreen('game');
+                              };
+
                               return (
-                                <div 
+                                <button
+                                  type="button"
                                   key={stageNum}
                                   data-demo-guide={isBossStage ? 'final-boss' : (stageState === 'completed' && stageNum === currentStage - 1 ? 'replay-stage' : undefined)}
-                                  className={`p-3.5 rounded-2xl flex items-center justify-between border ${
+                                  disabled={!canPlayStage}
+                                  onClick={handleStageClick}
+                                  className={`w-full text-left p-3.5 rounded-2xl flex items-center justify-between border transition-all ${
                                     stageState === 'completed' ? 'bg-slate-900/40 border-slate-850 text-slate-300' :
                                     stageState === 'current' ? 'bg-gradient-to-r from-emerald-500/10 to-teal-500/5 border-emerald-500/30 text-emerald-400 font-extrabold shadow-inner' :
                                     'bg-slate-950/60 border-slate-950 text-slate-600 opacity-60'
-                                  }`}
+                                  } ${canPlayStage ? 'hover:border-emerald-500/40 hover:bg-slate-900/70 hover:scale-[1.01] cursor-pointer' : 'cursor-not-allowed'}`}
                                 >
                                   <div className="flex items-center gap-3">
                                     <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black border ${
@@ -580,11 +587,15 @@ export default function Dashboard() {
                                   </div>
 
                                   <div>
-                                    {stageState === 'completed' && <span className="text-emerald-400 text-sm">✅</span>}
+                                    {stageState === 'completed' && (
+                                      <span className="text-emerald-400 text-xs font-black bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-full">
+                                        {stageActionLabel}
+                                      </span>
+                                    )}
                                     {stageState === 'current' && <span className="text-amber-400 text-sm animate-bounce">🎯</span>}
                                     {stageState === 'locked' && <span className="text-slate-600 text-sm">🔒</span>}
                                   </div>
-                                </div>
+                                </button>
                               );
                             })}
                           </div>
@@ -615,6 +626,7 @@ export default function Dashboard() {
                   <button 
                     onClick={() => {
                       setMissionLevel(1);
+                      setSelectedStageNumber(null);
                       setScreen('game');
                     }}
                     className="w-full sm:w-auto px-8 py-4 font-black rounded-2xl flex items-center justify-center gap-2 transition-all text-sm bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 hover:scale-[1.02]"
