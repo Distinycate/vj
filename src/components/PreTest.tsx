@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
+import { useDemoStore } from '@/store/useDemoStore';
 import { Volume2 } from 'lucide-react';
 import { playWordAudio } from '@/utils/audio';
 import {
@@ -125,6 +126,28 @@ export default function PreTest() {
     if (averageScore >= 21) newRank = 5;
 
     const newStage = 1; // All students start at Stage 1 in Adaptive Difficulty model!
+
+    if (useDemoStore.getState().isDemoMode) {
+      const newCount = pretestCount + 1;
+      
+      // Update Demo state
+      useDemoStore.getState().updateDemoProgress({
+        pretest_score: averageScore,
+        pretest_date: newCount >= 5 ? new Date().toISOString() : null,
+        rank: newRank,
+        current_stage: newStage
+      });
+
+      setProgress({
+        ...progress,
+        initial_rank: newRank,
+        current_rank: newRank,
+        current_stage: newStage,
+        pretest_score: averageScore,
+        pretest_date: new Date().toISOString() // Let the app think it's done for UI sake
+      });
+      return;
+    }
 
     try {
       // 1. Log to pre_tests table

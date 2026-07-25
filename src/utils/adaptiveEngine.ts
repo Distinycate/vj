@@ -1,6 +1,7 @@
 import { supabase } from '@/utils/supabase/client';
 import { createTeamScoreEvent } from '@/utils/teamBattleEngine';
 import { ADAPTIVE_RANK_CONFIG, RankConfig, getWorldForStage } from './adaptiveConfig';
+import { useDemoStore } from '@/store/useDemoStore';
 import {
   filterDistractors,
   getVocabularyField,
@@ -447,6 +448,38 @@ function calculateStreak(lastActiveDate: string | null, currentStreak: number): 
 }
 
 export async function completeStage(studentId: string, stageNumber: number, result: CompleteStageResult, missionLevel: number = 1) {
+  if (useDemoStore.getState().isDemoMode) {
+    const passed = result.accuracy >= 60; // Mock pass score
+    const coins = passed ? 100 : 10;
+    const exp = passed ? 50 : 5;
+    
+    const demoProgress = useDemoStore.getState().demoProgress;
+    const newStage = passed && stageNumber === demoProgress.current_stage ? stageNumber + 1 : demoProgress.current_stage;
+    
+    useDemoStore.getState().updateDemoProgress({
+      coins: demoProgress.coins + coins,
+      exp: demoProgress.exp + exp,
+      current_stage: newStage,
+      stars: demoProgress.stars + (passed ? missionLevel : 0)
+    });
+    
+    return {
+      earnedCoins: coins,
+      earnedExp: exp,
+      rankUp: false,
+      newRank: demoProgress.rank,
+      passed,
+      passScore: 60,
+      streak: 1,
+      starMultiplier: 1,
+      earnedStars: passed ? missionLevel : 0,
+      accuracy: result.accuracy,
+      totalQuestions: result.totalQuestions,
+      usedHints: result.usedHints,
+      assistedWords: []
+    };
+  }
+
   try {
     const {
       score,

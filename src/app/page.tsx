@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import Dashboard from '@/components/Dashboard';
@@ -30,6 +31,7 @@ const generateRandomStudentId = () => {
 };
 
 export default function Home() {
+  const router = useRouter();
   const { student, progress, setStudent, setProgress, currentScreen } = useAppStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   
@@ -392,6 +394,13 @@ export default function Home() {
                loginRole === 'student' ? 'เข้าสู่ระบบผจญภัย 🚀' : 
                loginRole === 'teacher' ? 'เข้าสู่ระบบจัดการเรียนรู้ 👨‍🏫' : 
                'เข้าสู่ระบบรายงานผู้บริหาร 📊'}
+            </button>
+            <button 
+              type="button" 
+              onClick={() => router.push('/demo')} 
+              className="w-full bg-slate-800/50 hover:bg-purple-600/20 text-purple-300 border border-purple-500/30 font-bold py-3 rounded-xl transition-colors mt-2 flex items-center justify-center gap-2"
+            >
+              👑 เข้าสู่โหมดกรรมการ (Demo)
             </button>
           </div>
         ) : mode === 'register' && !isRegistrationOpen ? (

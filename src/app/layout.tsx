@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import NetworkStatus from "@/components/NetworkStatus";
+import DemoToolbar from "@/components/demo/DemoToolbar";
 
 export const metadata: Metadata = {
   title: "Vocab Journey 🚀",
@@ -28,6 +29,7 @@ export default function RootLayout({
         <meta name="google" content="notranslate" />
       </head>
       <body className="min-h-full flex flex-col bg-slate-950">
+        <DemoToolbar />
         <NetworkStatus />
         {children}
         <script dangerouslySetInnerHTML={{ __html: `document.addEventListener('contextmenu', event => event.preventDefault());` }} />
