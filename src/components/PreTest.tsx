@@ -55,22 +55,59 @@ export default function PreTest() {
   const fetchPretestData = async () => {
     setLoading(true);
     try {
-      if (useDemoStore.getState().isDemoMode) {
+      const isDemo = useDemoStore.getState().isDemoMode;
+
+      if (isDemo) {
+        // --- DEMO MODE: Use mock vocabulary, skip all Supabase calls ---
         setPretestCount(0);
         setPreviousPretests([]);
-      } else {
-        // 1. Fetch completed pretest count
-        const { data: pretestHistory, count } = await supabase
-          .from('pre_tests')
-          .select('*', { count: 'exact' })
-          .eq('student_id', student.id)
-          .order('created_at', { ascending: true });
-        
-        setPretestCount(count || 0);
-        setPreviousPretests(pretestHistory || []);
+
+        const demoVocab = [
+          { id: 'pv1', word: 'Accomplish', meaning_th: 'บรรลุ / สำเร็จ', part_of_speech: 'v.' },
+          { id: 'pv2', word: 'Brilliant', meaning_th: 'เฉลียวฉลาด / ยอดเยี่ยม', part_of_speech: 'adj.' },
+          { id: 'pv3', word: 'Confident', meaning_th: 'มั่นใจ / มีความเชื่อมั่น', part_of_speech: 'adj.' },
+          { id: 'pv4', word: 'Demonstrate', meaning_th: 'สาธิต / แสดงให้เห็น', part_of_speech: 'v.' },
+          { id: 'pv5', word: 'Efficient', meaning_th: 'มีประสิทธิภาพ', part_of_speech: 'adj.' },
+          { id: 'pv6', word: 'Flexible', meaning_th: 'ยืดหยุ่น / ปรับตัวได้', part_of_speech: 'adj.' },
+          { id: 'pv7', word: 'Generate', meaning_th: 'สร้าง / ก่อให้เกิด', part_of_speech: 'v.' },
+          { id: 'pv8', word: 'Innovative', meaning_th: 'คิดสร้างสรรค์ / ริเริ่มใหม่', part_of_speech: 'adj.' },
+          { id: 'pv9', word: 'Justify', meaning_th: 'พิสูจน์ / อ้างเหตุผล', part_of_speech: 'v.' },
+          { id: 'pv10', word: 'Knowledge', meaning_th: 'ความรู้ / ความเข้าใจ', part_of_speech: 'n.' },
+          { id: 'pv11', word: 'Leadership', meaning_th: 'ภาวะผู้นำ', part_of_speech: 'n.' },
+          { id: 'pv12', word: 'Motivation', meaning_th: 'แรงจูงใจ / แรงบันดาลใจ', part_of_speech: 'n.' },
+          { id: 'pv13', word: 'Navigate', meaning_th: 'นำทาง / ค้นหาเส้นทาง', part_of_speech: 'v.' },
+          { id: 'pv14', word: 'Observe', meaning_th: 'สังเกต / ดู', part_of_speech: 'v.' },
+          { id: 'pv15', word: 'Persevere', meaning_th: 'อดทน / มุ่งมั่น', part_of_speech: 'v.' },
+          { id: 'pv16', word: 'Quality', meaning_th: 'คุณภาพ / ลักษณะ', part_of_speech: 'n.' },
+          { id: 'pv17', word: 'Reliable', meaning_th: 'เชื่อถือได้ / น่าไว้วางใจ', part_of_speech: 'adj.' },
+          { id: 'pv18', word: 'Strategy', meaning_th: 'กลยุทธ์ / แผนการ', part_of_speech: 'n.' },
+          { id: 'pv19', word: 'Transform', meaning_th: 'เปลี่ยนแปลง / แปลงร่าง', part_of_speech: 'v.' },
+          { id: 'pv20', word: 'Unique', meaning_th: 'เป็นเอกลักษณ์ / พิเศษ', part_of_speech: 'adj.' },
+          { id: 'pv21', word: 'Valuable', meaning_th: 'มีคุณค่า / มีประโยชน์', part_of_speech: 'adj.' },
+          { id: 'pv22', word: 'Wisdom', meaning_th: 'ความฉลาด / ปัญญา', part_of_speech: 'n.' },
+          { id: 'pv23', word: 'Expand', meaning_th: 'ขยาย / แพร่กระจาย', part_of_speech: 'v.' },
+          { id: 'pv24', word: 'Achieve', meaning_th: 'บรรลุ / ทำสำเร็จ', part_of_speech: 'v.' },
+          { id: 'pv25', word: 'Evaluate', meaning_th: 'ประเมิน / ตัดสิน', part_of_speech: 'v.' },
+        ];
+
+        const shuffled = [...demoVocab].sort(() => Math.random() - 0.5);
+        setQuestions(
+          shuffled.map(v => generateQuestion(v, demoVocab)).filter(q => q.choices.length === 4)
+        );
+        return;
       }
 
-      // Fetch 25 random vocabulary words (Read-only is fine for demo)
+      // 1. Fetch completed pretest count (real students only)
+      const { data: pretestHistory, count } = await supabase
+        .from('pre_tests')
+        .select('*', { count: 'exact' })
+        .eq('student_id', student.id)
+        .order('created_at', { ascending: true });
+      
+      setPretestCount(count || 0);
+      setPreviousPretests(pretestHistory || []);
+
+      // 2. Fetch 25 random vocabulary words from Supabase
       const { data: vocab } = await supabase
         .from('vocabulary')
         .select('*')

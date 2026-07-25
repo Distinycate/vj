@@ -86,6 +86,55 @@ export default function Game() {
   useEffect(() => {
     async function initStage() {
       const stageNum = progress?.current_stage || 1;
+      const isDemoMode = useDemoStore.getState().isDemoMode;
+
+      // --- DEMO MODE: Use mock data, skip all Supabase calls ---
+      if (isDemoMode) {
+        setCurrentStageId('demo-stage-id');
+        setDifficultyConfig({ timeLimit: 15, passScore: 75, hintMode: 'limited' });
+        setTimeLeft(15);
+
+        // Mock vocabulary for demo
+        const demoVocab = [
+          { id: 'dv1', word: 'Advocate', meaning_th: 'สนับสนุน / ผู้สนับสนุน', part_of_speech: 'v./n.', stage_number: stageNum, difficulty_level: 'normal', example_sentence: null },
+          { id: 'dv2', word: 'Elaborate', meaning_th: 'อธิบายอย่างละเอียด', part_of_speech: 'v.', stage_number: stageNum, difficulty_level: 'hard', example_sentence: null },
+          { id: 'dv3', word: 'Persevere', meaning_th: 'อดทน / มุ่งมั่น', part_of_speech: 'v.', stage_number: stageNum, difficulty_level: 'normal', example_sentence: null },
+          { id: 'dv4', word: 'Comprehend', meaning_th: 'เข้าใจ / รับรู้', part_of_speech: 'v.', stage_number: stageNum, difficulty_level: 'easy', example_sentence: null },
+          { id: 'dv5', word: 'Significant', meaning_th: 'สำคัญ / มีนัยสำคัญ', part_of_speech: 'adj.', stage_number: stageNum, difficulty_level: 'normal', example_sentence: null },
+          { id: 'dv6', word: 'Diligent', meaning_th: 'ขยัน / มุ่งมั่น', part_of_speech: 'adj.', stage_number: stageNum, difficulty_level: 'easy', example_sentence: null },
+          { id: 'dv7', word: 'Consequence', meaning_th: 'ผลลัพธ์ / ผลที่ตามมา', part_of_speech: 'n.', stage_number: stageNum, difficulty_level: 'hard', example_sentence: null },
+          { id: 'dv8', word: 'Acknowledge', meaning_th: 'ยอมรับ / ตระหนัก', part_of_speech: 'v.', stage_number: stageNum, difficulty_level: 'normal', example_sentence: null },
+          { id: 'dv9', word: 'Strategy', meaning_th: 'กลยุทธ์ / แผนการ', part_of_speech: 'n.', stage_number: stageNum, difficulty_level: 'easy', example_sentence: null },
+          { id: 'dv10', word: 'Motivate', meaning_th: 'กระตุ้น / จูงใจ', part_of_speech: 'v.', stage_number: stageNum, difficulty_level: 'normal', example_sentence: null },
+        ];
+
+        const shuffleArr = (a: any[]) => [...a].sort(() => Math.random() - 0.5);
+        const candidates = shuffleArr(demoVocab);
+        const demoQuestions = demoVocab.map(word => {
+          const distractors = candidates.filter(c => c.id !== word.id).slice(0, 3);
+          const choices = shuffleArr([
+            { word_id: word.id, text: word.meaning_th, is_correct: true },
+            ...distractors.map(d => ({ word_id: d.id, text: d.meaning_th, is_correct: false }))
+          ]);
+          return {
+            id: word.id,
+            word: word.word,
+            correct_answer: word.meaning_th,
+            qType: 'MEANING_MC',
+            choices,
+            part_of_speech: word.part_of_speech,
+          };
+        });
+
+        setWords(demoQuestions);
+        setInventory([
+          { id: 'mock-item-1', item_id: 'item-1', quantity: 3, items: { item_code: 'TIME_FREEZE', item_name: 'Time Freeze', item_type: 'powerup', description: 'เพิ่มเวลา 10 วินาที', icon_url: '⏳' } },
+          { id: 'mock-item-2', item_id: 'item-2', quantity: 2, items: { item_code: 'FIFTY_FIFTY', item_name: '50/50', item_type: 'powerup', description: 'ตัดตัวเลือกผิด 2 ข้อ', icon_url: '✨' } },
+          { id: 'mock-item-3', item_id: 'item-3', quantity: 5, items: { item_code: 'EXTRA_LIFE', item_name: 'Extra Life', item_type: 'powerup', description: 'เพิ่มพลังชีวิต 1 ดวง', icon_url: '❤️' } },
+        ]);
+        setLoading(false);
+        return;
+      }
 
       // 1. Fetch stage ID
       const { data: stageData } = await supabase

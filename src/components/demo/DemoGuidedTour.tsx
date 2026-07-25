@@ -15,7 +15,7 @@ export default function DemoGuidedTour() {
   const { isDemoMode } = useDemoStore();
   const { isActive, currentStepIndex, nextStep, prevStep, stopTour, resetTour, goToStep } = useDemoGuideStore();
 
-  const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [targetRect, setTargetRect] = useState<{top: number, left: number, width: number, height: number, bottom: number, viewportTop: number, viewportBottom: number} | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [isWaiting, setIsWaiting] = useState(false);
 
@@ -36,23 +36,51 @@ export default function DemoGuidedTour() {
 
     // Look for target element
     let timeoutId: NodeJS.Timeout;
+    let animationFrameId: number;
+    let isUpdating = false;
+
+    const updateRect = (el: Element) => {
+      const rect = el.getBoundingClientRect();
+      const absTop = rect.top + window.scrollY;
+      const absLeft = rect.left + window.scrollX;
+      
+      setTargetRect(prev => {
+        if (
+          !prev ||
+          Math.abs(prev.top - absTop) > 1 ||
+          Math.abs(prev.left - absLeft) > 1 ||
+          Math.abs(prev.width - rect.width) > 1 ||
+          Math.abs(prev.height - rect.height) > 1 ||
+          Math.abs(prev.viewportTop - rect.top) > 50 // only update viewport if it shifted a lot to avoid micro re-renders
+        ) {
+          return {
+            top: absTop,
+            left: absLeft,
+            width: rect.width,
+            height: rect.height,
+            bottom: rect.bottom + window.scrollY,
+            viewportTop: rect.top,
+            viewportBottom: rect.bottom
+          };
+        }
+        return prev;
+      });
+    };
+
     const findTarget = () => {
       const el = document.querySelector(`[data-demo-guide="${step.target}"]`);
       if (el) {
-        // Found it
-        const rect = el.getBoundingClientRect();
-        setTargetRect(rect);
+        updateRect(el);
         setIsWaiting(false);
-        // Scroll into view if out of bounds
-        if (
-          rect.top < 100 ||
-          rect.bottom > window.innerHeight - 100
-        ) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < 100 || rect.bottom > window.innerHeight - 100) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(() => setTargetRect(el.getBoundingClientRect()), 400); // Update after scroll
+          setTimeout(() => {
+            const currentEl = document.querySelector(`[data-demo-guide="${step.target}"]`);
+            if (currentEl) updateRect(currentEl);
+          }, 400);
         }
       } else {
-        // Try again in 200ms
         setIsWaiting(true);
         timeoutId = setTimeout(findTarget, 200);
       }
@@ -62,9 +90,13 @@ export default function DemoGuidedTour() {
 
     // Listen to resize and scroll
     const handleUpdate = () => {
-      const el = document.querySelector(`[data-demo-guide="${step.target}"]`);
-      if (el) {
-        setTargetRect(el.getBoundingClientRect());
+      if (!isUpdating) {
+        isUpdating = true;
+        animationFrameId = requestAnimationFrame(() => {
+          const el = document.querySelector(`[data-demo-guide="${step.target}"]`);
+          if (el) updateRect(el);
+          isUpdating = false;
+        });
       }
     };
 
@@ -73,6 +105,7 @@ export default function DemoGuidedTour() {
 
     return () => {
       clearTimeout(timeoutId);
+      cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleUpdate);
       window.removeEventListener('scroll', handleUpdate);
     };
@@ -98,20 +131,20 @@ export default function DemoGuidedTour() {
   let placement = 'bottom';
 
   if (targetRect) {
-    const spaceBelow = window.innerHeight - targetRect.bottom;
-    const spaceAbove = targetRect.top;
+    const spaceBelow = window.innerHeight - targetRect.viewportBottom;
+    const spaceAbove = targetRect.viewportTop;
     
     // Default to bottom, unless not enough space
     if (spaceBelow < 350 && spaceAbove > 350) {
       placement = 'top';
-      tooltipTop = targetRect.top + window.scrollY - 20; // 20px gap
+      tooltipTop = targetRect.top - 20; // 20px gap
     } else {
       placement = 'bottom';
-      tooltipTop = targetRect.bottom + window.scrollY + 20;
+      tooltipTop = targetRect.bottom + 20;
     }
     
     // Center horizontally
-    tooltipLeft = targetRect.left + window.scrollX + (targetRect.width / 2);
+    tooltipLeft = targetRect.left + (targetRect.width / 2);
   }
 
   return (
@@ -126,8 +159,8 @@ export default function DemoGuidedTour() {
           <div
             className="absolute rounded-lg transition-all duration-500 ease-out border-2 border-indigo-500 pointer-events-none shadow-[0_0_15px_rgba(99,102,241,0.5)] bg-transparent"
             style={{
-              top: targetRect.top + window.scrollY - 4,
-              left: targetRect.left + window.scrollX - 4,
+              top: targetRect.top - 4,
+              left: targetRect.left - 4,
               width: targetRect.width + 8,
               height: targetRect.height + 8,
               boxShadow: '0 0 0 9999px rgba(0,0,0,0.6)',
