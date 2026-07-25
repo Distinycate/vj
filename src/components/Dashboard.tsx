@@ -333,7 +333,7 @@ export default function Dashboard() {
   const currentWorld = getWorldForStage(currentStage);
 
   return (
-    <div data-demo-guide="student-dashboard" className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-8 pb-24 relative overflow-hidden">
+    <div data-demo-guide="student-dashboard" className="min-h-screen bg-slate-950 text-slate-100 font-sans p-3 sm:p-4 md:p-8 safe-bottom relative overflow-x-hidden">
       {/* Ambient backgrounds */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
@@ -404,16 +404,16 @@ export default function Dashboard() {
         )}
 
         {/* Tab Links */}
-        <div className="flex justify-between items-end mb-2">
+        <div className="flex flex-col min-[420px]:flex-row min-[420px]:justify-between min-[420px]:items-end gap-2 mb-2">
           <div className="text-slate-400 text-sm font-bold">เมนูหลัก</div>
-          <button onClick={() => window.location.reload()} className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-full transition-all">
+          <button onClick={() => window.location.reload()} className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-full transition-all">
             <RefreshCw className="w-3 h-3" /> รีเฟรชข้อมูล
           </button>
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-6 bg-slate-900/60 border border-slate-850 rounded-2xl p-1 mb-8 gap-0.5">
+        <div className="grid grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-6 bg-slate-900/60 border border-slate-850 rounded-2xl p-1 mb-8 gap-1">
           <button 
             onClick={() => setActiveTab('roadmap')} 
-            className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
               activeTab === 'roadmap' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -422,7 +422,7 @@ export default function Dashboard() {
           </button>
           <button 
             onClick={() => setActiveTab('review')} 
-            className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
               activeTab === 'review' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -431,7 +431,7 @@ export default function Dashboard() {
           </button>
           <button 
             onClick={() => setActiveTab('collection')} 
-            className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
               activeTab === 'collection' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -440,7 +440,7 @@ export default function Dashboard() {
           </button>
           <button 
             onClick={() => setActiveTab('stats')} 
-            className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
               activeTab === 'stats' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -449,7 +449,7 @@ export default function Dashboard() {
           </button>
           <button 
             onClick={() => setActiveTab('teams')} 
-            className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
               activeTab === 'teams' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -458,7 +458,7 @@ export default function Dashboard() {
           </button>
           <button 
             onClick={() => setActiveTab('profile')} 
-            className={`py-3.5 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
               activeTab === 'profile' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -499,17 +499,17 @@ export default function Dashboard() {
                       <button 
                         disabled={!isUnlockedWorld}
                         onClick={() => setExpandedWorld(isOpen ? null : world.worldNumber)}
-                        className="w-full p-5 flex justify-between items-center text-left hover:bg-slate-900/30 transition-colors"
+                        className="w-full p-4 sm:p-5 flex flex-col min-[420px]:flex-row min-[420px]:justify-between min-[420px]:items-center gap-3 text-left hover:bg-slate-900/30 transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="text-2xl p-2 bg-slate-950 rounded-xl border border-slate-800">{world.icon}</span>
+                          <span className="text-2xl p-2 bg-slate-950 rounded-xl border border-slate-800 shrink-0">{world.icon}</span>
                           <div>
                             <span className="text-[10px] font-bold text-slate-500 block uppercase tracking-widest">WORLD {world.worldNumber}</span>
                             <h3 className="text-lg font-black text-white">{world.title}</h3>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-between min-[420px]:justify-end gap-3 w-full min-[420px]:w-auto">
                           {isCompletedWorld ? (
                             <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-extrabold px-2.5 py-1 rounded-full border border-emerald-500/20">สำเร็จ 🏆</span>
                           ) : isCurrentWorld ? (

@@ -21,6 +21,7 @@ body {
   color: var(--foreground);
   font-family: 'Outfit', system-ui, sans-serif;
   overflow-x: hidden;
+  min-width: 320px;
   
   /* Anti-Cheat: Prevent Google Lens / Translate by blocking text selection and long-press callouts */
   -webkit-touch-callout: none; /* iOS Safari */
@@ -31,10 +32,27 @@ body {
   user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
 }
 
+html {
+  overflow-x: hidden;
+}
+
 /* Allow selection in inputs and textareas so user can still type and edit */
 input, textarea, select {
   -webkit-user-select: auto;
   user-select: auto;
+  font-size: 16px; /* Prevent iOS Safari from zooming form controls */
+}
+
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+.safe-bottom {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+.mobile-scroll-panel {
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Custom premium scrollbar */

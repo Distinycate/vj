@@ -348,23 +348,23 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 flex items-start xl:items-center justify-center p-3 sm:p-4 safe-bottom relative overflow-x-hidden overflow-y-auto">
 
 
       {/* Ambient orbs */}
       <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[128px] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-500/10 rounded-full mix-blend-screen filter blur-[128px] pointer-events-none"></div>
 
-      <div className="relative z-10 w-full max-w-7xl grid grid-cols-1 xl:grid-cols-[1.35fr_0.65fr] gap-6 items-start">
+      <div className="relative z-10 w-full max-w-7xl grid grid-cols-1 xl:grid-cols-[1.35fr_0.65fr] gap-4 sm:gap-6 items-start">
         <motion.section
           initial={{ opacity: 0, x: -24 }}
           animate={{ opacity: 1, x: 0 }}
-          className="glass-card p-6 sm:p-8 rounded-3xl shadow-2xl border border-emerald-500/10 max-h-[95vh] overflow-y-auto"
+          className="glass-card p-4 sm:p-8 rounded-3xl shadow-2xl border border-emerald-500/10 xl:max-h-[95vh] xl:overflow-y-auto mobile-scroll-panel"
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-black tracking-widest uppercase mb-5">
             🌟 Active Learning Innovation
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-4">
+          <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-4 break-words">
             Vocab Journey: ก้าวข้ามขีดจำกัดการท่องจำ
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-300 to-blue-300">
               สู่นวัตกรรมการเรียนรู้แห่งศตวรรษที่ 21
@@ -418,7 +418,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-7 bg-indigo-500/10 border border-indigo-500/20 rounded-3xl p-5">
+          <div className="mt-7 bg-indigo-500/10 border border-indigo-500/20 rounded-3xl p-4 sm:p-5">
             <h2 className="text-xl font-black text-white mb-3">👨‍🏫 ประวัติและข้อมูลผู้จัดทำนวัตกรรม</h2>
             <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -482,7 +482,7 @@ export default function Home() {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-card p-8 rounded-3xl w-full max-w-md shadow-2xl max-h-[95vh] overflow-y-auto xl:sticky xl:top-4 justify-self-center"
+        className="glass-card p-4 sm:p-8 rounded-3xl w-full max-w-md shadow-2xl xl:max-h-[95vh] xl:overflow-y-auto xl:sticky xl:top-4 justify-self-center mobile-scroll-panel"
       >
         <div className="text-center mb-6">
           <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 mb-2">
@@ -494,13 +494,13 @@ export default function Home() {
         <div className="flex bg-slate-950/80 border border-slate-800 rounded-2xl p-1 mb-6">
           <button 
             onClick={() => { setMode('login'); setError(''); }}
-            className={`flex-1 py-2.5 rounded-xl font-bold transition-all ${mode === 'login' ? 'bg-emerald-500 text-slate-950 shadow-lg' : 'text-slate-400 hover:text-white'}`}
+            className={`flex-1 min-h-11 py-2.5 rounded-xl font-bold transition-all ${mode === 'login' ? 'bg-emerald-500 text-slate-950 shadow-lg' : 'text-slate-400 hover:text-white'}`}
           >
             เข้าสู่ระบบ
           </button>
           <button 
             onClick={() => { setMode('register'); setError(''); }}
-            className={`flex-1 py-2.5 rounded-xl font-bold transition-all ${mode === 'register' ? 'bg-emerald-500 text-slate-950 shadow-lg' : 'text-slate-400 hover:text-white'}`}
+            className={`flex-1 min-h-11 py-2.5 rounded-xl font-bold transition-all ${mode === 'register' ? 'bg-emerald-500 text-slate-950 shadow-lg' : 'text-slate-400 hover:text-white'}`}
           >
             สมัครสมาชิก
           </button>
@@ -509,25 +509,25 @@ export default function Home() {
         {error && <div className="error-state mb-6 text-sm">{error}</div>}
 
         {mode === 'login' && (
-          <div className="grid grid-cols-3 gap-2 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-1 mb-6">
+          <div className="grid grid-cols-1 min-[390px]:grid-cols-3 gap-2 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-1 mb-6">
             <button 
               type="button"
               onClick={() => { setLoginRole('student'); setError(''); }}
-              className={`py-2 rounded-xl text-xs font-bold transition-all ${loginRole === 'student' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:text-white border border-transparent'}`}
+              className={`min-h-11 py-2 rounded-xl text-xs font-bold transition-all ${loginRole === 'student' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:text-white border border-transparent'}`}
             >
               👩‍🎓 นักเรียน
             </button>
             <button 
               type="button"
               onClick={() => { setLoginRole('teacher'); setError(''); }}
-              className={`py-2 rounded-xl text-xs font-bold transition-all ${loginRole === 'teacher' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:text-white border border-transparent'}`}
+              className={`min-h-11 py-2 rounded-xl text-xs font-bold transition-all ${loginRole === 'teacher' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:text-white border border-transparent'}`}
             >
               👨‍🏫 ครูผู้สอน
             </button>
             <button 
               type="button"
               onClick={() => { setLoginRole('executive'); setError(''); }}
-              className={`py-2 rounded-xl text-xs font-bold transition-all ${loginRole === 'executive' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:text-white border border-transparent'}`}
+              className={`min-h-11 py-2 rounded-xl text-xs font-bold transition-all ${loginRole === 'executive' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:text-white border border-transparent'}`}
             >
               📊 ผู้บริหาร
             </button>
@@ -565,7 +565,7 @@ export default function Home() {
           </div>
         ) : mode === 'register' ? (
           <div className="flex flex-col gap-4" onKeyDown={(e) => { if (e.key === 'Enter') handleRegister(e); }}>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">ชื่อจริง</label>
                 <input type="text" value={regFirstName} onChange={(e) => setRegFirstName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="สมชาย" />
@@ -575,7 +575,7 @@ export default function Home() {
                 <input type="text" value={regLastName} onChange={(e) => setRegLastName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="ใจดี" />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 min-[390px]:grid-cols-3 gap-4">
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">ระดับชั้น</label>
                 <select value={regGrade} onChange={(e) => setRegGrade(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input">

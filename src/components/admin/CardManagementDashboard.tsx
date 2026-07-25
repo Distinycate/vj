@@ -286,23 +286,23 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-slate-950 text-slate-100 safe-bottom overflow-x-hidden">
       <header className="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
-          <div>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+          <div className="min-w-0">
             <div className="flex items-center gap-2 text-fuchsia-300 text-xs font-black uppercase tracking-widest">
               <Sparkles className="w-4 h-4" /> Card Game Administration
             </div>
-            <h1 className="text-2xl font-black text-white mt-1">จัดการการ์ดและข้อมูลพฤติกรรม</h1>
+            <h1 className="text-xl sm:text-2xl font-black text-white mt-1 break-words">จัดการการ์ดและข้อมูลพฤติกรรม</h1>
             <p className="text-sm text-slate-400 mt-1">แยกจากผลการเรียนและสถิติการเล่นคำศัพท์</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:flex lg:flex-wrap gap-2 w-full lg:w-auto">
             {teacher.role !== 'CARD_TEACHER' && (
-              <button onClick={() => window.location.href = '/admin'} className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold flex items-center gap-2">
+              <button onClick={() => window.location.href = '/admin'} className="min-h-11 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
                 <ArrowLeft className="w-4 h-4" /> Analytics ครู
               </button>
             )}
-            <button onClick={() => window.location.href = '/'} className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold flex items-center gap-2">
+            <button onClick={() => window.location.href = '/'} className="min-h-11 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
               <Home className="w-4 h-4" /> หน้าเข้าใช้งาน
             </button>
             <button
@@ -311,7 +311,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                 localStorage.removeItem('vocab_journey_card_teacher');
                 window.location.href = teacher.role === 'CARD_TEACHER' ? '/card-teacher' : '/';
               }}
-              className="px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 rounded-xl text-sm font-bold flex items-center gap-2"
+              className="min-h-11 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
             >
               <LogOut className="w-4 h-4" /> ออกจากระบบ
             </button>
@@ -319,9 +319,9 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto p-4 py-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 py-5 sm:py-6">
         <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between mb-6">
-          <nav className="flex gap-2 overflow-x-auto pb-1">
+          <nav className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
             {[
               { id: 'overview', label: 'ภาพรวมและคลังรายบุคคล', icon: BarChart3 },
               { id: 'cards', label: 'การ์ดทั้งหมด', icon: Package },
@@ -332,7 +332,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
               <button
                 key={item.id}
                 onClick={() => setTab(item.id as CardPageTab)}
-                className={`px-4 py-2.5 rounded-xl whitespace-nowrap text-sm font-bold flex items-center gap-2 ${
+                className={`min-h-11 px-4 py-2.5 rounded-xl whitespace-nowrap text-sm font-bold flex items-center gap-2 ${
                   tab === item.id ? 'bg-fuchsia-500 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'
                 }`}
               >
@@ -340,11 +340,11 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
               </button>
             ))}
           </nav>
-          <div className="flex gap-2">
-            <select value={classroomId} onChange={(event) => setClassroomId(event.target.value)} className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm font-bold">
+          <div className="grid grid-cols-[1fr_auto] gap-2 w-full md:w-auto">
+            <select value={classroomId} onChange={(event) => setClassroomId(event.target.value)} className="min-w-0 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm font-bold">
               {classrooms.map((classroom) => <option key={classroom.id} value={classroom.id}>{classroom.class_name}</option>)}
             </select>
-            <button onClick={loadData} className="p-2.5 bg-slate-800 rounded-xl"><RefreshCw className="w-4 h-4" /></button>
+            <button onClick={loadData} className="min-h-11 p-2.5 bg-slate-800 rounded-xl"><RefreshCw className="w-4 h-4" /></button>
           </div>
         </div>
 
@@ -379,7 +379,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                 </div>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[880px] text-sm">
                   <thead className="bg-slate-950 text-slate-500 text-xs">
                     <tr>
                       <th className="text-left p-4">นักเรียน</th>
@@ -434,7 +434,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                 ครูใช้หน้านี้ตรวจสอบว่าระบบมีการ์ดอะไรบ้าง ผลของการ์ด ระดับความหายาก และจำนวนที่นักเรียนในห้องที่เลือกถืออยู่
               </p>
             </div>
-            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3 p-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 p-4 sm:p-5">
               {cardCatalog.map((card) => (
                 <div key={card.id} className={`bg-slate-950/60 border rounded-2xl p-5 ${card.is_active === false ? 'border-slate-800 opacity-60' : 'border-slate-700'}`}>
                   <div className="flex items-start justify-between gap-3">
@@ -558,16 +558,16 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
       </main>
 
       {selectedStudent && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="max-w-3xl mx-auto my-8 bg-slate-900 border border-slate-700 rounded-3xl overflow-hidden">
-            <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+          <div className="max-w-3xl mx-auto my-4 sm:my-8 bg-slate-900 border border-slate-700 rounded-3xl overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <UserRound className="text-fuchsia-300" />
-                <div><h2 className="text-xl font-black">{selectedStudent.student_name}</h2><p className="text-xs text-slate-500">{selectedStudent.student_id}</p></div>
+                <div className="min-w-0"><h2 className="text-lg sm:text-xl font-black break-words">{selectedStudent.student_name}</h2><p className="text-xs text-slate-500">{selectedStudent.student_id}</p></div>
               </div>
-              <button onClick={() => setSelectedStudent(null)} className="p-2 bg-slate-800 rounded-xl"><X className="w-5 h-5" /></button>
+              <button onClick={() => setSelectedStudent(null)} className="min-h-11 min-w-11 p-2 bg-slate-800 rounded-xl flex items-center justify-center"><X className="w-5 h-5" /></button>
             </div>
-            <div className="p-5 space-y-6">
+            <div className="p-4 sm:p-5 space-y-6">
               <div>
                 <label className="text-xs font-bold text-slate-400">หมวดคุณลักษณะ</label>
                 <select value={behaviorCategory} onChange={(event) => setBehaviorCategory(event.target.value as BehaviorCategory)} className="w-full mt-2 bg-slate-950 border border-slate-700 rounded-xl p-3">
@@ -580,18 +580,18 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
               </div>
               <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">
                 <h3 className="font-black flex items-center gap-2">🪙 เหรียญ: {selectedStudent.coins}</h3>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <input type="number" min={1} max={10000} value={coinAmount} onChange={(event) => setCoinAmount(Math.max(1, Number(event.target.value)))} className="w-28 bg-slate-900 border border-slate-700 rounded-xl px-3" />
-                  <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(1)} className="px-4 py-2 bg-amber-400 text-slate-950 disabled:opacity-40 rounded-xl font-bold">มอบเหรียญ</button>
-                  <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(-1)} className="px-4 py-2 bg-rose-500/15 text-rose-300 disabled:opacity-40 rounded-xl font-bold">หักเหรียญ</button>
+                <div className="grid grid-cols-1 min-[420px]:grid-cols-[7rem_1fr_1fr] gap-2 mt-3">
+                  <input type="number" min={1} max={10000} value={coinAmount} onChange={(event) => setCoinAmount(Math.max(1, Number(event.target.value)))} className="min-h-11 bg-slate-900 border border-slate-700 rounded-xl px-3" />
+                  <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(1)} className="min-h-11 px-4 py-2 bg-amber-400 text-slate-950 disabled:opacity-40 rounded-xl font-bold">มอบเหรียญ</button>
+                  <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(-1)} className="min-h-11 px-4 py-2 bg-rose-500/15 text-rose-300 disabled:opacity-40 rounded-xl font-bold">หักเหรียญ</button>
                 </div>
               </div>
               <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">
                 <h3 className="font-black flex items-center gap-2"><Ticket className="w-4 h-4 text-sky-300" /> ตั๋วสุ่มฟรี: {selectedStudent.tickets}</h3>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <input type="number" min={1} max={100} value={ticketAmount} onChange={(event) => setTicketAmount(Math.max(1, Number(event.target.value)))} className="w-24 bg-slate-900 border border-slate-700 rounded-xl px-3" />
-                  <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(1)} className="px-4 py-2 bg-emerald-500 text-slate-950 disabled:opacity-40 rounded-xl font-bold flex gap-2"><Gift className="w-4 h-4" /> มอบตั๋ว</button>
-                  <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(-1)} className="px-4 py-2 bg-rose-500/15 text-rose-300 disabled:opacity-40 rounded-xl font-bold flex gap-2"><MinusCircle className="w-4 h-4" /> หักตั๋ว</button>
+                <div className="grid grid-cols-1 min-[420px]:grid-cols-[7rem_1fr_1fr] gap-2 mt-3">
+                  <input type="number" min={1} max={100} value={ticketAmount} onChange={(event) => setTicketAmount(Math.max(1, Number(event.target.value)))} className="min-h-11 bg-slate-900 border border-slate-700 rounded-xl px-3" />
+                  <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(1)} className="min-h-11 px-4 py-2 bg-emerald-500 text-slate-950 disabled:opacity-40 rounded-xl font-bold flex items-center justify-center gap-2"><Gift className="w-4 h-4" /> มอบตั๋ว</button>
+                  <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(-1)} className="min-h-11 px-4 py-2 bg-rose-500/15 text-rose-300 disabled:opacity-40 rounded-xl font-bold flex items-center justify-center gap-2"><MinusCircle className="w-4 h-4" /> หักตั๋ว</button>
                 </div>
               </div>
               <div>

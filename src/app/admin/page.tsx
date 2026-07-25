@@ -362,27 +362,27 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 relative">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans safe-bottom relative overflow-x-hidden">
       {/* Sticky Top Filter & Header */}
-      <div className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800 p-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
+      <div className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 p-3 sm:p-4">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between lg:items-center gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 bg-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center font-black border border-indigo-500/30">
               {teacher.role === 'ADMIN' ? 'AD' : 'TC'}
             </div>
-            <div>
-              <h1 className="text-lg font-black text-white">Vocab Journey | Teacher Dashboard</h1>
-              <p className="text-xs text-slate-400">ยินดีต้อนรับ, {teacher.name}</p>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-black text-white break-words">Vocab Journey | Teacher Dashboard</h1>
+              <p className="text-xs text-slate-400 truncate">ยินดีต้อนรับ, {teacher.name}</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <div className="flex items-center bg-slate-900 border border-slate-700 rounded-xl overflow-hidden px-2">
+          <div className="grid grid-cols-2 min-[520px]:flex min-[520px]:flex-wrap items-stretch min-[520px]:items-center gap-2 w-full lg:w-auto">
+            <div className="col-span-2 min-[520px]:col-span-1 flex items-center bg-slate-900 border border-slate-700 rounded-xl overflow-hidden px-2 min-w-0">
               <Filter className="w-4 h-4 text-slate-400 ml-2" />
               <select 
                 value={selectedClassroom} 
                 onChange={(e) => setSelectedClassroom(e.target.value)}
-                className="bg-transparent text-white text-sm font-bold p-2 focus:outline-none cursor-pointer"
+                className="w-full min-[520px]:w-auto bg-transparent text-white text-sm font-bold p-2 focus:outline-none cursor-pointer"
               >
                 {Object.entries(groupedClassrooms).map(([grade, rooms]) => (
                   <optgroup key={grade} label={grade} className="bg-slate-900 text-indigo-400 font-bold">
@@ -393,13 +393,13 @@ export default function AdminPage() {
                 ))}
               </select>
             </div>
-            <button onClick={() => window.location.reload()} className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold">
+            <button onClick={() => window.location.reload()} className="min-h-11 p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-xs font-bold">
               <RefreshCw className="w-4 h-4" /> รีเฟรช
             </button>
-            <button onClick={() => window.location.href = '/admin/cards'} className="p-2.5 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/20 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold">
+            <button onClick={() => window.location.href = '/admin/cards'} className="min-h-11 p-2.5 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/20 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-xs font-bold">
               <Sparkles className="w-4 h-4" /> จัดการการ์ด
             </button>
-            <button onClick={() => window.location.href = '/'} className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold">
+            <button onClick={() => window.location.href = '/'} className="min-h-11 p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-xs font-bold">
               <Home className="w-4 h-4" /> หน้าเข้าใช้งาน
             </button>
 
@@ -407,17 +407,17 @@ export default function AdminPage() {
               <Gift className="w-4 h-4" /> แจกเหรียญและตั๋ว
             </button>
 
-            <button onClick={handleLogout} className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl transition-colors">
+            <button onClick={handleLogout} className="min-h-11 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl transition-colors">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 mt-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 mt-5 sm:mt-6">
         
         {/* Tabs Menu */}
-        <div className="flex overflow-x-auto gap-2 pb-2 mb-6 custom-scrollbar">
+        <div className="flex overflow-x-auto gap-2 pb-2 mb-6 custom-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
           {[
             { id: 'school-overview', icon: <Activity className="w-4 h-4"/>, label: 'ภาพรวมโรงเรียน' },
             { id: 'overview', icon: <Activity className="w-4 h-4"/>, label: 'ภาพรวมห้องเรียน' },
@@ -431,7 +431,7 @@ export default function AdminPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as AdminTab)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${
+              className={`min-h-11 flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${
                 activeTab === tab.id 
                   ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
                   : 'bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800'
@@ -541,7 +541,7 @@ export default function AdminPage() {
                 <button 
                   onClick={handlePurgeUnverified}
                   disabled={isPurging || !selectedClassroom}
-                  className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all disabled:opacity-50"
+                  className="w-full sm:w-auto min-h-11 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                 >
                   <AlertTriangle className="w-4 h-4" />
                   {isPurging ? 'กำลังลบข้อมูล...' : 'ล้างบัญชีขยะ (ยังไม่ยืนยัน)'}
@@ -613,7 +613,7 @@ export default function AdminPage() {
                 </div>
               ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[860px] text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-950 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider">
                       <th className="p-4">นักเรียน</th>
@@ -662,7 +662,8 @@ export default function AdminPage() {
                             'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
                           }`}>{s.riskLevel}</span>
                         </td>
-                        <td className="p-4 text-right flex justify-end gap-2">
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-2">
                           <button onClick={() => setEditingStudent(s)} className="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all shadow-md">
                             แก้ไข
                           </button>
@@ -677,6 +678,7 @@ export default function AdminPage() {
                           <button onClick={() => handleDeleteStudent(s.id, s.student_name)} className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all shadow-md">
                             ลบ
                           </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -751,7 +753,7 @@ export default function AdminPage() {
               ) : (
                 <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full min-w-[720px] text-left border-collapse">
                       <thead>
                         <tr className="bg-slate-950 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider">
                           <th className="p-4">นักเรียน</th>
@@ -790,7 +792,8 @@ export default function AdminPage() {
                             <td className="p-4 text-center">
                               {s.daysInactive >= 999 ? 'ยังไม่เคยเข้าใช้งาน' : `${s.daysInactive} วัน`}
                             </td>
-                            <td className="p-4 text-right flex justify-end gap-2">
+                            <td className="p-4 text-right">
+                              <div className="flex justify-end gap-2">
                               <button onClick={() => setSelectedStudent(s)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all shadow-md">
                                 ดูข้อมูล
                               </button>
@@ -802,6 +805,7 @@ export default function AdminPage() {
                               <button onClick={() => handleDeleteStudent(s.id, s.student_name)} className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all shadow-md">
                                 ลบ
                               </button>
+                              </div>
                             </td>
                           </tr>
                         ))}

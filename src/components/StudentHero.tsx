@@ -13,14 +13,14 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
   const nextThreshold = thresholds[(currentRank + 1) as keyof typeof thresholds] || 100;
   const progressPercent = currentRank >= 5 ? 100 : Math.max(0, Math.min(100, ((rankScore - currentThreshold) / (nextThreshold - currentThreshold)) * 100));
   return (
-    <div className="bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 rounded-3xl p-6 mb-6 shadow-2xl relative overflow-hidden">
+    <div className="bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 rounded-3xl p-4 sm:p-6 mb-6 shadow-2xl relative overflow-hidden">
       <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[80px] pointer-events-none"></div>
       
       <div className="flex flex-col md:flex-row gap-6 items-center justify-between relative z-10">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 min-w-0 w-full">
           <AvatarDisplay seed={progress?.avatar_seed || student.id} style={progress?.avatar_style || 'adventurer'} size="lg" className="w-20 h-20 shadow-xl shadow-emerald-500/20" />
-          <div className="text-center sm:text-left">
-            <h1 className="text-3xl font-black text-white mb-2">{student.student_name}</h1>
+          <div className="text-center sm:text-left min-w-0 w-full">
+            <h1 className="text-2xl sm:text-3xl font-black text-white mb-2 break-words">{student.student_name}</h1>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <span className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-full text-xs font-black shadow-md flex items-center gap-1">
                 {progress?.current_rank === 1 ? '🥉' : progress?.current_rank === 2 ? '🥈' : progress?.current_rank === 3 ? '🥇' : progress?.current_rank === 4 ? '💎' : progress?.current_rank === 5 ? '👑' : '🛡️'}
@@ -30,8 +30,8 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
             </div>
             
             {/* Rank Score Progress Bar */}
-            <div data-demo-guide="rank-score" className="mt-3 w-full max-w-xs group cursor-pointer" onClick={() => setShowRankInfo(true)}>
-              <div className="flex justify-between items-center text-[10px] text-slate-400 mb-1 font-semibold px-1">
+            <div data-demo-guide="rank-score" className="mt-3 w-full max-w-xs mx-auto sm:mx-0 group cursor-pointer" onClick={() => setShowRankInfo(true)}>
+              <div className="flex flex-wrap justify-between items-center gap-x-2 gap-y-1 text-[10px] text-slate-400 mb-1 font-semibold px-1">
                 <span>Rank Score: {rankScore.toFixed(1)}</span>
                 <span className="flex items-center gap-1 hover:text-emerald-400 transition-colors">
                   <Info className="w-3 h-3" /> วิธีคำนวณ
@@ -92,17 +92,17 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
           </div>
         )}
         
-        <div className="flex flex-row md:flex-col items-center md:items-end gap-3 w-full md:w-auto">
+        <div className="flex flex-col min-[420px]:flex-row md:flex-col items-stretch md:items-end gap-3 w-full md:w-auto">
           <div className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-950/50 px-5 py-3 rounded-2xl border border-slate-800 shadow-inner">
             <span className="text-xl">🪙</span>
             <span className="text-white font-black text-xl">{progress?.coins || 0}</span>
           </div>
-          <div data-demo-guide="card-system" className="flex gap-2">
-            <button onClick={() => setShowCardCenter(true)} className="flex-1 md:flex-none px-4 py-2 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/30 text-fuchsia-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all">
+          <div data-demo-guide="card-system" className="grid grid-cols-[1fr_1fr_auto] md:flex gap-2 w-full md:w-auto">
+            <button onClick={() => setShowCardCenter(true)} className="min-h-11 flex-1 md:flex-none px-4 py-2 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/30 text-fuchsia-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all">
               <Sparkles className="w-4 h-4" /> การ์ด
             </button>
-            <button onClick={() => setShowShop(true)} className="flex-1 md:flex-none px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all"><Store className="w-4 h-4" /> ร้านค้า</button>
-            <button onClick={logout} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl flex items-center justify-center transition-all"><LogOut className="w-4 h-4" /></button>
+            <button onClick={() => setShowShop(true)} className="min-h-11 flex-1 md:flex-none px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all"><Store className="w-4 h-4" /> ร้านค้า</button>
+            <button onClick={logout} className="min-h-11 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl flex items-center justify-center transition-all"><LogOut className="w-4 h-4" /></button>
           </div>
         </div>
       </div>
