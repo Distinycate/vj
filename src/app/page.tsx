@@ -47,17 +47,6 @@ const fetchRegistrationOpen = async () => {
   return data?.is_registration_open !== false;
 };
 
-const implementationChecks = [
-  { label: 'Pre-test 5 รอบ', status: 'ใช้งานจริง', detail: 'ปลดล็อก Dashboard เมื่อมีผลประเมินครบ 5 ครั้ง และใช้คะแนนเฉลี่ยกำหนด Rank เริ่มต้น' },
-  { label: 'Review / SRS', status: 'ใช้งานจริง', detail: 'บันทึกคำที่พบใน user_review_words และดึงคำที่ถึงเวลา next_review_at กลับมาทบทวน' },
-  { label: 'Boss Stage', status: 'ใช้งานจริง', detail: 'ทุกด่านที่หาร 10 ลงตัวเป็น Boss Stage และด่าน 100 แสดงเป็น Final Boss' },
-  { label: 'Rank 1–5', status: 'ใช้งานจริง', detail: 'คำนวณจากความก้าวหน้า Accuracy ดาว Boss และ Streak หลังจบด่าน' },
-  { label: 'Team Battle', status: 'ใช้งานจริง', detail: 'มีทั้งตารางคะแนนภายในห้องและระดับโรงเรียนผ่านฤดูกาลที่เปิดใช้งาน' },
-  { label: 'Dashboard ครู', status: 'ใช้งานจริง', detail: 'มี Item Analysis คำอ่อน รายชื่อนักเรียนแยกห้อง และรายชื่อนักเรียนกลุ่มเสี่ยงเพื่อวางแผน Intervention' },
-  { label: 'Certificate / Hall of Fame', status: 'เตรียมเชื่อมต่อ', detail: 'ยังไม่ประกาศว่าใช้งานจริงจนกว่าจะผูกผล Stage 100 กับหน้าออกเกียรติบัตรสำเร็จ' },
-  { label: 'การ์ด Thief ข้ามห้อง', status: 'เตรียมเชื่อมต่อ', detail: 'ยังไม่ระบุในรายงานว่าใช้งานจริงจนกว่าจะมี workflow ลบ/ขโมยการ์ดครบ' },
-];
-
 export default function Home() {
   const router = useRouter();
   const { student, progress, setStudent, setProgress, currentScreen } = useAppStore();
@@ -430,26 +419,55 @@ export default function Home() {
           </div>
 
           <div className="mt-7 bg-indigo-500/10 border border-indigo-500/20 rounded-3xl p-5">
-            <h2 className="text-xl font-black text-white mb-3">📋 สถานะฟีเจอร์สำหรับนำไปเขียนรายงาน</h2>
-            <p className="text-slate-400 text-sm mb-4">
-              ตารางนี้ช่วยกันรายงานเขียนเกินระบบจริง: รายการที่ใช้งานจริงสามารถอ้างได้ ส่วนรายการที่เตรียมเชื่อมต่อควรเขียนเป็นแผนพัฒนาต่อ
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {implementationChecks.map((item) => (
-                <div key={item.label} className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">
-                  <div className="flex items-center justify-between gap-3 mb-1">
-                    <span className="font-black text-white text-sm">{item.label}</span>
-                    <span className={`text-[10px] font-black px-2 py-1 rounded-full border ${
-                      item.status === 'ใช้งานจริง'
-                        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-                        : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
-                    }`}>
-                      {item.status}
-                    </span>
-                  </div>
-                  <p className="text-slate-500 text-xs leading-relaxed">{item.detail}</p>
+            <h2 className="text-xl font-black text-white mb-3">👨‍🏫 ประวัติและข้อมูลผู้จัดทำนวัตกรรม</h2>
+            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black text-indigo-300 uppercase tracking-widest">Innovator Profile</p>
+                  <h3 className="text-2xl font-black text-white mt-2">นายณัฐภัทร พรมปรุ</h3>
+                  <p className="text-slate-400 text-sm mt-1">Mr. Natthaphat Phrompru</p>
                 </div>
-              ))}
+                <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 text-sm text-emerald-200 font-bold">
+                  ตำแหน่ง: ครู
+                </div>
+              </div>
+              <div className="mt-4 text-sm text-slate-300 leading-relaxed">
+                <span className="font-bold text-white">สถานที่ทำงาน:</span> โรงเรียนบ้านโคกยาง สังกัดสำนักงานเขตพื้นที่การศึกษาประถมศึกษาบุรีรัมย์ เขต 3
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+              <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+                <h3 className="font-black text-white mb-3">🎓 ประวัติการศึกษา (Education)</h3>
+                <div className="space-y-3 text-sm text-slate-400 leading-relaxed">
+                  <p><span className="font-bold text-indigo-300">ปริญญาโท:</span> ศึกษาศาสตรมหาบัณฑิต สาขาวิชาการบริหารการศึกษา มหาวิทยาลัยวงษ์ชวลิตกุล</p>
+                  <p><span className="font-bold text-indigo-300">ปริญญาโท:</span> ศิลปศาสตรมหาบัณฑิต สาขาวิชาภาษาอังกฤษ มหาวิทยาลัยราชภัฏบุรีรัมย์</p>
+                  <p><span className="font-bold text-indigo-300">ปริญญาตรี:</span> ครุศาสตรบัณฑิต สาขาวิชาภาษาอังกฤษ มหาวิทยาลัยราชภัฏบุรีรัมย์</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+                <h3 className="font-black text-white mb-3">📌 บทบาทและหน้าที่รับผิดชอบ</h3>
+                <div className="space-y-3 text-sm text-slate-400 leading-relaxed">
+                  <p><span className="font-bold text-emerald-300">ด้านการจัดการเรียนรู้:</span> ผู้สอนกลุ่มสาระการเรียนรู้ภาษาต่างประเทศ (ภาษาอังกฤษ) และผู้รับผิดชอบการออกแบบแผนขับเคลื่อนเพื่อยกระดับผลสัมฤทธิ์ทางการทดสอบระดับชาติ (O-NET) สำหรับนักเรียนระดับชั้นมัธยมศึกษาตอนต้น</p>
+                  <p><span className="font-bold text-emerald-300">ด้านการบริหารจัดการ:</span> ปฏิบัติหน้าที่หัวหน้างานบริหารงานบุคคล (Head of Personnel Administration) โรงเรียนบ้านโคกยาง</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+              <h3 className="font-black text-white mb-3">💡 ความสนใจทางวิชาการ (Academic Interests)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 text-slate-400 leading-relaxed">
+                  การออกแบบการจัดการเรียนรู้เชิงรุก (Active Learning) และการจัดการเรียนรู้โดยใช้โครงงานเป็นฐาน (Project-Based Learning - PBL)
+                </div>
+                <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 text-slate-400 leading-relaxed">
+                  การประยุกต์ใช้จิตวิทยาการศึกษาและเทคโนโลยีเกมมิฟิเคชัน (Gamification & EdTech) เพื่อพัฒนาผลสัมฤทธิ์ของผู้เรียน
+                </div>
+                <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 text-slate-400 leading-relaxed">
+                  การบริหารการศึกษาและการขับเคลื่อนคุณภาพสถานศึกษาด้วยวงจรคุณภาพ (PDCA)
+                </div>
+              </div>
             </div>
           </div>
 
