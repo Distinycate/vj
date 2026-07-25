@@ -33,7 +33,7 @@ const generateRandomStudentId = () => {
 
 export default function Home() {
   const router = useRouter();
-  const { student, progress, setStudent, setProgress, currentScreen, setScreen } = useAppStore();
+  const { student, progress, setStudent, setProgress, currentScreen } = useAppStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   
   useEffect(() => {
@@ -46,27 +46,6 @@ export default function Home() {
           console.log('ServiceWorker registration failed: ', err);
         }
       );
-    }
-  }, []);
-
-  // Restore demo session on mount (persisted via sessionStorage)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const isDemoSession = sessionStorage.getItem('vocab_journey_demo') === 'true';
-    if (isDemoSession && !student) {
-      // Restore demo store and set student
-      const demoStore = useDemoStore.getState();
-      if (!demoStore.isDemoMode) demoStore.startDemo();
-      const ds = useDemoStore.getState();
-      if (ds.demoStudent) {
-        setStudent(ds.demoStudent);
-        setProgress(ds.demoProgress);
-        // Check if there's a saved screen preference
-        const savedScreen = sessionStorage.getItem('demo_screen') as 'dashboard' | 'study' | 'game' | null;
-        if (savedScreen && savedScreen !== 'dashboard') {
-          setScreen(savedScreen);
-        }
-      }
     }
   }, []);
 
