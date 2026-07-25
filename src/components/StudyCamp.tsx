@@ -3,12 +3,14 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Volume2, ArrowRight, ArrowLeft, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import { useDemoStore } from '@/store/useDemoStore';
 import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
 import { getWorldForStage } from '@/utils/adaptiveConfig';
 
 export default function StudyCamp() {
   const { setScreen, progress, setStudiedCurrentStage } = useAppStore();
+  const isDemoMode = useDemoStore((state) => state.isDemoMode);
   const [words, setWords] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -77,7 +79,7 @@ export default function StudyCamp() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
+      <div className="min-h-[calc(100vh-var(--demo-bottom-nav-space,0px))] bg-slate-950 flex items-center justify-center text-white">
         <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
         <div className="text-slate-400">กำลังเตรียมคำศัพท์ค่าย...</div>
       </div>
@@ -86,7 +88,7 @@ export default function StudyCamp() {
 
   if (words.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
+      <div className="min-h-[calc(100vh-var(--demo-bottom-nav-space,0px))] bg-slate-950 text-white flex items-center justify-center p-6">
         <div className="bg-slate-900 border border-amber-500/20 rounded-3xl p-8 max-w-md text-center">
           <AlertTriangle className="w-14 h-14 text-amber-400 mx-auto mb-4" />
           <h2 className="text-2xl font-black mb-2">ยังไม่มีคำศัพท์ในด่านนี้</h2>
@@ -107,7 +109,7 @@ export default function StudyCamp() {
 
   if (isFinished) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-8">
+      <div className="min-h-[calc(100vh-var(--demo-bottom-nav-space,0px))] bg-slate-950 text-white flex flex-col items-center justify-center p-8">
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
@@ -138,7 +140,7 @@ export default function StudyCamp() {
   return (
     <div 
       data-demo-guide="study-camp"
-      className="min-h-screen bg-slate-950 text-white p-4 md:p-8 flex flex-col items-center select-none relative overflow-hidden"
+      className="min-h-[calc(100vh-var(--demo-bottom-nav-space,0px))] bg-slate-950 text-white p-4 md:p-8 flex flex-col items-center select-none relative overflow-hidden"
       onContextMenu={(e) => e.preventDefault()}
     >
       {/* Background glow */}
@@ -191,14 +193,14 @@ export default function StudyCamp() {
       </div>
 
       {/* Flashcard */}
-      <div className="w-full max-w-2xl relative flex-1 flex flex-col z-10">
+      <div className="w-full max-w-2xl relative flex-1 min-h-0 flex flex-col z-10">
         <AnimatePresence mode="wait">
           <motion.div 
             key={currentIndex}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-slate-900/50 backdrop-blur-lg border border-slate-800 rounded-3xl p-8 flex-1 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden group"
+            className="bg-slate-900/50 backdrop-blur-lg border border-slate-800 rounded-3xl p-6 sm:p-8 flex-1 min-h-0 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden group"
           >
             {/* Visual word placeholder */}
             <div className="w-40 h-40 bg-slate-950 rounded-2xl mb-8 flex items-center justify-center overflow-hidden border border-slate-850 shadow-inner relative">
@@ -223,15 +225,15 @@ export default function StudyCamp() {
 
             <button 
               onClick={() => playWordAudio(word.word)}
-              className="w-16 h-16 bg-slate-950 hover:bg-slate-800 border border-slate-850 text-emerald-400 hover:text-emerald-300 rounded-full flex items-center justify-center hover:scale-105 transition-all shadow-lg"
+              className={`${isDemoMode ? 'absolute top-4 right-4 w-12 h-12' : 'w-16 h-16'} bg-slate-950 hover:bg-slate-800 border border-slate-850 text-emerald-400 hover:text-emerald-300 rounded-full flex items-center justify-center hover:scale-105 transition-all shadow-lg`}
             >
-              <Volume2 className="w-7 h-7" />
+              <Volume2 className={isDemoMode ? 'w-5 h-5' : 'w-7 h-7'} />
             </button>
           </motion.div>
         </AnimatePresence>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between items-center mt-6 w-full gap-4">
+        <div className={`${isDemoMode ? 'fixed left-1/2 bottom-[calc(0.75rem+var(--demo-bottom-nav-space,0px))] z-[10000] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2' : 'relative mt-6 w-full'} flex justify-between items-center gap-4 rounded-3xl bg-slate-950/90 p-2 backdrop-blur-xl border border-slate-800/60 shadow-2xl shadow-slate-950/50`}>
           <button 
             onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
             disabled={currentIndex === 0}

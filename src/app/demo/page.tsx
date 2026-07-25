@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { CSSProperties, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDemoStore } from '@/store/useDemoStore';
@@ -155,6 +155,7 @@ export default function DemoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="min-h-screen"
+            style={{ '--demo-bottom-nav-space': '104px' } as CSSProperties}
           >
             {/* Demo Bottom Nav */}
             <DemoBottomNav
@@ -349,7 +350,7 @@ function DemoBottomNav({
   onExit: () => void;
 }) {
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-1.5 bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl px-3 py-2 shadow-2xl shadow-black/50">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] flex max-w-[calc(100vw-1rem)] items-center gap-1.5 overflow-x-auto bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl px-3 py-2 shadow-2xl shadow-black/50">
       {/* Demo Badge */}
       <div className="hidden sm:flex items-center gap-1.5 pr-2 border-r border-slate-700 mr-1">
         <Sparkles className="w-3 h-3 text-purple-400" />
