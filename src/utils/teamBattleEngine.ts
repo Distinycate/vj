@@ -2,7 +2,26 @@ import { supabase } from './supabase/client';
 
 export type TeamScoreEvent = 'stage_completed' | 'boss_completed' | 'accuracy_bonus' | 'perfect_bonus' | 'review_completed' | 'wrong_word_mastered' | 'streak_bonus' | 'participation_bonus';
 
+async function isInternalStudent(userId: string) {
+  const { data, error } = await supabase
+    .from('students')
+    .select('user_type')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) {
+    // Safe rollout: before MIGRATION_EXTERNAL_NETWORK.sql is applied, the legacy
+    // internal app must keep working. Missing user_type means the DB is still
+    // pre-migration, so treat existing users as INTERNAL.
+    if (error.message?.includes('user_type')) return true;
+    throw error;
+  }
+  return (data?.user_type || 'INTERNAL') === 'INTERNAL';
+}
+
 export async function autoAssignTeamForStudent(userId: string) {
+  if (!(await isInternalStudent(userId))) {
+    return { skipped: true, reason: 'EXTERNAL_USER_NOT_ASSIGNED_TO_INTERNAL_TEAMS' };
+  }
   const { data, error } = await supabase.rpc('ensure_student_team_memberships', {
     p_student_id: userId,
   });
@@ -16,6 +35,9 @@ export async function createTeamScoreEvent(params: {
   points: number;
   metadata?: any;
 }) {
+  if (!(await isInternalStudent(params.userId))) {
+    return { skipped: true, reason: 'EXTERNAL_USER_NOT_RECORDED_IN_INTERNAL_TEAM_SCORE' };
+  }
   const { data, error } = await supabase.rpc('record_team_score_event', {
     p_student_id: params.userId,
     p_event_type: params.eventType,
@@ -41,18 +63,39 @@ export async function calculateTeamScore(teamId: string, seasonId?: string | nul
       if (seasonError) throw seasonError;
       resolvedSeasonId = season?.id || null;
     }
-    let query = supabase.from('team_score_events').select('*').eq('team_id', teamId);
+    let query = supabase
+      .from('team_score_events')
+      .select('*, students!inner(user_type)')
+      .eq('team_id', teamId)
+      .eq('students.user_type', 'INTERNAL');
     if (resolvedSeasonId) query = query.eq('season_id', resolvedSeasonId);
     
-    const { data: events, error: eventsError } = await query;
+    let { data: events, error: eventsError }: { data: any[] | null; error: any } = await query;
+    if (eventsError?.message?.includes('user_type')) {
+      let legacyQuery = supabase.from('team_score_events').select('*').eq('team_id', teamId);
+      if (resolvedSeasonId) legacyQuery = legacyQuery.eq('season_id', resolvedSeasonId);
+      const legacyEvents = await legacyQuery;
+      events = legacyEvents.data;
+      eventsError = legacyEvents.error;
+    }
     if (eventsError) throw eventsError;
     if (!events) return { totalScore: 0, finalScore: 0, activeMembersRate: 0 };
 
-    const { data: members, error: membersError } = await supabase
+    let { data: members, error: membersError }: { data: any[] | null; error: any } = await supabase
       .from('team_members')
-      .select('user_id')
+      .select('user_id, students!inner(user_type)')
       .eq('team_id', teamId)
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .eq('students.user_type', 'INTERNAL');
+    if (membersError?.message?.includes('user_type')) {
+      const legacyMembers = await supabase
+        .from('team_members')
+        .select('user_id')
+        .eq('team_id', teamId)
+        .eq('is_active', true);
+      members = legacyMembers.data;
+      membersError = legacyMembers.error;
+    }
     if (membersError) throw membersError;
     const totalMembers = members?.length || 1;
 

@@ -137,7 +137,9 @@ export default function Home() {
           .order('created_at', { ascending: false });
 
         const hasCompleted5Pretests = pretestCount !== null && pretestCount >= 5;
-        const pretestDate = hasCompleted5Pretests && pretestList && pretestList.length > 0 ? pretestList[0].created_at : null;
+        const pretestDate = studentData.user_type === 'EXTERNAL'
+          ? new Date().toISOString()
+          : hasCompleted5Pretests && pretestList && pretestList.length > 0 ? pretestList[0].created_at : null;
 
         setStudent(studentData);
         saveStudentSession(studentData);
@@ -628,6 +630,13 @@ export default function Home() {
           className="w-full mt-5 py-3 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/20 text-fuchsia-300 rounded-xl font-bold text-sm"
         >
           🃏 ระบบการ์ดสำหรับคุณครู (สมัคร/เข้าใช้)
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push('/register/network')}
+          className="w-full mt-3 py-3 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 text-cyan-300 rounded-xl font-bold text-sm"
+        >
+          🌐 สมัครใช้งานโรงเรียนเครือข่าย (Guest)
         </button>
       </motion.div>
       </div>

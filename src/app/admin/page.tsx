@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { 
   Users, AlertTriangle, LogOut, Shield, CheckCircle2,
-  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings, Gift, Star
+  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings, Gift, Star, Globe2
 } from 'lucide-react';
 import { 
   BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -398,6 +398,9 @@ export default function AdminPage() {
             </button>
             <button onClick={() => window.location.href = '/admin/cards'} className="min-h-11 p-2.5 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/20 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-xs font-bold">
               <Sparkles className="w-4 h-4" /> จัดการการ์ด
+            </button>
+            <button onClick={() => window.location.href = '/admin/external-network'} className="min-h-11 p-2.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/20 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-xs font-bold">
+              <Globe2 className="w-4 h-4" /> เครือข่าย
             </button>
             <button onClick={() => window.location.href = '/'} className="min-h-11 p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-xs font-bold">
               <Home className="w-4 h-4" /> หน้าเข้าใช้งาน

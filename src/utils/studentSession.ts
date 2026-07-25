@@ -4,6 +4,8 @@ export type StudentSession = {
   id: string;
   student_name?: string;
   classroom_id?: string | null;
+  user_type?: 'INTERNAL' | 'EXTERNAL';
+  school_name?: string | null;
 };
 
 export function saveStudentSession(student: StudentSession) {
@@ -12,6 +14,8 @@ export function saveStudentSession(student: StudentSession) {
     id: student.id,
     student_name: student.student_name,
     classroom_id: student.classroom_id ?? null,
+    user_type: student.user_type || 'INTERNAL',
+    school_name: student.school_name ?? null,
   }));
 }
 

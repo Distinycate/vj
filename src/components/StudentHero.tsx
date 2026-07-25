@@ -5,6 +5,7 @@ import { Store, LogOut, Sparkles, Info } from 'lucide-react';
 export default function StudentHero({ student, progress, stats, rankConfig, setShowShop, setShowCardCenter, logout }: any) {
   const [showRankInfo, setShowRankInfo] = React.useState(false);
   const rankScore = progress?.rank_score || 0;
+  const isExternalUser = student?.user_type === 'EXTERNAL';
   
   // Calculate next rank threshold
   const currentRank = progress?.current_rank || 1;
@@ -27,6 +28,11 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
                 {rankConfig.skillTitle}
               </span>
               <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-bold">Lvl {stats.level}</span>
+              {isExternalUser && (
+                <span className="px-3 py-1 bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 rounded-full text-xs font-black">
+                  🌐 Guest Network
+                </span>
+              )}
             </div>
             
             {/* Rank Score Progress Bar */}
@@ -97,11 +103,15 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
             <span className="text-xl">🪙</span>
             <span className="text-white font-black text-xl">{progress?.coins || 0}</span>
           </div>
-          <div data-demo-guide="card-system" className="grid grid-cols-[1fr_1fr_auto] md:flex gap-2 w-full md:w-auto">
-            <button onClick={() => setShowCardCenter(true)} className="min-h-11 flex-1 md:flex-none px-4 py-2 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/30 text-fuchsia-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all">
-              <Sparkles className="w-4 h-4" /> การ์ด
-            </button>
-            <button onClick={() => setShowShop(true)} className="min-h-11 flex-1 md:flex-none px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all"><Store className="w-4 h-4" /> ร้านค้า</button>
+          <div data-demo-guide="card-system" className={`${isExternalUser ? 'grid grid-cols-1' : 'grid grid-cols-[1fr_1fr_auto]'} md:flex gap-2 w-full md:w-auto`}>
+            {!isExternalUser && (
+              <>
+                <button onClick={() => setShowCardCenter(true)} className="min-h-11 flex-1 md:flex-none px-4 py-2 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/30 text-fuchsia-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all">
+                  <Sparkles className="w-4 h-4" /> การ์ด
+                </button>
+                <button onClick={() => setShowShop(true)} className="min-h-11 flex-1 md:flex-none px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all"><Store className="w-4 h-4" /> ร้านค้า</button>
+              </>
+            )}
             <button onClick={logout} className="min-h-11 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl flex items-center justify-center transition-all"><LogOut className="w-4 h-4" /></button>
           </div>
         </div>

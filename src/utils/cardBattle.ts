@@ -49,7 +49,26 @@ export function getRpcErrorMessage(message?: string) {
   return key ? known[key] : message;
 }
 
+async function assertInternalCardUser(studentId: string) {
+  const { data, error } = await supabase
+    .from('students')
+    .select('user_type')
+    .eq('id', studentId)
+    .maybeSingle();
+  if (error) {
+    // Safe rollout while the external-network migration is being applied:
+    // pre-migration databases have no user_type column, and all existing users
+    // are internal by definition.
+    if (error.message?.includes('user_type')) return;
+    throw error;
+  }
+  if ((data?.user_type || 'INTERNAL') === 'EXTERNAL') {
+    throw new Error('บัญชีโรงเรียนเครือข่ายไม่สามารถใช้ระบบการ์ดหรือกาชาของโรงเรียนภายในได้');
+  }
+}
+
 export async function pullGachaCard(studentId: string) {
+  await assertInternalCardUser(studentId);
   const { data, error } = await supabase.rpc('pull_gacha_card', {
     p_student_id: studentId,
     p_coin_cost: GACHA_COIN_COST,
@@ -64,6 +83,7 @@ export async function createCardAction(
   targetId?: string | null,
   metadata?: any
 ) {
+  await assertInternalCardUser(attackerId);
   const { data, error } = await supabase.rpc('create_card_action', {
     p_attacker_id: attackerId,
     p_card_id: cardId,

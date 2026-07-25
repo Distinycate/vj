@@ -10,7 +10,7 @@ const cardCenter = readFileSync('src/components/CardCenterModal.tsx', 'utf8');
 test('student dashboard opens exactly one card center modal', () => {
   const modalRenderCount = (dashboard.match(/<CardCenterModal/g) || []).length;
   assert.equal(modalRenderCount, 1);
-  assert.match(dashboard, /showCardCenter && <CardCenterModal/);
+  assert.match(dashboard, /showCardCenter && !isExternalUser && <CardCenterModal/);
 });
 
 test('completed stages are clickable replay buttons without changing current progress', () => {

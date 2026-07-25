@@ -247,6 +247,13 @@ export default function Dashboard() {
       }
 
       // 5. Team Battle
+      if (student.user_type === 'EXTERNAL') {
+        setMyTeams([]);
+        setTeamScores({});
+        setTeamError('');
+        return;
+      }
+
       try {
         setTeamError('');
         await autoAssignTeamForStudent(student.id);
@@ -331,6 +338,7 @@ export default function Dashboard() {
   const currentRank = progress?.current_rank || 1;
   const rankConfig = ADAPTIVE_RANK_CONFIG[currentRank] || ADAPTIVE_RANK_CONFIG[1];
   const currentWorld = getWorldForStage(currentStage);
+  const isExternalUser = student?.user_type === 'EXTERNAL';
 
   return (
     <div data-demo-guide="student-dashboard" className="min-h-screen bg-slate-950 text-slate-100 font-sans p-3 sm:p-4 md:p-8 safe-bottom relative overflow-x-hidden">
@@ -390,14 +398,14 @@ export default function Dashboard() {
             ระบบทีมยังไม่พร้อม: {teamError}
           </div>
         )}
-        {myTeams.length > 0 && (
+        {myTeams.length > 0 && !isExternalUser && (
           <div className="mb-6">
             <StudentTeamCard team={myTeams[0]} scoreData={teamScores[myTeams[0].id]} />
           </div>
         )}
 
         {/* Mini Leaderboard on top if in roadmap */}
-        {activeTab === 'roadmap' && (
+        {activeTab === 'roadmap' && !isExternalUser && (
           <div data-demo-guide="leaderboard" className="mb-8">
             <TeamLeaderboard scope="class" classroomId={student?.classroom_id} />
           </div>
@@ -447,15 +455,17 @@ export default function Dashboard() {
             <Trophy className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span className="text-[10px] sm:text-sm font-black">แรงกิ้ง</span>
           </button>
-          <button 
-            onClick={() => setActiveTab('teams')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
-              activeTab === 'teams' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Users className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-            <span className="text-[10px] sm:text-sm font-black">ทีมของฉัน</span>
-          </button>
+          {!isExternalUser && (
+            <button 
+              onClick={() => setActiveTab('teams')} 
+              className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+                activeTab === 'teams' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+              <span className="text-[10px] sm:text-sm font-black">ทีมของฉัน</span>
+            </button>
+          )}
           <button 
             onClick={() => setActiveTab('profile')} 
             className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
@@ -858,7 +868,7 @@ export default function Dashboard() {
           )}
 
           {/* TAB: TEAMS (CROSS-CLASS BATTLE) */}
-          {activeTab === 'teams' as any && (
+          {activeTab === 'teams' as any && !isExternalUser && (
             <motion.div 
               key="teams" 
               initial={{ opacity: 0, y: 10 }} 
@@ -979,8 +989,8 @@ export default function Dashboard() {
 
       </div>
       <StudentVerificationModal />
-      {showShop && <ShopModal onClose={() => setShowShop(false)} />}
-      {showCardCenter && <CardCenterModal onClose={() => setShowCardCenter(false)} />}
+      {showShop && !isExternalUser && <ShopModal onClose={() => setShowShop(false)} />}
+      {showCardCenter && !isExternalUser && <CardCenterModal onClose={() => setShowCardCenter(false)} />}
     </div>
   );
 }
