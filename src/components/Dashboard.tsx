@@ -530,6 +530,7 @@ export default function Dashboard() {
                               const isCompletedStage = stageNum < currentStage;
                               const isCurrentStage = stageNum === currentStage;
                               const isBossStage = stageNum % 10 === 0;
+                              const isFinalBossStage = stageNum === 100;
 
                               let stageState = 'locked';
                               if (isCompletedStage) stageState = 'completed';
@@ -549,7 +550,7 @@ export default function Dashboard() {
                                 <button
                                   type="button"
                                   key={stageNum}
-                                  data-demo-guide={isBossStage ? 'final-boss' : (stageState === 'completed' && stageNum === currentStage - 1 ? 'replay-stage' : undefined)}
+                                  data-demo-guide={isFinalBossStage ? 'final-boss' : (stageState === 'completed' && stageNum === currentStage - 1 ? 'replay-stage' : undefined)}
                                   disabled={!canPlayStage}
                                   onClick={handleStageClick}
                                   className={`w-full text-left p-3.5 rounded-2xl flex items-center justify-between border transition-all ${
@@ -581,7 +582,7 @@ export default function Dashboard() {
                                         )}
                                       </span>
                                       <span className="text-[10px] text-slate-500 tracking-wider">
-                                        {isBossStage ? '👹 ด่านบอสข้ามโลก' : '🧭 โจทย์ระดับปกติ'}
+                                        {isFinalBossStage ? '👑 Final Boss ผู้พิชิต O-NET' : isBossStage ? '👹 ด่านบอสประจำโลก' : '🧭 โจทย์ระดับปกติ'}
                                       </span>
                                     </div>
                                   </div>

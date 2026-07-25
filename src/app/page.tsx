@@ -47,6 +47,17 @@ const fetchRegistrationOpen = async () => {
   return data?.is_registration_open !== false;
 };
 
+const implementationChecks = [
+  { label: 'Pre-test 5 รอบ', status: 'ใช้งานจริง', detail: 'ปลดล็อก Dashboard เมื่อมีผลประเมินครบ 5 ครั้ง และใช้คะแนนเฉลี่ยกำหนด Rank เริ่มต้น' },
+  { label: 'Review / SRS', status: 'ใช้งานจริง', detail: 'บันทึกคำที่พบใน user_review_words และดึงคำที่ถึงเวลา next_review_at กลับมาทบทวน' },
+  { label: 'Boss Stage', status: 'ใช้งานจริง', detail: 'ทุกด่านที่หาร 10 ลงตัวเป็น Boss Stage และด่าน 100 แสดงเป็น Final Boss' },
+  { label: 'Rank 1–5', status: 'ใช้งานจริง', detail: 'คำนวณจากความก้าวหน้า Accuracy ดาว Boss และ Streak หลังจบด่าน' },
+  { label: 'Team Battle', status: 'ใช้งานจริง', detail: 'มีทั้งตารางคะแนนภายในห้องและระดับโรงเรียนผ่านฤดูกาลที่เปิดใช้งาน' },
+  { label: 'Dashboard ครู', status: 'ใช้งานจริง', detail: 'มี Item Analysis คำอ่อน รายชื่อนักเรียนแยกห้อง และรายชื่อนักเรียนกลุ่มเสี่ยงเพื่อวางแผน Intervention' },
+  { label: 'Certificate / Hall of Fame', status: 'เตรียมเชื่อมต่อ', detail: 'ยังไม่ประกาศว่าใช้งานจริงจนกว่าจะผูกผล Stage 100 กับหน้าออกเกียรติบัตรสำเร็จ' },
+  { label: 'การ์ด Thief ข้ามห้อง', status: 'เตรียมเชื่อมต่อ', detail: 'ยังไม่ระบุในรายงานว่าใช้งานจริงจนกว่าจะมี workflow ลบ/ขโมยการ์ดครบ' },
+];
+
 export default function Home() {
   const router = useRouter();
   const { student, progress, setStudent, setProgress, currentScreen } = useAppStore();
@@ -355,10 +366,105 @@ export default function Home() {
       <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[128px] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-500/10 rounded-full mix-blend-screen filter blur-[128px] pointer-events-none"></div>
 
+      <div className="relative z-10 w-full max-w-7xl grid grid-cols-1 xl:grid-cols-[1.35fr_0.65fr] gap-6 items-start">
+        <motion.section
+          initial={{ opacity: 0, x: -24 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="glass-card p-6 sm:p-8 rounded-3xl shadow-2xl border border-emerald-500/10 max-h-[95vh] overflow-y-auto"
+        >
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-black tracking-widest uppercase mb-5">
+            🌟 Active Learning Innovation
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-4">
+            Vocab Journey: ก้าวข้ามขีดจำกัดการท่องจำ
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-300 to-blue-300">
+              สู่นวัตกรรมการเรียนรู้แห่งศตวรรษที่ 21
+            </span>
+          </h1>
+          <div className="space-y-4 text-slate-300 leading-relaxed text-sm sm:text-base">
+            <p>
+              ภาษาอังกฤษคือหน้าต่างสู่โอกาสที่ไร้ขีดจำกัด แต่อุปสรรคสำคัญที่ทำให้นักเรียนหลายคนไปไม่ถึงเป้าหมาย
+              คือข้อจำกัดด้าน “คลังคำศัพท์” การท่องจำจากหน้ากระดาษแบบเดิมมักทำให้เกิดความเบื่อหน่ายและลืมเลือนอย่างรวดเร็ว
+            </p>
+            <p>
+              <strong className="text-white">Vocab Journey</strong> จึงไม่ได้เป็นเพียงแพลตฟอร์มเกมออนไลน์ แต่คือ
+              <strong className="text-emerald-300"> นวัตกรรมการจัดการเรียนรู้เชิงรุก (Active Learning)</strong>
+              ที่สร้างขึ้นเพื่อยกระดับทักษะภาษาอังกฤษของนักเรียนโรงเรียนบ้านโคกยาง และเตรียมความพร้อมสู่การทดสอบระดับชาติ (O-NET)
+              อย่างเป็นระบบ
+            </p>
+            <p>
+              ทุกฟังก์ชันถูกออกแบบบนฐานจิตวิทยาการศึกษาและทฤษฎีการเรียนรู้ เพื่อให้ “ทุกนาทีแห่งความสนุก”
+              เป็นทุกนาทีแห่งการพัฒนาศักยภาพอย่างแท้จริง
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-7">
+            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+              <h2 className="text-lg font-black text-white mb-2">🎯 เรียนรู้ในจังหวะของตัวเอง</h2>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                ระบบ Adaptive Rank อิงแนวคิด ZPD ช่วยปรับความยากให้พอดีกับผู้เรียน ไม่ยากจนท้อ และไม่ง่ายจนน่าเบื่อ
+                เพื่อพาเข้าสู่สภาวะ Flow State ที่พร้อมเรียนรู้อย่างมีสมาธิ
+              </p>
+            </div>
+            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+              <h2 className="text-lg font-black text-white mb-2">🧠 จำระยะยาวด้วย SRS</h2>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                คำที่ตอบผิดไม่ใช่ความล้มเหลว แต่คือข้อมูลเรียนรู้ ระบบจะบันทึกคำที่ควรทบทวน
+                และดึงกลับมาในจังหวะที่เหมาะสมตามแนวคิด Ebbinghaus Forgetting Curve
+              </p>
+            </div>
+            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+              <h2 className="text-lg font-black text-white mb-2">🌍 ทักษะแห่งศตวรรษที่ 21</h2>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Context MC ฝึก Critical Thinking, Team Battle ฝึก Collaboration และ Dashboard ช่วยสะท้อนข้อมูลให้ผู้เรียนกำกับตนเอง
+                แบบ Self-Directed Learning
+              </p>
+            </div>
+            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+              <h2 className="text-lg font-black text-white mb-2">⚔️ เปลี่ยนการท่องจำเป็นการผจญภัย</h2>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                คลังคำศัพท์ มินิเกม ด่านบอส ระบบดาว ทีม และการ์ดเวทมนตร์ ช่วยเปลี่ยนการฝึกคำศัพท์ O-NET
+                ให้เป็นประสบการณ์ที่สนุก วัดผลได้ และต่อเนื่อง
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-7 bg-indigo-500/10 border border-indigo-500/20 rounded-3xl p-5">
+            <h2 className="text-xl font-black text-white mb-3">📋 สถานะฟีเจอร์สำหรับนำไปเขียนรายงาน</h2>
+            <p className="text-slate-400 text-sm mb-4">
+              ตารางนี้ช่วยกันรายงานเขียนเกินระบบจริง: รายการที่ใช้งานจริงสามารถอ้างได้ ส่วนรายการที่เตรียมเชื่อมต่อควรเขียนเป็นแผนพัฒนาต่อ
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {implementationChecks.map((item) => (
+                <div key={item.label} className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">
+                  <div className="flex items-center justify-between gap-3 mb-1">
+                    <span className="font-black text-white text-sm">{item.label}</span>
+                    <span className={`text-[10px] font-black px-2 py-1 rounded-full border ${
+                      item.status === 'ใช้งานจริง'
+                        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                        : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                    }`}>
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="text-slate-500 text-xs leading-relaxed">{item.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-7 text-center bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-3xl p-5">
+            <p className="text-white font-black text-lg">พร้อมหรือยัง... ที่จะเปลี่ยนการท่องจำให้เป็นการผจญภัย?</p>
+            <p className="text-slate-400 text-sm mt-2">
+              คลิกปุ่ม “สมัครสมาชิก/เข้าสู่ระบบ” เพื่อเริ่มต้นการเดินทาง และก้าวสู่การเป็นผู้พิชิตโอเน็ต (O-NET Conqueror) ไปด้วยกัน
+            </p>
+          </div>
+        </motion.section>
+
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-card p-8 rounded-3xl w-full max-w-md shadow-2xl relative z-10 max-h-[95vh] overflow-y-auto"
+        className="glass-card p-8 rounded-3xl w-full max-w-md shadow-2xl max-h-[95vh] overflow-y-auto xl:sticky xl:top-4 justify-self-center"
       >
         <div className="text-center mb-6">
           <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 mb-2">
@@ -503,6 +609,7 @@ export default function Home() {
           🃏 ระบบการ์ดสำหรับคุณครู (สมัคร/เข้าใช้)
         </button>
       </motion.div>
+      </div>
     </div>
   );
 }
