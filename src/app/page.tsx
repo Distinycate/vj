@@ -359,7 +359,7 @@ export default function Home() {
         <motion.section
           initial={{ opacity: 0, x: -24 }}
           animate={{ opacity: 1, x: 0 }}
-          className="glass-card p-4 sm:p-8 rounded-3xl shadow-2xl border border-emerald-500/10 xl:max-h-[95vh] xl:overflow-y-auto mobile-scroll-panel"
+          className="order-2 xl:order-1 glass-card p-4 sm:p-8 rounded-3xl shadow-2xl border border-emerald-500/10 xl:max-h-[95vh] xl:overflow-y-auto mobile-scroll-panel"
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-black tracking-widest uppercase mb-5">
             🌟 Active Learning Innovation
@@ -482,13 +482,16 @@ export default function Home() {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-card p-4 sm:p-8 rounded-3xl w-full max-w-md shadow-2xl xl:max-h-[95vh] xl:overflow-y-auto xl:sticky xl:top-4 justify-self-center mobile-scroll-panel"
+        className="order-1 xl:order-2 glass-card p-4 sm:p-8 rounded-3xl w-full max-w-md shadow-2xl xl:max-h-[95vh] xl:overflow-y-auto xl:sticky xl:top-4 justify-self-center mobile-scroll-panel"
       >
         <div className="text-center mb-6">
           <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 mb-2">
             Vocab Journey
           </h1>
           <p className="text-slate-400 font-medium">ระบบประเมินและฝึกทักษะคำศัพท์อัจฉริยะ</p>
+          <p className="mt-2 text-xs font-bold text-emerald-300 xl:hidden">
+            เข้าสู่ระบบหรือสมัครสมาชิกได้จากกล่องนี้
+          </p>
         </div>
 
         <div className="flex bg-slate-950/80 border border-slate-800 rounded-2xl p-1 mb-6">
