@@ -12,7 +12,7 @@ import {
 } from '@/utils/cardBattle';
 import CardWorkflowPanel from './CardWorkflowPanel';
 
-type CardPageTab = 'overview' | 'behavior' | 'workflow' | 'history';
+type CardPageTab = 'overview' | 'cards' | 'behavior' | 'workflow' | 'history';
 
 interface StudentSummary {
   id: string;
@@ -69,6 +69,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
   const [classroomId, setClassroomId] = useState('');
   const [students, setStudents] = useState<StudentSummary[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
+  const [allCards, setAllCards] = useState<any[]>([]);
   const [actions, setActions] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<StudentSummary | null>(null);
   const [search, setSearch] = useState('');
@@ -82,14 +83,20 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
 
   useEffect(() => {
     async function loadClassrooms() {
+      const cardsResult = supabase
+        .from('cards')
+        .select('id, card_code, name, description, rarity, effect_type, image_url, drop_weight, is_active, target_scope')
+        .order('rarity', { ascending: false })
+        .order('name');
       let query = supabase.from('classrooms').select('id, class_name').order('class_name');
       if (teacher.role === 'TEACHER') query = query.eq('teacher_id', teacher.id);
-      const { data, error } = await query;
-      if (error) {
-        setMessage(error.message);
+      const [{ data, error }, { data: cardsData, error: cardsError }] = await Promise.all([query, cardsResult]);
+      if (error || cardsError) {
+        setMessage(error?.message || cardsError?.message || 'โหลดข้อมูลเริ่มต้นไม่สำเร็จ');
         setLoading(false);
         return;
       }
+      setAllCards(cardsData || []);
       setClassrooms(data || []);
       if (data?.[0]) setClassroomId(data[0].id);
       else setLoading(false);
@@ -200,6 +207,16 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     ? inventory.filter((row) => row.student_id === selectedStudent.id)
     : [];
 
+  const cardCatalog = useMemo(() => allCards.map((card) => {
+    const inventoryRows = inventory.filter((row) => row.card_id === card.id);
+    return {
+      ...card,
+      currentQuantity: inventoryRows.reduce((sum, row) => sum + Number(row.quantity || 0), 0),
+      reservedQuantity: inventoryRows.reduce((sum, row) => sum + Number(row.reserved_quantity || 0), 0),
+      holders: new Set(inventoryRows.map((row) => row.student_id)).size,
+    };
+  }), [allCards, inventory]);
+
   async function adjustTickets(direction: 1 | -1) {
     if (!selectedStudent || !reason.trim() || ticketAmount < 1 || busy) return;
     setBusy(true);
@@ -307,6 +324,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
           <nav className="flex gap-2 overflow-x-auto pb-1">
             {[
               { id: 'overview', label: 'ภาพรวมและคลังรายบุคคล', icon: BarChart3 },
+              { id: 'cards', label: 'การ์ดทั้งหมด', icon: Package },
               { id: 'behavior', label: 'สรุปคุณลักษณะ', icon: CheckCircle2 },
               { id: 'workflow', label: 'คำขอใช้การ์ด', icon: ClipboardList },
               { id: 'history', label: 'ประวัติครู', icon: ShieldAlert },
@@ -404,6 +422,68 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
               </div>
               {loading && <div className="p-10 text-center text-slate-500">กำลังโหลดข้อมูล...</div>}
               {!loading && filteredStudents.length === 0 && <div className="p-10 text-center text-slate-500">ไม่พบนักเรียน</div>}
+            </div>
+          </div>
+        )}
+
+        {tab === 'cards' && (
+          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden">
+            <div className="p-5 border-b border-slate-800">
+              <h2 className="text-lg font-black text-white">รายการการ์ดทั้งหมดในระบบ</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                ครูใช้หน้านี้ตรวจสอบว่าระบบมีการ์ดอะไรบ้าง ผลของการ์ด ระดับความหายาก และจำนวนที่นักเรียนในห้องที่เลือกถืออยู่
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3 p-5">
+              {cardCatalog.map((card) => (
+                <div key={card.id} className={`bg-slate-950/60 border rounded-2xl p-5 ${card.is_active === false ? 'border-slate-800 opacity-60' : 'border-slate-700'}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex gap-3">
+                      <span className="text-4xl">{card.image_url || '🃏'}</span>
+                      <div>
+                        <h3 className="font-black text-white">{card.name}</h3>
+                        <div className="text-xs text-slate-500 mt-0.5">{card.card_code}</div>
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 rounded-full bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-500/20 text-xs font-black">
+                      {card.rarity}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-400 mt-4 leading-relaxed">{card.description || 'ไม่มีคำอธิบาย'}</p>
+                  <div className="grid grid-cols-3 gap-2 mt-4 text-center">
+                    <div className="bg-slate-900 rounded-xl p-2">
+                      <div className="text-[10px] text-slate-500">ประเภท</div>
+                      <div className="text-xs font-black text-white mt-1">{card.effect_type}</div>
+                    </div>
+                    <div className="bg-slate-900 rounded-xl p-2">
+                      <div className="text-[10px] text-slate-500">ในห้องนี้</div>
+                      <div className="text-xs font-black text-sky-300 mt-1">{card.currentQuantity} ใบ</div>
+                    </div>
+                    <div className="bg-slate-900 rounded-xl p-2">
+                      <div className="text-[10px] text-slate-500">ผู้ถือ</div>
+                      <div className="text-xs font-black text-emerald-300 mt-1">{card.holders} คน</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold">
+                    <span className="px-2 py-1 rounded-full bg-slate-900 text-slate-400 border border-slate-800">
+                      เป้าหมาย: {card.effect_type === 'ATTACK' ? 'ข้ามห้อง/ทั้งโรงเรียน' : card.effect_type === 'BUFF' || card.effect_type === 'DEFENSE' ? 'ตนเองหรือสวนกลับ' : 'ไม่มีผล'}
+                    </span>
+                    <span className="px-2 py-1 rounded-full bg-slate-900 text-slate-400 border border-slate-800">
+                      Drop weight: {card.drop_weight ?? '-'}
+                    </span>
+                    {card.reservedQuantity > 0 && (
+                      <span className="px-2 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                        จองอยู่ {card.reservedQuantity} ใบ
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {cardCatalog.length === 0 && (
+                <div className="md:col-span-2 xl:col-span-3 p-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
+                  ยังไม่มีข้อมูลการ์ดในระบบ
+                </div>
+              )}
             </div>
           </div>
         )}

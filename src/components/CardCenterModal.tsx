@@ -36,7 +36,7 @@ const rarityStyle: Record<string, string> = {
 export default function CardCenterModal({ onClose }: CardCenterModalProps) {
   const { student, progress, setProgress } = useAppStore();
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
-  const [classmates, setClassmates] = useState<any[]>([]);
+  const [schoolmates, setSchoolmates] = useState<any[]>([]);
   const [incoming, setIncoming] = useState<any[]>([]);
   const [selectedCard, setSelectedCard] = useState<InventoryRow | null>(null);
   const [selectedTarget, setSelectedTarget] = useState('');
@@ -99,29 +99,31 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
           },
         },
       ]);
-      setClassmates([
-        { id: 'demo-classmate-1', student_name: 'นักเรียนตัวอย่าง A' },
-        { id: 'demo-classmate-2', student_name: 'นักเรียนตัวอย่าง B' },
-        { id: 'demo-classmate-3', student_name: 'นักเรียนตัวอย่าง C' },
+      setSchoolmates([
+        { id: 'demo-classmate-1', student_name: 'นักเรียนตัวอย่าง A', classrooms: { class_name: 'ม.1/1' } },
+        { id: 'demo-classmate-2', student_name: 'นักเรียนตัวอย่าง B', classrooms: { class_name: 'ม.2/1' } },
+        { id: 'demo-classmate-3', student_name: 'นักเรียนตัวอย่าง C', classrooms: { class_name: 'ม.3/1' } },
       ]);
       setIncoming([]);
       setLoading(false);
       return;
     }
 
-    const [inventoryResult, classmatesResult, incomingResult, pathResult] = await Promise.all([
+    let targetQuery = supabase
+      .from('students')
+      .select('id, student_name, classroom_id, classrooms(class_name)')
+      .neq('id', student.id)
+      .eq('is_active', true)
+      .order('student_name');
+    if (student.school_id) targetQuery = targetQuery.eq('school_id', student.school_id);
+
+    const [inventoryResult, schoolmatesResult, incomingResult, pathResult] = await Promise.all([
       supabase
         .from('card_inventory')
         .select('id, quantity, reserved_quantity, cards(*)')
         .eq('student_id', student.id)
         .gt('quantity', 0),
-      supabase
-        .from('students')
-        .select('id, student_name')
-        .eq('classroom_id', student.classroom_id)
-        .neq('id', student.id)
-        .eq('is_active', true)
-        .order('student_name'),
+      targetQuery,
       supabase
         .from('card_logs')
         .select('*, attacker:attacker_id(student_name), played_card:played_card_id(*), counter_card:counter_card_id(*)')
@@ -135,7 +137,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
         .single(),
     ]);
 
-    const loadError = inventoryResult.error || classmatesResult.error || incomingResult.error;
+    const loadError = inventoryResult.error || schoolmatesResult.error || incomingResult.error;
     if (loadError) {
       setMessage(`โหลดศูนย์การ์ดไม่สำเร็จ: ${loadError.message}`);
       setLoading(false);
@@ -150,7 +152,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
         cards: Array.isArray(row.cards) ? row.cards[0] : row.cards,
       })).filter((row) => row.cards) as InventoryRow[]);
     }
-    if (classmatesResult.data) setClassmates(classmatesResult.data);
+    if (schoolmatesResult.data) setSchoolmates(schoolmatesResult.data);
     if (incomingResult.data) setIncoming(incomingResult.data);
     if (pathResult.data) setProgress(pathResult.data);
     setLoading(false);
@@ -253,11 +255,11 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
 
       const metadata: any = {};
       if (isCleanRoom) {
-         const t2 = classmates.find(c => c.id === selectedTarget2);
-         const t3 = classmates.find(c => c.id === selectedTarget3);
+         const t2 = schoolmates.find(c => c.id === selectedTarget2);
+         const t3 = schoolmates.find(c => c.id === selectedTarget3);
          metadata.additionalTargets = [
-           { id: t2?.id, name: t2?.student_name },
-           { id: t3?.id, name: t3?.student_name }
+           { id: t2?.id, name: t2?.student_name, classroom: Array.isArray(t2?.classrooms) ? t2.classrooms[0]?.class_name : t2?.classrooms?.class_name },
+           { id: t3?.id, name: t3?.student_name, classroom: Array.isArray(t3?.classrooms) ? t3.classrooms[0]?.class_name : t3?.classrooms?.class_name }
          ];
       }
 
@@ -462,9 +464,12 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                   onChange={(event) => setSelectedTarget(event.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3"
                 >
-                  <option value="">{selectedCard.cards.card_code === 'CLEAN_ROOM' ? 'เลือกเพื่อนในห้อง (คนที่ 1)' : 'เลือกเพื่อนในห้อง'}</option>
-                  {classmates.map((classmate) => (
-                    <option key={classmate.id} value={classmate.id}>{classmate.student_name}</option>
+                  <option value="">{selectedCard.cards.card_code === 'CLEAN_ROOM' ? 'เลือกนักเรียนทั้งโรงเรียน (คนที่ 1)' : 'เลือกนักเรียนทั้งโรงเรียน'}</option>
+                  {schoolmates.map((classmate) => (
+                    <option key={classmate.id} value={classmate.id}>
+                      {classmate.student_name}
+                      {` — ${Array.isArray(classmate.classrooms) ? classmate.classrooms[0]?.class_name || 'ไม่ทราบห้อง' : classmate.classrooms?.class_name || 'ไม่ทราบห้อง'}`}
+                    </option>
                   ))}
                 </select>
 
@@ -475,9 +480,12 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                       onChange={(event) => setSelectedTarget2(event.target.value)}
                       className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3"
                     >
-                      <option value="">เลือกเพื่อนในห้อง (คนที่ 2)</option>
-                      {classmates.map((classmate) => (
-                        <option key={classmate.id} value={classmate.id}>{classmate.student_name}</option>
+                      <option value="">เลือกนักเรียนทั้งโรงเรียน (คนที่ 2)</option>
+                      {schoolmates.map((classmate) => (
+                        <option key={classmate.id} value={classmate.id}>
+                          {classmate.student_name}
+                          {` — ${Array.isArray(classmate.classrooms) ? classmate.classrooms[0]?.class_name || 'ไม่ทราบห้อง' : classmate.classrooms?.class_name || 'ไม่ทราบห้อง'}`}
+                        </option>
                       ))}
                     </select>
                     <select
@@ -485,9 +493,12 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                       onChange={(event) => setSelectedTarget3(event.target.value)}
                       className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3"
                     >
-                      <option value="">เลือกเพื่อนในห้อง (คนที่ 3)</option>
-                      {classmates.map((classmate) => (
-                        <option key={classmate.id} value={classmate.id}>{classmate.student_name}</option>
+                      <option value="">เลือกนักเรียนทั้งโรงเรียน (คนที่ 3)</option>
+                      {schoolmates.map((classmate) => (
+                        <option key={classmate.id} value={classmate.id}>
+                          {classmate.student_name}
+                          {` — ${Array.isArray(classmate.classrooms) ? classmate.classrooms[0]?.class_name || 'ไม่ทราบห้อง' : classmate.classrooms?.class_name || 'ไม่ทราบห้อง'}`}
+                        </option>
                       ))}
                     </select>
                   </>

@@ -18,6 +18,22 @@ const adminCardPage = readFileSync(
   new URL('../app/admin/cards/page.tsx', import.meta.url),
   'utf8',
 );
+const cardCenter = readFileSync(
+  new URL('../components/CardCenterModal.tsx', import.meta.url),
+  'utf8',
+);
+const cardWorkflowPanel = readFileSync(
+  new URL('../components/admin/CardWorkflowPanel.tsx', import.meta.url),
+  'utf8',
+);
+const cardManagementDashboard = readFileSync(
+  new URL('../components/admin/CardManagementDashboard.tsx', import.meta.url),
+  'utf8',
+);
+const crossClassMigration = readFileSync(
+  new URL('../../MIGRATION_CROSS_CLASS_CARD_USAGE.sql', import.meta.url),
+  'utf8',
+);
 
 test('teacher card and ticket changes are audited', () => {
   assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.card_admin_actions/);
@@ -87,4 +103,30 @@ test('card removal cannot consume reserved cards', () => {
 test('bulk teacher awards reuse the audited adjustment function', () => {
   assert.match(migration, /FUNCTION public\.award_free_pull_tickets\(/);
   assert.match(migration, /PERFORM public\.teacher_adjust_free_pull_tickets/);
+});
+
+test('students can target card actions across classrooms while teacher approval remains required', () => {
+  assert.match(cardCenter, /select\('id, student_name, classroom_id, classrooms\(class_name\)'\)/);
+  assert.doesNotMatch(cardCenter, /\.eq\('classroom_id', student\.classroom_id\)/);
+  assert.match(cardCenter, /เลือกนักเรียนทั้งโรงเรียน/);
+  assert.match(cardCenter, /ส่งให้ครูอนุมัติ/);
+  assert.match(crossClassMigration, /SET target_scope = 'school'[\s\S]*WHERE effect_type = 'ATTACK'/);
+});
+
+test('teacher card workflow shows schoolwide pending actions and classroom labels', () => {
+  assert.match(cardWorkflowPanel, /รายการรอครูดำเนินการทั้งโรงเรียน/);
+  assert.match(cardWorkflowPanel, /card_logs/);
+  assert.doesNotMatch(cardWorkflowPanel, /attacker_id\.in/);
+  assert.doesNotMatch(cardWorkflowPanel, /target_id\.in/);
+  assert.match(cardWorkflowPanel, /classrooms\(class_name\)/);
+  assert.match(cardWorkflowPanel, /announceCardAction/);
+  assert.match(cardWorkflowPanel, /resolveCardAction/);
+});
+
+test('teacher card dashboard exposes the full card catalog', () => {
+  assert.match(cardManagementDashboard, /type CardPageTab = 'overview' \| 'cards'/);
+  assert.match(cardManagementDashboard, /\.from\('cards'\)/);
+  assert.match(cardManagementDashboard, /รายการการ์ดทั้งหมดในระบบ/);
+  assert.match(cardManagementDashboard, /เป้าหมาย: \{card\.effect_type === 'ATTACK' \? 'ข้ามห้อง\/ทั้งโรงเรียน'/);
+  assert.match(cardManagementDashboard, /Drop weight/);
 });

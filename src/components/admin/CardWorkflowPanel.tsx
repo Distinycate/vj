@@ -5,44 +5,31 @@ import { CheckCircle, Clock, Megaphone, RefreshCw, XCircle } from 'lucide-react'
 import { supabase } from '@/utils/supabase/client';
 import { announceCardAction, resolveCardAction } from '@/utils/cardBattle';
 
-export default function CardWorkflowPanel({ teacher, classroomId }: { teacher: any; classroomId: string }) {
+export default function CardWorkflowPanel({ teacher }: { teacher: any; classroomId?: string }) {
   const [logs, setLogs] = useState<any[]>([]);
   const [resultText, setResultText] = useState<Record<string, string>>({});
   const [message, setMessage] = useState('');
   const [busyId, setBusyId] = useState('');
 
   const loadData = useCallback(async () => {
-    if (!classroomId) return;
-    const { data: studentData } = await supabase
-      .from('students')
-      .select('id, student_name')
-      .eq('classroom_id', classroomId)
-      .eq('is_active', true)
-      .order('student_name');
-    const ids = (studentData || []).map((student) => student.id);
-    if (ids.length === 0) {
-      setLogs([]);
-      return;
-    }
     const { data } = await supabase
       .from('card_logs')
-      .select('*, attacker:attacker_id(student_name), target:target_id(student_name), played_card:played_card_id(*), counter_card:counter_card_id(*)')
-      .or(`attacker_id.in.(${ids.join(',')}),target_id.in.(${ids.join(',')})`)
+      .select('*, attacker:attacker_id(student_name, classroom_id, classrooms(class_name)), target:target_id(student_name, classroom_id, classrooms(class_name)), played_card:played_card_id(*), counter_card:counter_card_id(*)')
       .in('status', ['PENDING', 'COUNTER_PHASE'])
       .order('created_at', { ascending: true });
     setLogs(data || []);
-  }, [classroomId]);
+  }, []);
 
   useEffect(() => {
     loadData();
     const channel = supabase
-      .channel(`teacher-card-workflow-${classroomId}`)
+      .channel(`teacher-card-workflow-schoolwide`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'card_logs' }, loadData)
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [classroomId, loadData]);
+  }, [loadData]);
 
   async function run(logId: string, action: 'announce' | 'approve' | 'reject') {
     setBusyId(logId);
@@ -63,7 +50,10 @@ export default function CardWorkflowPanel({ teacher, classroomId }: { teacher: a
       {message && <div className="p-3 bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-xl">{message}</div>}
 
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-black text-white">รายการรอครูดำเนินการ</h2>
+        <div>
+          <h2 className="text-xl font-black text-white">รายการรอครูดำเนินการทั้งโรงเรียน</h2>
+          <p className="text-xs text-slate-500 mt-1">นักเรียนใช้การ์ดข้ามห้องได้ แต่ทุกคำขอต้องผ่านครูประกาศและอนุมัติผลก่อนมีผลจริง</p>
+        </div>
         <button onClick={loadData} className="p-2 bg-slate-800 rounded-xl text-slate-300"><RefreshCw className="w-4 h-4" /></button>
       </div>
 
@@ -72,10 +62,20 @@ export default function CardWorkflowPanel({ teacher, classroomId }: { teacher: a
           <div className="flex flex-wrap justify-between gap-3">
             <div>
               <div className="font-black text-white">
-                {log.attacker?.student_name} → {log.target?.student_name || 'ตัวเอง'}
+                {log.attacker?.student_name}
+                <span className="text-xs text-slate-500 font-normal ml-1">
+                  ({Array.isArray(log.attacker?.classrooms) ? log.attacker.classrooms[0]?.class_name : log.attacker?.classrooms?.class_name || 'ไม่ทราบห้อง'})
+                </span>
+                {' → '}
+                {log.target?.student_name || 'ตัวเอง'}
+                {log.target && (
+                  <span className="text-xs text-slate-500 font-normal ml-1">
+                    ({Array.isArray(log.target?.classrooms) ? log.target.classrooms[0]?.class_name : log.target?.classrooms?.class_name || 'ไม่ทราบห้อง'})
+                  </span>
+                )}
                 {log.metadata?.additionalTargets && log.metadata.additionalTargets.length > 0 && (
                   <span className="text-sm text-slate-400 font-normal ml-2">
-                    (และ {log.metadata.additionalTargets.map((t: any) => t.name).join(', ')})
+                    (และ {log.metadata.additionalTargets.map((t: any) => `${t.name}${t.classroom ? ` ${t.classroom}` : ''}`).join(', ')})
                   </span>
                 )}
               </div>
