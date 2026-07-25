@@ -14,8 +14,14 @@ import {
   uniqueChoicesByText,
 } from '@/lib/quizUtils';
 
-export default function PreTest() {
-  const { student, progress, setProgress, setScreen } = useAppStore();
+export default function PreTest({
+  onExit,
+  onDashboard,
+}: {
+  onExit?: () => void;
+  onDashboard?: () => void;
+} = {}) {
+  const { student, progress, setProgress, setScreen, logout } = useAppStore();
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -281,6 +287,22 @@ export default function PreTest() {
     fetchPretestData();
   };
 
+  const handleExit = () => {
+    if (useDemoStore.getState().isDemoMode) {
+      onExit?.();
+      return;
+    }
+    logout();
+  };
+
+  const handleDashboard = () => {
+    if (useDemoStore.getState().isDemoMode && onDashboard) {
+      onDashboard();
+      return;
+    }
+    setScreen('dashboard');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center">
@@ -364,7 +386,7 @@ export default function PreTest() {
             </button>
           ) : (
             <button 
-              onClick={() => setScreen('dashboard')} 
+              onClick={handleDashboard} 
               className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-4 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20 hover:scale-[1.02]"
             >
               เข้าสู่ Dashboard 🚀
@@ -397,7 +419,7 @@ export default function PreTest() {
               ข้อ {currentIndex + 1} / {questions.length}
             </div>
             <button 
-              onClick={() => useAppStore.getState().logout()}
+              onClick={handleExit}
               className="bg-slate-900 hover:bg-slate-850 border border-slate-800 px-3.5 py-2 rounded-xl text-rose-400 hover:text-rose-300 text-xs font-bold transition-all flex items-center gap-1"
             >
               🚪 ออก

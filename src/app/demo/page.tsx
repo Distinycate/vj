@@ -167,7 +167,13 @@ export default function DemoPage() {
             {/* Content Area */}
             <AnimatePresence mode="wait">
               {view === 'dashboard' && <Dashboard key="dash" />}
-              {view === 'pretest' && <PreTest key="pretest" />}
+              {view === 'pretest' && (
+                <PreTest
+                  key="pretest"
+                  onExit={() => switchView('dashboard')}
+                  onDashboard={() => switchView('dashboard')}
+                />
+              )}
               {view === 'game' && <Game key="game" />}
               {view === 'study' && <StudyCamp key="study" />}
             </AnimatePresence>
