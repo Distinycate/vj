@@ -1,8 +1,18 @@
 const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient('https://ljgpljhszzlneawwpcwt.supabase.co', 'sb_publishable_1q4wrxi1BKsCrKrFCL3_YA_0HL6SQfE');
 
-async function test() {
-  const { data, error } = await supabase.from('learning_paths').select('*').eq('student_id', 'e729ab54-c7bf-4e60-a283-4226a26b81ef').single();
-  console.log("Learning Paths:", data, "Error:", error);
+require('dotenv').config({ path: '.env.local' });
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+async function run() {
+  const { data: lp } = await supabase.from('learning_paths').select('*').limit(1);
+  console.log('lp columns:', Object.keys(lp[0] || {}));
+  
+  // Find users with stage > 10
+  const { data: topUsers } = await supabase.from('learning_paths').select('student_id, current_stage').gte('current_stage', 10).order('current_stage', {ascending: false});
+  console.log('Users with stage >= 10:', topUsers?.length);
+  
+  if (topUsers && topUsers.length > 0) {
+      console.log('Max stage:', topUsers[0].current_stage);
+  }
 }
-test();
+run();

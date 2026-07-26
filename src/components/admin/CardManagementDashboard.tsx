@@ -72,6 +72,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
   const [allCards, setAllCards] = useState<any[]>([]);
   const [actions, setActions] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<StudentSummary | null>(null);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -261,6 +262,61 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     }
   }
 
+  async function adjustBulkTickets(direction: 1 | -1) {
+    if (selectedStudentIds.size === 0 || !reason.trim() || ticketAmount < 1 || busy) return;
+    setBusy(true);
+    try {
+      await Promise.all(
+        Array.from(selectedStudentIds).map((id) =>
+          adjustStudentTickets(teacher.id, id, direction * ticketAmount, reason.trim(), behaviorCategory)
+        )
+      );
+      setReason('');
+      setMessage(direction > 0 ? `มอบตั๋วให้นักเรียน ${selectedStudentIds.size} คนแล้ว` : `หักตั๋วนักเรียน ${selectedStudentIds.size} คนแล้ว`);
+      await loadData();
+      setSelectedStudentIds(new Set());
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'ปรับตั๋วแบบกลุ่มไม่สำเร็จ');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function adjustBulkCoins(direction: 1 | -1) {
+    if (selectedStudentIds.size === 0 || !reason.trim() || coinAmount < 1 || busy) return;
+    setBusy(true);
+    try {
+      await Promise.all(
+        Array.from(selectedStudentIds).map((id) =>
+          adjustStudentCoins(teacher.id, id, direction * coinAmount, reason.trim(), behaviorCategory)
+        )
+      );
+      setReason('');
+      setMessage(direction > 0 ? `มอบเหรียญให้นักเรียน ${selectedStudentIds.size} คนแล้ว` : `หักเหรียญนักเรียน ${selectedStudentIds.size} คนแล้ว`);
+      await loadData();
+      setSelectedStudentIds(new Set());
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'ปรับเหรียญแบบกลุ่มไม่สำเร็จ');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const toggleStudentSelection = (id: string) => {
+    const newSelected = new Set(selectedStudentIds);
+    if (newSelected.has(id)) newSelected.delete(id);
+    else newSelected.add(id);
+    setSelectedStudentIds(newSelected);
+  };
+
+  const toggleAllStudents = () => {
+    if (selectedStudentIds.size === filteredStudents.length) {
+      setSelectedStudentIds(new Set());
+    } else {
+      setSelectedStudentIds(new Set(filteredStudents.map(s => s.id)));
+    }
+  };
+
   async function removeCard(row: any) {
     if (!selectedStudent || !reason.trim() || busy) return;
     if (!window.confirm(`ยืนยันริบการ์ด “${row.cards?.name}” 1 ใบ?`)) return;
@@ -382,6 +438,14 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                 <table className="w-full min-w-[880px] text-sm">
                   <thead className="bg-slate-950 text-slate-500 text-xs">
                     <tr>
+                      <th className="p-4 w-12">
+                        <input 
+                          type="checkbox" 
+                          className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500/50"
+                          checked={filteredStudents.length > 0 && selectedStudentIds.size === filteredStudents.length}
+                          onChange={toggleAllStudents}
+                        />
+                      </th>
                       <th className="text-left p-4">นักเรียน</th>
                       <th className="text-center p-4">สุ่มได้</th>
                       <th className="text-center p-4">คงเหลือ</th>
@@ -397,7 +461,15 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                     {filteredStudents.map((student) => {
                       const signal = behaviorSignal(student);
                       return (
-                        <tr key={student.id} className="hover:bg-slate-800/30">
+                        <tr key={student.id} className={`hover:bg-slate-800/30 ${selectedStudentIds.has(student.id) ? 'bg-indigo-500/5' : ''}`}>
+                          <td className="p-4">
+                            <input 
+                              type="checkbox" 
+                              className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500/50"
+                              checked={selectedStudentIds.has(student.id)}
+                              onChange={() => toggleStudentSelection(student.id)}
+                            />
+                          </td>
                           <td className="p-4">
                             <div className="font-bold text-white">{student.student_name}</div>
                             <div className="text-xs text-slate-500">{student.student_id}</div>
@@ -423,6 +495,48 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
               {loading && <div className="p-10 text-center text-slate-500">กำลังโหลดข้อมูล...</div>}
               {!loading && filteredStudents.length === 0 && <div className="p-10 text-center text-slate-500">ไม่พบนักเรียน</div>}
             </div>
+
+            {/* Bulk Action Panel */}
+            {selectedStudentIds.size > 0 && (
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-4xl bg-slate-900/95 border border-indigo-500/50 p-4 sm:p-6 rounded-3xl shadow-2xl backdrop-blur-xl z-50 animate-in slide-in-from-bottom-10 fade-in duration-300 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="text-white">
+                  <div className="font-black text-lg">ดำเนินการแบบกลุ่ม ({selectedStudentIds.size} คน)</div>
+                  <div className="text-sm text-slate-400 mt-1">แจกหรือหักตั๋ว/เหรียญ ให้กับนักเรียนทั้งหมดที่เลือก</div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                  <input
+                    placeholder="เหตุผล (จำเป็น)..."
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-2.5 min-w-[200px]"
+                  />
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-28">
+                      <input 
+                        type="number" min="1" max="100" value={ticketAmount} onChange={(e) => setTicketAmount(parseInt(e.target.value) || 1)}
+                        className="w-full bg-slate-950 border border-sky-500/30 text-sky-400 font-bold rounded-xl pl-9 pr-2 py-2.5"
+                      />
+                      <span className="absolute left-3 top-2.5">🎫</span>
+                    </div>
+                    <button onClick={() => adjustBulkTickets(1)} disabled={busy} className="bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 px-3 py-2.5 rounded-xl font-bold whitespace-nowrap">แจก</button>
+                    <button onClick={() => adjustBulkTickets(-1)} disabled={busy} className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-3 py-2.5 rounded-xl font-bold whitespace-nowrap">หัก</button>
+                  </div>
+                  
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-32">
+                      <input 
+                        type="number" min="1" max="10000" step="10" value={coinAmount} onChange={(e) => setCoinAmount(parseInt(e.target.value) || 100)}
+                        className="w-full bg-slate-950 border border-amber-500/30 text-amber-400 font-bold rounded-xl pl-9 pr-2 py-2.5"
+                      />
+                      <span className="absolute left-3 top-2.5">🪙</span>
+                    </div>
+                    <button onClick={() => adjustBulkCoins(1)} disabled={busy} className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-2.5 rounded-xl font-bold whitespace-nowrap">แจก</button>
+                    <button onClick={() => adjustBulkCoins(-1)} disabled={busy} className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-3 py-2.5 rounded-xl font-bold whitespace-nowrap">หัก</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

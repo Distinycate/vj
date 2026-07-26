@@ -31,6 +31,8 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeletingUnplayed, setIsDeletingUnplayed] = useState(false);
+  const [isRandomizingTeams, setIsRandomizingTeams] = useState(false);
   const [isResettingAll, setIsResettingAll] = useState(false);
 
   const [activeTab, setActiveTab] = useState<AdminTab>('school-overview');
@@ -98,6 +100,33 @@ export default function AdminPage() {
       alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + err.message);
     } finally {
       setIsPurging(false);
+    }
+  };
+
+  const handleRandomizeTeams = async () => {
+    if (!teacher) return;
+    
+    if (!confirm('คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการสุ่มทีมระดับโรงเรียนและห้องเรียนใหม่ทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
+      return;
+    }
+
+    const userInput = prompt('พิมพ์ "SHUFFLE" เพื่อยืนยันการสุ่มทีมใหม่');
+    if (userInput !== 'SHUFFLE') {
+      alert('การพิมพ์ยืนยันไม่ถูกต้อง ยกเลิกการสุ่มทีม');
+      return;
+    }
+
+    setIsRandomizingTeams(true);
+    try {
+      const { error: rpcError } = await supabase.rpc('randomize_all_teams');
+      if (rpcError) throw rpcError;
+      
+      alert('สุ่มทีมใหม่ทั้งหมดสำเร็จแล้ว');
+      window.location.reload();
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการสุ่มทีม กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setIsRandomizingTeams(false);
     }
   };
 
@@ -873,9 +902,21 @@ export default function AdminPage() {
           {/* TAB: TEAMS */}
           {activeTab === 'teams' && (
             <motion.div key="teams" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
-              <div className="bg-slate-900/40 p-6 rounded-3xl border border-slate-900">
-                <h2 className="text-xl font-black text-white flex items-center gap-2"><Trophy className="text-amber-400"/> Cross-Class Team Battle</h2>
-                <p className="text-slate-400 text-sm mt-1">อันดับทีมข้ามห้องเรียนระดับโรงเรียน</p>
+              <div className="bg-slate-900/40 p-6 rounded-3xl border border-slate-900 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-black text-white flex items-center gap-2"><Trophy className="text-amber-400"/> Cross-Class Team Battle</h2>
+                  <p className="text-slate-400 text-sm mt-1">อันดับทีมข้ามห้องเรียนระดับโรงเรียน</p>
+                </div>
+                {teacher?.role === 'ADMIN' && (
+                  <button
+                    onClick={handleRandomizeTeams}
+                    disabled={isRandomizingTeams}
+                    className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors flex items-center gap-2"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isRandomizingTeams ? 'animate-spin' : ''}`} />
+                    {isRandomizingTeams ? 'กำลังสุ่มทีม...' : 'สุ่มทีมใหม่ทั้งหมด'}
+                  </button>
+                )}
               </div>
               
               {teacher.role === 'ADMIN' && (
@@ -908,7 +949,7 @@ export default function AdminPage() {
           {/* TAB: EVENTS */}
           {activeTab === 'events' && (
             <motion.div key="events" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
-               <EventAnalyticsTab />
+               <EventAnalyticsTab teacher={teacher} />
             </motion.div>
           )}
         </AnimatePresence>
