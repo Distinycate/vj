@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, CheckCircle, XCircle, Trophy, Timer, Volume2, 
-  Heart, Sparkles, AlertTriangle
+  Heart, Sparkles, AlertTriangle, Star, Flame
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
@@ -26,6 +26,8 @@ export default function Game() {
   
   // Game Play States
   const [score, setScore] = useState(0);
+  const [showScorePopup, setShowScorePopup] = useState(false);
+  const [shakeScreen, setShakeScreen] = useState(false);
   const [lives, setLives] = useState(3);
   const [timeLeft, setTimeLeft] = useState(15);
   const [isAnswered, setIsAnswered] = useState(false);
@@ -263,10 +265,16 @@ export default function Game() {
       const newCombo = comboCount + 1;
       setComboCount(newCombo);
       if (newCombo > maxCombo) setMaxCombo(newCombo);
+      
+      setShowScorePopup(true);
+      setTimeout(() => setShowScorePopup(false), 1000);
     } else {
       setLives(l => l - 1);
       setComboCount(0); // break combo
       setWrongWords(w => [...w, wordObj.word_id || wordObj.id]);
+      
+      setShakeScreen(true);
+      setTimeout(() => setShakeScreen(false), 500);
     }
 
     setTimeout(() => {
@@ -544,16 +552,41 @@ export default function Game() {
 
   return (
     <div 
-      className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 flex flex-col items-center relative overflow-hidden select-none"
+      className={`min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 flex flex-col items-center relative overflow-hidden select-none transition-transform duration-100 ${shakeScreen ? 'animate-shake' : ''}`}
       onContextMenu={(e) => e.preventDefault()}
     >
-      
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-10px) rotate(-1deg); }
+          50% { transform: translateX(10px) rotate(1deg); }
+          75% { transform: translateX(-10px) rotate(-1deg); }
+        }
+        .animate-shake { animation: shake 0.3s ease-in-out; }
+      `}} />
+
       {/* Header Panel */}
       <div className="w-full max-w-2xl flex justify-between items-center mb-6 relative z-10">
-        <div className="flex gap-1 bg-slate-900 border border-slate-800 px-3 py-2 rounded-xl">
-          {Array(3).fill(0).map((_, i) => (
-            <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'text-slate-850'}`} />
-          ))}
+        <div className="flex gap-2 items-center">
+          <div className="flex gap-1 bg-slate-900 border border-slate-800 px-3 py-2 rounded-xl">
+            {Array(3).fill(0).map((_, i) => (
+              <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'text-slate-850'}`} />
+            ))}
+          </div>
+          
+          <div className="relative">
+            <div className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border font-bold text-sm transition-all ${
+              showScorePopup ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-slate-900 border-slate-800 text-slate-300'
+            }`}>
+              <Star className={`w-4 h-4 ${showScorePopup ? 'animate-spin' : ''}`} />
+              <span>{score}</span>
+            </div>
+            {showScorePopup && (
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-emerald-400 font-black text-lg pointer-events-none drop-shadow-lg animate-bounce">
+                +1
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Combo Multiplier indicator */}

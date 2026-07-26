@@ -347,15 +347,20 @@ export default function Dashboard() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
 
       <div className="max-w-4xl mx-auto relative z-10">
-        <StudentHero 
-          student={student} 
-          progress={progress} 
-          stats={stats} 
-          rankConfig={rankConfig} 
-          setShowShop={setShowShop} 
-          setShowCardCenter={setShowCardCenter}
-          logout={logout} 
-        />
+        <motion.div
+          animate={{ y: [0, -3, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <StudentHero 
+            student={student} 
+            progress={progress} 
+            stats={stats} 
+            rankConfig={rankConfig} 
+            setShowShop={setShowShop} 
+            setShowCardCenter={setShowCardCenter}
+            logout={logout} 
+          />
+        </motion.div>
 
         {/* AI Mascot Bubble */}
         <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/5 border border-emerald-500/15 p-4 rounded-2xl flex items-center gap-3.5 mb-6">

@@ -391,9 +391,31 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               </button>
             </div>
 
-            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5 flex items-center justify-center min-h-48">
+            <div className={`bg-slate-950/60 border border-slate-800 rounded-2xl p-5 flex items-center justify-center min-h-48 transition-all duration-300 ${latestPull && ['SSR', 'SR'].includes(latestPull.rarity) ? 'animate-shake shadow-[0_0_50px_rgba(236,72,153,0.3)]' : ''}`}>
+              <style dangerouslySetInnerHTML={{__html: `
+                @keyframes gacha-shake {
+                  0%, 100% { transform: scale(1) rotate(0deg); }
+                  25% { transform: scale(1.05) rotate(-2deg); }
+                  50% { transform: scale(1.05) rotate(2deg); }
+                  75% { transform: scale(1.05) rotate(-2deg); }
+                }
+                .animate-shake { animation: gacha-shake 0.5s ease-in-out; }
+              `}} />
               {latestPull ? (
-                <div className={`w-full text-center border rounded-2xl p-5 ${rarityStyle[latestPull.rarity]}`}>
+                <motion.div 
+                  initial={{ scale: 0, rotate: 180, opacity: 0 }}
+                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                  transition={{ type: 'spring', damping: 12, stiffness: 100 }}
+                  className={`w-full text-center border rounded-2xl p-5 ${rarityStyle[latestPull.rarity]} ${['SSR', 'SR'].includes(latestPull.rarity) ? 'relative overflow-hidden' : ''}`}
+                >
+                  {['SSR', 'SR'].includes(latestPull.rarity) && (
+                    <motion.div 
+                      initial={{ left: '-100%' }}
+                      animate={{ left: '200%' }}
+                      transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
+                      className="absolute top-0 bottom-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg]"
+                    />
+                  )}
                   <div className="text-6xl">{latestPull.image_url}</div>
                   <div className="font-black text-2xl mt-2">{latestPull.name}</div>
                   <div className="text-xs font-bold mt-1">RARITY {latestPull.rarity}</div>
@@ -403,7 +425,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                     </div>
                   )}
                   <p className="text-sm text-slate-400 mt-2">{latestPull.description}</p>
-                </div>
+                </motion.div>
               ) : (
                 <span className="text-slate-500">การ์ดที่สุ่มได้จะแสดงที่นี่</span>
               )}

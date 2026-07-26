@@ -106,12 +106,16 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
           return (
             <div 
               key={team.id} 
-              className={`p-4 rounded-2xl flex items-center justify-between border ${
-                isTop3 ? 'bg-slate-800/80 border-amber-500/30' : 'bg-slate-950/60 border-slate-800'
+              className={`p-4 rounded-2xl flex items-center justify-between border relative overflow-hidden transition-all duration-500 ${
+                isTop3 ? 'bg-slate-800/80 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:scale-[1.02]' : 'bg-slate-950/60 border-slate-800'
               }`}
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 flex items-center justify-center text-xl rounded-xl border border-slate-700 font-black" style={{ backgroundColor: `${team.team_color}20`, color: team.team_color }}>
+              {isTop3 && (
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-amber-500/20 to-transparent blur-2xl pointer-events-none" />
+              )}
+              <div className="flex items-center gap-4 relative z-10">
+                <div className="w-12 h-12 flex items-center justify-center text-xl rounded-xl border border-slate-700 font-black relative" style={{ backgroundColor: `${team.team_color}20`, color: team.team_color }}>
+                  {idx === 0 && <Crown className="w-6 h-6 absolute -top-4 -right-2 text-amber-400 rotate-12 drop-shadow-md" />}
                   {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                 </div>
                 <div>
