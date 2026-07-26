@@ -410,8 +410,59 @@ export default function Dashboard() {
     }
   };
 
+  const handleClaimQuest = async (questId: string) => {
+    try {
+      // 1. Update DB (if table exists)
+      const { error } = await supabase
+        .from('student_daily_quests')
+        .update({ is_claimed: true })
+        .eq('id', questId);
+      
+      // If error (e.g. demo mode / mock data), we just ignore and update local state
+      
+      // 2. Update local state
+      setDailyQuests(prev => 
+        prev.map(q => q.id === questId ? { ...q, claimed: true } : q)
+      );
+
+      // 3. Give rewards (Update progress and DB)
+      const questToClaim = dailyQuests.find(q => q.id === questId);
+      if (questToClaim && progress) {
+        const rewardCoins = questToClaim.reward_coins || 0;
+        const rewardTickets = questToClaim.reward_tickets || 0;
+
+        const updatedCoins = (progress.coins || 0) + rewardCoins;
+        const updatedTickets = (progress.gacha_tickets || 0) + rewardTickets;
+
+        // Update DB
+        await supabase
+          .from('learning_paths')
+          .update({ coins: updatedCoins, gacha_tickets: updatedTickets })
+          .eq('student_id', student.id);
+
+        // Update Zustand
+        setProgress({ 
+          ...progress, 
+          coins: updatedCoins, 
+          gacha_tickets: updatedTickets 
+        });
+
+        // Trigger confetti (using existing window.confetti if available)
+        if (typeof window !== 'undefined' && (window as any).confetti) {
+          (window as any).confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Error claiming quest:", e);
+    }
+  };
+
   return (
-    <div data-demo-guide="student-dashboard" className="min-h-screen bg-slate-950 text-slate-100 font-sans p-3 sm:p-4 md:p-8 safe-bottom relative overflow-x-hidden">
+    <div data-demo-guide="student-dashboard" className="min-h-screen bg-slate-950 text-slate-100 font-sans p-3 sm:p-4 md:p-8 safe-bottom relative">
       {/* Ambient backgrounds */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
@@ -1176,6 +1227,7 @@ export default function Dashboard() {
                           </div>
                           
                           <button 
+                            onClick={() => handleClaimQuest(q.id)}
                             disabled={!isDone || q.claimed}
                             className={`min-w-28 py-2.5 rounded-xl font-bold text-sm shrink-0 transition-all ${
                               q.claimed ? 'bg-slate-800 text-slate-500' :
