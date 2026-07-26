@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Trophy, Star, LogOut, Award, Compass, Store,
-  Bookmark, Eye, CheckCircle2, BookOpen, Volume2, User, ChevronDown, ChevronUp, BookMarked, Activity, Shuffle, RefreshCw
+  Bookmark, Eye, CheckCircle2, BookOpen, Volume2, User, ChevronDown, ChevronUp, BookMarked, Activity, Shuffle, RefreshCw, Mail, CheckSquare
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
@@ -39,7 +39,7 @@ export default function Dashboard() {
   const [reviewWords, setReviewWords] = useState<any[]>([]);
   const [wordCollection, setWordCollection] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({ xp: 0, level: 1 });
-  const [activeTab, setActiveTab] = useState<'roadmap' | 'review' | 'stats' | 'collection' | 'profile' | 'teams'>('roadmap');
+  const [activeTab, setActiveTab] = useState<'roadmap' | 'review' | 'stats' | 'collection' | 'profile' | 'teams' | 'inbox' | 'quests'>('roadmap');
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [expandedWorld, setExpandedWorld] = useState<number | null>(1);
   const [aiTeacherMessage, setAiTeacherMessage] = useState('');
@@ -50,6 +50,12 @@ export default function Dashboard() {
   const [teamError, setTeamError] = useState('');
   const [stageStars, setStageStars] = useState<Record<number, number>>({});
   const [realAccuracy, setRealAccuracy] = useState<number | null>(null);
+
+  // Inbox & Quests States
+  const [messages, setMessages] = useState<any[]>([]);
+  const [showMessages, setShowMessages] = useState(false);
+  const [dailyQuests, setDailyQuests] = useState<any[]>([]);
+  const [showQuests, setShowQuests] = useState(false);
 
   // Classroom stats calculations
   const [classroomStats, setClassroomStats] = useState({
@@ -278,6 +284,54 @@ export default function Dashboard() {
         console.error('Team Battle load failed:', error);
         setTeamError(error instanceof Error ? error.message : 'โหลดระบบทีมไม่สำเร็จ');
       }
+
+      // 6. Fetch Messages
+      const { data: messagesData } = await supabase
+        .from('student_messages')
+        .select('*')
+        .eq('student_id', student.id)
+        .order('created_at', { ascending: false });
+      
+      if (messagesData) {
+        setMessages(messagesData);
+      }
+
+      // 7. Fetch Daily Quests (with fallback if table not created yet)
+      try {
+        const { data: questData, error: questError } = await supabase
+          .from('student_daily_quests')
+          .select('*, daily_quests(*)')
+          .eq('student_id', student.id)
+          .eq('quest_date', new Date().toISOString().split('T')[0]);
+        
+        if (questError) throw questError;
+
+        if (questData && questData.length > 0) {
+          setDailyQuests(questData.map(q => ({
+            id: q.id,
+            title: q.daily_quests.title,
+            target_value: q.daily_quests.target_value,
+            reward_coins: q.daily_quests.reward_coins,
+            reward_tickets: q.daily_quests.reward_tickets,
+            progress: q.progress,
+            claimed: q.is_claimed
+          })));
+        } else {
+          // Fallback mock quests if no data or table empty
+          setDailyQuests([
+            { id: '1', title: 'เข้าเรียนและเล่นเกมคำศัพท์ 3 ด่าน', target_value: 3, reward_coins: 100, reward_tickets: 0, progress: 1, claimed: false },
+            { id: '2', title: 'ทำแบบทดสอบได้คะแนนเต็ม (Perfect Score) 1 ครั้ง', target_value: 1, reward_coins: 50, reward_tickets: 1, progress: 1, claimed: false },
+            { id: '3', title: 'ทบทวนคำศัพท์เก่า (Spaced Repetition) 10 คำ', target_value: 10, reward_coins: 150, reward_tickets: 0, progress: 10, claimed: true }
+          ]);
+        }
+      } catch (e) {
+        console.warn("Daily quests table might not exist yet, using mock data", e);
+        setDailyQuests([
+          { id: '1', title: 'เข้าเรียนและเล่นเกมคำศัพท์ 3 ด่าน', target_value: 3, reward_coins: 100, reward_tickets: 0, progress: 1, claimed: false },
+          { id: '2', title: 'ทำแบบทดสอบได้คะแนนเต็ม (Perfect Score) 1 ครั้ง', target_value: 1, reward_coins: 50, reward_tickets: 1, progress: 1, claimed: false },
+          { id: '3', title: 'ทบทวนคำศัพท์เก่า (Spaced Repetition) 10 คำ', target_value: 10, reward_coins: 150, reward_tickets: 0, progress: 10, claimed: true }
+        ]);
+      }
     }
 
     loadDashboardData();
@@ -339,6 +393,22 @@ export default function Dashboard() {
   const rankConfig = ADAPTIVE_RANK_CONFIG[currentRank] || ADAPTIVE_RANK_CONFIG[1];
   const currentWorld = getWorldForStage(currentStage);
   const isExternalUser = student?.user_type === 'EXTERNAL';
+
+  const markMessagesAsRead = async () => {
+    const unreadMessages = messages.filter(m => !m.is_read);
+    if (unreadMessages.length === 0) return;
+    
+    try {
+      await supabase
+        .from('student_messages')
+        .update({ is_read: true })
+        .in('id', unreadMessages.map(m => m.id));
+      
+      setMessages(messages.map(m => ({ ...m, is_read: true })));
+    } catch (e) {
+      console.error("Error marking messages as read:", e);
+    }
+  };
 
   return (
     <div data-demo-guide="student-dashboard" className="min-h-screen bg-slate-950 text-slate-100 font-sans p-3 sm:p-4 md:p-8 safe-bottom relative overflow-x-hidden">
@@ -423,62 +493,91 @@ export default function Dashboard() {
             <RefreshCw className="w-3 h-3" /> รีเฟรชข้อมูล
           </button>
         </div>
-        <div className="grid grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-6 bg-slate-900/60 border border-slate-850 rounded-2xl p-1 mb-8 gap-1">
+        <div className="grid grid-cols-3 min-[420px]:grid-cols-4 md:grid-cols-8 bg-slate-900/60 border border-slate-850 rounded-2xl p-1 mb-8 gap-1">
           <button 
             onClick={() => setActiveTab('roadmap')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
               activeTab === 'roadmap' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Compass className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-            <span className="text-[10px] sm:text-sm font-black">ผจญภัย</span>
+            <Compass className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-black">ผจญภัย</span>
           </button>
           <button 
             onClick={() => setActiveTab('review')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
               activeTab === 'review' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-            <span className="text-[10px] sm:text-sm font-black">ทบทวน ({reviewWords.length})</span>
+            <Bookmark className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-black">ทบทวน ({reviewWords.length})</span>
           </button>
           <button 
             onClick={() => setActiveTab('collection')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
               activeTab === 'collection' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <BookMarked className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-            <span className="text-[10px] sm:text-sm font-black">คลังศัพท์</span>
+            <BookMarked className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-black">คลังศัพท์</span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('quests')} 
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all relative ${
+              activeTab === 'quests' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <CheckSquare className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-black">ภารกิจ</span>
+            {dailyQuests.some(q => q.progress >= q.target_value && !q.claimed) && (
+              <div className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full animate-ping" />
+            )}
+            {dailyQuests.some(q => q.progress >= q.target_value && !q.claimed) && (
+              <div className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full" />
+            )}
           </button>
           <button 
             onClick={() => setActiveTab('stats')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
               activeTab === 'stats' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Trophy className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-            <span className="text-[10px] sm:text-sm font-black">แรงกิ้ง</span>
+            <Trophy className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-black">แรงกิ้ง</span>
           </button>
           {!isExternalUser && (
             <button 
               onClick={() => setActiveTab('teams')} 
-              className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+              className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
                 activeTab === 'teams' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Users className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-              <span className="text-[10px] sm:text-sm font-black">ทีมของฉัน</span>
+              <Users className="w-5 h-5 shrink-0" />
+              <span className="text-[10px] sm:text-xs font-black">ทีมของฉัน</span>
             </button>
           )}
           <button 
+            onClick={() => { setActiveTab('inbox'); markMessagesAsRead(); }} 
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all relative ${
+              activeTab === 'inbox' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Mail className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-black">จดหมาย</span>
+            {messages.filter(m => !m.is_read).length > 0 && (
+              <div className="absolute top-2 right-2 flex items-center justify-center w-4 h-4 bg-rose-500 text-white text-[10px] font-black rounded-full shadow-lg">
+                {messages.filter(m => !m.is_read).length}
+              </div>
+            )}
+          </button>
+          <button 
             onClick={() => setActiveTab('profile')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
               activeTab === 'profile' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <User className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-            <span className="text-[10px] sm:text-sm font-black">โปรไฟล์</span>
+            <User className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-black">โปรไฟล์</span>
           </button>
         </div>
 
@@ -964,6 +1063,106 @@ export default function Dashboard() {
               {/* Show Leaderboard in Teams tab */}
               <div className="mt-8">
                 <TeamLeaderboard scope="school" />
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB: INBOX */}
+          {activeTab === 'inbox' && (
+            <motion.div 
+              key="inbox" 
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6 text-left"
+            >
+              <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-5 sm:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <Mail className="w-6 h-6 text-indigo-400" />
+                  <h3 className="text-xl font-black text-white">กล่องจดหมาย (Teacher's Note)</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  {messages.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500">
+                      <Mail className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                      <p>ยังไม่มีจดหมายจากคุณครูครับ</p>
+                    </div>
+                  ) : (
+                    messages.map(msg => (
+                      <div key={msg.id} className="bg-slate-950/80 border border-indigo-500/20 rounded-2xl p-5 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500" />
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0">
+                            <span className="text-xl">👩‍🏫</span>
+                          </div>
+                          <div>
+                            <div className="text-xs text-indigo-300 font-bold mb-1">จาก: {msg.sender_name} <span className="text-slate-500 ml-2 font-normal">{new Date(msg.created_at).toLocaleDateString('th-TH')}</span></div>
+                            <p className="text-white whitespace-pre-wrap">{msg.message}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB: QUESTS */}
+          {activeTab === 'quests' && (
+            <motion.div 
+              key="quests" 
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6 text-left"
+            >
+              <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-5 sm:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <CheckSquare className="w-6 h-6 text-emerald-400" />
+                  <h3 className="text-xl font-black text-white">ภารกิจรายวัน (Daily Quests)</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  {dailyQuests.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500">
+                      <CheckSquare className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                      <p>กำลังโหลดภารกิจ หรือไม่มีภารกิจในวันนี้</p>
+                    </div>
+                  ) : (
+                    dailyQuests.map(q => {
+                      const percent = Math.min(100, Math.round((q.progress / q.target_value) * 100));
+                      const isDone = q.progress >= q.target_value;
+                      return (
+                        <div key={q.id} className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 flex flex-col sm:flex-row gap-5 items-center justify-between">
+                          <div className="w-full">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-white font-bold">{q.title}</span>
+                              {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                            </div>
+                            <div className="text-xs text-slate-400 mb-3">รางวัล: {q.reward_coins > 0 && `🪙 ${q.reward_coins} เหรียญ`} {q.reward_tickets > 0 && `🎫 ${q.reward_tickets} ตั๋ว`}</div>
+                            <div className="h-3 w-full bg-slate-900 rounded-full overflow-hidden">
+                              <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${percent}%` }} />
+                            </div>
+                            <div className="text-right text-[10px] text-slate-500 mt-1">{q.progress} / {q.target_value}</div>
+                          </div>
+                          
+                          <button 
+                            disabled={!isDone || q.claimed}
+                            className={`min-w-28 py-2.5 rounded-xl font-bold text-sm shrink-0 transition-all ${
+                              q.claimed ? 'bg-slate-800 text-slate-500' :
+                              isDone ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.4)]' :
+                              'bg-slate-800 text-slate-400'
+                            }`}
+                          >
+                            {q.claimed ? 'รับแล้ว' : isDone ? 'รับรางวัล' : 'ยังไม่สำเร็จ'}
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             </motion.div>
           )}

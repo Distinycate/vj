@@ -81,6 +81,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
   const [ticketAmount, setTicketAmount] = useState(1);
   const [coinAmount, setCoinAmount] = useState(100);
   const [behaviorCategory, setBehaviorCategory] = useState<BehaviorCategory>('POSITIVE_BEHAVIOR');
+  const [teacherMessage, setTeacherMessage] = useState('');
 
   useEffect(() => {
     async function loadClassrooms() {
@@ -262,6 +263,27 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     }
   }
 
+  async function sendMessage() {
+    if (!selectedStudent || !teacherMessage.trim() || busy) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.from('student_messages').insert({
+        student_id: selectedStudent.id,
+        sender_name: teacher.name || 'คุณครู',
+        message: teacherMessage.trim(),
+        is_read: false
+      });
+      if (error) throw error;
+      
+      setTeacherMessage('');
+      setMessage(`ส่งข้อความให้ ${selectedStudent.student_name} แล้ว`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'ส่งข้อความไม่สำเร็จ');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function adjustBulkTickets(direction: 1 | -1) {
     if (selectedStudentIds.size === 0 || !reason.trim() || ticketAmount < 1 || busy) return;
     setBusy(true);
@@ -297,6 +319,30 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
       setSelectedStudentIds(new Set());
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'ปรับเหรียญแบบกลุ่มไม่สำเร็จ');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendBulkMessage() {
+    if (selectedStudentIds.size === 0 || !teacherMessage.trim() || busy) return;
+    setBusy(true);
+    try {
+      const messages = Array.from(selectedStudentIds).map((id) => ({
+        student_id: id,
+        sender_name: teacher.name || 'คุณครู',
+        message: teacherMessage.trim(),
+        is_read: false
+      }));
+      
+      const { error } = await supabase.from('student_messages').insert(messages);
+      if (error) throw error;
+      
+      setTeacherMessage('');
+      setMessage(`ส่งข้อความให้นักเรียน ${selectedStudentIds.size} คนแล้ว`);
+      setSelectedStudentIds(new Set());
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'ส่งข้อความไม่สำเร็จ');
     } finally {
       setBusy(false);
     }
@@ -535,6 +581,18 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                     <button onClick={() => adjustBulkCoins(-1)} disabled={busy} className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-3 py-2.5 rounded-xl font-bold whitespace-nowrap">หัก</button>
                   </div>
                 </div>
+
+                <div className="flex w-full mt-4 gap-3">
+                  <input
+                    placeholder="เขียนข้อความหรือจดหมายถึงนักเรียน..."
+                    value={teacherMessage}
+                    onChange={(e) => setTeacherMessage(e.target.value)}
+                    className="flex-1 bg-slate-950 border border-indigo-500/30 text-white rounded-xl px-4 py-2.5"
+                  />
+                  <button onClick={sendBulkMessage} disabled={busy || !teacherMessage.trim()} className="bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-2.5 rounded-xl font-bold whitespace-nowrap">
+                    ส่งข้อความ
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -706,6 +764,20 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                   <input type="number" min={1} max={100} value={ticketAmount} onChange={(event) => setTicketAmount(Math.max(1, Number(event.target.value)))} className="min-h-11 bg-slate-900 border border-slate-700 rounded-xl px-3" />
                   <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(1)} className="min-h-11 px-4 py-2 bg-emerald-500 text-slate-950 disabled:opacity-40 rounded-xl font-bold flex items-center justify-center gap-2"><Gift className="w-4 h-4" /> มอบตั๋ว</button>
                   <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(-1)} className="min-h-11 px-4 py-2 bg-rose-500/15 text-rose-300 disabled:opacity-40 rounded-xl font-bold flex items-center justify-center gap-2"><MinusCircle className="w-4 h-4" /> หักตั๋ว</button>
+                </div>
+              </div>
+              <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-2xl p-4">
+                <h3 className="font-black flex items-center gap-2 text-indigo-300 mb-3">จดหมายส่วนตัวถึงนักเรียน (Teacher Note)</h3>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    placeholder="เขียนข้อความหรือคำชื่นชม..."
+                    value={teacherMessage}
+                    onChange={(e) => setTeacherMessage(e.target.value)}
+                    className="flex-1 min-h-11 bg-slate-950 border border-indigo-500/30 text-white rounded-xl px-3"
+                  />
+                  <button onClick={sendMessage} disabled={busy || !teacherMessage.trim()} className="min-h-11 px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white disabled:opacity-40 rounded-xl font-bold whitespace-nowrap">
+                    ส่งข้อความ
+                  </button>
                 </div>
               </div>
               <div>
