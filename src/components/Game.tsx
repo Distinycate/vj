@@ -9,14 +9,14 @@ import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
 import { useDemoStore } from '@/store/useDemoStore';
-import { generateStageQuestions, completeStage, getAdaptiveDifficulty } from '@/utils/adaptiveEngine';
+import { generateStageQuestions, completeStage, getAdaptiveDifficulty, generateWeaknessBossQuestions } from '@/utils/adaptiveEngine';
 import { normalizeAnswer, QuizChoice } from '@/lib/quizUtils';
 import { useAntiCheat } from '@/hooks/useAntiCheat';
 
 type GameStep = 'play' | 'reflection' | 'results';
 
 export default function Game() {
-  const { setScreen, progress, student, setProgress, missionLevel, selectedStageNumber, setSelectedStageNumber } = useAppStore();
+  const { setScreen, progress, student, setProgress, missionLevel, selectedStageNumber, setSelectedStageNumber, isBossMode, setBossMode } = useAppStore();
   const [words, setWords] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -155,7 +155,12 @@ export default function Game() {
       setTimeLeft(diffConfig.timeLimit || 15);
 
       // 3. Generate adaptive questions
-      const generatedQuestions = await generateStageQuestions(student.id, stageNum, missionLevel);
+      let generatedQuestions = [];
+      if (isBossMode) {
+        generatedQuestions = await generateWeaknessBossQuestions(student.id, 20);
+      } else {
+        generatedQuestions = await generateStageQuestions(student.id, stageNum, missionLevel);
+      }
       
       if (generatedQuestions && generatedQuestions.length > 0) {
         setWords(generatedQuestions);
@@ -393,6 +398,7 @@ export default function Game() {
 
   const handleFinishGame = () => {
     setSelectedStageNumber(null);
+    setBossMode(false);
     setScreen('dashboard');
   };
 
@@ -419,6 +425,7 @@ export default function Game() {
           <button
             onClick={() => {
               setSelectedStageNumber(null);
+              setBossMode(false);
               setScreen('dashboard');
             }}
             className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold"
@@ -552,7 +559,7 @@ export default function Game() {
 
   return (
     <div 
-      className={`min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 flex flex-col items-center relative overflow-hidden select-none transition-transform duration-100 ${shakeScreen ? 'animate-shake' : ''}`}
+      className={`min-h-screen ${isBossMode ? 'bg-gradient-to-b from-rose-950 to-slate-950' : 'bg-slate-950'} text-slate-100 p-4 md:p-8 flex flex-col items-center relative overflow-hidden select-none transition-transform duration-100 ${shakeScreen ? 'animate-shake' : ''}`}
       onContextMenu={(e) => e.preventDefault()}
     >
       <style dangerouslySetInnerHTML={{__html: `
@@ -598,6 +605,16 @@ export default function Game() {
             className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-full font-black text-xs shadow-md animate-bounce"
           >
             ⚡ {comboCount} COMBO
+          </motion.div>
+        )}
+
+        {isBossMode && (
+          <motion.div 
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="flex items-center gap-1.5 px-4 py-2 bg-rose-500/20 text-rose-400 rounded-full font-black text-sm border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.3)] animate-pulse"
+          >
+            👹 BOSS MODE
           </motion.div>
         )}
         

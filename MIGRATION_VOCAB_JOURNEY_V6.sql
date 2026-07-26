@@ -54,6 +54,9 @@ CREATE TABLE IF NOT EXISTS public.daily_quests (
     is_active BOOLEAN DEFAULT true
 );
 
+-- Ensure is_active exists if the table was already created in the past
+ALTER TABLE public.daily_quests ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+
 CREATE TABLE IF NOT EXISTS public.student_daily_quests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     student_id UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,

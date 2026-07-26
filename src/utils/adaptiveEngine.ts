@@ -215,6 +215,54 @@ export async function generateStageQuestions(studentId: string, stageNumber: num
   }
 }
 
+export async function generateWeaknessBossQuestions(studentId: string, limit: number = 20) {
+  try {
+    // Fetch user's weakest words (mastery < 3, ordered by mastery ascending or next_review_at)
+    const { data: weakWordsData, error } = await supabase
+      .from('user_review_words')
+      .select('*, vocabulary:word_id(*)')
+      .eq('user_id', studentId)
+      .lt('mastery_level', 4)
+      .order('mastery_level', { ascending: true })
+      .limit(limit);
+
+    if (error) throw error;
+    if (!weakWordsData || weakWordsData.length === 0) return [];
+
+    const targetWords = weakWordsData.map(w => w.vocabulary).filter(Boolean);
+
+    // Fetch all words for distractors
+    const allVocabularyList = await supabase
+      .from('vocabulary')
+      .select('*')
+      .eq('is_active', true)
+      .limit(250)
+      .then((response) => response.data?.length ? response.data : targetWords);
+
+    const questions: any[] = [];
+    
+    for (const targetWord of targetWords) {
+      // Prioritize contextual puzzle for boss mode if sentence exists
+      let chosenType: QuestionType = (targetWord.example_sentence && Math.random() > 0.3) ? 'context_mc' : 'meaning_mc';
+
+      const question = await generateValidQuestion({
+        targetWord,
+        questionType: chosenType,
+        candidates: allVocabularyList
+      });
+
+      if (question) {
+        questions.push(question);
+      }
+    }
+
+    return questions;
+  } catch (err) {
+    console.error("Error generating boss questions:", err);
+    return [];
+  }
+}
+
 async function generateValidQuestion(params: { targetWord: any, questionType: QuestionType, candidates: any[] }) {
   const MAX_ATTEMPTS = 10;
   let lastQuestion: ReturnType<typeof buildRawQuestion> | null = null;

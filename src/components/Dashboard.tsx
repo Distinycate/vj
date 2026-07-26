@@ -593,6 +593,33 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-6 text-left"
             >
+              {/* Weakness Boss Mode Banner */}
+              {reviewWords.length >= 5 && (
+                <div className="bg-gradient-to-r from-rose-950 to-red-900 border border-rose-500/50 rounded-3xl p-5 sm:p-6 mb-6 shadow-[0_0_30px_rgba(225,29,72,0.15)] flex flex-col sm:flex-row items-center gap-6 justify-between animate-in zoom-in-95 duration-500">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-rose-500/20 rounded-2xl flex items-center justify-center text-4xl shrink-0 animate-bounce">
+                      👹
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-rose-300">บอสล้างตา (Weakness Boss Mode)</h3>
+                      <p className="text-sm text-rose-200/80 mt-1">
+                        พบคำศัพท์ที่น้องยังจำไม่ได้ {reviewWords.length} คำ! ท้าทายบอสเพื่อทบทวนคำศัพท์เหล่านี้และรับโบนัส EXP พิเศษ
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      // Navigate to game with Boss Mode active
+                      useAppStore.getState().setBossMode(true);
+                      setScreen('game');
+                    }}
+                    className="w-full sm:w-auto px-6 py-3 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-black shadow-lg shadow-rose-500/30 transition-all hover:scale-105 whitespace-nowrap shrink-0"
+                  >
+                    ⚔️ ท้าทายบอส
+                  </button>
+                </div>
+              )}
+
               {/* World roadmap navigation */}
               <div data-demo-guide="stage-map" className="space-y-4">
                 {STORY_WORLDS.map((world) => {

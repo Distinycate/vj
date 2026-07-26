@@ -20,6 +20,8 @@ interface AppState {
   setInventory: (inventory: any[]) => void;
   setRecommendations: (recommendations: any[]) => void;
   setReviewMode: (isReview: boolean) => void;
+  isBossMode: boolean;
+  setBossMode: (isBoss: boolean) => void;
   hasStudiedCurrentStage: boolean;
   setStudiedCurrentStage: (studied: boolean) => void;
   logout: () => void;
@@ -47,6 +49,8 @@ export const useAppStore = create<AppState>((set) => ({
   setInventory: (inventory) => set({ inventory }),
   setRecommendations: (recommendations) => set({ recommendations }),
   setReviewMode: (isReviewMode) => set({ isReviewMode }),
+  isBossMode: false,
+  setBossMode: (isBossMode) => set({ isBossMode }),
   setStudiedCurrentStage: (hasStudiedCurrentStage) => set({ hasStudiedCurrentStage }),
   logout: () => {
     clearStudentSession();
