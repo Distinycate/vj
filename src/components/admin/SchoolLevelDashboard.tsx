@@ -2,7 +2,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Cell
 } from 'recharts';
 import { TrendingUp, Target, Info, AlertTriangle, BookOpen } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
@@ -11,11 +10,15 @@ interface SchoolLevelDashboardProps {
   studentsList: any[];
 }
 
+const THAI_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+
 export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashboardProps) {
   
   const [frequentWrongWords, setFrequentWrongWords] = useState<any[]>([]);
   const [topWrongWord, setTopWrongWord] = useState<string>('-');
   const [topWrongCount, setTopWrongCount] = useState<number>(0);
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     async function fetchWrongWords() {
@@ -58,32 +61,100 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
     fetchWrongWords();
   }, [studentsList]);
 
-  const learningGainData = useMemo(() => {
-    let currentPre = 60;
-    let currentPost = 88;
-    if (studentsList && studentsList.length > 0) {
-      let totalPre = 0;
-      let totalPost = 0;
-      studentsList.forEach(s => {
-        const stats = Array.isArray(s.analytics_summary) ? s.analytics_summary[0] : s.analytics_summary;
-        totalPre += stats?.pretest_score || 0;
-        totalPost += stats?.posttest_score || 0;
-      });
-      currentPre = Math.round(totalPre / studentsList.length);
-      currentPost = Math.round(totalPost / studentsList.length);
-    }
+  // Fetch real pre_tests and post_tests data grouped by month
+  useEffect(() => {
+    async function fetchMonthlyAssessments() {
+      if (!studentsList || studentsList.length === 0) {
+        setDataLoading(false);
+        return;
+      }
 
-    return [
-      { month: 'พ.ค. (Plan)', preTest: Math.max(0, currentPre - 30), postTest: Math.max(0, currentPost - 43), target: 50 },
-      { month: 'มิ.ย. (Do)', preTest: Math.max(0, currentPre - 25), postTest: Math.max(0, currentPost - 36), target: 55 },
-      { month: 'ก.ค. (Check)', preTest: Math.max(0, currentPre - 20), postTest: Math.max(0, currentPost - 23), target: 60 },
-      { month: 'ส.ค. (Act)', preTest: Math.max(0, currentPre - 15), postTest: Math.max(0, currentPost - 13), target: 65 },
-      { month: 'ก.ย. (Plan)', preTest: Math.max(0, currentPre - 5), postTest: Math.max(0, currentPost - 6), target: 70 },
-      { month: 'ปัจจุบัน', preTest: currentPre, postTest: currentPost, target: 80 },
-    ];
+      const studentIds = studentsList.map(s => s.id);
+
+      const [preResult, postResult] = await Promise.all([
+        supabase
+          .from('pre_tests')
+          .select('score, total_questions, created_at')
+          .in('student_id', studentIds)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('post_tests')
+          .select('score, total_questions, created_at')
+          .in('student_id', studentIds)
+          .order('created_at', { ascending: true }),
+      ]);
+
+      const preTests = preResult.data || [];
+      const postTests = postResult.data || [];
+
+      // Group by month key (YYYY-MM)
+      const monthMap: Record<string, { preSums: number; preCount: number; postSums: number; postCount: number }> = {};
+
+      for (const row of preTests) {
+        const date = new Date(row.created_at);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (!monthMap[key]) monthMap[key] = { preSums: 0, preCount: 0, postSums: 0, postCount: 0 };
+        monthMap[key].preSums += Number(row.score || 0);
+        monthMap[key].preCount += 1;
+      }
+
+      for (const row of postTests) {
+        const date = new Date(row.created_at);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (!monthMap[key]) monthMap[key] = { preSums: 0, preCount: 0, postSums: 0, postCount: 0 };
+        monthMap[key].postSums += Number(row.score || 0);
+        monthMap[key].postCount += 1;
+      }
+
+      // Convert to array sorted by date
+      const chartData = Object.keys(monthMap)
+        .sort()
+        .map(key => {
+          const parts = key.split('-');
+          const monthIndex = parseInt(parts[1], 10) - 1;
+          const year = parts[0].slice(2); // Last 2 digits
+          const entry = monthMap[key];
+          return {
+            month: `${THAI_MONTHS[monthIndex]} ${year}`,
+            preTest: entry.preCount > 0 ? Math.round(entry.preSums / entry.preCount) : null,
+            postTest: entry.postCount > 0 ? Math.round(entry.postSums / entry.postCount) : null,
+          };
+        });
+
+      setMonthlyData(chartData);
+      setDataLoading(false);
+    }
+    fetchMonthlyAssessments();
   }, [studentsList]);
 
-  const avgLearningGain = Math.round(learningGainData[5].postTest - learningGainData[5].preTest);
+  // Calculate real avg Learning Gain from analytics_summary
+  const avgLearningGain = useMemo(() => {
+    if (!studentsList || studentsList.length === 0) return 0;
+    let totalPre = 0;
+    let totalPost = 0;
+    let count = 0;
+    studentsList.forEach(s => {
+      const stats = Array.isArray(s.analytics_summary) ? s.analytics_summary[0] : s.analytics_summary;
+      const pre = stats?.pretest_score || 0;
+      const post = stats?.posttest_score || 0;
+      if (pre > 0 || post > 0) {
+        totalPre += pre;
+        totalPost += post;
+        count++;
+      }
+    });
+    return count > 0 ? Math.round(((totalPost - totalPre) / Math.max(1, count))) : 0;
+  }, [studentsList]);
+
+  // Determine PDCA status based on data
+  const pdcaStatus = useMemo(() => {
+    if (avgLearningGain > 5) return { label: 'On Track', color: 'text-amber-400' };
+    if (avgLearningGain > 0) return { label: 'Progressing', color: 'text-emerald-400' };
+    if (avgLearningGain === 0) return { label: 'รอข้อมูล', color: 'text-slate-400' };
+    return { label: 'Needs Attention', color: 'text-rose-400' };
+  }, [avgLearningGain]);
+
+  const hasChartData = monthlyData.length > 0 && monthlyData.some(d => d.preTest !== null || d.postTest !== null);
 
   return (
     <div className="space-y-6">
@@ -99,14 +170,16 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
         <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-2xl flex flex-col justify-center relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10"><TrendingUp className="w-16 h-16" /></div>
           <span className="text-sm text-slate-400 font-bold mb-1">Avg. Learning Gain</span>
-          <span className="text-3xl font-black text-indigo-400">+{avgLearningGain}%</span>
-          <span className="text-xs text-slate-500 mt-2">ความก้าวหน้าเฉลี่ยทั้งโรงเรียน</span>
+          <span className="text-3xl font-black text-indigo-400">{avgLearningGain > 0 ? '+' : ''}{avgLearningGain} คะแนน</span>
+          <span className="text-xs text-slate-500 mt-2">
+            {avgLearningGain === 0 ? 'ยังไม่มีข้อมูล Post-test' : 'ค่าเฉลี่ย Post-test − Pre-test จริง'}
+          </span>
         </div>
         <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-2xl flex flex-col justify-center relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10"><Target className="w-16 h-16" /></div>
           <span className="text-sm text-slate-400 font-bold mb-1">School Target (PDCA)</span>
-          <span className="text-3xl font-black text-amber-400">On Track</span>
-          <span className="text-xs text-slate-500 mt-2">อยู่ในเกณฑ์เป้าหมายนโยบายโรงเรียน</span>
+          <span className={`text-3xl font-black ${pdcaStatus.color}`}>{pdcaStatus.label}</span>
+          <span className="text-xs text-slate-500 mt-2">สถานะจากข้อมูลผลลัพธ์จริง</span>
         </div>
       </div>
 
@@ -147,28 +220,37 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
           </div>
         </div>
 
-        {/* School-Wide Learning Gain Line Chart */}
+        {/* School-Wide Learning Gain Line Chart — REAL DATA */}
         <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl flex flex-col">
-          <h3 className="text-lg font-black text-white mb-2">School-Wide Learning Gain (PDCA)</h3>
-          <p className="text-xs text-slate-400 mb-2">ติดตามพัฒนาการเฉลี่ย Pre-test vs Post-test ตลอดปีการศึกษา</p>
-          <div className="flex items-center gap-1.5 text-[10px] text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md w-fit mb-4 border border-amber-500/20">
-            <Info className="w-3 h-3" /> กราฟเดือนก่อนหน้าเป็นการคำนวณแนวโน้มย้อนหลัง เพื่อวิเคราะห์ร่วมกับคะแนนปัจจุบัน
-          </div>
+          <h3 className="text-lg font-black text-white mb-2">School-Wide Learning Gain</h3>
+          <p className="text-xs text-slate-400 mb-2">ค่าเฉลี่ย Pre-test vs Post-test จริงจัดกลุ่มตามเดือน</p>
           
-          <div className="flex-1 min-h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={learningGainData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                <XAxis dataKey="month" stroke="#64748b" fontSize={12} tickLine={false} />
-                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                <Line type="monotone" dataKey="preTest" name="Pre-test Avg" stroke="#64748b" strokeWidth={3} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey="postTest" name="Post-test Avg" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey="target" name="School Target" stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {dataLoading ? (
+            <div className="flex-1 min-h-[250px] flex items-center justify-center text-slate-500">
+              <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mr-3"></div>
+              กำลังโหลดข้อมูล...
+            </div>
+          ) : hasChartData ? (
+            <div className="flex-1 min-h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="month" stroke="#64748b" fontSize={12} tickLine={false} />
+                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                  <Line type="monotone" dataKey="preTest" name="Pre-test Avg" stroke="#64748b" strokeWidth={3} dot={{ r: 4 }} connectNulls />
+                  <Line type="monotone" dataKey="postTest" name="Post-test Avg" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} connectNulls />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="flex-1 min-h-[250px] flex flex-col items-center justify-center text-slate-500">
+              <Info className="w-8 h-8 mb-3 text-slate-600" />
+              <p className="text-sm font-bold">ยังไม่มีข้อมูล Pre-test / Post-test</p>
+              <p className="text-xs mt-1 max-w-xs text-center">กราฟจะแสดงข้อมูลจริงเมื่อนักเรียนทำ Pre-test และ Post-test ในระบบแล้ว</p>
+            </div>
+          )}
         </div>
         
       </div>

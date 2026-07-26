@@ -4,7 +4,7 @@ import { clearStudentSession } from '@/utils/studentSession';
 interface AppState {
   student: any;
   progress: any;
-  currentScreen: 'dashboard' | 'study' | 'game';
+  currentScreen: 'dashboard' | 'study' | 'game' | 'posttest';
   missionLevel: number;
   selectedStageNumber: number | null;
   currentCategory: any;
@@ -13,7 +13,7 @@ interface AppState {
   isReviewMode: boolean;
   setStudent: (student: any) => void;
   setProgress: (progress: any) => void;
-  setScreen: (screen: 'dashboard' | 'study' | 'game') => void;
+  setScreen: (screen: 'dashboard' | 'study' | 'game' | 'posttest') => void;
   setMissionLevel: (level: number) => void;
   setSelectedStageNumber: (stageNumber: number | null) => void;
   setCurrentCategory: (category: any) => void;

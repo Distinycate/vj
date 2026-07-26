@@ -8,6 +8,7 @@ import Dashboard from '@/components/Dashboard';
 import StudyCamp from '@/components/StudyCamp';
 import Game from '@/components/Game';
 import PreTest from '@/components/PreTest';
+import PostTest from '@/components/PostTest';
 import { saveStudentSession } from '@/utils/studentSession';
 import { useDemoStore } from '@/store/useDemoStore';
 
@@ -346,6 +347,7 @@ export default function Home() {
     if (currentScreen === 'dashboard') return <Dashboard />;
     if (currentScreen === 'study') return <StudyCamp />;
     if (currentScreen === 'game') return <Game />;
+    if (currentScreen === 'posttest') return <PostTest />;
     return <Dashboard />;
   }
 

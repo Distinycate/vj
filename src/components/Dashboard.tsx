@@ -646,6 +646,25 @@ export default function Dashboard() {
                   </button>
                 </div>
               </div>
+
+              {/* Post-Test CTA — shows when student has played enough stages */}
+              {currentStage >= 20 && !isExternalUser && (
+                <div className="bg-gradient-to-tr from-indigo-950/60 to-slate-950 border border-indigo-500/20 rounded-3xl p-6 flex flex-col md:flex-row gap-5 justify-between items-center shadow-xl">
+                  <div className="text-center md:text-left w-full md:w-auto">
+                    <span className="text-xs bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full border border-indigo-500/20 font-bold uppercase tracking-widest">แบบทดสอบหลังเรียน</span>
+                    <h3 className="text-xl font-black text-white mt-3">📝 Post-Test พร้อมแล้ว!</h3>
+                    <p className="text-slate-400 text-sm mt-1">
+                      ทำแบบทดสอบหลังเรียนเพื่อวัดพัฒนาการ เปรียบเทียบกับ Pre-test
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => setScreen('posttest')}
+                    className="w-full md:w-auto px-8 py-4 font-black rounded-2xl flex items-center justify-center gap-2 transition-all text-sm bg-indigo-500 hover:bg-indigo-400 text-white shadow-lg shadow-indigo-500/20 hover:scale-[1.02]"
+                  >
+                    📝 เริ่มทำ Post-Test
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
 
