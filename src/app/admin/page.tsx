@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { 
   Users, AlertTriangle, LogOut, Shield, CheckCircle2,
-  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings, Gift, Star, Globe2
+  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings, Gift, Star, Globe2, Target
 } from 'lucide-react';
 import { 
   BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -21,8 +21,9 @@ import IndividualStudentProfile from '@/components/admin/IndividualStudentProfil
 import EventAnalyticsTab from '@/components/admin/EventAnalyticsTab';
 import SettingsTab from '@/components/admin/SettingsTab';
 import EditStudentModal from '@/components/admin/EditStudentModal';
+import IndividualComparisonTable from '@/components/admin/IndividualComparisonTable';
 
-type AdminTab = 'school-overview' | 'overview' | 'students' | 'teams' | 'weak-words' | 'risks' | 'events' | 'settings';
+type AdminTab = 'school-overview' | 'overview' | 'students' | 'assessments' | 'teams' | 'weak-words' | 'risks' | 'events' | 'settings';
 
 export default function AdminPage() {
   const [teacher, setTeacher] = useState<any>(null);
@@ -425,6 +426,7 @@ export default function AdminPage() {
             { id: 'school-overview', icon: <Activity className="w-4 h-4"/>, label: 'ภาพรวมโรงเรียน' },
             { id: 'overview', icon: <Activity className="w-4 h-4"/>, label: 'ภาพรวมห้องเรียน' },
             { id: 'students', icon: <Users className="w-4 h-4"/>, label: 'นักเรียน' },
+            { id: 'assessments', icon: <Target className="w-4 h-4"/>, label: 'ผลการทดสอบ' },
             { id: 'teams', icon: <Trophy className="w-4 h-4"/>, label: 'ทีม (Team Battle)' },
             { id: 'events', icon: <Sparkles className="w-4 h-4"/>, label: 'กิจกรรม (Events)' },
             { id: 'weak-words', icon: <BookOpen className="w-4 h-4"/>, label: 'คำที่ผิดบ่อย' },
@@ -690,6 +692,54 @@ export default function AdminPage() {
               </div>
               )}
               </div>
+            </motion.div>
+          )}
+
+          {/* TAB: ASSESSMENTS (POST-TEST) */}
+          {activeTab === 'assessments' && (
+            <motion.div key="assessments" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-4">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-2">
+                <div>
+                  <h2 className="text-lg font-black text-white">ตารางเปรียบเทียบพัฒนาการ (Pre-test vs Post-test)</h2>
+                  <p className="text-sm text-slate-400">ระบบจะแปลงคะแนนการเล่นผ่านด่าน Boss (ทุก 10 ด่าน) เป็นคะแนน Post-test โดยอัตโนมัติ</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-4 mb-4">
+                <div className="flex items-center gap-2 text-slate-300 text-sm font-bold mb-3">
+                  <Filter className="w-4 h-4 text-indigo-400" />
+                  เลือกห้องเรียน
+                </div>
+                {Object.entries(groupedClassrooms).length === 0 ? (
+                  <div className="text-sm text-slate-500">ยังไม่มีข้อมูลห้องเรียนในระบบ</div>
+                ) : (
+                  <div className="space-y-3">
+                    {Object.entries(groupedClassrooms).map(([grade, rooms]) => (
+                      <div key={grade}>
+                        <div className="text-[11px] uppercase tracking-wider text-slate-500 font-black mb-2">{grade}</div>
+                        <div className="flex flex-wrap gap-2">
+                          {(rooms as any[]).map((room) => (
+                            <button
+                              key={room.id}
+                              type="button"
+                              onClick={() => setSelectedClassroom(room.id)}
+                              className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${
+                                selectedClassroom === room.id
+                                  ? 'bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20'
+                                  : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-indigo-500/50 hover:text-white'
+                              }`}
+                            >
+                              ห้อง {room.class_name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <IndividualComparisonTable studentsList={classroomMetrics?.students || []} />
             </motion.div>
           )}
 

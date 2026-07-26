@@ -719,12 +719,42 @@ export async function completeStage(studentId: string, stageNumber: number, resu
         const nextSuccessRate = ((previousSuccessRate * previousAttemptCount + accuracy) / nextAttemptCount);
         const addedTime = Math.round(responseTimeAvg * Math.max(1, totalQuestions));
 
+        // Auto Post-Test from Boss Stages
+        let newPostTestScore = analytics?.posttest_score || 0;
+        let newLearningGain = analytics?.learning_gain || 0;
+        let newNormalizedGain = analytics?.normalized_gain || 0;
+        const isBoss = stageNumber % 10 === 0;
+
+        if (isBoss && passed) {
+          // Normalize accuracy to a 25-point scale to match PreTest
+          const normalizedScore = Math.round((accuracy / 100) * 25);
+          newPostTestScore = normalizedScore;
+          
+          const pretestScore = analytics?.pretest_score || 0;
+          const maxPossible = 25 - pretestScore;
+          const rawGain = normalizedScore - pretestScore;
+          
+          newLearningGain = Number(rawGain.toFixed(2));
+          newNormalizedGain = maxPossible > 0 ? Number(((rawGain / maxPossible) * 100).toFixed(2)) : 0;
+          
+          try {
+            await supabase.from('post_tests').insert([{
+              student_id: studentId,
+              score: normalizedScore,
+              total_questions: 25,
+              time_spent_sec: addedTime
+            }]);
+          } catch (err) {
+            console.error('Failed to insert auto post-test from boss stage', err);
+          }
+        }
+
         await supabase.from('analytics_summary').upsert({
           student_id: studentId,
           pretest_score: analytics?.pretest_score || 0,
-          posttest_score: analytics?.posttest_score || 0,
-          learning_gain: analytics?.learning_gain || 0,
-          normalized_gain: analytics?.normalized_gain || 0,
+          posttest_score: newPostTestScore,
+          learning_gain: newLearningGain,
+          normalized_gain: newNormalizedGain,
           success_rate: Number(nextSuccessRate.toFixed(2)),
           attempt_count: nextAttemptCount,
           total_time_on_task_sec: (analytics?.total_time_on_task_sec || 0) + addedTime,
