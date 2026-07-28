@@ -432,19 +432,19 @@ export default function Dashboard() {
         const rewardTickets = questToClaim.reward_tickets || 0;
 
         const updatedCoins = (progress.coins || 0) + rewardCoins;
-        const updatedTickets = (progress.gacha_tickets || 0) + rewardTickets;
+        const updatedTickets = (progress.free_pull_tickets || 0) + rewardTickets;
 
         // Update DB
         await supabase
           .from('learning_paths')
-          .update({ coins: updatedCoins, gacha_tickets: updatedTickets })
+          .update({ coins: updatedCoins, free_pull_tickets: updatedTickets })
           .eq('student_id', student.id);
 
         // Update Zustand
         setProgress({ 
           ...progress, 
           coins: updatedCoins, 
-          gacha_tickets: updatedTickets 
+          free_pull_tickets: updatedTickets 
         });
 
         // Trigger confetti (using existing window.confetti if available)
