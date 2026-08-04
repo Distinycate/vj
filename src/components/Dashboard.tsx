@@ -34,6 +34,23 @@ function getRareCardStatus(inventory: any) {
   return { rarity: 'SR', icon: '🛡️', label: 'ผู้ครอบครอง SR' };
 }
 
+function getMockQuests(studentId: string) {
+  if (typeof window === 'undefined') return [];
+  const today = new Date().toISOString().split('T')[0];
+  const mockKey = `mock_quests_${studentId}_${today}`;
+  const savedMock = localStorage.getItem(mockKey);
+  if (savedMock) {
+    try {
+      return JSON.parse(savedMock);
+    } catch(e) {}
+  }
+  return [
+    { id: '1', title: 'เข้าเรียนและเล่นเกมคำศัพท์ 3 ด่าน', target_value: 3, reward_coins: 100, reward_tickets: 0, progress: 3, claimed: false },
+    { id: '2', title: 'ทำแบบทดสอบได้คะแนนเต็ม (Perfect Score) 1 ครั้ง', target_value: 1, reward_coins: 50, reward_tickets: 1, progress: 1, claimed: false },
+    { id: '3', title: 'ทบทวนคำศัพท์เก่า (Spaced Repetition) 10 คำ', target_value: 10, reward_coins: 150, reward_tickets: 0, progress: 10, claimed: false }
+  ];
+}
+
 export default function Dashboard() {
   const { student, progress, logout, setScreen, setProgress, setStudiedCurrentStage, setMissionLevel, setSelectedStageNumber } = useAppStore();
   const [reviewWords, setReviewWords] = useState<any[]>([]);
@@ -56,6 +73,7 @@ export default function Dashboard() {
   const [showMessages, setShowMessages] = useState(false);
   const [dailyQuests, setDailyQuests] = useState<any[]>([]);
   const [showQuests, setShowQuests] = useState(false);
+  const [claimingQuests, setClaimingQuests] = useState<Set<string>>(new Set());
 
   // Classroom stats calculations
   const [classroomStats, setClassroomStats] = useState({
@@ -318,19 +336,11 @@ export default function Dashboard() {
           })));
         } else {
           // Fallback mock quests if no data or table empty
-          setDailyQuests([
-            { id: '1', title: 'เข้าเรียนและเล่นเกมคำศัพท์ 3 ด่าน', target_value: 3, reward_coins: 100, reward_tickets: 0, progress: 1, claimed: false },
-            { id: '2', title: 'ทำแบบทดสอบได้คะแนนเต็ม (Perfect Score) 1 ครั้ง', target_value: 1, reward_coins: 50, reward_tickets: 1, progress: 1, claimed: false },
-            { id: '3', title: 'ทบทวนคำศัพท์เก่า (Spaced Repetition) 10 คำ', target_value: 10, reward_coins: 150, reward_tickets: 0, progress: 10, claimed: true }
-          ]);
+          setDailyQuests(getMockQuests(student.id));
         }
       } catch (e) {
         console.warn("Daily quests table might not exist yet, using mock data", e);
-        setDailyQuests([
-          { id: '1', title: 'เข้าเรียนและเล่นเกมคำศัพท์ 3 ด่าน', target_value: 3, reward_coins: 100, reward_tickets: 0, progress: 1, claimed: false },
-          { id: '2', title: 'ทำแบบทดสอบได้คะแนนเต็ม (Perfect Score) 1 ครั้ง', target_value: 1, reward_coins: 50, reward_tickets: 1, progress: 1, claimed: false },
-          { id: '3', title: 'ทบทวนคำศัพท์เก่า (Spaced Repetition) 10 คำ', target_value: 10, reward_coins: 150, reward_tickets: 0, progress: 10, claimed: true }
-        ]);
+        setDailyQuests(getMockQuests(student.id));
       }
     }
 
@@ -411,6 +421,9 @@ export default function Dashboard() {
   };
 
   const handleClaimQuest = async (questId: string) => {
+    if (claimingQuests.has(questId)) return;
+    setClaimingQuests(prev => new Set(prev).add(questId));
+
     try {
       // 1. Update DB (if table exists)
       const { error } = await supabase
@@ -421,18 +434,26 @@ export default function Dashboard() {
       // If error (e.g. demo mode / mock data), we just ignore and update local state
       
       // 2. Update local state
-      setDailyQuests(prev => 
-        prev.map(q => q.id === questId ? { ...q, claimed: true } : q)
-      );
+      setDailyQuests(prev => {
+        const next = prev.map(q => q.id === questId ? { ...q, claimed: true } : q);
+        // Save to localStorage if it's a mock quest
+        if (['1', '2', '3'].includes(questId) && typeof window !== 'undefined') {
+          const today = new Date().toISOString().split('T')[0];
+          localStorage.setItem(`mock_quests_${student.id}_${today}`, JSON.stringify(next));
+        }
+        return next;
+      });
 
       // 3. Give rewards (Update progress and DB)
       const questToClaim = dailyQuests.find(q => q.id === questId);
-      if (questToClaim && progress) {
+      const currentProgress = useAppStore.getState().progress;
+      
+      if (questToClaim && currentProgress) {
         const rewardCoins = questToClaim.reward_coins || 0;
         const rewardTickets = questToClaim.reward_tickets || 0;
 
-        const updatedCoins = (progress.coins || 0) + rewardCoins;
-        const updatedTickets = (progress.free_pull_tickets || 0) + rewardTickets;
+        const updatedCoins = (currentProgress.coins || 0) + rewardCoins;
+        const updatedTickets = (currentProgress.free_pull_tickets || 0) + rewardTickets;
 
         // Update DB
         await supabase
@@ -442,7 +463,7 @@ export default function Dashboard() {
 
         // Update Zustand
         setProgress({ 
-          ...progress, 
+          ...currentProgress, 
           coins: updatedCoins, 
           free_pull_tickets: updatedTickets 
         });
@@ -458,6 +479,12 @@ export default function Dashboard() {
       }
     } catch (e) {
       console.error("Error claiming quest:", e);
+    } finally {
+      setClaimingQuests(prev => {
+        const next = new Set(prev);
+        next.delete(questId);
+        return next;
+      });
     }
   };
 
@@ -1228,7 +1255,7 @@ export default function Dashboard() {
                           
                           <button 
                             onClick={() => handleClaimQuest(q.id)}
-                            disabled={!isDone || q.claimed}
+                            disabled={!isDone || q.claimed || claimingQuests.has(q.id)}
                             className={`min-w-28 py-2.5 rounded-xl font-bold text-sm shrink-0 transition-all ${
                               q.claimed ? 'bg-slate-800 text-slate-500' :
                               isDone ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.4)]' :
