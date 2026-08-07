@@ -44,6 +44,16 @@ export function getRpcErrorMessage(message?: string) {
     USERNAME_ALREADY_EXISTS: 'ชื่อผู้ใช้นี้ถูกใช้แล้ว',
     SEASON_ALREADY_REWARDED: 'ฤดูกาลนี้แจกรางวัลแล้ว',
     NO_ELIGIBLE_TEAM: 'ไม่พบทีมที่เข้าเกณฑ์ในฤดูกาลนี้',
+    NO_ELIGIBLE_TARGETS: 'ไม่มีเป้าหมายที่สามารถขโมยได้ในขณะนี้',
+    RANDOM_THIEF_DISABLED: 'โรงเรียนปิดการใช้งานการ์ดขโมยแบบสุ่ม',
+    MASTER_THIEF_DISABLED: 'โรงเรียนปิดการใช้งานการ์ดขโมยมืออาชีพ',
+    TARGET_ON_COOLDOWN: 'เป้าหมายนี้ถูกขโมยไปเมื่อไม่นานมานี้ (คูลดาวน์ 7 วัน)',
+    COOLDOWN_ACTIVE: 'คุณเพิ่งใช้การ์ดขโมยมืออาชีพไป (คูลดาวน์ 24 ชั่วโมง)',
+    TARGET_IS_PROTECTED: 'เป้าหมายอยู่ระหว่างการคุ้มครอง (โล่ป้องกัน)',
+    TARGET_DAILY_LIMIT_REACHED: 'เป้าหมายถูกขโมยครบโควต้าต่อวันแล้ว',
+    CARD_NOT_STEALABLE: 'การ์ดนี้ไม่สามารถขโมยได้',
+    TARGET_HAS_ONLY_ONE_CARD: 'ไม่สามารถขโมยได้เนื่องจากเป้าหมายเหลือการ์ดเพียงใบเดียว',
+    TARGET_DOES_NOT_HAVE_CARD: 'เป้าหมายไม่มีการ์ดใบนี้',
   };
   const key = Object.keys(known).find((code) => message.includes(code));
   return key ? known[key] : message;
@@ -193,5 +203,18 @@ export async function registerCardTeacher(name: string, username: string, passwo
     p_password: password,
   });
   if (error) throw new Error(getRpcErrorMessage(error.message));
+  return data;
+}
+
+export async function executeRandomThief(attackerId: string, thiefCardId: string) {
+  await assertInternalCardUser(attackerId);
+  const { data, error } = await supabase.rpc('execute_random_thief', {
+    p_attacker_id: attackerId,
+    p_thief_card_id: thiefCardId,
+  });
+  if (error) throw new Error(getRpcErrorMessage(error.message));
+  if (data?.success === false) {
+    throw new Error(getRpcErrorMessage(data.reason) || 'ไม่สามารถขโมยได้');
+  }
   return data;
 }

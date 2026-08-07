@@ -12,6 +12,7 @@ import {
   counterCardAction,
   createCardAction,
   pullGachaCard,
+  executeRandomThief,
 } from '@/utils/cardBattle';
 
 interface InventoryRow {
@@ -225,7 +226,8 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
 
   async function handleUseCard() {
     if (!student || !selectedCard || busy) return;
-    const needsTarget = selectedCard.cards.effect_type === 'ATTACK';
+    const isRandomThief = selectedCard.cards.card_code === 'THIEF_RANDOM';
+    const needsTarget = selectedCard.cards.effect_type === 'ATTACK' && !isRandomThief;
     if (needsTarget && !selectedTarget) {
       setMessage('กรุณาเลือกเพื่อนที่ต้องการใช้การ์ด');
       return;
@@ -263,8 +265,14 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
          ];
       }
 
-      await createCardAction(student.id, selectedCard.cards.id, needsTarget ? selectedTarget : null, metadata);
-      setMessage('ส่งคำขอแล้ว การ์ดถูกจองไว้จนกว่าครูจะตัดสิน');
+      if (isRandomThief) {
+        const data = await executeRandomThief(student.id, selectedCard.cards.id);
+        setMessage(`สำเร็จ! คุณขโมย "${data.stolen_card_name}" มาได้แล้ว`);
+      } else {
+        await createCardAction(student.id, selectedCard.cards.id, needsTarget ? selectedTarget : null, metadata);
+        setMessage('ส่งคำขอแล้ว การ์ดถูกจองไว้จนกว่าครูจะตัดสิน');
+      }
+
       setSelectedCard(null);
       setSelectedTarget('');
       setSelectedTarget2('');
@@ -479,7 +487,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               ใช้ {selectedCard.cards.name}
             </h3>
             <p className="text-slate-400 text-sm mt-2">{selectedCard.cards.description}</p>
-            {selectedCard.cards.effect_type === 'ATTACK' && (
+            {selectedCard.cards.effect_type === 'ATTACK' && selectedCard.cards.card_code !== 'THIEF_RANDOM' && (
               <div className="space-y-3 mt-5">
                 <select
                   value={selectedTarget}
@@ -527,12 +535,17 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                 )}
               </div>
             )}
+            {selectedCard.cards.card_code === 'THIEF_RANDOM' && (
+              <div className="mt-5 p-3 bg-fuchsia-500/10 border border-fuchsia-500/20 rounded-xl text-fuchsia-300 text-sm text-center">
+                ระบบจะทำการสุ่มเป้าหมายจากนักเรียนในโรงเรียนโดยอัตโนมัติ
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3 mt-6">
               <button onClick={() => setSelectedCard(null)} className="py-3 bg-slate-800 rounded-xl font-bold">
                 ยกเลิก
               </button>
               <button disabled={busy} onClick={handleUseCard} className="py-3 bg-fuchsia-500 rounded-xl font-bold text-white">
-                ส่งให้ครูอนุมัติ
+                {selectedCard.cards.card_code === 'THIEF_RANDOM' ? 'สุ่มขโมยเลย!' : 'ส่งให้ครูอนุมัติ'}
               </button>
             </div>
           </div>
