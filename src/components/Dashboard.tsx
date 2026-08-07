@@ -34,22 +34,7 @@ function getRareCardStatus(inventory: any) {
   return { rarity: 'SR', icon: '🛡️', label: 'ผู้ครอบครอง SR' };
 }
 
-function getMockQuests(studentId: string) {
-  if (typeof window === 'undefined') return [];
-  const today = new Date().toISOString().split('T')[0];
-  const mockKey = `mock_quests_${studentId}_${today}`;
-  const savedMock = localStorage.getItem(mockKey);
-  if (savedMock) {
-    try {
-      return JSON.parse(savedMock);
-    } catch(e) {}
-  }
-  return [
-    { id: '1', title: 'เข้าเรียนและเล่นเกมคำศัพท์ 3 ด่าน', target_value: 3, reward_coins: 100, reward_tickets: 0, progress: 3, claimed: false },
-    { id: '2', title: 'ทำแบบทดสอบได้คะแนนเต็ม (Perfect Score) 1 ครั้ง', target_value: 1, reward_coins: 50, reward_tickets: 1, progress: 1, claimed: false },
-    { id: '3', title: 'ทบทวนคำศัพท์เก่า (Spaced Repetition) 10 คำ', target_value: 10, reward_coins: 150, reward_tickets: 0, progress: 10, claimed: false }
-  ];
-}
+import { getMockQuests } from '@/utils/questUtils';
 
 export default function Dashboard() {
   const { student, progress, logout, setScreen, setProgress, setStudiedCurrentStage, setMissionLevel, setSelectedStageNumber } = useAppStore();
@@ -452,14 +437,21 @@ export default function Dashboard() {
         const rewardCoins = questToClaim.reward_coins || 0;
         const rewardTickets = questToClaim.reward_tickets || 0;
 
-        const updatedCoins = (currentProgress.coins || 0) + rewardCoins;
-        const updatedTickets = (currentProgress.free_pull_tickets || 0) + rewardTickets;
+        // Secure RPC call instead of client-side DB update
+        const { data: rpcData, error: rpcError } = await supabase.rpc('claim_mock_quest_reward', {
+          p_student_id: student.id,
+          p_quest_id: questId,
+          p_reward_coins: rewardCoins,
+          p_reward_tickets: rewardTickets
+        });
 
-        // Update DB
-        await supabase
-          .from('learning_paths')
-          .update({ coins: updatedCoins, free_pull_tickets: updatedTickets })
-          .eq('student_id', student.id);
+        if (rpcError) {
+          console.error("Failed to claim quest:", rpcError);
+          return; // Stop if they already claimed it or other DB error
+        }
+
+        const updatedCoins = rpcData.new_coins;
+        const updatedTickets = rpcData.new_tickets;
 
         // Update Zustand
         setProgress({ 
