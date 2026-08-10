@@ -82,6 +82,8 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
   const [coinAmount, setCoinAmount] = useState(100);
   const [behaviorCategory, setBehaviorCategory] = useState<BehaviorCategory>('POSITIVE_BEHAVIOR');
   const [teacherMessage, setTeacherMessage] = useState('');
+  const [bulkCardId, setBulkCardId] = useState('');
+  const [bulkCardAmount, setBulkCardAmount] = useState(1);
 
   useEffect(() => {
     async function loadClassrooms() {
@@ -348,6 +350,33 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     }
   }
 
+  async function removeBulkCards() {
+    if (selectedStudentIds.size === 0 || !reason.trim() || !bulkCardId || bulkCardAmount < 1 || busy) return;
+    
+    const cardInfo = allCards.find(c => c.id === bulkCardId);
+    if (!window.confirm(`ยืนยันการริบการ์ด "${cardInfo?.name}" จำนวน ${bulkCardAmount} ใบ จากนักเรียน ${selectedStudentIds.size} คน? (ข้ามคนที่ไม่มีการ์ด)`)) return;
+
+    setBusy(true);
+    let successCount = 0;
+    try {
+      await Promise.allSettled(
+        Array.from(selectedStudentIds).map((id) =>
+          removeStudentCard(teacher.id, id, bulkCardId, bulkCardAmount, reason.trim(), behaviorCategory)
+            .then(() => { successCount++; })
+        )
+      );
+      
+      setReason('');
+      setMessage(`ริบการ์ดสำเร็จสำหรับนักเรียน ${successCount} คน (ข้ามคนที่ไม่มีการ์ดตามจำนวนที่ระบุ)`);
+      await loadData();
+      setSelectedStudentIds(new Set());
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'ริบการ์ดแบบกลุ่มเกิดข้อผิดพลาด');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const toggleStudentSelection = (id: string) => {
     const newSelected = new Set(selectedStudentIds);
     if (newSelected.has(id)) newSelected.delete(id);
@@ -591,6 +620,30 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                   />
                   <button onClick={sendBulkMessage} disabled={busy || !teacherMessage.trim()} className="bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-2.5 rounded-xl font-bold whitespace-nowrap">
                     ส่งข้อความ
+                  </button>
+                </div>
+
+                <div className="flex flex-col sm:flex-row w-full mt-4 gap-3">
+                  <div className="flex-1 flex gap-2 w-full sm:w-auto">
+                    <select
+                      value={bulkCardId}
+                      onChange={(e) => setBulkCardId(e.target.value)}
+                      className="flex-1 bg-slate-950 border border-rose-500/30 text-rose-300 rounded-xl px-4 py-2.5 min-w-[200px] font-bold"
+                    >
+                      <option value="">-- เลือกการ์ดที่จะริบ --</option>
+                      {allCards.map(c => (
+                        <option key={c.id} value={c.id}>{c.name} {c.rarity}</option>
+                      ))}
+                    </select>
+                    <div className="relative w-24">
+                      <input 
+                        type="number" min="1" max="100" value={bulkCardAmount} onChange={(e) => setBulkCardAmount(parseInt(e.target.value) || 1)}
+                        className="w-full bg-slate-950 border border-rose-500/30 text-rose-300 font-bold rounded-xl px-3 py-2.5 text-center"
+                      />
+                    </div>
+                  </div>
+                  <button onClick={removeBulkCards} disabled={busy || !reason.trim() || !bulkCardId} className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-4 py-2.5 rounded-xl font-bold whitespace-nowrap">
+                    ริบการ์ด
                   </button>
                 </div>
               </div>

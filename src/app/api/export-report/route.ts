@@ -52,7 +52,7 @@ export async function GET() {
       let status = 'Good';
       if (row.p_value < 0.2) status = 'Too Hard';
       if (row.p_value > 0.8) status = 'Too Easy';
-      if (row.d_value < 0.2) status = 'Needs Revision';
+      if (row.d_value !== 0 && row.d_value < 0.2) status = 'Needs Revision';
 
       sheet.addRow({
         no: index + 1,

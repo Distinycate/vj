@@ -12,6 +12,7 @@ import { useDemoStore } from '@/store/useDemoStore';
 import { generateStageQuestions, completeStage, getAdaptiveDifficulty, generateWeaknessBossQuestions } from '@/utils/adaptiveEngine';
 import { normalizeAnswer, QuizChoice } from '@/lib/quizUtils';
 import { useAntiCheat } from '@/hooks/useAntiCheat';
+import { incrementMockQuestProgress } from '@/utils/questUtils';
 
 type GameStep = 'play' | 'reflection' | 'results';
 
@@ -360,6 +361,23 @@ export default function Game() {
       : 10;
 
     const accuracyVal = Math.round((finalScore / words.length) * 100);
+
+    // DAILY QUEST UPDATES
+    if (student?.id) {
+      // Quest 1: Play 3 stages
+      incrementMockQuestProgress(student.id, '1', 1);
+      // Quest 2: Perfect Score
+      if (accuracyVal === 100) {
+        incrementMockQuestProgress(student.id, '2', 1);
+      }
+      // Quest 3: Spaced Repetition Boss Mode
+      if (isBossMode) {
+        const correctCount = words.length - finalWrongWords.length;
+        if (correctCount > 0) {
+          incrementMockQuestProgress(student.id, '3', correctCount);
+        }
+      }
+    }
 
     try {
       // 1. Call completeStage from adaptive engine
