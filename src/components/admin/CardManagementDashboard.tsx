@@ -394,19 +394,34 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
 
   async function removeCard(row: any) {
     if (!selectedStudent || !reason.trim() || busy) return;
-    if (!window.confirm(`ยืนยันริบการ์ด “${row.cards?.name}” 1 ใบ?`)) return;
+    const available = row.quantity - row.reserved_quantity;
+    if (available < 1) return;
+    
+    let amountToRemove = 1;
+    if (available > 1) {
+      const input = window.prompt(`ระบุจำนวนการ์ด "${row.cards?.name}" ที่ต้องการริบ (สูงสุด ${available}):`, "1");
+      if (input === null) return;
+      amountToRemove = parseInt(input, 10);
+      if (isNaN(amountToRemove) || amountToRemove < 1 || amountToRemove > available) {
+        alert("จำนวนไม่ถูกต้อง");
+        return;
+      }
+    } else {
+      if (!window.confirm(`ยืนยันริบการ์ด “${row.cards?.name}” 1 ใบ?`)) return;
+    }
+
     setBusy(true);
     try {
       await removeStudentCard(
         teacher.id,
         selectedStudent.id,
         row.card_id,
-        1,
+        amountToRemove,
         reason.trim(),
         behaviorCategory,
       );
       setReason('');
-      setMessage('ริบการ์ดและบันทึกเหตุผลแล้ว');
+      setMessage(`ริบการ์ด ${amountToRemove} ใบและบันทึกเหตุผลแล้ว`);
       await loadData();
       setSelectedStudent(null);
     } catch (error) {
