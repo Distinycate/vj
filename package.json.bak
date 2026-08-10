@@ -12,12 +12,6 @@
     "test": "node --test src/lib/*.test.ts",
     "check": "npm run lint && npm run typecheck && npm test"
   },
-    "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "iOS >= 14",
-    "Safari >= 14"
-  ],
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
     "dotenv": "^17.4.2",

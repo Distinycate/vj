@@ -2,11 +2,13 @@ export function getMockQuests(studentId: string) {
   if (typeof window === 'undefined') return [];
   const today = new Date().toISOString().split('T')[0];
   const mockKey = `mock_quests_${studentId}_${today}`;
-  const savedMock = localStorage.getItem(mockKey);
-  if (savedMock) {
-    try {
+  try {
+    const savedMock = localStorage.getItem(mockKey);
+    if (savedMock) {
       return JSON.parse(savedMock);
-    } catch(e) {}
+    }
+  } catch(e) {
+    console.warn("localStorage error:", e);
   }
   return [
     { id: '1', title: 'เข้าเรียนและเล่นเกมคำศัพท์ 3 ด่าน', target_value: 3, reward_coins: 100, reward_tickets: 0, progress: 0, claimed: false },
@@ -19,13 +21,17 @@ export function incrementMockQuestProgress(studentId: string, questId: string, a
   if (typeof window === 'undefined') return;
   const today = new Date().toISOString().split('T')[0];
   const mockKey = `mock_quests_${studentId}_${today}`;
-  const savedMock = localStorage.getItem(mockKey);
+  
   let quests = [];
-  if (savedMock) {
-    try {
+  try {
+    const savedMock = localStorage.getItem(mockKey);
+    if (savedMock) {
       quests = JSON.parse(savedMock);
-    } catch(e) {}
-  } else {
+    } else {
+      quests = getMockQuests(studentId);
+    }
+  } catch(e) {
+    console.warn("localStorage error:", e);
     quests = getMockQuests(studentId);
   }
 
@@ -36,5 +42,9 @@ export function incrementMockQuestProgress(studentId: string, questId: string, a
     return q;
   });
 
-  localStorage.setItem(mockKey, JSON.stringify(updatedQuests));
+  try {
+    localStorage.setItem(mockKey, JSON.stringify(updatedQuests));
+  } catch(e) {
+    console.warn("localStorage error:", e);
+  }
 }

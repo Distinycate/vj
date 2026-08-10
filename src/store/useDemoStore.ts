@@ -52,7 +52,9 @@ export const useDemoStore = create<DemoState>((set) => ({
   startDemo: () => {
     // Also save to sessionStorage to persist across reloads
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem('vocab_journey_demo', 'true');
+      try {
+        sessionStorage.setItem('vocab_journey_demo', 'true');
+      } catch (e) {}
     }
     set({
       isDemoMode: true,
@@ -65,7 +67,9 @@ export const useDemoStore = create<DemoState>((set) => ({
 
   resetDemo: () => {
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('vocab_journey_demo');
+      try {
+        sessionStorage.removeItem('vocab_journey_demo');
+      } catch (e) {}
     }
     set({
       isDemoMode: false,
@@ -91,7 +95,11 @@ export const useDemoStore = create<DemoState>((set) => ({
 
 // Initialize demo mode on load if sessionStorage flag exists
 if (typeof window !== 'undefined') {
-  if (sessionStorage.getItem('vocab_journey_demo') === 'true') {
-    useDemoStore.getState().startDemo();
+  try {
+    if (sessionStorage.getItem('vocab_journey_demo') === 'true') {
+      useDemoStore.getState().startDemo();
+    }
+  } catch (e) {
+    console.warn("sessionStorage not available", e);
   }
 }
