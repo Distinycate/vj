@@ -31,6 +31,7 @@ export default function CardTeacherAccessPage() {
           .eq('password', password)
           .eq('is_active', true)
           .in('role', ['CARD_TEACHER', 'TEACHER', 'ADMIN'])
+          .limit(1)
           .maybeSingle();
         if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือบัญชีไม่มีสิทธิ์ระบบการ์ด');
         teacher = data;

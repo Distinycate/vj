@@ -153,8 +153,9 @@ export default function Home() {
         const { data: teacherData, error: teacherError } = await supabase
           .from('teachers')
           .select('*')
-          .eq('username', loginUsername.trim())
+          .ilike('username', loginUsername.trim())
           .eq('password', loginPassword.trim())
+          .limit(1)
           .maybeSingle();
 
         if (teacherError || !teacherData) {
@@ -162,6 +163,11 @@ export default function Home() {
         }
 
         if (loginRole === 'teacher') {
+          if (teacherData.role === 'CARD_TEACHER') {
+            localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(teacherData));
+            window.location.href = '/card-teacher/dashboard';
+            return;
+          }
           if (teacherData.role !== 'TEACHER' && teacherData.role !== 'ADMIN') {
             throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานระบบครูผู้สอน');
           }
