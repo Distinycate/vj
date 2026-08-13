@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Globe2, Loader2, LogIn, School } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
@@ -30,6 +30,14 @@ const generateExternalStudentId = () => {
 export default function NetworkRegisterPage() {
   const router = useRouter();
   const { setStudent, setProgress } = useAppStore();
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+
+  // Login State
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Register State
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [schoolName, setSchoolName] = useState('');
@@ -39,6 +47,71 @@ export default function NetworkRegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('vj_saved_guest');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.username) setLoginUsername(parsed.username);
+        if (parsed.password) setLoginPassword(parsed.password);
+        setRememberMe(true);
+      } catch (e) {}
+    }
+  }, []);
+
+  async function handleLogin(event: React.FormEvent) {
+    event.preventDefault();
+    if (!loginUsername.trim() || !loginPassword.trim()) {
+      setError('กรุณากรอก Username และ Password');
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .select('*')
+        .eq('username', loginUsername.trim())
+        .eq('password', loginPassword.trim())
+        .eq('user_type', 'EXTERNAL')
+        .maybeSingle();
+
+      if (studentError || !studentData) {
+        throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือไม่ใช่บัญชีเครือข่ายภายนอก');
+      }
+
+      if (rememberMe) {
+        localStorage.setItem('vj_saved_guest', JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim() }));
+      } else {
+        localStorage.removeItem('vj_saved_guest');
+      }
+
+      const { data: progressData } = await supabase
+        .from('learning_paths')
+        .select('*')
+        .eq('student_id', studentData.id)
+        .single();
+
+      const guestProgress = {
+        ...progressData,
+        pretest_date: new Date().toISOString(),
+      };
+
+      setStudent(studentData);
+      setProgress(guestProgress);
+      saveStudentSession(studentData);
+      setMessage('เข้าสู่ระบบสำเร็จ กำลังเข้าสู่ Dashboard...');
+      router.push('/');
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่');
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -143,6 +216,10 @@ export default function NetworkRegisterPage() {
         pretest_date: new Date().toISOString(),
       };
 
+      if (rememberMe) {
+        localStorage.setItem('vj_saved_guest', JSON.stringify({ username: normalizedUsername, password: password.trim() }));
+      }
+
       setStudent(studentData);
       setProgress(guestProgress);
       saveStudentSession(studentData);
@@ -181,10 +258,49 @@ export default function NetworkRegisterPage() {
             </div>
           </div>
 
+          <div className="flex bg-slate-950/80 border border-slate-800 rounded-2xl p-1 mb-6">
+            <button 
+              onClick={() => { setMode('login'); setError(''); setMessage(''); }}
+              className={`flex-1 min-h-11 py-2.5 rounded-xl font-bold transition-all ${mode === 'login' ? 'bg-cyan-500 text-slate-950 shadow-lg' : 'text-slate-400 hover:text-white'}`}
+            >
+              เข้าสู่ระบบ Guest
+            </button>
+            <button 
+              onClick={() => { setMode('register'); setError(''); setMessage(''); }}
+              className={`flex-1 min-h-11 py-2.5 rounded-xl font-bold transition-all ${mode === 'register' ? 'bg-cyan-500 text-slate-950 shadow-lg' : 'text-slate-400 hover:text-white'}`}
+            >
+              สมัครสมาชิกใหม่
+            </button>
+          </div>
+
           {error && <div className="mb-5 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-2xl p-4 text-sm">{error}</div>}
           {message && <div className="mb-5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-2xl p-4 text-sm">{message}</div>}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === 'login' ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="text-sm font-bold text-slate-300 block mb-1.5">Username</label>
+                <input value={loginUsername} onChange={(event) => setLoginUsername(event.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white" placeholder="สำหรับเข้าสู่ระบบ" />
+              </div>
+              <div>
+                <label className="text-sm font-bold text-slate-300 block mb-1.5">Password</label>
+                <input type="password" value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white" placeholder="รหัสผ่าน" />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer mt-1">
+                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-900" />
+                <span className="text-slate-400 text-sm font-medium hover:text-white transition-colors">จดจำรหัสผ่าน</span>
+              </label>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full min-h-12 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-black rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50 mt-4"
+              >
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
+                เข้าสู่ระบบ Guest
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-bold text-slate-300 block mb-1.5">ชื่อจริง</label>
@@ -224,15 +340,21 @@ export default function NetworkRegisterPage() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full min-h-12 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-black rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
-              สมัครและเข้าสู่ระบบ Guest
-            </button>
-          </form>
+              <label className="flex items-center gap-2 cursor-pointer mt-1">
+                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-900" />
+                <span className="text-slate-400 text-sm font-medium hover:text-white transition-colors">จดจำรหัสผ่านเข้าสู่ระบบในครั้งหน้า</span>
+              </label>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full min-h-12 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-black rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
+                สมัครและเข้าสู่ระบบ Guest
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>

@@ -69,6 +69,7 @@ export default function Home() {
   // Login State
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   
   // Register State
   const [regFirstName, setRegFirstName] = useState('');
@@ -88,6 +89,17 @@ export default function Home() {
       setIsRegistrationOpen(isOpen);
     }
     checkRegistration();
+
+    const savedUser = localStorage.getItem('vj_saved_user');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.username) setLoginUsername(parsed.username);
+        if (parsed.password) setLoginPassword(parsed.password);
+        if (parsed.role) setLoginRole(parsed.role);
+        setRememberMe(true);
+      } catch (e) {}
+    }
   }, []);
   const [loginRole, setLoginRole] = useState<'student' | 'teacher' | 'executive'>('student');
   const [isLoading, setIsLoading] = useState(false);
@@ -142,6 +154,12 @@ export default function Home() {
           ? new Date().toISOString()
           : hasCompleted5Pretests && pretestList && pretestList.length > 0 ? pretestList[0].created_at : null;
 
+        if (rememberMe) {
+          localStorage.setItem('vj_saved_user', JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim(), role: loginRole }));
+        } else {
+          localStorage.removeItem('vj_saved_user');
+        }
+
         setStudent(studentData);
         saveStudentSession(studentData);
         setProgress({ 
@@ -163,6 +181,11 @@ export default function Home() {
         }
 
         if (loginRole === 'teacher') {
+          if (rememberMe) {
+            localStorage.setItem('vj_saved_user', JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim(), role: loginRole }));
+          } else {
+            localStorage.removeItem('vj_saved_user');
+          }
           if (teacherData.role === 'CARD_TEACHER') {
             localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(teacherData));
             window.location.href = '/card-teacher/dashboard';
@@ -174,6 +197,11 @@ export default function Home() {
           localStorage.setItem('vocab_journey_teacher', JSON.stringify(teacherData));
           window.location.href = '/admin';
         } else if (loginRole === 'executive') {
+          if (rememberMe) {
+            localStorage.setItem('vj_saved_user', JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim(), role: loginRole }));
+          } else {
+            localStorage.removeItem('vj_saved_user');
+          }
           if (teacherData.role !== 'EXECUTIVE' && teacherData.role !== 'ADMIN') {
             throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานระบบผู้บริหาร');
           }
@@ -484,12 +512,26 @@ export default function Home() {
           <div className="mt-7 text-center bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-3xl p-5">
             <p className="text-white font-black text-lg">พร้อมหรือยัง... ที่จะเปลี่ยนการท่องจำให้เป็นการผจญภัย?</p>
             <p className="text-slate-400 text-sm mt-2">
-              คลิกปุ่ม “สมัครสมาชิก/เข้าสู่ระบบ” เพื่อเริ่มต้นการเดินทาง และก้าวสู่การเป็นผู้พิชิตโอเน็ต (O-NET Conqueror) ไปด้วยกัน
+              คลิกปุ่ม “สมัครสมาชิก/เข้าสู่ระบบ” ด้านบนเพื่อเริ่มต้นการเดินทาง และก้าวสู่การเป็นผู้พิชิตโอเน็ต (O-NET Conqueror) ไปด้วยกัน
             </p>
+            <button 
+              onClick={() => {
+                const loginPanel = document.getElementById('login-panel');
+                if (loginPanel) {
+                  loginPanel.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
+              className="mt-5 xl:hidden inline-block w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg transition-all transform active:scale-95"
+            >
+              ขึ้นไปเข้าสู่ระบบ / สมัครสมาชิก 🚀
+            </button>
           </div>
         </motion.section>
 
       <motion.div 
+        id="login-panel"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="order-1 xl:order-2 glass-card p-4 sm:p-8 rounded-3xl w-full max-w-md shadow-2xl xl:max-h-[95vh] xl:overflow-y-auto xl:sticky xl:top-4 justify-self-center mobile-scroll-panel"
@@ -557,6 +599,10 @@ export default function Home() {
               <label className="text-slate-300 text-sm font-bold block mb-1.5">Password</label>
               <input type="password" autoComplete="new-password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-all transform active:scale-95" placeholder="กรอกรหัสผ่าน" />
             </div>
+            <label className="flex items-center gap-2 cursor-pointer mt-1">
+              <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900" />
+              <span className="text-slate-400 text-sm font-medium hover:text-white transition-colors">จดจำรหัสผ่าน</span>
+            </label>
             <button type="button" onClick={handleLogin} disabled={isLoading} className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg mt-4 disabled:opacity-50 transition-all transform active:scale-95">
               {isLoading ? 'กำลังโหลด...' : 
                loginRole === 'student' ? 'เข้าสู่ระบบผจญภัย 🚀' : 
