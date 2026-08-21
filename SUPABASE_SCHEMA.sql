@@ -751,3 +751,67 @@ INSERT INTO public.weekly_missions (mission_title, target_type, target_value, re
     ('เรียนรู้คำศัพท์ 50 คำใน 1 สัปดาห์', 'WORDS_STUDIED', 50, 50),
     ('ผ่านด่านท้าทาย 15 ด่าน', 'STAGES_PLAYED', 15, 75)
 ON CONFLICT (mission_title) DO NOTHING;
+
+-- 7. RPC for Claiming Mock Daily Quests
+CREATE OR REPLACE FUNCTION public.claim_mock_quest_reward(
+  p_student_id uuid,
+  p_quest_id text,
+  p_reward_coins integer,
+  p_reward_tickets integer
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_path public.learning_paths%ROWTYPE;
+  v_today text := to_char(now() AT TIME ZONE 'Asia/Bangkok', 'YYYY_MM_DD');
+  v_claim_key text := 'mock_quest_claimed_' || v_today || '_' || p_quest_id;
+  v_metadata jsonb;
+BEGIN
+  -- 1. Get the current learning path
+  SELECT * INTO v_path
+  FROM public.learning_paths
+  WHERE student_id = p_student_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'LEARNING_PATH_NOT_FOUND';
+  END IF;
+
+  -- 2. Ensure metadata is a jsonb object
+  v_metadata := coalesce(v_path.metadata, '{}'::jsonb);
+
+  -- 3. Check if the quest is already claimed today
+  IF (v_metadata->>v_claim_key) IS NOT NULL THEN
+    RAISE EXCEPTION 'QUEST_ALREADY_CLAIMED_TODAY';
+  END IF;
+
+  -- 4. Mark the quest as claimed today
+  v_metadata := v_metadata || jsonb_build_object(v_claim_key, true);
+
+  -- 5. Update the learning path safely
+  UPDATE public.learning_paths
+  SET coins = coalesce(coins, 0) + p_reward_coins,
+      free_pull_tickets = coalesce(free_pull_tickets, 0) + p_reward_tickets,
+      metadata = v_metadata
+  WHERE student_id = p_student_id;
+
+  -- 6. Log transaction if tickets are awarded
+  IF p_reward_tickets > 0 THEN
+      -- You can insert to coins_transactions or tickets_transactions if such a table exists
+      -- We'll log coins here for traceability
+      INSERT INTO public.coins_transactions(student_id, amount, source)
+      VALUES (p_student_id, p_reward_coins, 'MOCK_QUEST_REWARD_' || p_quest_id);
+  ELSIF p_reward_coins > 0 THEN
+      INSERT INTO public.coins_transactions(student_id, amount, source)
+      VALUES (p_student_id, p_reward_coins, 'MOCK_QUEST_REWARD_' || p_quest_id);
+  END IF;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'new_coins', coalesce(v_path.coins, 0) + p_reward_coins,
+    'new_tickets', coalesce(v_path.free_pull_tickets, 0) + p_reward_tickets
+  );
+END;
+$$;

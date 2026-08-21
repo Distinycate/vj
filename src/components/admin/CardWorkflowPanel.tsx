@@ -45,6 +45,52 @@ export default function CardWorkflowPanel({ teacher }: { teacher: any; classroom
     }
   }
 
+  // --- Summary Logic ---
+  const summaryByStudent = logs.reduce((acc: any, log: any) => {
+    // Only count attack cards that actually have targets
+    if (log.played_card?.effect_type !== 'ATTACK' || !log.target) return acc;
+    
+    // Default structure for a target
+    if (!acc[log.target.student_name]) {
+      acc[log.target.student_name] = { 
+        total: 0, 
+        breakdown: {}, 
+        hasDefense: false, 
+        hasReflect: false 
+      };
+    }
+    
+    // Add to breakdown
+    const code = log.played_card.card_code;
+    const name = log.played_card.name;
+    const key = `${code}|${name}`;
+    
+    acc[log.target.student_name].breakdown[key] = (acc[log.target.student_name].breakdown[key] || 0) + 1;
+    acc[log.target.student_name].total += 1;
+
+    // Check if there's a counter card applied
+    if (log.counter_card) {
+      if (log.counter_card.effect_type === 'DEFENSE') acc[log.target.student_name].hasDefense = true;
+      if (log.counter_card.effect_type === 'REFLECT') acc[log.target.student_name].hasReflect = true;
+    }
+    
+    // Include additional targets (like for CLEAN_ROOM)
+    if (log.metadata?.additionalTargets) {
+      log.metadata.additionalTargets.forEach((t: any) => {
+        if (!acc[t.name]) {
+          acc[t.name] = { total: 0, breakdown: {}, hasDefense: false, hasReflect: false };
+        }
+        acc[t.name].breakdown[key] = (acc[t.name].breakdown[key] || 0) + 1;
+        acc[t.name].total += 1;
+      });
+    }
+    
+    return acc;
+  }, {});
+
+  const summaryEntries = Object.entries(summaryByStudent).sort((a: any, b: any) => b[1].total - a[1].total);
+  // --- End Summary Logic ---
+
   return (
     <div className="space-y-6">
       {message && <div className="p-3 bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-xl">{message}</div>}
@@ -54,8 +100,56 @@ export default function CardWorkflowPanel({ teacher }: { teacher: any; classroom
           <h2 className="text-xl font-black text-white">รายการรอครูดำเนินการทั้งโรงเรียน</h2>
           <p className="text-xs text-slate-500 mt-1">นักเรียนใช้การ์ดข้ามห้องได้ แต่ทุกคำขอต้องผ่านครูประกาศและอนุมัติผลก่อนมีผลจริง</p>
         </div>
-        <button onClick={loadData} className="p-2 bg-slate-800 rounded-xl text-slate-300"><RefreshCw className="w-4 h-4" /></button>
+        <div className="flex gap-2">
+          {logs.length > 0 && (
+             <button disabled={!!busyId} onClick={async () => {
+               if(!window.confirm('ยืนยันอนุมัติทั้งหมด (เฉพาะรายการที่อยู่ในช่วงสวนกลับ หรือรายการที่อนุมัติได้ทันที)?')) return;
+               const approvable = logs.filter(l => l.status === 'COUNTER_PHASE');
+               for (const l of approvable) {
+                 await run(l.id, 'approve');
+               }
+             }} className="p-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm flex items-center gap-1">
+               <CheckCircle className="w-4 h-4" /> อนุมัติทั้งหมด
+             </button>
+          )}
+          <button onClick={loadData} className="p-2 bg-slate-800 rounded-xl text-slate-300"><RefreshCw className="w-4 h-4" /></button>
+        </div>
       </div>
+
+      {summaryEntries.length > 0 && (
+        <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-2xl p-5 mb-6">
+          <h3 className="font-black text-indigo-300 mb-3 text-lg">📊 สรุปผู้ได้รับผลกระทบ (จากรายการรอดำเนินการ)</h3>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {summaryEntries.map(([studentName, data]: any) => (
+              <div key={studentName} className="bg-slate-900/80 border border-slate-700 p-4 rounded-xl">
+                <div className="font-bold text-white text-lg flex items-center justify-between">
+                  {studentName}
+                  <span className="text-sm px-2 py-0.5 bg-rose-500/20 text-rose-400 rounded-full">{data.total} ใบ</span>
+                </div>
+                
+                <div className="mt-2 space-y-1">
+                  {Object.entries(data.breakdown).map(([key, count]: any) => {
+                    const [code, name] = key.split('|');
+                    return (
+                      <div key={key} className="text-sm text-slate-400 flex justify-between">
+                        <span className="truncate pr-2">{name}</span>
+                        <span className="text-slate-300">x{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {(data.hasDefense || data.hasReflect) && (
+                  <div className="mt-3 flex gap-2">
+                    {data.hasDefense && <span className="px-2 py-1 bg-sky-500/20 text-sky-300 text-xs rounded-lg font-bold border border-sky-500/30 flex items-center gap-1">🛡️ ใช้โล่</span>}
+                    {data.hasReflect && <span className="px-2 py-1 bg-amber-500/20 text-amber-300 text-xs rounded-lg font-bold border border-amber-500/30 flex items-center gap-1">↩️ สะท้อนกลับ</span>}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {logs.map((log) => (
         <div key={log.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">

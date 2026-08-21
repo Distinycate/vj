@@ -252,12 +252,10 @@ BEGIN
   IF v_card.effect_type IN ('ATTACK') AND p_target_id IS NULL THEN
     RAISE EXCEPTION 'TARGET_REQUIRED';
   END IF;
-  IF v_card.effect_type = 'REFLECT' THEN
-    RAISE EXCEPTION 'COUNTER_CARD_CANNOT_START_ACTION';
-  END IF;
-  IF v_card.effect_type = 'DEFENSE' AND p_target_id IS NOT NULL THEN
+  IF v_card.effect_type IN ('DEFENSE', 'REFLECT') AND p_target_id IS NOT NULL THEN
     RAISE EXCEPTION 'DEFENSE_MUST_TARGET_SELF';
   END IF;
+
   IF p_target_id = p_attacker_id THEN RAISE EXCEPTION 'SELF_TARGET_NOT_ALLOWED'; END IF;
 
   SELECT * INTO v_inventory

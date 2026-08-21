@@ -445,7 +445,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {inventory.map((row) => {
                 const available = row.quantity - row.reserved_quantity;
-                const canStart = row.cards.effect_type !== 'REFLECT' && row.cards.effect_type !== 'DUD';
+                const canStart = row.cards.effect_type !== 'DUD';
                 return (
                   <button
                     key={row.id}
@@ -465,6 +465,9 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                     {row.cards.effect_type === 'DUD' && <div className="text-xs mt-2 text-slate-500">ไม่มีผลใดๆ ไม่สามารถใช้งานได้</div>}
                     {row.cards.effect_type === 'DEFENSE' && (
                       <div className="text-xs mt-2">ใช้ป้องกันเมื่อถูกโจมตี หรือส่งให้ครูอนุมัติเป็นสิทธิ์กันแบน</div>
+                    )}
+                    {row.cards.effect_type === 'REFLECT' && (
+                      <div className="text-xs mt-2">ใช้ย้อนกลับเมื่อถูกโจมตี หรือส่งให้ครูอนุมัติเพื่อตั้งรับล่วงหน้า</div>
                     )}
                   </button>
                 );
