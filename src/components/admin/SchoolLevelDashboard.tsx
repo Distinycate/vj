@@ -4,6 +4,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { TrendingUp, Target, Info, AlertTriangle, BookOpen } from 'lucide-react';
+import RankDistribution from './RankDistribution';
 import { supabase } from '@/utils/supabase/client';
 
 interface SchoolLevelDashboardProps {
@@ -14,6 +15,40 @@ const THAI_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.
 
 export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashboardProps) {
   
+  const [allStudents, setAllStudents] = useState<any[]>([]);
+  const [isFetchingAll, setIsFetchingAll] = useState(true);
+
+  useEffect(() => {
+    async function fetchAllStudents() {
+      setIsFetchingAll(true);
+      try {
+        const saved = localStorage.getItem('vocab_journey_teacher');
+        const teacher = saved ? JSON.parse(saved) : null;
+        if (!teacher) return;
+        
+        let query = supabase.from('students').select('*, classrooms(class_name), analytics_summary(*), learning_paths(*)');
+        
+        if (teacher.role === 'TEACHER') {
+          // Get classrooms for this teacher
+          const { data: classes } = await supabase.from('classrooms').select('id').eq('teacher_id', teacher.id);
+          if (classes && classes.length > 0) {
+            query = query.in('classroom_id', classes.map(c => c.id));
+          }
+        }
+        
+        const { data } = await query;
+        if (data) {
+          setAllStudents(data);
+        }
+      } catch (err) {
+        console.error("Error fetching all students:", err);
+      } finally {
+        setIsFetchingAll(false);
+      }
+    }
+    fetchAllStudents();
+  }, []);
+
   const [frequentWrongWords, setFrequentWrongWords] = useState<any[]>([]);
   const [topWrongWord, setTopWrongWord] = useState<string>('-');
   const [topWrongCount, setTopWrongCount] = useState<number>(0);
@@ -181,6 +216,22 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
           <span className={`text-3xl font-black ${pdcaStatus.color}`}>{pdcaStatus.label}</span>
           <span className="text-xs text-slate-500 mt-2">สถานะจากข้อมูลผลลัพธ์จริง</span>
         </div>
+      </div>
+
+
+      {/* Rank Distribution - School Level */}
+      <div className="mt-6">
+        {isFetchingAll ? (
+          <div className="bg-slate-900/40 p-6 rounded-2xl flex justify-center items-center h-32">
+            <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <RankDistribution 
+            students={allStudents} 
+            title="การกระจายตัวระดับ Rank (ภาพรวมโรงเรียน)" 
+            subtitle="แสดงจำนวนและรายชื่อนักเรียนในแต่ละ Rank จากทุกห้องเรียนที่คุณดูแล" 
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

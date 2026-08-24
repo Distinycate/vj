@@ -5,6 +5,7 @@ import {
   BarChart, Bar, Cell
 } from 'recharts';
 import { Download, BrainCircuit, Users } from 'lucide-react';
+import RankDistribution from './RankDistribution';
 import { supabase } from '@/utils/supabase/client';
 
 interface ClassLevelAnalyticsProps {
@@ -169,6 +170,16 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
           </div>
         </div>
       )}
+
+
+      {/* Rank Distribution - Class Level */}
+      <div className="mt-6">
+        <RankDistribution 
+          students={studentsList} 
+          title="การกระจายตัวระดับ Rank (ประจำห้องเรียน)" 
+          subtitle="แสดงจำนวนและรายชื่อนักเรียนในแต่ละ Rank เฉพาะห้องเรียนที่เลือก" 
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
