@@ -416,26 +416,18 @@ export default function Dashboard() {
         .update({ is_claimed: true })
         .eq('id', questId);
       
-      // If error (e.g. demo mode / mock data), we just ignore and update local state
+      // If error (e.g. demo mode / mock data), we just ignore
       
-      // 2. Update local state
-      setDailyQuests(prev => {
-        const next = prev.map(q => q.id === questId ? { ...q, claimed: true } : q);
-        // Save to localStorage if it's a mock quest
-        if (['1', '2', '3'].includes(questId) && typeof window !== 'undefined') {
-          const today = new Date().toISOString().split('T')[0];
-          localStorage.setItem(`mock_quests_${student.id}_${today}`, JSON.stringify(next));
-        }
-        return next;
-      });
-
-      // 3. Give rewards (Update progress and DB)
       const questToClaim = dailyQuests.find(q => q.id === questId);
       const currentProgress = useAppStore.getState().progress;
       
       if (questToClaim && currentProgress) {
         const rewardCoins = questToClaim.reward_coins || 0;
         const rewardTickets = questToClaim.reward_tickets || 0;
+
+        let updatedCoins = currentProgress.coins || 0;
+        let updatedTickets = currentProgress.free_pull_tickets || 0;
+        let claimSuccess = false;
 
         // Secure RPC call instead of client-side DB update
         const { data: rpcData, error: rpcError } = await supabase.rpc('claim_mock_quest_reward', {
@@ -446,27 +438,57 @@ export default function Dashboard() {
         });
 
         if (rpcError) {
-          console.error("Failed to claim quest:", rpcError);
-          return; // Stop if they already claimed it or other DB error
+          console.error("Failed to claim quest via RPC:", rpcError);
+          // Fallback if RPC doesn't exist
+          const { error: dbError } = await supabase
+             .from('learning_paths')
+             .update({
+                 coins: updatedCoins + rewardCoins,
+                 free_pull_tickets: updatedTickets + rewardTickets
+             })
+             .eq('student_id', student.id);
+             
+          if (dbError) {
+             console.error("Failed to claim via fallback DB update", dbError);
+             alert("เกิดข้อผิดพลาดในการรับรางวัล กรุณาลองใหม่อีกครั้ง");
+             return;
+          }
+          updatedCoins += rewardCoins;
+          updatedTickets += rewardTickets;
+          claimSuccess = true;
+        } else {
+          updatedCoins = rpcData.new_coins;
+          updatedTickets = rpcData.new_tickets;
+          claimSuccess = true;
         }
 
-        const updatedCoins = rpcData.new_coins;
-        const updatedTickets = rpcData.new_tickets;
-
-        // Update Zustand
-        setProgress({ 
-          ...currentProgress, 
-          coins: updatedCoins, 
-          free_pull_tickets: updatedTickets 
-        });
-
-        // Trigger confetti (using existing window.confetti if available)
-        if (typeof window !== 'undefined' && (window as any).confetti) {
-          (window as any).confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
+        if (claimSuccess) {
+          // Update Zustand
+          setProgress({ 
+            ...currentProgress, 
+            coins: updatedCoins, 
+            free_pull_tickets: updatedTickets 
           });
+
+          // Update local state
+          setDailyQuests(prev => {
+            const next = prev.map(q => q.id === questId ? { ...q, claimed: true } : q);
+            // Save to localStorage if it's a mock quest
+            if (['1', '2', '3'].includes(questId) && typeof window !== 'undefined') {
+              const today = new Date().toISOString().split('T')[0];
+              localStorage.setItem(`mock_quests_${student.id}_${today}`, JSON.stringify(next));
+            }
+            return next;
+          });
+
+          // Trigger confetti (using existing window.confetti if available)
+          if (typeof window !== 'undefined' && (window as any).confetti) {
+            (window as any).confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 }
+            });
+          }
         }
       }
     } catch (e) {
