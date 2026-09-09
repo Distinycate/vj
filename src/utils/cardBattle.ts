@@ -247,3 +247,39 @@ export async function teacherMarkCardExecuted(teacherId: string, logId: string) 
   if (error) throw new Error(getRpcErrorMessage(error.message));
   return data;
 }
+
+export async function executeBombCard(attackerId: string, targetId: string, bombCardId: string) {
+  await assertInternalCardUser(attackerId);
+  const { data, error } = await supabase.rpc('execute_bomb_card', {
+    p_attacker_id: attackerId,
+    p_target_id: targetId,
+    p_bomb_card_id: bombCardId,
+  });
+  if (error) throw new Error(getRpcErrorMessage(error.message));
+  if (data?.success === false) {
+    throw new Error(getRpcErrorMessage(data.reason) || 'ไม่สามารถระเบิดได้');
+  }
+  return data;
+}
+
+export async function executeNinjaCard(
+  attackerId: string,
+  targetId: string,
+  ninjaCardId: string,
+  targetCard1Id: string,
+  targetCard2Id: string | null
+) {
+  await assertInternalCardUser(attackerId);
+  const { data, error } = await supabase.rpc('execute_ninja_card', {
+    p_attacker_id: attackerId,
+    p_target_id: targetId,
+    p_ninja_card_id: ninjaCardId,
+    p_target_card_1_id: targetCard1Id,
+    p_target_card_2_id: targetCard2Id,
+  });
+  if (error) throw new Error(getRpcErrorMessage(error.message));
+  if (data?.success === false) {
+    throw new Error(getRpcErrorMessage(data.reason) || 'ไม่สามารถลอบทำลายได้');
+  }
+  return data;
+}

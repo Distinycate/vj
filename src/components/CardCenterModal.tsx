@@ -15,6 +15,8 @@ import {
   pullGachaCard,
   executeRandomThief,
   executeMasterThief,
+  executeBombCard,
+  executeNinjaCard,
 } from '@/utils/cardBattle';
 
 interface InventoryRow {
@@ -47,6 +49,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
   const [selectedTarget3, setSelectedTarget3] = useState('');
   const [targetInventory, setTargetInventory] = useState<InventoryRow[]>([]);
   const [selectedTargetCardId, setSelectedTargetCardId] = useState('');
+  const [selectedTargetCard2Id, setSelectedTargetCard2Id] = useState('');
   const [loadingTargetCards, setLoadingTargetCards] = useState(false);
   const [latestPull, setLatestPull] = useState<BattleCard | null>(null);
   const [latestPullWasPity, setLatestPullWasPity] = useState(false);
@@ -192,16 +195,21 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
   );
 
   useEffect(() => {
-    if (selectedCard?.cards.card_code === 'THIEF_MASTER' && selectedTarget) {
+    if (['THIEF_MASTER', 'NINJA'].includes(selectedCard?.cards.card_code || '') && selectedTarget) {
       setLoadingTargetCards(true);
       setSelectedTargetCardId('');
-      supabase
+      setSelectedTargetCard2Id('');
+      let query = supabase
         .from('card_inventory')
         .select('id, quantity, reserved_quantity, cards!inner(*)')
         .eq('student_id', selectedTarget)
-        .eq('cards.is_stealable', true)
-        .gt('quantity', 0)
-        .then(({ data, error }) => {
+        .gt('quantity', 0);
+        
+      if (selectedCard?.cards.card_code === 'THIEF_MASTER') {
+        query = query.eq('cards.is_stealable', true);
+      }
+      
+      query.then(({ data, error }) => {
           setLoadingTargetCards(false);
           if (data && !error) {
             setTargetInventory(data as any[]);
@@ -239,6 +247,9 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       const result = await pullGachaCard(student.id);
       setLatestPull(result.card);
       setLatestPullWasPity(Boolean(result.is_pity));
+      if (result.card.card_code === 'DEMON_TEACHER') {
+        setMessage('😱 โดนคำสาปครูปีศาจ! การ์ดในคลังของคุณถูกทำลายแบบสุ่ม 10 ใบ!');
+      }
       setProgress({
         ...progress,
         coins: result.coins,
@@ -257,13 +268,21 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
     if (!student || !selectedCard || busy) return;
     const isRandomThief = selectedCard.cards.card_code === 'THIEF_RANDOM';
     const isMasterThief = selectedCard.cards.card_code === 'THIEF_MASTER';
-    const needsTarget = selectedCard.cards.effect_type === 'ATTACK' && !isRandomThief;
+    const isBomb = selectedCard.cards.card_code === 'BOMB';
+    const isNinja = selectedCard.cards.card_code === 'NINJA';
+    const isAngel = selectedCard.cards.card_code === 'ANGEL';
+    
+    const needsTarget = (selectedCard.cards.effect_type === 'ATTACK' || isAngel) && !isRandomThief;
     if (needsTarget && !selectedTarget) {
       setMessage('กรุณาเลือกเพื่อนที่ต้องการใช้การ์ด');
       return;
     }
     if (isMasterThief && !selectedTargetCardId) {
       setMessage('กรุณาเลือกการ์ดที่ต้องการขโมย');
+      return;
+    }
+    if (isNinja && (!selectedTargetCardId || !selectedTargetCard2Id)) {
+      setMessage('กรุณาเลือกการ์ด 2 ใบที่ต้องการทำลาย');
       return;
     }
     const isCleanRoom = selectedCard.cards.card_code === 'CLEAN_ROOM';
@@ -287,6 +306,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
         setSelectedTarget2('');
         setSelectedTarget3('');
         setSelectedTargetCardId('');
+        setSelectedTargetCard2Id('');
         return;
       }
 
@@ -306,11 +326,17 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       } else if (isMasterThief) {
         const data = await executeMasterThief(student.id, selectedTarget, selectedCard.cards.id, selectedTargetCardId);
         setMessage(`สำเร็จ! คุณขโมย "${data.stolen_card_name}" มาได้แล้ว`);
+      } else if (isBomb) {
+        const data = await executeBombCard(student.id, selectedTarget, selectedCard.cards.id);
+        setMessage(`สำเร็จ! ระเบิดการ์ดเป้าหมายทิ้ง ${data.destroyed_count} ใบ!`);
+      } else if (isNinja) {
+        await executeNinjaCard(student.id, selectedTarget, selectedCard.cards.id, selectedTargetCardId, selectedTargetCard2Id);
+        setMessage('สำเร็จ! ลอบทำลายการ์ดเป้าหมายทิ้ง 2 ใบ!');
       } else {
         await createCardAction(student.id, selectedCard.cards.id, needsTarget ? selectedTarget : null, metadata);
         if (selectedCard.cards.card_code === 'EARLY_HOME') {
           setMessage('ส่งคำขอแล้ว รอครูอนุมัติ');
-        } else if (['DEFENSE', 'REFLECT'].includes(selectedCard.cards.effect_type)) {
+        } else if (['DEFENSE', 'REFLECT', 'ANGEL'].includes(selectedCard.cards.card_code) || ['DEFENSE', 'REFLECT'].includes(selectedCard.cards.effect_type)) {
           setMessage('กางโล่ตั้งรับล่วงหน้าสำเร็จ!');
         } else {
           setMessage('ใช้งานการ์ดสำเร็จ!');
@@ -322,6 +348,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       setSelectedTarget2('');
       setSelectedTarget3('');
       setSelectedTargetCardId('');
+      setSelectedTargetCard2Id('');
       await loadData();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'ใช้การ์ดไม่สำเร็จ');
@@ -472,7 +499,8 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                       พร้อมใช้ {available}/{row.quantity} ใบ
                     </div>
                     {!canStart && row.cards.effect_type !== 'DUD' && <div className="text-xs mt-2">ใช้ได้เมื่อถูกโจมตี</div>}
-                    {row.cards.effect_type === 'DUD' && <div className="text-xs mt-2 text-slate-500">ไม่มีผลใดๆ ไม่สามารถใช้งานได้</div>}
+                    {row.cards.effect_type === 'DUD' && row.cards.card_code !== 'DEMON_TEACHER' && <div className="text-xs mt-2 text-slate-500">ไม่มีผลใดๆ ไม่สามารถใช้งานได้</div>}
+                    {row.cards.card_code === 'DEMON_TEACHER' && <div className="text-xs mt-2 text-slate-500">ทำงานอัตโนมัติไปแล้วตอนสุ่ม</div>}
                     {row.cards.effect_type === 'DEFENSE' && (
                       <div className="text-xs mt-2">ใช้กางโล่ป้องกันการโจมตีอัตโนมัติ 1 ครั้ง</div>
                     )}
@@ -500,14 +528,14 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               ใช้ {selectedCard.cards.name}
             </h3>
             <p className="text-slate-400 text-sm mt-2">{selectedCard.cards.description}</p>
-            {selectedCard.cards.effect_type === 'ATTACK' && selectedCard.cards.card_code !== 'THIEF_RANDOM' && (
+            {(selectedCard.cards.effect_type === 'ATTACK' || selectedCard.cards.card_code === 'ANGEL') && selectedCard.cards.card_code !== 'THIEF_RANDOM' ? (
               <div className="space-y-3 mt-5">
                 <select
                   value={selectedTarget}
                   onChange={(event) => setSelectedTarget(event.target.value)}
                   className="w-full glass-input text-white p-3 border-none"
                 >
-                  <option value="">{selectedCard.cards.card_code === 'CLEAN_ROOM' ? 'เลือกนักเรียนทั้งโรงเรียน (คนที่ 1)' : 'เลือกนักเรียนทั้งโรงเรียน'}</option>
+                  <option value="">{selectedCard.cards.card_code === 'CLEAN_ROOM' ? 'เลือกนักเรียนทั้งโรงเรียน (คนที่ 1)' : selectedCard.cards.card_code === 'ANGEL' ? 'เลือกเพื่อนที่ต้องการกางโล่ให้' : 'เลือกนักเรียนทั้งโรงเรียน'}</option>
                   {schoolmates.map((classmate) => (
                     <option key={classmate.id} value={classmate.id}>
                       {classmate.student_name}
@@ -546,33 +574,51 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                     </select>
                   </>
                 )}
-                {selectedCard.cards.card_code === 'THIEF_MASTER' && selectedTarget && (
+                {['THIEF_MASTER', 'NINJA'].includes(selectedCard.cards.card_code) && selectedTarget && (
                   <div className="mt-3 p-4 glass-card border-none space-y-3">
-                    <div className="text-sm font-bold text-slate-300">เลือกการ์ดที่ต้องการขโมย:</div>
+                    <div className="text-sm font-bold text-slate-300">
+                      {selectedCard.cards.card_code === 'NINJA' ? 'เลือกการ์ดที่ต้องการทำลาย 2 ใบ:' : 'เลือกการ์ดที่ต้องการขโมย:'}
+                    </div>
                     {loadingTargetCards ? (
                       <div className="text-sm text-slate-500">กำลังโหลดการ์ด...</div>
                     ) : targetInventory.length > 0 ? (
-                      <select
-                        value={selectedTargetCardId}
-                        onChange={(event) => setSelectedTargetCardId(event.target.value)}
-                        className="w-full glass-input border-fuchsia-500/30 text-white p-3 focus:ring-1 focus:ring-fuchsia-500"
-                      >
-                        <option value="">-- เลือกการ์ด 1 ใบ --</option>
-                        {targetInventory.map((item) => (
-                          <option key={item.cards.id} value={item.cards.id}>
-                            {item.cards.image_url} {item.cards.name} (มี {item.quantity} ใบ)
-                          </option>
-                        ))}
-                      </select>
+                      <>
+                        <select
+                          value={selectedTargetCardId}
+                          onChange={(event) => setSelectedTargetCardId(event.target.value)}
+                          className="w-full glass-input border-fuchsia-500/30 text-white p-3 focus:ring-1 focus:ring-fuchsia-500"
+                        >
+                          <option value="">-- เลือกการ์ดใบที่ 1 --</option>
+                          {targetInventory.map((item) => (
+                            <option key={item.cards.id} value={item.cards.id}>
+                              {item.cards.image_url} {item.cards.name} (มี {item.quantity} ใบ)
+                            </option>
+                          ))}
+                        </select>
+                        {selectedCard.cards.card_code === 'NINJA' && (
+                          <select
+                            value={selectedTargetCard2Id}
+                            onChange={(event) => setSelectedTargetCard2Id(event.target.value)}
+                            className="w-full glass-input border-fuchsia-500/30 text-white p-3 focus:ring-1 focus:ring-fuchsia-500"
+                          >
+                            <option value="">-- เลือกการ์ดใบที่ 2 --</option>
+                            {targetInventory.map((item) => (
+                              <option key={item.cards.id} value={item.cards.id}>
+                                {item.cards.image_url} {item.cards.name} (มี {item.quantity} ใบ)
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </>
                     ) : (
                       <div className="text-sm text-rose-400 p-2 bg-rose-500/10 rounded-lg">
-                        เป้าหมายไม่มีการ์ดที่สามารถขโมยได้
+                        เป้าหมายไม่มีการ์ดให้เลือก
                       </div>
                     )}
                   </div>
                 )}
               </div>
-            )}
+            ) : null}
             {selectedCard.cards.card_code === 'THIEF_RANDOM' && (
               <div className="mt-5 p-3 bg-fuchsia-500/10 border border-fuchsia-500/20 rounded-xl text-fuchsia-300 text-sm text-center">
                 ระบบจะทำการสุ่มเป้าหมายจากนักเรียนในโรงเรียนโดยอัตโนมัติ
@@ -585,11 +631,13 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                 setSelectedTarget2('');
                 setSelectedTarget3('');
                 setSelectedTargetCardId('');
+                setSelectedTargetCard2Id('');
               }}>
                 ยกเลิก
               </Button>
               <Button disabled={busy} onClick={handleUseCard} className="bg-fuchsia-500 hover:bg-fuchsia-400 text-white">
                 {selectedCard.cards.card_code === 'THIEF_RANDOM' || selectedCard.cards.card_code === 'THIEF_MASTER' ? 'ขโมยเลย!' : 
+                 ['BOMB', 'NINJA'].includes(selectedCard.cards.card_code) ? 'ทำลายทิ้ง!' :
                  selectedCard.cards.card_code === 'EARLY_HOME' ? 'ส่งให้ครูอนุมัติ' : 'ใช้งานทันที!'}
               </Button>
             </div>
