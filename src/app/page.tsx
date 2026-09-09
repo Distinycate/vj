@@ -123,13 +123,12 @@ export default function Home() {
           return;
         }
 
-        // 1. Authenticate student by querying the students table directly
+        // 1. Authenticate student via secure RPC
         const { data: studentData, error: studentError } = await supabase
-          .from('students')
-          .select('*')
-          .eq('username', loginUsername.trim())
-          .eq('password', loginPassword.trim())
-          .maybeSingle();
+          .rpc('login_student', {
+            p_username: loginUsername.trim(),
+            p_password: loginPassword.trim()
+          });
 
         if (studentError || !studentData) {
           throw new Error('ชื่อผู้ใช้หรือรหัสผ่านนักเรียนไม่ถูกต้อง');
@@ -167,14 +166,12 @@ export default function Home() {
           pretest_date: pretestDate 
         });
       } else {
-        // Authenticate teacher/executive directly
+        // Authenticate teacher/executive via secure RPC
         const { data: teacherData, error: teacherError } = await supabase
-          .from('teachers')
-          .select('*')
-          .ilike('username', loginUsername.trim())
-          .eq('password', loginPassword.trim())
-          .limit(1)
-          .maybeSingle();
+          .rpc('login_teacher', {
+            p_username: loginUsername.trim(),
+            p_password: loginPassword.trim()
+          });
 
         if (teacherError || !teacherData) {
           throw new Error('ชื่อผู้ใช้หรือรหัสผ่านเจ้าหน้าที่ไม่ถูกต้อง');

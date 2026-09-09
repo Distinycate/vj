@@ -13,6 +13,7 @@ import {
   createCardAction,
   pullGachaCard,
   executeRandomThief,
+  executeMasterThief,
 } from '@/utils/cardBattle';
 
 interface InventoryRow {
@@ -43,6 +44,9 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
   const [selectedTarget, setSelectedTarget] = useState('');
   const [selectedTarget2, setSelectedTarget2] = useState('');
   const [selectedTarget3, setSelectedTarget3] = useState('');
+  const [targetInventory, setTargetInventory] = useState<InventoryRow[]>([]);
+  const [selectedTargetCardId, setSelectedTargetCardId] = useState('');
+  const [loadingTargetCards, setLoadingTargetCards] = useState(false);
   const [latestPull, setLatestPull] = useState<BattleCard | null>(null);
   const [latestPullWasPity, setLatestPullWasPity] = useState(false);
   const [message, setMessage] = useState('');
@@ -186,6 +190,30 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
     [inventory],
   );
 
+  useEffect(() => {
+    if (selectedCard?.cards.card_code === 'THIEF_MASTER' && selectedTarget) {
+      setLoadingTargetCards(true);
+      setSelectedTargetCardId('');
+      supabase
+        .from('card_inventory')
+        .select('id, quantity, reserved_quantity, cards!inner(*)')
+        .eq('student_id', selectedTarget)
+        .eq('cards.is_stealable', true)
+        .gt('quantity', 0)
+        .then(({ data, error }) => {
+          setLoadingTargetCards(false);
+          if (data && !error) {
+            setTargetInventory(data as any[]);
+          } else {
+            setTargetInventory([]);
+          }
+        });
+    } else {
+      setTargetInventory([]);
+      setSelectedTargetCardId('');
+    }
+  }, [selectedTarget, selectedCard]);
+
   async function handlePull() {
     if (!student || busy) return;
     setBusy(true);
@@ -227,9 +255,14 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
   async function handleUseCard() {
     if (!student || !selectedCard || busy) return;
     const isRandomThief = selectedCard.cards.card_code === 'THIEF_RANDOM';
+    const isMasterThief = selectedCard.cards.card_code === 'THIEF_MASTER';
     const needsTarget = selectedCard.cards.effect_type === 'ATTACK' && !isRandomThief;
     if (needsTarget && !selectedTarget) {
       setMessage('กรุณาเลือกเพื่อนที่ต้องการใช้การ์ด');
+      return;
+    }
+    if (isMasterThief && !selectedTargetCardId) {
+      setMessage('กรุณาเลือกการ์ดที่ต้องการขโมย');
       return;
     }
     const isCleanRoom = selectedCard.cards.card_code === 'CLEAN_ROOM';
@@ -252,6 +285,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
         setSelectedTarget('');
         setSelectedTarget2('');
         setSelectedTarget3('');
+        setSelectedTargetCardId('');
         return;
       }
 
@@ -268,6 +302,9 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       if (isRandomThief) {
         const data = await executeRandomThief(student.id, selectedCard.cards.id);
         setMessage(`สำเร็จ! คุณขโมย "${data.stolen_card_name}" มาได้แล้ว`);
+      } else if (isMasterThief) {
+        const data = await executeMasterThief(student.id, selectedTarget, selectedCard.cards.id, selectedTargetCardId);
+        setMessage(`สำเร็จ! คุณขโมย "${data.stolen_card_name}" มาได้แล้ว`);
       } else {
         await createCardAction(student.id, selectedCard.cards.id, needsTarget ? selectedTarget : null, metadata);
         setMessage('ส่งคำขอแล้ว การ์ดถูกจองไว้จนกว่าครูจะตัดสิน');
@@ -277,6 +314,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       setSelectedTarget('');
       setSelectedTarget2('');
       setSelectedTarget3('');
+      setSelectedTargetCardId('');
       await loadData();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'ใช้การ์ดไม่สำเร็จ');
@@ -536,6 +574,31 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                     </select>
                   </>
                 )}
+                {selectedCard.cards.card_code === 'THIEF_MASTER' && selectedTarget && (
+                  <div className="mt-3 p-4 bg-slate-950/50 border border-slate-700/50 rounded-xl space-y-3">
+                    <div className="text-sm font-bold text-slate-300">เลือกการ์ดที่ต้องการขโมย:</div>
+                    {loadingTargetCards ? (
+                      <div className="text-sm text-slate-500">กำลังโหลดการ์ด...</div>
+                    ) : targetInventory.length > 0 ? (
+                      <select
+                        value={selectedTargetCardId}
+                        onChange={(event) => setSelectedTargetCardId(event.target.value)}
+                        className="w-full bg-slate-900 border border-fuchsia-500/30 text-white rounded-xl p-3 focus:ring-2 focus:ring-fuchsia-500"
+                      >
+                        <option value="">-- เลือกการ์ด 1 ใบ --</option>
+                        {targetInventory.map((item) => (
+                          <option key={item.cards.id} value={item.cards.id}>
+                            {item.cards.image_url} {item.cards.name} (มี {item.quantity} ใบ)
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="text-sm text-rose-400 p-2 bg-rose-500/10 rounded-lg">
+                        เป้าหมายไม่มีการ์ดที่สามารถขโมยได้
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             {selectedCard.cards.card_code === 'THIEF_RANDOM' && (
@@ -544,11 +607,17 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               </div>
             )}
             <div className="grid grid-cols-2 gap-3 mt-6">
-              <button onClick={() => setSelectedCard(null)} className="py-3 bg-slate-800 rounded-xl font-bold">
+              <button onClick={() => {
+                setSelectedCard(null);
+                setSelectedTarget('');
+                setSelectedTarget2('');
+                setSelectedTarget3('');
+                setSelectedTargetCardId('');
+              }} className="py-3 bg-slate-800 rounded-xl font-bold">
                 ยกเลิก
               </button>
               <button disabled={busy} onClick={handleUseCard} className="py-3 bg-fuchsia-500 rounded-xl font-bold text-white">
-                {selectedCard.cards.card_code === 'THIEF_RANDOM' ? 'สุ่มขโมยเลย!' : 'ส่งให้ครูอนุมัติ'}
+                {selectedCard.cards.card_code === 'THIEF_RANDOM' || selectedCard.cards.card_code === 'THIEF_MASTER' ? 'ขโมยเลย!' : 'ส่งให้ครูอนุมัติ'}
               </button>
             </div>
           </div>

@@ -64,7 +64,7 @@ export default function AdminPage() {
     if (!username.trim() || !password.trim()) return setLoginError('กรุณากรอก Username และ Password');
     setIsLoading(true); setLoginError('');
     try {
-      const { data, error } = await supabase.from('teachers').select('*').eq('username', username.trim()).eq('password', password.trim()).maybeSingle();
+      const { data, error } = await supabase.rpc('login_teacher', { p_username: username.trim(), p_password: password.trim() });
       if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านครูไม่ถูกต้อง');
       if (!['TEACHER', 'ADMIN'].includes(data.role)) {
         throw new Error('บัญชีนี้ใช้ได้เฉพาะระบบการ์ด กรุณาเข้าผ่านเมนูระบบการ์ดสำหรับคุณครู');

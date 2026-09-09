@@ -24,15 +24,12 @@ export default function CardTeacherAccessPage() {
       if (mode === 'register') {
         teacher = await registerCardTeacher(name, username, password);
       } else {
-        const { data, error } = await supabase
-          .from('teachers')
-          .select('id, name, username, role, is_active')
-          .ilike('username', username.trim())
-          .eq('password', password)
-          .eq('is_active', true)
-          .in('role', ['CARD_TEACHER', 'TEACHER', 'ADMIN'])
-          .limit(1)
-          .maybeSingle();
+        const { data, error } = await supabase.rpc('login_teacher', { p_username: username.trim(), p_password: password });
+
+        if (!error && data) {
+          if (!data.is_active) throw new Error('ชื่อผู้ใช้นี้ถูกระงับการใช้งาน');
+          if (!['CARD_TEACHER', 'TEACHER', 'ADMIN'].includes(data.role)) throw new Error('ไม่มีสิทธิ์เข้าใช้งาน');
+        }
         if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือบัญชีไม่มีสิทธิ์ระบบการ์ด');
         teacher = data;
       }

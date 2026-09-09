@@ -189,16 +189,18 @@ export default function Dashboard() {
         starsByStage[stageNumber] = Math.max(starsByStage[stageNumber] || 0, derivedStars);
       }
 
-      if (Object.keys(starsByStage).length === 0) {
-        for (const row of attemptRows || []) {
-          if (!row.is_passed) continue;
-          const stageRelation = Array.isArray(row.stages) ? row.stages[0] : row.stages;
-          const stageNumber = Number(stageRelation?.stage_number || 0);
-          const totalQuestions = Number(row.total_questions || 0);
-          if (!stageNumber || totalQuestions <= 0) continue;
+      for (const row of attemptRows || []) {
+        if (!row.is_passed) continue;
+        const stageRelation = Array.isArray(row.stages) ? row.stages[0] : row.stages;
+        const stageNumber = Number(stageRelation?.stage_number || 0);
+        const totalQuestions = Number(row.total_questions || 0);
+        if (!stageNumber || totalQuestions <= 0) continue;
+        
+        // Only use legacy attempt data if the stage isn't already recorded in the new stage_results table
+        if (starsByStage[stageNumber] === undefined) {
           const accuracy = (Number(row.score || 0) / totalQuestions) * 100;
           const derivedStars = accuracy >= 90 ? 3 : accuracy >= 75 ? 2 : 1;
-          starsByStage[stageNumber] = Math.max(starsByStage[stageNumber] || 0, derivedStars);
+          starsByStage[stageNumber] = derivedStars;
         }
       }
       setStageStars(starsByStage);

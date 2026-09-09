@@ -40,6 +40,20 @@ const BEHAVIOR_CATEGORIES: Array<{ value: BehaviorCategory; label: string }> = [
   { value: 'OTHER', label: 'อื่น ๆ' },
 ];
 
+const QUICK_REASONS = {
+  POSITIVE: [
+    { text: 'ส่งงานตรงเวลา', category: 'RESPONSIBILITY' },
+    { text: 'ตั้งใจเรียน', category: 'POSITIVE_BEHAVIOR' },
+    { text: 'จิตอาสา', category: 'VOLUNTEER' },
+    { text: 'ตอบคำถามดี', category: 'POSITIVE_BEHAVIOR' },
+  ],
+  NEGATIVE: [
+    { text: 'ส่งงานช้า', category: 'RESPONSIBILITY' },
+    { text: 'คุยในห้อง', category: 'DISCIPLINE' },
+    { text: 'ไม่ทำเวร', category: 'RULE_VIOLATION' },
+  ]
+} as const;
+
 function categoryLabel(value: string) {
   return BEHAVIOR_CATEGORIES.find((category) => category.value === value)?.label || 'อื่น ๆ';
 }
@@ -221,14 +235,15 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     };
   }), [allCards, inventory]);
 
-  async function adjustTickets(direction: 1 | -1) {
-    if (!selectedStudent || !reason.trim() || ticketAmount < 1 || busy) return;
+  async function adjustTickets(direction: 1 | -1, overrideAmount?: number) {
+    const amountToUse = overrideAmount || ticketAmount;
+    if (!selectedStudent || !reason.trim() || amountToUse < 1 || busy) return;
     setBusy(true);
     try {
       await adjustStudentTickets(
         teacher.id,
         selectedStudent.id,
-        direction * ticketAmount,
+        direction * amountToUse,
         reason.trim(),
         behaviorCategory,
       );
@@ -243,14 +258,15 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     }
   }
 
-  async function adjustCoins(direction: 1 | -1) {
-    if (!selectedStudent || !reason.trim() || coinAmount < 1 || busy) return;
+  async function adjustCoins(direction: 1 | -1, overrideAmount?: number) {
+    const amountToUse = overrideAmount || coinAmount;
+    if (!selectedStudent || !reason.trim() || amountToUse < 1 || busy) return;
     setBusy(true);
     try {
       await adjustStudentCoins(
         teacher.id,
         selectedStudent.id,
-        direction * coinAmount,
+        direction * amountToUse,
         reason.trim(),
         behaviorCategory,
       );
@@ -286,13 +302,14 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     }
   }
 
-  async function adjustBulkTickets(direction: 1 | -1) {
-    if (selectedStudentIds.size === 0 || !reason.trim() || ticketAmount < 1 || busy) return;
+  async function adjustBulkTickets(direction: 1 | -1, overrideAmount?: number) {
+    const amountToUse = overrideAmount || ticketAmount;
+    if (selectedStudentIds.size === 0 || !reason.trim() || amountToUse < 1 || busy) return;
     setBusy(true);
     try {
       await Promise.all(
         Array.from(selectedStudentIds).map((id) =>
-          adjustStudentTickets(teacher.id, id, direction * ticketAmount, reason.trim(), behaviorCategory)
+          adjustStudentTickets(teacher.id, id, direction * amountToUse, reason.trim(), behaviorCategory)
         )
       );
       setReason('');
@@ -306,13 +323,14 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     }
   }
 
-  async function adjustBulkCoins(direction: 1 | -1) {
-    if (selectedStudentIds.size === 0 || !reason.trim() || coinAmount < 1 || busy) return;
+  async function adjustBulkCoins(direction: 1 | -1, overrideAmount?: number) {
+    const amountToUse = overrideAmount || coinAmount;
+    if (selectedStudentIds.size === 0 || !reason.trim() || amountToUse < 1 || busy) return;
     setBusy(true);
     try {
       await Promise.all(
         Array.from(selectedStudentIds).map((id) =>
-          adjustStudentCoins(teacher.id, id, direction * coinAmount, reason.trim(), behaviorCategory)
+          adjustStudentCoins(teacher.id, id, direction * amountToUse, reason.trim(), behaviorCategory)
         )
       );
       setReason('');
@@ -594,35 +612,47 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                   <div className="text-sm text-slate-400 mt-1">แจกหรือหักตั๋ว/เหรียญ ให้กับนักเรียนทั้งหมดที่เลือก</div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                  <input
-                    placeholder="เหตุผล (จำเป็น)..."
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    className="bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-2.5 min-w-[200px]"
-                  />
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <div className="relative flex-1 sm:w-28">
-                      <input 
-                        type="number" min="1" max="100" value={ticketAmount} onChange={(e) => setTicketAmount(parseInt(e.target.value) || 1)}
-                        className="w-full bg-slate-950 border border-sky-500/30 text-sky-400 font-bold rounded-xl pl-9 pr-2 py-2.5"
-                      />
-                      <span className="absolute left-3 top-2.5">🎫</span>
-                    </div>
-                    <button onClick={() => adjustBulkTickets(1)} disabled={busy} className="bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 px-3 py-2.5 rounded-xl font-bold whitespace-nowrap">แจก</button>
-                    <button onClick={() => adjustBulkTickets(-1)} disabled={busy} className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-3 py-2.5 rounded-xl font-bold whitespace-nowrap">หัก</button>
-                  </div>
+                <div className="flex flex-col gap-4 w-full">
                   
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <div className="relative flex-1 sm:w-32">
-                      <input 
-                        type="number" min="1" max="10000" step="10" value={coinAmount} onChange={(e) => setCoinAmount(parseInt(e.target.value) || 100)}
-                        className="w-full bg-slate-950 border border-amber-500/30 text-amber-400 font-bold rounded-xl pl-9 pr-2 py-2.5"
-                      />
-                      <span className="absolute left-3 top-2.5">🪙</span>
+                  {/* Quick Tags for Bulk */}
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs font-bold text-slate-500 py-1.5 mr-2">เหตุผลด่วน:</span>
+                    {QUICK_REASONS.POSITIVE.map(tag => (
+                      <button key={tag.text} onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }} className={`px-2 py-1 text-xs font-bold rounded-lg border ${reason === tag.text ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>{tag.text}</button>
+                    ))}
+                    <div className="w-[1px] h-6 bg-slate-700 mx-1"></div>
+                    {QUICK_REASONS.NEGATIVE.map(tag => (
+                      <button key={tag.text} onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }} className={`px-2 py-1 text-xs font-bold rounded-lg border ${reason === tag.text ? 'bg-rose-500/20 border-rose-500 text-rose-300' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>{tag.text}</button>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 w-full items-start sm:items-center">
+                    <input
+                      placeholder="พิมพ์เหตุผลอื่นๆ (จำเป็น)..."
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      className="flex-1 bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm"
+                    />
+                    
+                    {/* Quick Coins */}
+                    <div className="flex gap-2 w-full sm:w-auto bg-amber-500/5 p-1 rounded-xl border border-amber-500/10">
+                      <button onClick={() => adjustBulkCoins(1, 100)} disabled={busy || !reason.trim()} className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-1.5 rounded-lg font-bold text-xs">+100🪙</button>
+                      <button onClick={() => adjustBulkCoins(-1, 100)} disabled={busy || !reason.trim()} className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-3 py-1.5 rounded-lg font-bold text-xs">-100🪙</button>
+                      <div className="flex gap-1 ml-1">
+                        <input type="number" min="1" value={coinAmount} onChange={(e) => setCoinAmount(Math.max(1, parseInt(e.target.value)))} className="w-16 bg-slate-950 border border-amber-500/30 text-amber-400 font-bold rounded-lg px-2 py-1.5 text-xs text-center" />
+                        <button onClick={() => adjustBulkCoins(1)} disabled={busy || !reason.trim()} className="bg-amber-500 text-slate-950 px-2 py-1.5 rounded-lg font-bold text-xs">แจก</button>
+                      </div>
                     </div>
-                    <button onClick={() => adjustBulkCoins(1)} disabled={busy} className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-2.5 rounded-xl font-bold whitespace-nowrap">แจก</button>
-                    <button onClick={() => adjustBulkCoins(-1)} disabled={busy} className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-3 py-2.5 rounded-xl font-bold whitespace-nowrap">หัก</button>
+                    
+                    {/* Quick Tickets */}
+                    <div className="flex gap-2 w-full sm:w-auto bg-sky-500/5 p-1 rounded-xl border border-sky-500/10">
+                      <button onClick={() => adjustBulkTickets(1, 1)} disabled={busy || !reason.trim()} className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 px-3 py-1.5 rounded-lg font-bold text-xs">+1🎫</button>
+                      <button onClick={() => adjustBulkTickets(-1, 1)} disabled={busy || !reason.trim()} className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-3 py-1.5 rounded-lg font-bold text-xs">-1🎫</button>
+                      <div className="flex gap-1 ml-1">
+                        <input type="number" min="1" value={ticketAmount} onChange={(e) => setTicketAmount(Math.max(1, parseInt(e.target.value)))} className="w-12 bg-slate-950 border border-sky-500/30 text-sky-400 font-bold rounded-lg px-2 py-1.5 text-xs text-center" />
+                        <button onClick={() => adjustBulkTickets(1)} disabled={busy || !reason.trim()} className="bg-emerald-500 text-slate-950 px-2 py-1.5 rounded-lg font-bold text-xs">แจก</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -807,33 +837,88 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
               </div>
               <button onClick={() => setSelectedStudent(null)} className="min-h-11 min-w-11 p-2 bg-slate-800 rounded-xl flex items-center justify-center"><X className="w-5 h-5" /></button>
             </div>
-            <div className="p-4 sm:p-5 space-y-6">
-              <div>
-                <label className="text-xs font-bold text-slate-400">หมวดคุณลักษณะ</label>
-                <select value={behaviorCategory} onChange={(event) => setBehaviorCategory(event.target.value as BehaviorCategory)} className="w-full mt-2 bg-slate-950 border border-slate-700 rounded-xl p-3">
-                  {BEHAVIOR_CATEGORIES.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-slate-400">เหตุผลที่มอบหรือหัก (จำเป็น)</label>
-                <textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="เช่น ช่วยงานส่วนรวม / ไม่ปฏิบัติตามข้อตกลงของชั้นเรียน" className="w-full mt-2 bg-slate-950 border border-slate-700 rounded-xl p-3 min-h-20" />
-              </div>
-              <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">
-                <h3 className="font-black flex items-center gap-2">🪙 เหรียญ: {selectedStudent.coins}</h3>
-                <div className="grid grid-cols-1 min-[420px]:grid-cols-[7rem_1fr_1fr] gap-2 mt-3">
-                  <input type="number" min={1} max={10000} value={coinAmount} onChange={(event) => setCoinAmount(Math.max(1, Number(event.target.value)))} className="min-h-11 bg-slate-900 border border-slate-700 rounded-xl px-3" />
-                  <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(1)} className="min-h-11 px-4 py-2 bg-amber-400 text-slate-950 disabled:opacity-40 rounded-xl font-bold">มอบเหรียญ</button>
-                  <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(-1)} className="min-h-11 px-4 py-2 bg-rose-500/15 text-rose-300 disabled:opacity-40 rounded-xl font-bold">หักเหรียญ</button>
+              <div className="p-4 sm:p-5 space-y-6">
+                
+                {/* 1. Quick Reasons (Tags) */}
+                <div className="bg-slate-950/40 border border-slate-800 rounded-2xl p-4">
+                  <div className="flex flex-col md:flex-row gap-4 mb-4">
+                    <div className="flex-1">
+                      <label className="text-xs font-bold text-emerald-400 mb-2 block">เชิงบวก (ให้รางวัล)</label>
+                      <div className="flex flex-wrap gap-2">
+                        {QUICK_REASONS.POSITIVE.map((tag) => (
+                          <button
+                            key={tag.text}
+                            onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-lg border ${reason === tag.text ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}
+                          >
+                            {tag.text}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-xs font-bold text-rose-400 mb-2 block">เชิงลบ (ลงโทษ)</label>
+                      <div className="flex flex-wrap gap-2">
+                        {QUICK_REASONS.NEGATIVE.map((tag) => (
+                          <button
+                            key={tag.text}
+                            onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-lg border ${reason === tag.text ? 'bg-rose-500/20 border-rose-500 text-rose-300' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}
+                          >
+                            {tag.text}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <select value={behaviorCategory} onChange={(event) => setBehaviorCategory(event.target.value as BehaviorCategory)} className="bg-slate-950 border border-slate-700 text-sm rounded-xl p-3">
+                      {BEHAVIOR_CATEGORIES.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
+                    </select>
+                    <input 
+                      value={reason} onChange={(event) => setReason(event.target.value)} 
+                      placeholder="พิมพ์เหตุผลอื่นๆ... (จำเป็น)" 
+                      className="md:col-span-2 bg-slate-950 border border-slate-700 text-sm rounded-xl p-3" 
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">
-                <h3 className="font-black flex items-center gap-2"><Ticket className="w-4 h-4 text-sky-300" /> ตั๋วสุ่มฟรี: {selectedStudent.tickets}</h3>
-                <div className="grid grid-cols-1 min-[420px]:grid-cols-[7rem_1fr_1fr] gap-2 mt-3">
-                  <input type="number" min={1} max={100} value={ticketAmount} onChange={(event) => setTicketAmount(Math.max(1, Number(event.target.value)))} className="min-h-11 bg-slate-900 border border-slate-700 rounded-xl px-3" />
-                  <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(1)} className="min-h-11 px-4 py-2 bg-emerald-500 text-slate-950 disabled:opacity-40 rounded-xl font-bold flex items-center justify-center gap-2"><Gift className="w-4 h-4" /> มอบตั๋ว</button>
-                  <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(-1)} className="min-h-11 px-4 py-2 bg-rose-500/15 text-rose-300 disabled:opacity-40 rounded-xl font-bold flex items-center justify-center gap-2"><MinusCircle className="w-4 h-4" /> หักตั๋ว</button>
+
+                {/* 2. Quick Actions (Coins & Tickets) */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="bg-slate-950/60 border border-amber-500/20 rounded-2xl p-4">
+                    <h3 className="font-black flex items-center justify-between text-amber-400 mb-4">
+                      <span>🪙 เหรียญ (มี {selectedStudent.coins})</span>
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(1, 100)} className="py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 disabled:opacity-40 rounded-xl font-bold text-sm">+100</button>
+                      <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(1, 500)} className="py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 disabled:opacity-40 rounded-xl font-bold text-sm">+500</button>
+                      <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(-1, 100)} className="py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 disabled:opacity-40 rounded-xl font-bold text-sm border border-rose-500/20">-100</button>
+                      <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(-1, 500)} className="py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 disabled:opacity-40 rounded-xl font-bold text-sm border border-rose-500/20">-500</button>
+                    </div>
+                    <div className="flex gap-2">
+                      <input type="number" min={1} value={coinAmount} onChange={(e) => setCoinAmount(Math.max(1, Number(e.target.value)))} className="w-20 bg-slate-900 border border-slate-700 rounded-xl px-3 text-center text-sm" />
+                      <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(1)} className="flex-1 py-2 bg-amber-500 text-slate-950 disabled:opacity-40 rounded-xl font-bold text-sm">แจก</button>
+                      <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(-1)} className="flex-1 py-2 bg-rose-500/15 text-rose-300 disabled:opacity-40 rounded-xl font-bold text-sm">หัก</button>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-950/60 border border-sky-500/20 rounded-2xl p-4">
+                    <h3 className="font-black flex items-center justify-between text-sky-400 mb-4">
+                      <span className="flex items-center gap-2"><Ticket className="w-4 h-4" /> ตั๋วสุ่มฟรี (มี {selectedStudent.tickets})</span>
+                    </h3>
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(1, 1)} className="col-span-1 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 disabled:opacity-40 rounded-xl font-bold text-sm">+1</button>
+                      <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(1, 5)} className="col-span-1 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 disabled:opacity-40 rounded-xl font-bold text-sm">+5</button>
+                      <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(-1, 1)} className="col-span-1 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 disabled:opacity-40 rounded-xl font-bold text-sm border border-rose-500/20">-1</button>
+                    </div>
+                    <div className="flex gap-2">
+                      <input type="number" min={1} value={ticketAmount} onChange={(e) => setTicketAmount(Math.max(1, Number(e.target.value)))} className="w-20 bg-slate-900 border border-slate-700 rounded-xl px-3 text-center text-sm" />
+                      <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(1)} className="flex-1 py-2 bg-emerald-500 text-slate-950 disabled:opacity-40 rounded-xl font-bold text-sm">แจก</button>
+                      <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(-1)} className="flex-1 py-2 bg-rose-500/15 text-rose-300 disabled:opacity-40 rounded-xl font-bold text-sm">หัก</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
               <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-2xl p-4">
                 <h3 className="font-black flex items-center gap-2 text-indigo-300 mb-3">จดหมายส่วนตัวถึงนักเรียน (Teacher Note)</h3>
                 <div className="flex flex-col sm:flex-row gap-3">

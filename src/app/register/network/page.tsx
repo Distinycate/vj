@@ -72,12 +72,14 @@ export default function NetworkRegisterPage() {
 
     try {
       const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('*')
-        .eq('username', loginUsername.trim())
-        .eq('password', loginPassword.trim())
-        .eq('user_type', 'EXTERNAL')
-        .maybeSingle();
+        .rpc('login_student', {
+          p_username: loginUsername.trim(),
+          p_password: loginPassword.trim()
+        });
+
+      if (!studentError && studentData && studentData.user_type !== 'EXTERNAL') {
+        throw new Error('บัญชีนี้ไม่ใช่บัญชีเครือข่ายภายนอก');
+      }
 
       if (studentError || !studentData) {
         throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือไม่ใช่บัญชีเครือข่ายภายนอก');

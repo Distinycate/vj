@@ -203,8 +203,9 @@ export async function generateStageQuestions(studentId: string, stageNumber: num
       }
     }
 
-    if (questions.length === 0) {
-      console.warn("No valid questions could be generated");
+    const minRequired = Math.min(5, Math.floor(targetCount * 0.6));
+    if (questions.length < minRequired) {
+      console.warn(`Only generated ${questions.length} questions out of ${targetCount}. Rejecting to prevent auto-pass exploit.`);
       return [];
     }
 

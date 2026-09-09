@@ -218,3 +218,23 @@ export async function executeRandomThief(attackerId: string, thiefCardId: string
   }
   return data;
 }
+
+export async function executeMasterThief(
+  attackerId: string,
+  targetId: string,
+  thiefCardId: string,
+  targetCardId: string
+) {
+  await assertInternalCardUser(attackerId);
+  const { data, error } = await supabase.rpc('execute_master_thief', {
+    p_attacker_id: attackerId,
+    p_target_id: targetId,
+    p_thief_card_id: thiefCardId,
+    p_target_card_id: targetCardId,
+  });
+  if (error) throw new Error(getRpcErrorMessage(error.message));
+  if (data?.success === false) {
+    throw new Error(getRpcErrorMessage(data.reason) || 'ไม่สามารถขโมยได้');
+  }
+  return data;
+}

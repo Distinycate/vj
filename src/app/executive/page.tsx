@@ -34,7 +34,7 @@ export default function ExecutiveDashboard() {
     if (!username.trim() || !password.trim()) return setLoginError('กรุณากรอก Username และ Password');
     setIsLoading(true); setLoginError('');
     try {
-      const { data, error } = await supabase.from('teachers').select('*').eq('username', username.trim()).eq('password', password.trim()).maybeSingle();
+      const { data, error } = await supabase.rpc('login_teacher', { p_username: username.trim(), p_password: password.trim() });
       if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านผู้บริหารไม่ถูกต้อง');
       if (data.role !== 'EXECUTIVE' && data.role !== 'ADMIN') throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าใช้ระบบผู้บริหาร');
       setExecutiveUser(data);
