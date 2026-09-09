@@ -51,6 +51,13 @@ export async function generateStageQuestions(studentId: string, stageNumber: num
     } else if (missionLevel === 3) {
        questionTypes = ['spelling', 'context_mc'];
     }
+
+    // Skull ID Override (Special Needs Students)
+    const { data: studentData } = await supabase.from('students').select('is_skull').eq('id', studentId).maybeSingle();
+    if (studentData?.is_skull) {
+      questionTypes = ['meaning_mc', 'word_mc']; // Force multiple choice only
+    }
+
     const isBoss = stageNumber % 10 === 0;
     const targetCount = isBoss ? Math.round(questionCount * 1.5) : questionCount;
 

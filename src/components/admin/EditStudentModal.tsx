@@ -18,6 +18,7 @@ export default function EditStudentModal({
   const [gradeLevel, setGradeLevel] = useState(student.grade_level || 'ม.1');
   const [roomNumber, setRoomNumber] = useState(student.room_number || '1');
   const [studentId, setStudentId] = useState(student.student_id || '');
+  const [isSkull, setIsSkull] = useState(Boolean(student.is_skull));
   
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -60,7 +61,8 @@ export default function EditStudentModal({
           student_name: fullName,
           grade_level: gradeLevel.trim(),
           room_number: roomNumber.trim(),
-          student_id: studentId.trim()
+          student_id: studentId.trim(),
+          is_skull: isSkull
         })
         .eq('id', student.id)
         .select()
@@ -135,6 +137,21 @@ export default function EditStudentModal({
               <label className="text-slate-400 text-xs font-bold block mb-1">เลขที่</label>
               <input type="text" value={studentId} onChange={(e) => setStudentId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500" placeholder="15" />
             </div>
+          </div>
+
+          <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between">
+            <div>
+              <div className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                💀 Skull ID (โหมดเด็กพิเศษ)
+              </div>
+              <div className="text-xs text-slate-500 mt-1">
+                บังคับให้เจอแต่ข้อสอบแบบเลือกตอบ (ไม่มีการให้พิมพ์สะกดคำ) เพื่อให้นักเรียนที่อ่านไม่ออกหรือมีปัญหาเรียนรู้ได้เล่นเกมสนุกขึ้น
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" checked={isSkull} onChange={(e) => setIsSkull(e.target.checked)} className="sr-only peer" />
+              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
+            </label>
           </div>
           
           <div className="pt-4 flex gap-3">

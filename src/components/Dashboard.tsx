@@ -144,6 +144,16 @@ export default function Dashboard() {
         .single();
       
       if (pathData) {
+        if (!student.is_demo_account && !useDemoStore.getState().isDemoMode) {
+          try {
+            const { data: decayedCount } = await supabase.rpc('trigger_card_decay', { p_student_id: student.id });
+            if (decayedCount && decayedCount > 0) {
+              alert(`😱 คุณหายไปนานเกิน 3 วัน! บทลงโทษ: การ์ดในคลังของคุณถูกทำลายไป ${decayedCount} ใบ!`);
+            }
+          } catch (e) {
+            console.error("Decay Error:", e);
+          }
+        }
         // Fallback seed assignment in UI state if DB hasn't populated yet
         if (!pathData.avatar_seed) pathData.avatar_seed = student.id;
         setProgress(pathData);

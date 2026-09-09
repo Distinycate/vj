@@ -1,12 +1,12 @@
 -- 1. Add New Cards
 INSERT INTO public.cards (card_code, name, description, rarity, effect_type, image_url, drop_weight, target_scope, is_stealable)
 VALUES 
-  ('BOMB', 'การ์ดระเบิด', 'สุ่มทำลายการ์ดของเพื่อนแบบสุ่ม 5 ใบ', 'SSR', 'ATTACK', '💣', 15, 'SCHOOL', false),
-  ('NINJA', 'การ์ดนินจา', 'เลือกทำลายการ์ดของเพื่อนแบบเจาะจง 2 ใบ', 'UR', 'ATTACK', '🥷', 5, 'SCHOOL', false),
-  ('DEMON_TEACHER', 'การ์ดครูปีศาจ', 'คำสาป! เมื่อสุ่มได้การ์ดนี้ ระบบจะทำลายการ์ดในคลังของคุณแบบสุ่ม 10 ใบทันที', 'UR', 'DUD', '👹', 8, 'SELF', false),
-  ('ANGEL', 'การ์ดนางฟ้า', 'ส่งความช่วยเหลือ กางโล่ป้องกันการโจมตีให้เพื่อน 1 ครั้ง', 'SR', 'BUFF', '👼', 20, 'SCHOOL', true),
-  ('CLEAN_CLASS', 'สั่งทำความสะอาดห้อง', 'ทำโทษเพื่อน 1 คนให้ไปทำความสะอาดห้องเรียน', 'R', 'ATTACK', '🧹', 35, 'SCHOOL', true),
-  ('PICK_TRASH', 'สั่งเก็บขยะ', 'ทำโทษเพื่อน 1 คนให้ไปเดินเก็บขยะ', 'N', 'ATTACK', '🗑️', 50, 'SCHOOL', true)
+  ('BOMB', 'การ์ดระเบิด', 'สุ่มทำลายการ์ดของเพื่อนแบบสุ่ม 5 ใบ', 'SSR', 'ATTACK', '💣', 15, 'school', false),
+  ('NINJA', 'การ์ดนินจา', 'เลือกทำลายการ์ดของเพื่อนแบบเจาะจง 2 ใบ', 'UR', 'ATTACK', '🥷', 5, 'school', false),
+  ('DEMON_TEACHER', 'การ์ดครูปีศาจ', 'คำสาป! เมื่อสุ่มได้การ์ดนี้ ระบบจะทำลายการ์ดในคลังของคุณแบบสุ่ม 10 ใบทันที', 'UR', 'DUD', '👹', 8, 'self', false),
+  ('ANGEL', 'การ์ดนางฟ้า', 'ส่งความช่วยเหลือ กางโล่ป้องกันการโจมตีให้เพื่อน 1 ครั้ง', 'SR', 'BUFF', '👼', 20, 'school', true),
+  ('CLEAN_CLASS', 'สั่งทำความสะอาดห้อง', 'ทำโทษเพื่อน 1 คนให้ไปทำความสะอาดห้องเรียน', 'R', 'ATTACK', '🧹', 35, 'school', true),
+  ('PICK_TRASH', 'สั่งเก็บขยะ', 'ทำโทษเพื่อน 1 คนให้ไปเดินเก็บขยะ', 'N', 'ATTACK', '🗑️', 50, 'school', true)
 ON CONFLICT (card_code) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
