@@ -387,8 +387,8 @@ export default function Home() {
 
 
       {/* Ambient orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 glow-orb"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-secondary/20 glow-orb"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/20 glow-orb"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-sky-500/20 glow-orb"></div>
 
       <div className="relative z-10 w-full max-w-7xl grid grid-cols-1 xl:grid-cols-[1.35fr_0.65fr] gap-4 sm:gap-6 items-start">
         <motion.section
@@ -520,7 +520,7 @@ export default function Home() {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               }}
-              className="mt-5 xl:hidden inline-block w-full premium-btn bg-primary text-slate-950 font-black py-4"
+              className="mt-5 xl:hidden inline-block w-full premium-btn bg-emerald-500 text-slate-950 font-black py-4"
             >
               ขึ้นไปเข้าสู่ระบบ / สมัครสมาชิก 🚀
             </button>
@@ -600,7 +600,7 @@ export default function Home() {
               <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900" />
               <span className="text-slate-400 text-sm font-medium hover:text-white transition-colors">จดจำรหัสผ่าน</span>
             </label>
-            <button type="button" onClick={handleLogin} disabled={isLoading} className="w-full premium-btn bg-primary hover:bg-primary-hover text-slate-950 font-black py-4 mt-4 disabled:opacity-50">
+            <button type="button" onClick={handleLogin} disabled={isLoading} className="w-full premium-btn bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-4 mt-4 disabled:opacity-50">
               {isLoading ? 'กำลังโหลด...' : 
                loginRole === 'student' ? 'เข้าสู่ระบบผจญภัย 🚀' : 
                loginRole === 'teacher' ? 'เข้าสู่ระบบจัดการเรียนรู้ 👨‍🏫' : 
@@ -670,7 +670,7 @@ export default function Home() {
               <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} className="w-full glass-input px-4 py-2.5 text-white text-sm" placeholder="รหัสผ่านเข้าสู่ระบบ" />
             </div>
  
-            <button type="button" onClick={handleRegister} disabled={isLoading} className="w-full premium-btn bg-primary hover:bg-primary-hover text-slate-950 font-black py-4 mt-4 disabled:opacity-50">
+            <button type="button" onClick={handleRegister} disabled={isLoading} className="w-full premium-btn bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-4 mt-4 disabled:opacity-50">
               {isLoading ? 'กำลังโหลด...' : 'ลงทะเบียนและเริ่มผจญภัย 🎉'}
             </button>
           </div>

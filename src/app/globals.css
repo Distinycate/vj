@@ -26,6 +26,13 @@
   --danger: #f43f5e;
 }
 
+@theme {
+  --color-primary: #10b981;
+  --color-primary-hover: #059669;
+  --color-secondary: #0ea5e9;
+  --color-accent: #8b5cf6;
+}
+
 body {
   background-color: var(--background);
   background-image: 

@@ -60,7 +60,7 @@ export default function StudentVerificationModal() {
         <button 
           onClick={handleVerify}
           disabled={loading}
-          className="w-full py-4 premium-btn bg-primary hover:bg-emerald-400 text-slate-950 font-black text-lg flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-4 premium-btn bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-lg flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
