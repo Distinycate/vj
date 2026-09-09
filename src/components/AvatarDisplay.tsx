@@ -31,7 +31,7 @@ export default function AvatarDisplay({ seed, style = 'adventurer', size = 'md',
   // Generate DiceBear URL (API v9)
   const avatarUrl = `https://api.dicebear.com/9.x/${safeStyle}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=transparent`;
 
-  const baseClasses = `rounded-full flex items-center justify-center bg-slate-800 border-2 border-slate-700 overflow-hidden select-none shrink-0`;
+  const baseClasses = `rounded-full flex items-center justify-center bg-slate-800/80 backdrop-blur-sm border-2 border-slate-600/50 shadow-[0_0_15px_rgba(255,255,255,0.05)] overflow-hidden select-none shrink-0 transition-transform hover:scale-105`;
   const sizeClasses = {
     sm: 'w-8 h-8',
     md: 'w-12 h-12',

@@ -321,9 +321,9 @@ export default function PreTest({
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
-          className="bg-slate-900 border border-slate-800 p-8 rounded-3xl text-center shadow-2xl w-full max-w-md"
+          className="glass-card p-8 text-center w-full max-w-md"
         >
-          <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
             <span className="text-4xl">{isAllCompleted ? '🎉' : '🏆'}</span>
           </div>
           <h2 className="text-3xl font-extrabold text-white mb-2">
@@ -380,14 +380,14 @@ export default function PreTest({
           {!isAllCompleted ? (
             <button 
               onClick={handleNextAttempt} 
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 hover:scale-[1.02]"
+              className="w-full premium-btn bg-secondary py-4 text-white font-bold"
             >
               ทำแบบประเมินรอบถัดไป ({currentAttemptNum + 1}/5) 🚀
             </button>
           ) : (
             <button 
               onClick={handleDashboard} 
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-4 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20 hover:scale-[1.02]"
+              className="w-full premium-btn bg-primary py-4 text-slate-950 font-bold"
             >
               เข้าสู่ Dashboard 🚀
             </button>
@@ -407,7 +407,7 @@ export default function PreTest({
       className="min-h-screen bg-slate-950 p-6 flex flex-col justify-center items-center relative overflow-hidden select-none"
       onContextMenu={(e) => e.preventDefault()}
     >
-      <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[100px] pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-primary/20 glow-orb pointer-events-none"></div>
       
       <div className="w-full max-w-xl flex justify-between items-center mb-4 relative z-10">
           <div className="text-slate-400 font-bold tracking-wider text-sm flex flex-col">
@@ -437,7 +437,7 @@ export default function PreTest({
         key={currentIndex}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 w-full max-w-xl rounded-3xl p-8 shadow-2xl relative z-10"
+        className="glass-card w-full max-w-xl p-8 relative z-10"
       >
         <div className="text-center mb-12">
           <span className="text-slate-500 text-sm tracking-widest uppercase block mb-2">คำศัพท์</span>
@@ -463,7 +463,7 @@ export default function PreTest({
             <button 
               key={choice.word_id}
               onClick={() => handleAnswer(choice)}
-              className="bg-slate-800/40 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/30 hover:text-emerald-400 text-slate-300 p-4 sm:p-5 rounded-2xl text-base sm:text-lg font-bold transition-all text-center break-words"
+              className="glass-input p-4 sm:p-5 text-base sm:text-lg font-bold text-center break-words hover-lift hover:border-primary/50 hover:text-primary cursor-pointer transition-all"
             >
               {choice.text}
             </button>

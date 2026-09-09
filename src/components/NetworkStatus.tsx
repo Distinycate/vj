@@ -22,9 +22,9 @@ export default function NetworkStatus() {
   if (isOnline) return null;
 
   return (
-    <div className="bg-rose-500/90 text-white text-sm font-bold text-center py-2 px-4 flex items-center justify-center gap-2 border-b border-rose-600 fixed top-0 left-0 right-0 z-50 animate-pulse">
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-rose-500/80 backdrop-blur-xl border border-rose-400/30 text-white text-sm font-bold py-2 px-5 rounded-full flex items-center gap-2 shadow-[0_8px_32px_rgba(244,63,94,0.4)] animate-bounce">
       <WifiOff className="w-4 h-4" />
-      <span>คุณกำลังออฟไลน์ หน้าที่เคยเปิดอาจยังดูได้ แต่ต้องเชื่อมต่ออินเทอร์เน็ตก่อนบันทึกผลการเรียน</span>
+      <span>คุณกำลังออฟไลน์ (หน้าต่างที่โหลดไว้ยังดูได้)</span>
     </div>
   );
 }

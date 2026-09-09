@@ -14,8 +14,8 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
   const nextThreshold = thresholds[(currentRank + 1) as keyof typeof thresholds] || 100;
   const progressPercent = currentRank >= 5 ? 100 : Math.max(0, Math.min(100, ((rankScore - currentThreshold) / (nextThreshold - currentThreshold)) * 100));
   return (
-    <div className="bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 rounded-3xl p-4 sm:p-6 mb-6 shadow-2xl relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[80px] pointer-events-none"></div>
+    <div className="glass-card p-4 sm:p-6 mb-6 shadow-2xl relative overflow-hidden bg-gradient-to-r from-emerald-500/5 to-transparent">
+      <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-primary/20 glow-orb pointer-events-none"></div>
       
       <div className="flex flex-col md:flex-row gap-6 items-center justify-between relative z-10">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 min-w-0 w-full">
@@ -57,8 +57,8 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
         {/* Rank Info Modal */}
         {showRankInfo && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowRankInfo(false)}></div>
-            <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full relative z-10 shadow-2xl">
+            <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" onClick={() => setShowRankInfo(false)}></div>
+            <div className="glass-card p-6 max-w-md w-full relative z-10 shadow-2xl">
               <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <Info className="w-5 h-5 text-blue-400" />
                 การคำนวณ Rank Score (100 คะแนน)
@@ -90,7 +90,7 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
               </div>
               <button 
                 onClick={() => setShowRankInfo(false)}
-                className="mt-4 w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors font-bold"
+                className="mt-4 w-full py-2 premium-btn bg-slate-800 hover:bg-slate-700 text-white font-bold"
               >
                 เข้าใจแล้ว
               </button>
@@ -99,20 +99,20 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
         )}
         
         <div className="flex flex-col min-[420px]:flex-row md:flex-col items-stretch md:items-end gap-3 w-full md:w-auto">
-          <div className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-950/50 px-5 py-3 rounded-2xl border border-slate-800 shadow-inner">
+          <div className="flex-1 md:flex-none flex items-center justify-center gap-2 glass-input px-5 py-3 rounded-2xl">
             <span className="text-xl">🪙</span>
             <span className="text-white font-black text-xl">{progress?.coins || 0}</span>
           </div>
           <div data-demo-guide="card-system" className={`${isExternalUser ? 'grid grid-cols-1' : 'grid grid-cols-[1fr_1fr_auto]'} md:flex gap-2 w-full md:w-auto`}>
             {!isExternalUser && (
               <>
-                <button onClick={() => setShowCardCenter(true)} className="min-h-11 flex-1 md:flex-none px-4 py-2 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/30 text-fuchsia-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all">
+                <button onClick={() => setShowCardCenter(true)} className="min-h-11 flex-1 md:flex-none px-4 py-2 premium-btn bg-fuchsia-500/10 text-fuchsia-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm">
                   <Sparkles className="w-4 h-4" /> การ์ด
                 </button>
-                <button onClick={() => setShowShop(true)} className="min-h-11 flex-1 md:flex-none px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all"><Store className="w-4 h-4" /> ร้านค้า</button>
+                <button onClick={() => setShowShop(true)} className="min-h-11 flex-1 md:flex-none px-4 py-2 premium-btn bg-purple-500/10 text-purple-300 rounded-xl flex items-center justify-center gap-2 font-bold text-sm"><Store className="w-4 h-4" /> ร้านค้า</button>
               </>
             )}
-            <button onClick={logout} className="min-h-11 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl flex items-center justify-center transition-all"><LogOut className="w-4 h-4" /></button>
+            <button onClick={logout} className="min-h-11 px-4 py-2 premium-btn bg-rose-500/10 text-rose-300 rounded-xl flex items-center justify-center"><LogOut className="w-4 h-4" /></button>
           </div>
         </div>
       </div>

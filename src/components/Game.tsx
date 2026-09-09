@@ -435,7 +435,7 @@ export default function Game() {
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-slate-900 border border-rose-500/20 p-8 rounded-3xl w-full max-w-md text-center"
+          className="glass-card border-rose-500/20 p-8 w-full max-w-md text-center"
         >
           <AlertTriangle className="w-14 h-14 text-amber-400 mx-auto mb-4" />
           <h2 className="text-2xl font-black text-white mb-2">ยังเริ่มด่านไม่ได้</h2>
@@ -446,7 +446,7 @@ export default function Game() {
               setBossMode(false);
               setScreen('dashboard');
             }}
-            className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold"
+            className="w-full py-3.5 premium-btn bg-slate-800 hover:bg-slate-700 font-bold"
           >
             กลับหน้าแผนที่
           </button>
@@ -468,7 +468,7 @@ export default function Game() {
             ? 'ระบบตรวจพบการสลับหน้าจอ (พับแท็บ) เกิน 3 ครั้ง ซึ่งถือเป็นการผิดกฎการทดสอบในโหมดนี้'
             : 'ระบบตรวจพบการทำเวลาที่ผิดปกติ (Speed Hack) เวลาที่ใช้ในการทำข้อสอบน้อยเกินกว่าจะเป็นไปได้'}
         </p>
-        <button onClick={handleFinishGame} className="px-8 py-4 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold">
+        <button onClick={handleFinishGame} className="px-8 py-4 premium-btn bg-slate-800 hover:bg-slate-700 font-bold">
           กลับสู่หน้าหลัก
         </button>
       </div>
@@ -498,7 +498,7 @@ export default function Game() {
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
-          className="text-center bg-slate-900 border border-slate-800 p-8 sm:p-12 rounded-3xl max-w-lg w-full shadow-2xl relative z-10"
+          className="text-center glass-card p-8 sm:p-12 max-w-lg w-full shadow-2xl relative z-10"
         >
           {passed ? (
             <Trophy className="w-24 h-24 text-amber-400 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(245,158,11,0.2)]" />
@@ -530,15 +530,15 @@ export default function Game() {
           )}
           
           <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="bg-slate-950 border border-slate-850 p-4 rounded-xl">
+            <div className="glass-input p-4 border-none shadow-none">
               <span className="text-[10px] text-slate-500 block">คะแนนสะสม</span>
               <strong className="text-xl text-white">{score} / {words.length}</strong>
             </div>
-            <div className="bg-slate-950 border border-slate-850 p-4 rounded-xl">
+            <div className="glass-input p-4 border-none shadow-none">
               <span className="text-[10px] text-slate-500 block">คอมโบสูงสุด</span>
               <strong className="text-xl text-emerald-400">{maxCombo} Combo</strong>
             </div>
-            <div className="bg-slate-950 border border-slate-850 p-4 rounded-xl">
+            <div className="glass-input p-4 border-none shadow-none">
               <span className="text-[10px] text-slate-500 block">ความถูกต้อง</span>
               <strong className={`text-xl font-bold ${passed ? 'text-emerald-400' : 'text-rose-400'}`}>{accuracyVal}%</strong>
             </div>
@@ -563,7 +563,7 @@ export default function Game() {
 
           <button 
             onClick={handleFinishGame} 
-            className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl font-black transition-all shadow-lg text-lg hover:scale-[1.02]"
+            className="w-full py-4 premium-btn bg-primary hover:bg-emerald-400 text-slate-950 font-black shadow-lg text-lg"
           >
             กลับสู่แผนที่ผจญภัย 🧭
           </button>
@@ -577,7 +577,7 @@ export default function Game() {
 
   return (
     <div 
-      className={`min-h-screen ${isBossMode ? 'bg-gradient-to-b from-rose-950 to-slate-950' : 'bg-slate-950'} text-slate-100 p-4 md:p-8 flex flex-col items-center relative overflow-hidden select-none transition-transform duration-100 ${shakeScreen ? 'animate-shake' : ''}`}
+      className={`min-h-[calc(100vh-var(--demo-bottom-nav-space,0px))] ${isBossMode ? 'bg-gradient-to-b from-rose-950/40 to-transparent' : 'bg-transparent'} text-slate-100 p-4 md:p-8 flex flex-col items-center relative overflow-hidden select-none transition-transform duration-100 ${shakeScreen ? 'animate-shake' : ''}`}
       onContextMenu={(e) => e.preventDefault()}
     >
       <style dangerouslySetInnerHTML={{__html: `
@@ -593,7 +593,7 @@ export default function Game() {
       {/* Header Panel */}
       <div className="w-full max-w-2xl flex justify-between items-center mb-6 relative z-10">
         <div className="flex gap-2 items-center">
-          <div className="flex gap-1 bg-slate-900 border border-slate-800 px-3 py-2 rounded-xl">
+          <div className="flex gap-1 glass-card px-3 py-2 rounded-xl border-none">
             {Array(3).fill(0).map((_, i) => (
               <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'text-slate-850'}`} />
             ))}
@@ -601,7 +601,7 @@ export default function Game() {
           
           <div className="relative">
             <div className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border font-bold text-sm transition-all ${
-              showScorePopup ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-slate-900 border-slate-800 text-slate-300'
+              showScorePopup ? 'bg-primary/20 border-primary text-emerald-400' : 'glass-card border-none text-slate-300'
             }`}>
               <Star className={`w-4 h-4 ${showScorePopup ? 'animate-spin' : ''}`} />
               <span>{score}</span>
@@ -636,14 +636,14 @@ export default function Game() {
           </motion.div>
         )}
         
-        <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-full">
+        <div className="flex items-center gap-2 glass-card px-4 py-2.5 rounded-full border-none">
           <Timer className={timeLeft <= 5 ? "text-rose-500 animate-pulse" : "text-emerald-400"} />
           <span className={`text-lg font-bold font-mono ${timeLeft <= 5 ? "text-rose-500" : "text-slate-100"}`}>{timeLeft}s</span>
         </div>
 
         <button 
           onClick={handleFinishGame} 
-          className="px-3.5 py-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-white rounded-xl flex items-center gap-1.5 transition-all text-xs font-bold"
+          className="px-3.5 py-2 premium-btn bg-slate-900 hover:bg-slate-850 text-white flex items-center gap-1.5 text-xs font-bold"
         >
           <X className="w-4 h-4 text-rose-400" /> ยอมแพ้
         </button>
@@ -661,10 +661,10 @@ export default function Game() {
               onClick={() => applyPowerup(itemCode)} 
               disabled={isUsed}
               data-demo-guide={itemCode === 'HINT' ? 'hint-button' : undefined}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border font-bold text-xs transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs transition-all ${
                 isUsed 
-                  ? 'opacity-40 bg-slate-950 border-slate-900 text-slate-600' 
-                  : 'bg-slate-900 border-slate-800 hover:border-emerald-500/50 hover:bg-slate-800 text-slate-200 hover:scale-105'
+                  ? 'opacity-40 glass-input text-slate-600 border-none' 
+                  : 'glass-card hover-lift text-slate-200 border-none'
               }`}
             >
               <span className="text-base">{invItem.items.image_url}</span>
@@ -696,7 +696,7 @@ export default function Game() {
             className="text-center mb-8"
           >
             {qType === 'MEANING_MC' && (
-              <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
+              <div className="glass-card p-6 sm:p-8 shadow-xl w-full break-words border-none">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">แปลศัพท์สเปกตรัม</span>
                 <h2 
                   className="text-4xl sm:text-5xl font-black text-white mb-2 notranslate break-all pointer-events-none select-none" 
@@ -712,7 +712,7 @@ export default function Game() {
             )}
 
             {qType === 'WORD_MC' && (
-              <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
+              <div className="glass-card p-6 sm:p-8 shadow-xl w-full break-words border-none">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">ความหมายภาษาไทย</span>
                 <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-2 break-words">{currentWord.prompt}</h2>
                 <p className="text-slate-400 text-base sm:text-lg">ตรงกับคำศัพท์ภาษาอังกฤษคำใด?</p>
@@ -720,11 +720,11 @@ export default function Game() {
             )}
 
             {qType === 'LISTENING_MC' && (
-              <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl shadow-xl w-full">
+              <div className="glass-card p-8 shadow-xl w-full border-none">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-6">ฟังและเลือกสะกด</span>
                 <button 
                   onClick={() => playWordAudio(currentWord.word)}
-                  className="w-20 h-20 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6 hover:scale-105 transition-all shadow-lg"
+                  className="w-20 h-20 premium-btn bg-primary/10 hover:bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg border-primary/20"
                 >
                   <Volume2 className="w-10 h-10" />
                 </button>
@@ -733,11 +733,11 @@ export default function Game() {
             )}
 
             {qType === 'FILL_BLANK' && (
-              <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
+              <div className="glass-card p-6 sm:p-8 shadow-xl w-full break-words border-none">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">พิมพ์สะกด / เติมประโยค (Contextual Puzzle)</span>
                 
                 {currentWord.prompt?.includes('________') ? (
-                  <div className="bg-slate-950 border border-emerald-900/30 p-4 sm:p-6 rounded-2xl mb-6 italic text-slate-200 text-lg sm:text-xl font-medium leading-relaxed notranslate break-words shadow-inner" translate="no">
+                  <div className="glass-input p-4 sm:p-6 mb-6 italic text-slate-200 text-lg sm:text-xl font-medium leading-relaxed notranslate break-words border-none shadow-inner" translate="no">
                     &ldquo;{currentWord.prompt}&rdquo;
                   </div>
                 ) : (
@@ -755,10 +755,10 @@ export default function Game() {
                     disabled={isAnswered}
                     autoFocus
                     placeholder="พิมพ์สะกดคำศัพท์..."
-                    className="w-full text-center px-4 py-4 rounded-xl bg-slate-950 border border-slate-800 text-xl font-bold focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-white placeholder-slate-650 mb-3"
+                    className="w-full text-center px-4 py-4 glass-input text-xl font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-white placeholder-slate-650 mb-3"
                   />
                   {!isAnswered && (
-                    <button type="submit" className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition-all shadow-md">
+                    <button type="submit" className="w-full py-3.5 premium-btn bg-primary hover:bg-emerald-400 text-slate-950 font-bold shadow-md">
                       ยืนยันคำตอบ ➡️
                     </button>
                   )}
@@ -772,9 +772,9 @@ export default function Game() {
             )}
 
             {qType === 'CONTEXT_MC' && (
-              <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl w-full break-words">
+              <div className="glass-card p-6 sm:p-8 shadow-xl w-full break-words border-none">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-4">การเติมประโยคในบริบท</span>
-                <div className="bg-slate-950 border border-slate-850 p-4 sm:p-6 rounded-2xl mb-4 italic text-slate-200 text-lg sm:text-xl font-medium leading-relaxed notranslate break-words" translate="no">
+                <div className="glass-input p-4 sm:p-6 mb-4 italic text-slate-200 text-lg sm:text-xl font-medium leading-relaxed notranslate break-words border-none" translate="no">
                   &ldquo;{currentWord.prompt}&rdquo;
                 </div>
                 <p className="text-slate-400 text-base sm:text-lg">เติมตัวเลือกข้อใดในช่องว่างจึงจะสมบูรณ์ที่สุด?</p>
@@ -789,18 +789,18 @@ export default function Game() {
             {choices.map((choice, idx) => {
               if (!choice || choice.hidden) return <div key={`hidden-${idx}`} className="opacity-0 pointer-events-none"></div>;
 
-              let btnClass = "bg-slate-900/50 hover:bg-slate-900 border-slate-850 hover:border-slate-700 text-slate-350";
+              let btnClass = "glass-input text-slate-350 hover-lift hover:border-primary/50 hover:text-primary";
               let icon = null;
 
               if (isAnswered) {
                 if (choice.is_correct === true) {
-                  btnClass = "bg-emerald-500/20 border-emerald-500 text-emerald-300 font-extrabold shadow-lg shadow-emerald-500/10";
+                  btnClass = "bg-primary/20 border border-primary text-emerald-300 font-extrabold shadow-lg shadow-primary/10";
                   icon = <CheckCircle className="w-5 h-5 text-emerald-400" />;
                 } else if (selectedAnswer !== null && typeof selectedAnswer === 'object' && selectedAnswer.word_id === choice.word_id && selectedAnswer.text === choice.text) {
-                  btnClass = "bg-rose-500/20 border-rose-500 text-rose-300 font-extrabold shadow-lg";
+                  btnClass = "bg-secondary/20 border border-secondary text-rose-300 font-extrabold shadow-lg";
                   icon = <XCircle className="w-5 h-5 text-rose-400" />;
                 } else {
-                  btnClass = "bg-slate-950 border-slate-950 text-slate-650 opacity-40";
+                  btnClass = "glass-input opacity-40 text-slate-650 border-none shadow-none";
                 }
               }
 
@@ -809,7 +809,7 @@ export default function Game() {
                   key={`${choice.word_id}-${idx}`}
                   onClick={() => submitAnswer(choice)}
                   disabled={isAnswered}
-                  className={`p-4 sm:p-5 rounded-2xl border text-base sm:text-lg font-bold flex justify-between items-center transition-all ${btnClass} ${!isAnswered && 'hover:scale-[1.01]'} break-words`}
+                  className={`p-4 sm:p-5 text-base sm:text-lg font-bold flex justify-between items-center transition-all ${btnClass} break-words cursor-pointer`}
                 >
                   <span className="flex-1 text-center notranslate break-words" translate="no">{choice.text}</span>
                   {icon}

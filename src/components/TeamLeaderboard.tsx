@@ -87,7 +87,7 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
   }
 
   return (
-    <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
+    <div className="glass-card p-6 rounded-3xl">
       <div className="flex items-center gap-3 mb-6">
         <Crown className="w-8 h-8 text-amber-400" />
         <div>
@@ -106,8 +106,8 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
           return (
             <div 
               key={team.id} 
-              className={`p-4 rounded-2xl flex items-center justify-between border relative overflow-hidden transition-all duration-500 ${
-                isTop3 ? 'bg-slate-800/80 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:scale-[1.02]' : 'bg-slate-950/60 border-slate-800'
+              className={`p-4 rounded-2xl flex items-center justify-between border relative overflow-hidden transition-all duration-300 hover-lift ${
+                isTop3 ? 'bg-amber-500/10 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'glass-input border-none shadow-none'
               }`}
             >
               {isTop3 && (

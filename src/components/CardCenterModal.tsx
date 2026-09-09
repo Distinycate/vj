@@ -347,7 +347,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-4xl mx-auto my-6 bg-slate-900 border border-fuchsia-500/20 rounded-3xl shadow-2xl overflow-hidden"
+        className="max-w-4xl mx-auto my-6 glass-card border-fuchsia-500/20 overflow-hidden shadow-2xl"
       >
         <div className="p-6 border-b border-slate-800 flex items-start justify-between gap-4">
           <div>
@@ -363,7 +363,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               </span>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 bg-slate-800 rounded-xl text-slate-300">
+          <button onClick={onClose} className="p-2 glass-input border-none rounded-xl text-slate-300 hover-lift hover:bg-rose-500/20 hover:text-rose-400">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -376,7 +376,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
           )}
 
           {loading && (
-            <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-6 text-center text-slate-400 text-sm">
+            <div className="glass-card p-6 text-center text-slate-400 text-sm border-none">
               กำลังโหลดคลังการ์ดของคุณ...
             </div>
           )}
@@ -387,7 +387,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               : 0;
             const canCounter = log.status === 'COUNTER_PHASE' && seconds > 0 && !log.counter_card_id;
             return (
-              <div key={log.id} className="bg-rose-500/10 border border-rose-500/30 p-5 rounded-2xl">
+              <div key={log.id} className="glass-card bg-rose-500/10 border-rose-500/30 p-5">
                 <div className="flex justify-between gap-3">
                   <div>
                     <div className="text-rose-300 font-black">🚨 {log.attacker?.student_name} ใช้การ์ดกับคุณ</div>
@@ -402,7 +402,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                         key={row.id}
                         disabled={busy}
                         onClick={() => handleCounter(log.id, row.cards.id)}
-                        className="px-3 py-2 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-bold text-sm"
+                        className="px-3 py-2 premium-btn bg-rose-500 hover:bg-rose-400 text-white font-bold text-sm"
                       >
                         {row.cards.image_url} ใช้ {row.cards.name}
                       </button>
@@ -417,7 +417,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
           })}
 
           {!loading && <section className="grid md:grid-cols-[1fr_1.4fr] gap-5">
-            <div className="bg-gradient-to-br from-fuchsia-500/15 to-indigo-500/10 border border-fuchsia-500/20 rounded-2xl p-5 text-center">
+            <div className="glass-card bg-gradient-to-br from-fuchsia-500/15 to-indigo-500/10 border-fuchsia-500/20 p-5 text-center hover-lift">
               <Gift className="w-12 h-12 text-fuchsia-400 mx-auto mb-3" />
               <h3 className="text-xl font-black text-white">สุ่มการ์ด</h3>
               <p className="text-sm text-slate-400 mt-2">
@@ -429,7 +429,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               <button
                 disabled={busy || ((progress?.free_pull_tickets || 0) < 1 && (progress?.coins || 0) < GACHA_COIN_COST)}
                 onClick={handlePull}
-                className="w-full mt-5 py-3 bg-fuchsia-500 hover:bg-fuchsia-400 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-xl font-black"
+                className="w-full mt-5 py-3 premium-btn bg-fuchsia-500 hover:bg-fuchsia-400 disabled:bg-slate-700 disabled:text-slate-500 text-white font-black"
               >
                 {(progress?.free_pull_tickets || 0) > 0
                   ? <span className="flex justify-center gap-2"><Ticket /> ใช้ตั๋วสุ่มฟรี</span>
@@ -437,7 +437,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               </button>
             </div>
 
-            <div className={`bg-slate-950/60 border border-slate-800 rounded-2xl p-5 flex items-center justify-center min-h-48 transition-all duration-300 ${latestPull && ['SSR', 'SR'].includes(latestPull.rarity) ? 'animate-shake shadow-[0_0_50px_rgba(236,72,153,0.3)]' : ''}`}>
+            <div className={`glass-card p-5 flex items-center justify-center min-h-48 transition-all duration-300 border-none ${latestPull && ['SSR', 'SR'].includes(latestPull.rarity) ? 'animate-shake shadow-[0_0_50px_rgba(236,72,153,0.3)]' : ''}`}>
               <style dangerouslySetInnerHTML={{__html: `
                 @keyframes gacha-shake {
                   0%, 100% { transform: scale(1) rotate(0deg); }
@@ -452,7 +452,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                   initial={{ scale: 0, rotate: 180, opacity: 0 }}
                   animate={{ scale: 1, rotate: 0, opacity: 1 }}
                   transition={{ type: 'spring', damping: 12, stiffness: 100 }}
-                  className={`w-full text-center border rounded-2xl p-5 ${rarityStyle[latestPull.rarity]} ${['SSR', 'SR'].includes(latestPull.rarity) ? 'relative overflow-hidden' : ''}`}
+                  className={`w-full text-center glass-card p-5 ${rarityStyle[latestPull.rarity]} ${['SSR', 'SR'].includes(latestPull.rarity) ? 'relative overflow-hidden' : ''}`}
                 >
                   {['SSR', 'SR'].includes(latestPull.rarity) && (
                     <motion.div 
@@ -489,7 +489,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                     key={row.id}
                     disabled={!canStart || available < 1}
                     onClick={() => setSelectedCard(row)}
-                    className={`text-left p-4 bg-slate-950/60 border rounded-2xl disabled:opacity-50 ${rarityStyle[row.cards.rarity]}`}
+                    className={`text-left p-4 glass-card border disabled:opacity-50 hover-lift ${rarityStyle[row.cards.rarity]}`}
                   >
                     <div className="flex justify-between">
                       <span className="text-3xl">{row.cards.image_url}</span>
@@ -511,7 +511,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                 );
               })}
               {inventory.length === 0 && (
-                <div className="col-span-full text-center text-slate-500 p-8 border border-dashed border-slate-800 rounded-2xl">
+                <div className="col-span-full text-center text-slate-500 p-8 glass-card border-dashed border-slate-800">
                   ยังไม่มีการ์ด ลองสุ่มใบแรกได้เลย
                 </div>
               )}
@@ -522,7 +522,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
 
       {selectedCard && (
         <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-3xl p-6">
+          <div className="w-full max-w-md glass-card p-6">
             <h3 className="text-xl font-black text-white flex items-center gap-2">
               {selectedCard.cards.effect_type === 'ATTACK' ? <Sword /> : <Shield />}
               ใช้ {selectedCard.cards.name}
@@ -533,7 +533,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                 <select
                   value={selectedTarget}
                   onChange={(event) => setSelectedTarget(event.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3"
+                  className="w-full glass-input text-white p-3 border-none"
                 >
                   <option value="">{selectedCard.cards.card_code === 'CLEAN_ROOM' ? 'เลือกนักเรียนทั้งโรงเรียน (คนที่ 1)' : 'เลือกนักเรียนทั้งโรงเรียน'}</option>
                   {schoolmates.map((classmate) => (
@@ -549,7 +549,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                     <select
                       value={selectedTarget2}
                       onChange={(event) => setSelectedTarget2(event.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3"
+                      className="w-full glass-input text-white p-3 border-none"
                     >
                       <option value="">เลือกนักเรียนทั้งโรงเรียน (คนที่ 2)</option>
                       {schoolmates.map((classmate) => (
@@ -562,7 +562,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                     <select
                       value={selectedTarget3}
                       onChange={(event) => setSelectedTarget3(event.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3"
+                      className="w-full glass-input text-white p-3 border-none"
                     >
                       <option value="">เลือกนักเรียนทั้งโรงเรียน (คนที่ 3)</option>
                       {schoolmates.map((classmate) => (
@@ -575,7 +575,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                   </>
                 )}
                 {selectedCard.cards.card_code === 'THIEF_MASTER' && selectedTarget && (
-                  <div className="mt-3 p-4 bg-slate-950/50 border border-slate-700/50 rounded-xl space-y-3">
+                  <div className="mt-3 p-4 glass-card border-none space-y-3">
                     <div className="text-sm font-bold text-slate-300">เลือกการ์ดที่ต้องการขโมย:</div>
                     {loadingTargetCards ? (
                       <div className="text-sm text-slate-500">กำลังโหลดการ์ด...</div>
@@ -583,7 +583,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                       <select
                         value={selectedTargetCardId}
                         onChange={(event) => setSelectedTargetCardId(event.target.value)}
-                        className="w-full bg-slate-900 border border-fuchsia-500/30 text-white rounded-xl p-3 focus:ring-2 focus:ring-fuchsia-500"
+                        className="w-full glass-input border-fuchsia-500/30 text-white p-3 focus:ring-1 focus:ring-fuchsia-500"
                       >
                         <option value="">-- เลือกการ์ด 1 ใบ --</option>
                         {targetInventory.map((item) => (
@@ -613,10 +613,10 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                 setSelectedTarget2('');
                 setSelectedTarget3('');
                 setSelectedTargetCardId('');
-              }} className="py-3 bg-slate-800 rounded-xl font-bold">
+              }} className="py-3 premium-btn bg-slate-800 hover:bg-slate-700 font-bold">
                 ยกเลิก
               </button>
-              <button disabled={busy} onClick={handleUseCard} className="py-3 bg-fuchsia-500 rounded-xl font-bold text-white">
+              <button disabled={busy} onClick={handleUseCard} className="py-3 premium-btn bg-fuchsia-500 hover:bg-fuchsia-400 font-bold text-white">
                 {selectedCard.cards.card_code === 'THIEF_RANDOM' || selectedCard.cards.card_code === 'THIEF_MASTER' ? 'ขโมยเลย!' : 'ส่งให้ครูอนุมัติ'}
               </button>
             </div>

@@ -5,8 +5,8 @@ export default function StudentTeamCard({ team, scoreData }: { team: any, scoreD
   if (!team || !scoreData) return null;
   
   return (
-    <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
-      <div className="absolute top-[-50%] right-[-10%] w-64 h-64 rounded-full mix-blend-screen filter blur-[80px] opacity-20 pointer-events-none transition-all group-hover:opacity-40" style={{ backgroundColor: team.team_color }}></div>
+    <div className="glass-card p-6 shadow-xl relative overflow-hidden group hover-lift bg-gradient-to-br from-transparent to-slate-900/40">
+      <div className="absolute top-[-50%] right-[-10%] w-64 h-64 glow-orb opacity-20 pointer-events-none transition-all group-hover:opacity-40" style={{ backgroundColor: team.team_color }}></div>
       
       <div className="flex items-center gap-2 mb-4">
         <span className="text-xs font-black uppercase tracking-widest px-2 py-1 rounded-md" style={{ backgroundColor: `${team.team_color}20`, color: team.team_color }}>ทีมของฉัน</span>
@@ -32,12 +32,12 @@ export default function StudentTeamCard({ team, scoreData }: { team: any, scoreD
       
       <div className="mt-6 pt-5 border-t border-slate-800/80">
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-900/70 rounded-xl p-3">
-            <div className="text-xs text-slate-500">คะแนนกิจกรรมจริง</div>
+          <div className="glass-input p-3 border-none shadow-none">
+            <div className="text-xs text-slate-400">คะแนนกิจกรรมจริง</div>
             <div className="text-lg font-black text-white mt-1">{scoreData.totalScore || 0}</div>
           </div>
-          <div className="bg-slate-900/70 rounded-xl p-3">
-            <div className="text-xs text-slate-500 flex items-center gap-1"><Activity className="w-3 h-3" /> เหตุการณ์สะสม</div>
+          <div className="glass-input p-3 border-none shadow-none">
+            <div className="text-xs text-slate-400 flex items-center gap-1"><Activity className="w-3 h-3" /> เหตุการณ์สะสม</div>
             <div className="text-lg font-black text-white mt-1">{scoreData.eventsCount || 0}</div>
           </div>
         </div>

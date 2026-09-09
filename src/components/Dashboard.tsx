@@ -505,10 +505,10 @@ export default function Dashboard() {
   };
 
   return (
-    <div data-demo-guide="student-dashboard" className="min-h-screen bg-slate-950 text-slate-100 font-sans p-3 sm:p-4 md:p-8 safe-bottom relative">
+    <div data-demo-guide="student-dashboard" className="min-h-screen bg-transparent text-slate-100 font-sans p-3 sm:p-4 md:p-8 safe-bottom relative">
       {/* Ambient backgrounds */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 glow-orb"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-secondary/20 glow-orb"></div>
 
       <div className="max-w-4xl mx-auto relative z-10">
         <motion.div
@@ -527,7 +527,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* AI Mascot Bubble */}
-        <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/5 border border-emerald-500/15 p-4 rounded-2xl flex items-center gap-3.5 mb-6">
+        <div className="glass-card p-4 rounded-2xl flex items-center gap-3.5 mb-6 hover-lift bg-gradient-to-r from-emerald-500/10 to-transparent">
           <div className="w-10 h-10 bg-emerald-500/20 border border-emerald-500/30 rounded-xl flex items-center justify-center text-xl shrink-0">
             🤖
           </div>
@@ -539,22 +539,22 @@ export default function Dashboard() {
 
         {/* Quick Stats */}
         <div data-demo-guide="coin-exp" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+          <div className="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center hover-lift">
             <Target className="w-6 h-6 text-emerald-400 mb-2" />
             <span className="text-xs text-slate-400 font-bold mb-1">ความแม่นยำ</span>
             <span className="text-xl font-black text-white">{realAccuracy === null ? '-' : `${realAccuracy}%`}</span>
           </div>
-          <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+          <div className="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center hover-lift">
             <BrainCircuit className="w-6 h-6 text-indigo-400 mb-2" />
             <span className="text-xs text-slate-400 font-bold mb-1">ระดับทักษะ</span>
             <span className="text-xl font-black text-white">Lvl {stats.level}</span>
           </div>
-          <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+          <div className="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center hover-lift">
             <Zap className="w-6 h-6 text-amber-400 mb-2" />
             <span className="text-xs text-slate-400 font-bold mb-1">EXP สะสม</span>
             <span className="text-xl font-black text-white">{stats.xp}</span>
           </div>
-          <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+          <div className="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center hover-lift">
             <Bookmark className="w-6 h-6 text-fuchsia-400 mb-2" />
             <span className="text-xs text-slate-400 font-bold mb-1">ต้องทบทวน</span>
             <span className="text-xl font-black text-white">{reviewWords.length} คำ</span>
@@ -587,7 +587,7 @@ export default function Dashboard() {
             <RefreshCw className="w-3 h-3" /> รีเฟรชข้อมูล
           </button>
         </div>
-        <div className="grid grid-cols-3 min-[420px]:grid-cols-4 md:grid-cols-8 bg-slate-900/60 border border-slate-850 rounded-2xl p-1 mb-8 gap-1">
+        <div className="grid grid-cols-3 min-[420px]:grid-cols-4 md:grid-cols-8 glass-card rounded-2xl p-2 mb-8 gap-1">
           <button 
             onClick={() => setActiveTab('roadmap')} 
             className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
@@ -689,7 +689,7 @@ export default function Dashboard() {
             >
               {/* Weakness Boss Mode Banner */}
               {reviewWords.length >= 5 && (
-                <div className="bg-gradient-to-r from-rose-950 to-red-900 border border-rose-500/50 rounded-3xl p-5 sm:p-6 mb-6 shadow-[0_0_30px_rgba(225,29,72,0.15)] flex flex-col sm:flex-row items-center gap-6 justify-between animate-in zoom-in-95 duration-500">
+                <div className="glass-card border-rose-500/50 p-5 sm:p-6 mb-6 shadow-[0_0_30px_rgba(225,29,72,0.2)] flex flex-col sm:flex-row items-center gap-6 justify-between animate-in zoom-in-95 duration-500 bg-gradient-to-r from-rose-950/40 to-transparent">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-rose-500/20 rounded-2xl flex items-center justify-center text-4xl shrink-0 animate-bounce">
                       👹

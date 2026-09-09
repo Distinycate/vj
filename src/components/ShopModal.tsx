@@ -99,11 +99,11 @@ export default function ShopModal({ onClose }: ShopModalProps) {
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-slate-800 border border-slate-700 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl relative"
+        className="glass-card w-full max-w-lg overflow-hidden shadow-2xl relative border-none"
       >
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 text-white bg-slate-700/50 hover:bg-slate-700 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+          className="absolute top-4 right-4 text-white glass-input border-none px-3.5 py-1.5 text-xs font-bold hover-lift flex items-center gap-1"
         >
           <X className="w-4 h-4 text-rose-400" /> กลับหน้าหลัก
         </button>
@@ -112,7 +112,7 @@ export default function ShopModal({ onClose }: ShopModalProps) {
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
              ร้านค้าไอเทม
           </h2>
-          <div className="mt-2 flex items-center gap-2 bg-slate-900 inline-flex px-4 py-2 rounded-full border border-slate-700">
+          <div className="mt-2 flex items-center gap-2 glass-input inline-flex px-4 py-2 rounded-full border-none">
             <Coins className="w-5 h-5 text-amber-400" />
             <span className="text-white font-bold">{progress?.coins || 0} เหรียญ</span>
           </div>
@@ -130,9 +130,9 @@ export default function ShopModal({ onClose }: ShopModalProps) {
                 const price = Number(item.price || 0);
                 
                 return (
-                  <div key={item.id} className="bg-slate-700/30 border border-slate-600 rounded-2xl p-4 flex justify-between items-center">
+                  <div key={item.id} className="glass-card p-4 flex justify-between items-center border-none">
                     <div className="flex items-center gap-4">
-                      <div className="text-4xl bg-slate-800 w-16 h-16 rounded-xl flex items-center justify-center border border-slate-600 shadow-inner">
+                      <div className="text-4xl glass-input w-16 h-16 flex items-center justify-center border-none shadow-inner">
                         {item.image_url}
                       </div>
                       <div>
@@ -145,7 +145,7 @@ export default function ShopModal({ onClose }: ShopModalProps) {
                     <button 
                       onClick={() => handleBuy(item)}
                       disabled={(progress?.coins || 0) < price}
-                      className={`px-6 py-3 rounded-xl font-bold transition-all ${
+                      className={`px-6 py-3 premium-btn font-bold ${
                         (progress?.coins || 0) < price
                             ? 'bg-rose-500/20 text-rose-400 cursor-not-allowed'
                             : 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/20'

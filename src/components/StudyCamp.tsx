@@ -89,13 +89,13 @@ export default function StudyCamp() {
   if (words.length === 0) {
     return (
       <div className="min-h-[calc(100vh-var(--demo-bottom-nav-space,0px))] bg-slate-950 text-white flex items-center justify-center p-6">
-        <div className="bg-slate-900 border border-amber-500/20 rounded-3xl p-8 max-w-md text-center">
+        <div className="glass-card border-amber-500/20 p-8 max-w-md text-center">
           <AlertTriangle className="w-14 h-14 text-amber-400 mx-auto mb-4" />
           <h2 className="text-2xl font-black mb-2">ยังไม่มีคำศัพท์ในด่านนี้</h2>
           <p className="text-slate-400 text-sm mb-6">กรุณาแจ้งคุณครูให้เพิ่มคำศัพท์ก่อนเริ่มเรียน</p>
           <button
             onClick={() => setScreen('dashboard')}
-            className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold"
+            className="w-full py-3.5 premium-btn bg-slate-800 hover:bg-slate-700 font-bold"
           >
             กลับหน้าแผนที่
           </button>
@@ -113,7 +113,7 @@ export default function StudyCamp() {
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
-          className="text-center bg-slate-900 border border-slate-800 p-12 rounded-3xl max-w-md w-full shadow-2xl"
+          className="text-center glass-card p-12 max-w-md w-full shadow-2xl"
         >
           <CheckCircle className="w-24 h-24 text-emerald-400 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(52,211,153,0.2)]" />
           <h2 className="text-4xl font-black mb-4">เรียนรู้เสร็จสิ้น!</h2>
@@ -121,13 +121,13 @@ export default function StudyCamp() {
           <div className="flex gap-4 justify-center">
             <button 
               onClick={() => setScreen('dashboard')} 
-              className="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl transition-all font-bold"
+              className="px-6 py-3.5 premium-btn bg-slate-800 hover:bg-slate-700 text-white font-bold"
             >
               กลับหน้าหลัก
             </button>
             <button 
               onClick={() => setScreen('game')} 
-              className="px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-black shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all"
+              className="px-8 py-3.5 premium-btn bg-primary hover:bg-emerald-400 text-slate-950 font-black shadow-lg shadow-emerald-500/20"
             >
               ลุยด่าน Challenge ➡️
             </button>
@@ -144,7 +144,7 @@ export default function StudyCamp() {
       onContextMenu={(e) => e.preventDefault()}
     >
       {/* Background glow */}
-      <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-emerald-500/5 rounded-full filter blur-[80px] pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] glow-orb bg-primary/10 pointer-events-none"></div>
 
       {/* Header */}
       <div className="w-full max-w-2xl flex justify-between items-center mb-8 relative z-10">
@@ -170,14 +170,14 @@ export default function StudyCamp() {
                 setStudiedCurrentStage(true);
                 setScreen('game');
               }} 
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl flex items-center gap-1.5 transition-all text-xs font-bold"
+              className="px-4 py-2 premium-btn bg-primary hover:bg-emerald-400 text-slate-950 flex items-center gap-1.5 text-xs font-bold"
             >
               ข้ามไปลุยบอส ➡️
             </button>
           )}
           <button 
             onClick={() => setScreen('dashboard')} 
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-white rounded-xl flex items-center gap-1.5 transition-all text-xs font-bold"
+            className="px-4 py-2 premium-btn bg-slate-900 hover:bg-slate-850 text-white flex items-center gap-1.5 text-xs font-bold"
           >
             <X className="w-4 h-4 text-rose-400" /> ปิดค่าย
           </button>
@@ -200,7 +200,7 @@ export default function StudyCamp() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-slate-900/50 backdrop-blur-lg border border-slate-800 rounded-3xl p-6 sm:p-8 flex-1 min-h-0 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden group"
+            className="glass-card p-6 sm:p-8 flex-1 min-h-0 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden group hover-lift"
           >
             {/* Visual word placeholder */}
             <div className="w-40 h-40 bg-slate-950 rounded-2xl mb-8 flex items-center justify-center overflow-hidden border border-slate-850 shadow-inner relative">
@@ -225,7 +225,7 @@ export default function StudyCamp() {
 
             <button 
               onClick={() => playWordAudio(word.word)}
-              className={`${isDemoMode ? 'absolute top-4 right-4 w-12 h-12' : 'w-16 h-16'} bg-slate-950 hover:bg-slate-800 border border-slate-850 text-emerald-400 hover:text-emerald-300 rounded-full flex items-center justify-center hover:scale-105 transition-all shadow-lg`}
+              className={`${isDemoMode ? 'absolute top-4 right-4 w-12 h-12' : 'w-16 h-16'} premium-btn bg-slate-950 border-slate-850 text-primary hover:text-emerald-300 rounded-full flex items-center justify-center shadow-lg`}
             >
               <Volume2 className={isDemoMode ? 'w-5 h-5' : 'w-7 h-7'} />
             </button>
@@ -233,17 +233,17 @@ export default function StudyCamp() {
         </AnimatePresence>
 
         {/* Navigation Buttons */}
-        <div className={`${isDemoMode ? 'fixed left-1/2 bottom-[calc(0.75rem+var(--demo-bottom-nav-space,0px))] z-[10000] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2' : 'relative mt-6 w-full'} flex justify-between items-center gap-4 rounded-3xl bg-slate-950/90 p-2 backdrop-blur-xl border border-slate-800/60 shadow-2xl shadow-slate-950/50`}>
+        <div className={`${isDemoMode ? 'fixed left-1/2 bottom-[calc(0.75rem+var(--demo-bottom-nav-space,0px))] z-[10000] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2' : 'relative mt-6 w-full'} flex justify-between items-center gap-4 glass-card p-2 shadow-2xl border-none`}>
           <button 
             onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
             disabled={currentIndex === 0}
-            className="flex-1 py-4 bg-slate-900 border border-slate-800 hover:bg-slate-800 disabled:opacity-30 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm transition-all"
+            className="flex-1 py-4 premium-btn bg-slate-900 border border-slate-800 hover:bg-slate-800 disabled:opacity-30 flex items-center justify-center gap-2 font-bold text-sm"
           >
             <ArrowLeft className="w-4 h-4" /> ก่อนหน้า
           </button>
           <button 
             onClick={() => setCurrentIndex(currentIndex + 1)}
-            className="flex-1 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl flex items-center justify-center gap-2 font-black text-sm transition-all shadow-lg shadow-emerald-500/10"
+            className="flex-1 py-4 premium-btn bg-primary hover:bg-emerald-400 text-slate-950 flex items-center justify-center gap-2 font-black text-sm shadow-lg shadow-emerald-500/10"
           >
             ถัดไป <ArrowRight className="w-4 h-4" />
           </button>

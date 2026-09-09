@@ -27,10 +27,10 @@ export default function MissionSelectionModal({ isOpen, onClose, onSelect }: Mis
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           data-demo-guide="stage-stars"
-          className="relative bg-slate-900 border border-slate-700/50 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+          className="relative glass-card w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border-none"
         >
           {/* Header */}
-          <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 relative overflow-hidden">
+          <div className="p-6 flex justify-between items-center glass-card border-none rounded-b-none relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 pointer-events-none" />
             <h2 className="text-2xl font-black text-white flex items-center gap-2 relative z-10">
               <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
@@ -38,7 +38,7 @@ export default function MissionSelectionModal({ isOpen, onClose, onSelect }: Mis
             </h2>
             <button 
               onClick={onClose}
-              className="p-2 hover:bg-slate-800 rounded-full transition-colors relative z-10 text-slate-400 hover:text-white"
+              className="p-2 glass-input border-none rounded-full transition-colors relative z-10 text-slate-400 hover:text-white hover-lift"
             >
               <X className="w-5 h-5" />
             </button>
@@ -51,7 +51,7 @@ export default function MissionSelectionModal({ isOpen, onClose, onSelect }: Mis
             <button 
               onClick={() => onSelect(1)}
               data-demo-guide="stage-1-star"
-              className="w-full text-left bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-emerald-500/50 p-5 rounded-2xl transition-all group relative overflow-hidden"
+              className="w-full text-left glass-card hover-lift p-5 transition-all group relative overflow-hidden border-none"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/10 group-hover:to-transparent transition-all" />
               <div className="flex justify-between items-center relative z-10">
@@ -71,7 +71,7 @@ export default function MissionSelectionModal({ isOpen, onClose, onSelect }: Mis
             {/* Level 2: Listening */}
             <button 
               onClick={() => onSelect(2)}
-              className="w-full text-left bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-blue-500/50 p-5 rounded-2xl transition-all group relative overflow-hidden"
+              className="w-full text-left glass-card hover-lift p-5 transition-all group relative overflow-hidden border-none"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-hover:from-blue-500/10 group-hover:to-transparent transition-all" />
               <div className="flex justify-between items-center relative z-10">
@@ -92,7 +92,7 @@ export default function MissionSelectionModal({ isOpen, onClose, onSelect }: Mis
             {/* Level 3: Master */}
             <button 
               onClick={() => onSelect(3)}
-              className="w-full text-left bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-purple-500/50 p-5 rounded-2xl transition-all group relative overflow-hidden"
+              className="w-full text-left glass-card hover-lift p-5 transition-all group relative overflow-hidden border-none"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/0 to-purple-500/0 group-hover:from-purple-500/10 group-hover:to-transparent transition-all" />
               <div className="flex justify-between items-center relative z-10">

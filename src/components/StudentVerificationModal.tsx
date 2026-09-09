@@ -32,7 +32,7 @@ export default function StudentVerificationModal() {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4">
-      <div className="max-w-md w-full bg-slate-900 border-2 border-amber-500/50 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden">
+      <div className="max-w-md w-full glass-card border-amber-500/50 p-8 text-center shadow-2xl relative overflow-hidden">
         
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-rose-500 to-amber-500"></div>
 
@@ -42,7 +42,7 @@ export default function StudentVerificationModal() {
 
         <h2 className="text-2xl font-black text-white mb-2">ยืนยันตัวตนของคุณ</h2>
         
-        <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 mb-6 text-left">
+        <div className="glass-card p-4 mb-6 text-left border-none">
           <p className="text-sm text-slate-300 mb-2">
             พบว่ามีบัญชีนักเรียนซ้ำซ้อนในระบบเป็นจำนวนมาก เพื่อป้องกันการลบข้อมูลผิดพลาด กรุณายืนยันว่านี่คือบัญชีที่คุณใช้เรียนจริง
           </p>
@@ -51,7 +51,7 @@ export default function StudentVerificationModal() {
           </p>
         </div>
 
-        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 mb-6">
+        <div className="glass-input p-4 mb-6 border-none">
           <p className="text-slate-400 text-sm mb-1">ข้อมูลบัญชีปัจจุบัน:</p>
           <p className="text-white font-bold text-lg">{student.student_name}</p>
           <p className="text-indigo-400 text-sm">Username: {student.username}</p>
@@ -60,7 +60,7 @@ export default function StudentVerificationModal() {
         <button 
           onClick={handleVerify}
           disabled={loading}
-          className="w-full py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white rounded-xl font-black text-lg flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-4 premium-btn bg-primary hover:bg-emerald-400 text-slate-950 font-black text-lg flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />

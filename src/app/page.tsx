@@ -383,18 +383,18 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-start xl:items-center justify-center p-3 sm:p-4 safe-bottom relative overflow-x-hidden overflow-y-auto">
+    <div className="min-h-screen bg-transparent flex items-start xl:items-center justify-center p-3 sm:p-4 safe-bottom relative overflow-x-hidden overflow-y-auto">
 
 
       {/* Ambient orbs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-emerald-500/10 rounded-full mix-blend-screen filter blur-[128px] pointer-events-none"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-500/10 rounded-full mix-blend-screen filter blur-[128px] pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 glow-orb"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-secondary/20 glow-orb"></div>
 
       <div className="relative z-10 w-full max-w-7xl grid grid-cols-1 xl:grid-cols-[1.35fr_0.65fr] gap-4 sm:gap-6 items-start">
         <motion.section
           initial={{ opacity: 0, x: -24 }}
           animate={{ opacity: 1, x: 0 }}
-          className="order-2 xl:order-1 glass-card p-4 sm:p-8 rounded-3xl shadow-2xl border border-emerald-500/10 xl:max-h-[95vh] xl:overflow-y-auto mobile-scroll-panel"
+          className="order-2 xl:order-1 glass-card p-5 sm:p-8 xl:max-h-[95vh] xl:overflow-y-auto mobile-scroll-panel"
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-black tracking-widest uppercase mb-5">
             🌟 Active Learning Innovation
@@ -423,30 +423,30 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-7">
-            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
-              <h2 className="text-lg font-black text-white mb-2">🎯 เรียนรู้ในจังหวะของตัวเอง</h2>
-              <p className="text-slate-400 text-sm leading-relaxed">
+            <div className="glass-card p-5 hover-lift">
+              <h2 className="text-lg font-black text-emerald-300 mb-2">🎯 เรียนรู้ในจังหวะของตัวเอง</h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
                 ระบบ Adaptive Rank อิงแนวคิด ZPD ช่วยปรับความยากให้พอดีกับผู้เรียน ไม่ยากจนท้อ และไม่ง่ายจนน่าเบื่อ
                 เพื่อพาเข้าสู่สภาวะ Flow State ที่พร้อมเรียนรู้อย่างมีสมาธิ
               </p>
             </div>
-            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
-              <h2 className="text-lg font-black text-white mb-2">🧠 จำระยะยาวด้วย SRS</h2>
-              <p className="text-slate-400 text-sm leading-relaxed">
+            <div className="glass-card p-5 hover-lift">
+              <h2 className="text-lg font-black text-blue-300 mb-2">🧠 จำระยะยาวด้วย SRS</h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
                 คำที่ตอบผิดไม่ใช่ความล้มเหลว แต่คือข้อมูลเรียนรู้ ระบบจะบันทึกคำที่ควรทบทวน
                 และดึงกลับมาในจังหวะที่เหมาะสมตามแนวคิด Ebbinghaus Forgetting Curve
               </p>
             </div>
-            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
-              <h2 className="text-lg font-black text-white mb-2">🌍 ทักษะแห่งศตวรรษที่ 21</h2>
-              <p className="text-slate-400 text-sm leading-relaxed">
+            <div className="glass-card p-5 hover-lift">
+              <h2 className="text-lg font-black text-purple-300 mb-2">🌍 ทักษะแห่งศตวรรษที่ 21</h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
                 Context MC ฝึก Critical Thinking, Team Battle ฝึก Collaboration และ Dashboard ช่วยสะท้อนข้อมูลให้ผู้เรียนกำกับตนเอง
                 แบบ Self-Directed Learning
               </p>
             </div>
-            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
-              <h2 className="text-lg font-black text-white mb-2">⚔️ เปลี่ยนการท่องจำเป็นการผจญภัย</h2>
-              <p className="text-slate-400 text-sm leading-relaxed">
+            <div className="glass-card p-5 hover-lift">
+              <h2 className="text-lg font-black text-amber-300 mb-2">⚔️ เปลี่ยนการท่องจำเป็นการผจญภัย</h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
                 คลังคำศัพท์ มินิเกม ด่านบอส ระบบดาว ทีม และการ์ดเวทมนตร์ ช่วยเปลี่ยนการฝึกคำศัพท์ O-NET
                 ให้เป็นประสบการณ์ที่สนุก วัดผลได้ และต่อเนื่อง
               </p>
@@ -520,7 +520,7 @@ export default function Home() {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               }}
-              className="mt-5 xl:hidden inline-block w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg transition-all transform active:scale-95"
+              className="mt-5 xl:hidden inline-block w-full premium-btn bg-primary text-slate-950 font-black py-4"
             >
               ขึ้นไปเข้าสู่ระบบ / สมัครสมาชิก 🚀
             </button>
@@ -531,7 +531,7 @@ export default function Home() {
         id="login-panel"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="order-1 xl:order-2 glass-card p-4 sm:p-8 rounded-3xl w-full max-w-md shadow-2xl xl:max-h-[95vh] xl:overflow-y-auto xl:sticky xl:top-4 justify-self-center mobile-scroll-panel"
+        className="order-1 xl:order-2 glass-card p-5 sm:p-8 w-full max-w-md xl:max-h-[95vh] xl:overflow-y-auto xl:sticky xl:top-4 justify-self-center mobile-scroll-panel"
       >
         <div className="text-center mb-6">
           <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 mb-2">
@@ -590,17 +590,17 @@ export default function Home() {
           <div className="flex flex-col gap-4" onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(e); }}>
             <div>
               <label className="text-slate-300 text-sm font-bold block mb-1.5">Username</label>
-              <input type="text" autoComplete="off" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors glass-input" placeholder="กรอกชื่อผู้ใช้งาน" />
+              <input type="text" autoComplete="off" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} className="w-full glass-input px-4 py-3 text-white" placeholder="กรอกชื่อผู้ใช้งาน" />
             </div>
             <div>
               <label className="text-slate-300 text-sm font-bold block mb-1.5">Password</label>
-              <input type="password" autoComplete="new-password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-all transform active:scale-95" placeholder="กรอกรหัสผ่าน" />
+              <input type="password" autoComplete="new-password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full glass-input px-4 py-3 text-white" placeholder="กรอกรหัสผ่าน" />
             </div>
             <label className="flex items-center gap-2 cursor-pointer mt-1">
               <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900" />
               <span className="text-slate-400 text-sm font-medium hover:text-white transition-colors">จดจำรหัสผ่าน</span>
             </label>
-            <button type="button" onClick={handleLogin} disabled={isLoading} className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg mt-4 disabled:opacity-50 transition-all transform active:scale-95">
+            <button type="button" onClick={handleLogin} disabled={isLoading} className="w-full premium-btn bg-primary hover:bg-primary-hover text-slate-950 font-black py-4 mt-4 disabled:opacity-50">
               {isLoading ? 'กำลังโหลด...' : 
                loginRole === 'student' ? 'เข้าสู่ระบบผจญภัย 🚀' : 
                loginRole === 'teacher' ? 'เข้าสู่ระบบจัดการเรียนรู้ 👨‍🏫' : 
@@ -609,7 +609,7 @@ export default function Home() {
             <button 
               type="button" 
               onClick={() => router.push('/demo')} 
-              className="w-full bg-slate-800/50 hover:bg-purple-600/20 text-purple-300 border border-purple-500/30 font-bold py-3 rounded-xl transition-colors mt-2 flex items-center justify-center gap-2"
+              className="w-full premium-btn bg-slate-800/50 hover:bg-slate-800 text-purple-300 border border-purple-500/30 font-bold py-3 mt-2 flex items-center justify-center gap-2"
             >
               👑 เข้าสู่โหมดกรรมการ (Demo)
             </button>
@@ -624,17 +624,17 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">ชื่อจริง</label>
-                <input type="text" value={regFirstName} onChange={(e) => setRegFirstName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="สมชาย" />
+                <input type="text" value={regFirstName} onChange={(e) => setRegFirstName(e.target.value)} className="w-full glass-input px-4 py-2.5 text-white text-sm" placeholder="สมชาย" />
               </div>
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">นามสกุล</label>
-                <input type="text" value={regLastName} onChange={(e) => setRegLastName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="ใจดี" />
+                <input type="text" value={regLastName} onChange={(e) => setRegLastName(e.target.value)} className="w-full glass-input px-4 py-2.5 text-white text-sm" placeholder="ใจดี" />
               </div>
             </div>
             <div className="grid grid-cols-1 min-[390px]:grid-cols-3 gap-4">
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">ระดับชั้น</label>
-                <select value={regGrade} onChange={(e) => setRegGrade(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input">
+                <select value={regGrade} onChange={(e) => setRegGrade(e.target.value)} className="w-full glass-input px-4 py-2.5 text-white text-sm">
                   <option value="ป.1">ป.1</option>
                   <option value="ป.2">ป.2</option>
                   <option value="ป.3">ป.3</option>
@@ -651,11 +651,11 @@ export default function Home() {
               </div>
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">ห้อง</label>
-                <input type="text" value={regRoom} onChange={(e) => setRegRoom(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="1" />
+                <input type="text" value={regRoom} onChange={(e) => setRegRoom(e.target.value)} className="w-full glass-input px-4 py-2.5 text-white text-sm" placeholder="1" />
               </div>
               <div>
                 <label className="text-slate-300 text-sm font-bold block mb-1.5">เลขที่</label>
-                <input type="text" value={regStudentId} onChange={(e) => setRegStudentId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="15" />
+                <input type="text" value={regStudentId} onChange={(e) => setRegStudentId(e.target.value)} className="w-full glass-input px-4 py-2.5 text-white text-sm" placeholder="15" />
               </div>
             </div>
             
@@ -663,14 +663,14 @@ export default function Home() {
             
             <div>
               <label className="text-slate-300 text-sm font-bold block mb-1.5">ตั้ง Username</label>
-              <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="สำหรับเข้าใช้งาน" />
+              <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} className="w-full glass-input px-4 py-2.5 text-white text-sm" placeholder="สำหรับเข้าใช้งาน" />
             </div>
             <div>
               <label className="text-slate-300 text-sm font-bold block mb-1.5">ตั้ง Password</label>
-              <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm glass-input" placeholder="รหัสผ่านเข้าสู่ระบบ" />
+              <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} className="w-full glass-input px-4 py-2.5 text-white text-sm" placeholder="รหัสผ่านเข้าสู่ระบบ" />
             </div>
  
-            <button type="button" onClick={handleRegister} disabled={isLoading} className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-lg mt-4 disabled:opacity-50 transition-all transform active:scale-95">
+            <button type="button" onClick={handleRegister} disabled={isLoading} className="w-full premium-btn bg-primary hover:bg-primary-hover text-slate-950 font-black py-4 mt-4 disabled:opacity-50">
               {isLoading ? 'กำลังโหลด...' : 'ลงทะเบียนและเริ่มผจญภัย 🎉'}
             </button>
           </div>
