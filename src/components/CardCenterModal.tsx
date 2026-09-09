@@ -134,7 +134,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
         .from('card_logs')
         .select('*, attacker:attacker_id(student_name), played_card:played_card_id(*), counter_card:counter_card_id(*)')
         .eq('target_id', student.id)
-        .eq('status', 'COUNTER_PHASE')
+        .eq('status', 'PENDING') // Just in case, though not strictly needed anymore
         .order('created_at', { ascending: false }),
       supabase
         .from('learning_paths')
@@ -308,7 +308,13 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
         setMessage(`สำเร็จ! คุณขโมย "${data.stolen_card_name}" มาได้แล้ว`);
       } else {
         await createCardAction(student.id, selectedCard.cards.id, needsTarget ? selectedTarget : null, metadata);
-        setMessage('ส่งคำขอแล้ว การ์ดถูกจองไว้จนกว่าครูจะตัดสิน');
+        if (selectedCard.cards.card_code === 'EARLY_HOME') {
+          setMessage('ส่งคำขอแล้ว รอครูอนุมัติ');
+        } else if (['DEFENSE', 'REFLECT'].includes(selectedCard.cards.effect_type)) {
+          setMessage('กางโล่ตั้งรับล่วงหน้าสำเร็จ!');
+        } else {
+          setMessage('ใช้งานการ์ดสำเร็จ!');
+        }
       }
 
       setSelectedCard(null);
@@ -381,42 +387,6 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               กำลังโหลดคลังการ์ดของคุณ...
             </div>
           )}
-
-          {!loading && incoming.map((log) => {
-            const seconds = log.counter_deadline
-              ? Math.max(0, Math.ceil((new Date(log.counter_deadline).getTime() - now) / 1000))
-              : 0;
-            const canCounter = log.status === 'COUNTER_PHASE' && seconds > 0 && !log.counter_card_id;
-            return (
-              <div key={log.id} className="glass-card bg-rose-500/10 border-rose-500/30 p-5">
-                <div className="flex justify-between gap-3">
-                  <div>
-                    <div className="text-rose-300 font-black">🚨 {log.attacker?.student_name} ใช้การ์ดกับคุณ</div>
-                    <div className="text-white mt-1">{log.played_card?.image_url} {log.played_card?.name}</div>
-                  </div>
-                  <span className="text-2xl font-black text-rose-300">{seconds}s</span>
-                </div>
-                {canCounter && (
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {availableCounterCards.map((row) => (
-                      <Button
-                        key={row.id}
-                        disabled={busy}
-                        onClick={() => handleCounter(log.id, row.cards.id)}
-                        variant="danger"
-                        size="sm"
-                      >
-                        {row.cards.image_url} ใช้ {row.cards.name}
-                      </Button>
-                    ))}
-                    {availableCounterCards.length === 0 && (
-                      <span className="text-sm text-slate-400">ไม่มีการ์ดป้องกันหรือย้อนกลับที่พร้อมใช้</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
 
           {!loading && <section className="grid md:grid-cols-[1fr_1.4fr] gap-5">
             <div className="glass-card bg-gradient-to-br from-fuchsia-500/15 to-indigo-500/10 border-fuchsia-500/20 p-5 text-center hover-lift">
@@ -504,10 +474,10 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                     {!canStart && row.cards.effect_type !== 'DUD' && <div className="text-xs mt-2">ใช้ได้เมื่อถูกโจมตี</div>}
                     {row.cards.effect_type === 'DUD' && <div className="text-xs mt-2 text-slate-500">ไม่มีผลใดๆ ไม่สามารถใช้งานได้</div>}
                     {row.cards.effect_type === 'DEFENSE' && (
-                      <div className="text-xs mt-2">ใช้ป้องกันเมื่อถูกโจมตี หรือส่งให้ครูอนุมัติเป็นสิทธิ์กันแบน</div>
+                      <div className="text-xs mt-2">ใช้กางโล่ป้องกันการโจมตีอัตโนมัติ 1 ครั้ง</div>
                     )}
                     {row.cards.effect_type === 'REFLECT' && (
-                      <div className="text-xs mt-2">ใช้ย้อนกลับเมื่อถูกโจมตี หรือส่งให้ครูอนุมัติเพื่อตั้งรับล่วงหน้า</div>
+                      <div className="text-xs mt-2">ใช้กางโล่สะท้อนการโจมตีอัตโนมัติ 1 ครั้ง</div>
                     )}
                   </button>
                 );
@@ -619,7 +589,8 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                 ยกเลิก
               </Button>
               <Button disabled={busy} onClick={handleUseCard} className="bg-fuchsia-500 hover:bg-fuchsia-400 text-white">
-                {selectedCard.cards.card_code === 'THIEF_RANDOM' || selectedCard.cards.card_code === 'THIEF_MASTER' ? 'ขโมยเลย!' : 'ส่งให้ครูอนุมัติ'}
+                {selectedCard.cards.card_code === 'THIEF_RANDOM' || selectedCard.cards.card_code === 'THIEF_MASTER' ? 'ขโมยเลย!' : 
+                 selectedCard.cards.card_code === 'EARLY_HOME' ? 'ส่งให้ครูอนุมัติ' : 'ใช้งานทันที!'}
               </Button>
             </div>
           </div>

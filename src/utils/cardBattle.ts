@@ -238,3 +238,12 @@ export async function executeMasterThief(
   }
   return data;
 }
+
+export async function teacherMarkCardExecuted(teacherId: string, logId: string) {
+  const { data, error } = await supabase.rpc('teacher_mark_card_executed', {
+    p_teacher_id: teacherId,
+    p_log_id: logId,
+  });
+  if (error) throw new Error(getRpcErrorMessage(error.message));
+  return data;
+}
