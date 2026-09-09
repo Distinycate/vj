@@ -6,6 +6,7 @@ import { Coins, Gift, Shield, Sparkles, Sword, Ticket, X } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import { useDemoStore } from '@/store/useDemoStore';
+import { Button } from '@/components/ui/Button';
 import {
   BattleCard,
   GACHA_COIN_COST,
@@ -363,9 +364,9 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               </span>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 glass-input border-none rounded-xl text-slate-300 hover-lift hover:bg-rose-500/20 hover:text-rose-400">
+          <Button variant="ghost" size="icon" onClick={onClose} className="text-slate-300 hover:text-rose-400">
             <X className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
 
         <div className="p-6 space-y-7">
@@ -398,14 +399,15 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                 {canCounter && (
                   <div className="flex flex-wrap gap-2 mt-4">
                     {availableCounterCards.map((row) => (
-                      <button
+                      <Button
                         key={row.id}
                         disabled={busy}
                         onClick={() => handleCounter(log.id, row.cards.id)}
-                        className="px-3 py-2 premium-btn bg-rose-500 hover:bg-rose-400 text-white font-bold text-sm"
+                        variant="danger"
+                        size="sm"
                       >
                         {row.cards.image_url} ใช้ {row.cards.name}
-                      </button>
+                      </Button>
                     ))}
                     {availableCounterCards.length === 0 && (
                       <span className="text-sm text-slate-400">ไม่มีการ์ดป้องกันหรือย้อนกลับที่พร้อมใช้</span>
@@ -426,15 +428,15 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               <p className="text-xs text-fuchsia-300 mt-2">
                 Pity {(progress?.paid_gacha_pulls || 0) % 10}/10 — ทุกการสุ่มด้วยเหรียญครั้งที่ 10 จะไม่ออกการ์ดไม่มีอะไรเลย
               </p>
-              <button
+              <Button
                 disabled={busy || ((progress?.free_pull_tickets || 0) < 1 && (progress?.coins || 0) < GACHA_COIN_COST)}
                 onClick={handlePull}
-                className="w-full mt-5 py-3 premium-btn bg-fuchsia-500 hover:bg-fuchsia-400 disabled:bg-slate-700 disabled:text-slate-500 text-white font-black"
+                className="w-full mt-5 bg-fuchsia-500 hover:bg-fuchsia-400 text-white"
               >
                 {(progress?.free_pull_tickets || 0) > 0
                   ? <span className="flex justify-center gap-2"><Ticket /> ใช้ตั๋วสุ่มฟรี</span>
                   : <span className="flex justify-center gap-2"><Coins /> สุ่ม {GACHA_COIN_COST} เหรียญ</span>}
-              </button>
+              </Button>
             </div>
 
             <div className={`glass-card p-5 flex items-center justify-center min-h-48 transition-all duration-300 border-none ${latestPull && ['SSR', 'SR'].includes(latestPull.rarity) ? 'animate-shake shadow-[0_0_50px_rgba(236,72,153,0.3)]' : ''}`}>
@@ -607,18 +609,18 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               </div>
             )}
             <div className="grid grid-cols-2 gap-3 mt-6">
-              <button onClick={() => {
+              <Button variant="outline" onClick={() => {
                 setSelectedCard(null);
                 setSelectedTarget('');
                 setSelectedTarget2('');
                 setSelectedTarget3('');
                 setSelectedTargetCardId('');
-              }} className="py-3 premium-btn bg-slate-800 hover:bg-slate-700 font-bold">
+              }}>
                 ยกเลิก
-              </button>
-              <button disabled={busy} onClick={handleUseCard} className="py-3 premium-btn bg-fuchsia-500 hover:bg-fuchsia-400 font-bold text-white">
+              </Button>
+              <Button disabled={busy} onClick={handleUseCard} className="bg-fuchsia-500 hover:bg-fuchsia-400 text-white">
                 {selectedCard.cards.card_code === 'THIEF_RANDOM' || selectedCard.cards.card_code === 'THIEF_MASTER' ? 'ขโมยเลย!' : 'ส่งให้ครูอนุมัติ'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

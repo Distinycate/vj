@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { X, Coins } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 interface ShopModalProps {
   onClose: () => void;
@@ -96,17 +98,15 @@ export default function ShopModal({ onClose }: ShopModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="glass-card w-full max-w-lg overflow-hidden shadow-2xl relative border-none"
-      >
-        <button 
+      <Card className="w-full max-w-lg overflow-hidden shadow-2xl relative border-none">
+        <Button 
+          variant="ghost"
+          size="sm"
           onClick={onClose} 
-          className="absolute top-4 right-4 text-white glass-input border-none px-3.5 py-1.5 text-xs font-bold hover-lift flex items-center gap-1"
+          className="absolute top-4 right-4 text-slate-300 flex items-center gap-1"
         >
           <X className="w-4 h-4 text-rose-400" /> กลับหน้าหลัก
-        </button>
+        </Button>
 
         <div className="p-6 border-b border-slate-700">
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -130,9 +130,9 @@ export default function ShopModal({ onClose }: ShopModalProps) {
                 const price = Number(item.price || 0);
                 
                 return (
-                  <div key={item.id} className="glass-card p-4 flex justify-between items-center border-none">
+                  <Card key={item.id} className="p-4 flex justify-between items-center border-none">
                     <div className="flex items-center gap-4">
-                      <div className="text-4xl glass-input w-16 h-16 flex items-center justify-center border-none shadow-inner">
+                      <div className="text-4xl glass-input w-16 h-16 flex items-center justify-center border-none shadow-inner rounded-xl">
                         {item.image_url}
                       </div>
                       <div>
@@ -142,25 +142,20 @@ export default function ShopModal({ onClose }: ShopModalProps) {
                       </div>
                     </div>
                     
-                    <button 
+                    <Button 
                       onClick={() => handleBuy(item)}
                       disabled={(progress?.coins || 0) < price}
-                      className={`px-6 py-3 premium-btn font-bold ${
-                        (progress?.coins || 0) < price
-                            ? 'bg-rose-500/20 text-rose-400 cursor-not-allowed'
-                            : 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/20'
-                      }`}
                     >
                       ซื้อเพิ่ม
-                    </button>
-                  </div>
+                    </Button>
+                  </Card>
                 );
               })}
             </div>
           )}
         </div>
         
-      </motion.div>
+      </Card>
     </div>
   );
 }

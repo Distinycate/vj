@@ -11,14 +11,18 @@ import { playWordAudio } from '@/utils/audio';
 import { useDemoStore } from '@/store/useDemoStore';
 import { STORY_WORLDS, ADAPTIVE_RANK_CONFIG, getWorldForStage } from '@/utils/adaptiveConfig';
 import AvatarDisplay from '@/components/AvatarDisplay';
-import StudentVerificationModal from '@/components/StudentVerificationModal';
-import ShopModal from '@/components/ShopModal';
+import dynamic from 'next/dynamic';
 import { autoAssignTeamForStudent, calculateTeamScore } from '@/utils/teamBattleEngine';
 import { Users, Target, Zap, BrainCircuit } from 'lucide-react';
 import StudentHero from '@/components/StudentHero';
 import StudentTeamCard from '@/components/StudentTeamCard';
 import TeamLeaderboard from '@/components/TeamLeaderboard';
-import CardCenterModal from '@/components/CardCenterModal';
+
+const StudentVerificationModal = dynamic(() => import('@/components/StudentVerificationModal'));
+const ShopModal = dynamic(() => import('@/components/ShopModal'));
+const CardCenterModal = dynamic(() => import('@/components/CardCenterModal'));
+import ProgressStats from '@/components/dashboard/ProgressStats';
+import QuestList from '@/components/dashboard/QuestList';
 
 const CARD_RARITY_RANK: Record<string, number> = { N: 0, R: 1, SR: 2, SSR: 3, UR: 4 };
 
@@ -538,28 +542,12 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Stats */}
-        <div data-demo-guide="coin-exp" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center hover-lift">
-            <Target className="w-6 h-6 text-emerald-400 mb-2" />
-            <span className="text-xs text-slate-400 font-bold mb-1">ความแม่นยำ</span>
-            <span className="text-xl font-black text-white">{realAccuracy === null ? '-' : `${realAccuracy}%`}</span>
-          </div>
-          <div className="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center hover-lift">
-            <BrainCircuit className="w-6 h-6 text-indigo-400 mb-2" />
-            <span className="text-xs text-slate-400 font-bold mb-1">ระดับทักษะ</span>
-            <span className="text-xl font-black text-white">Lvl {stats.level}</span>
-          </div>
-          <div className="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center hover-lift">
-            <Zap className="w-6 h-6 text-amber-400 mb-2" />
-            <span className="text-xs text-slate-400 font-bold mb-1">EXP สะสม</span>
-            <span className="text-xl font-black text-white">{stats.xp}</span>
-          </div>
-          <div className="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center hover-lift">
-            <Bookmark className="w-6 h-6 text-fuchsia-400 mb-2" />
-            <span className="text-xs text-slate-400 font-bold mb-1">ต้องทบทวน</span>
-            <span className="text-xl font-black text-white">{reviewWords.length} คำ</span>
-          </div>
-        </div>
+        <ProgressStats 
+          realAccuracy={realAccuracy}
+          level={stats.level}
+          xp={stats.xp}
+          reviewWordsCount={reviewWords.length}
+        />
 
         {/* Team Card (if assigned) */}
         {teamError && (
@@ -1239,53 +1227,11 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-6 text-left"
             >
-              <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-5 sm:p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <CheckSquare className="w-6 h-6 text-emerald-400" />
-                  <h3 className="text-xl font-black text-white">ภารกิจรายวัน (Daily Quests)</h3>
-                </div>
-                
-                <div className="space-y-4">
-                  {dailyQuests.length === 0 ? (
-                    <div className="text-center py-12 text-slate-500">
-                      <CheckSquare className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                      <p>กำลังโหลดภารกิจ หรือไม่มีภารกิจในวันนี้</p>
-                    </div>
-                  ) : (
-                    dailyQuests.map(q => {
-                      const percent = Math.min(100, Math.round((q.progress / q.target_value) * 100));
-                      const isDone = q.progress >= q.target_value;
-                      return (
-                        <div key={q.id} className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 flex flex-col sm:flex-row gap-5 items-center justify-between">
-                          <div className="w-full">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-white font-bold">{q.title}</span>
-                              {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-                            </div>
-                            <div className="text-xs text-slate-400 mb-3">รางวัล: {q.reward_coins > 0 && `🪙 ${q.reward_coins} เหรียญ`} {q.reward_tickets > 0 && `🎫 ${q.reward_tickets} ตั๋ว`}</div>
-                            <div className="h-3 w-full bg-slate-900 rounded-full overflow-hidden">
-                              <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${percent}%` }} />
-                            </div>
-                            <div className="text-right text-[10px] text-slate-500 mt-1">{q.progress} / {q.target_value}</div>
-                          </div>
-                          
-                          <button 
-                            onClick={() => handleClaimQuest(q.id)}
-                            disabled={!isDone || q.claimed || claimingQuests.has(q.id)}
-                            className={`min-w-28 py-2.5 rounded-xl font-bold text-sm shrink-0 transition-all ${
-                              q.claimed ? 'bg-slate-800 text-slate-500' :
-                              isDone ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.4)]' :
-                              'bg-slate-800 text-slate-400'
-                            }`}
-                          >
-                            {q.claimed ? 'รับแล้ว' : isDone ? 'รับรางวัล' : 'ยังไม่สำเร็จ'}
-                          </button>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
+              <QuestList 
+                dailyQuests={dailyQuests}
+                claimingQuests={claimingQuests}
+                onClaimQuest={handleClaimQuest}
+              />
             </motion.div>
           )}
 

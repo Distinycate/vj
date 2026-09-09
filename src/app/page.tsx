@@ -4,11 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
-import Dashboard from '@/components/Dashboard';
-import StudyCamp from '@/components/StudyCamp';
-import Game from '@/components/Game';
-import PreTest from '@/components/PreTest';
-import PostTest from '@/components/PostTest';
+import dynamic from 'next/dynamic';
+
+const Dashboard = dynamic(() => import('@/components/Dashboard'));
+const StudyCamp = dynamic(() => import('@/components/StudyCamp'));
+const Game = dynamic(() => import('@/components/Game'));
+const PreTest = dynamic(() => import('@/components/PreTest'));
+const PostTest = dynamic(() => import('@/components/PostTest'));
 import { saveStudentSession } from '@/utils/studentSession';
 import { useDemoStore } from '@/store/useDemoStore';
 
