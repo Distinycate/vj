@@ -3,6 +3,24 @@
 -- Vocab Journey Phase 3.1 — Learning Engine V2 & Vocabulary Mastery System
 -- Authoritative State Machine: LEARNING -> FAMILIAR -> MASTERED
 -- Append-Only Academic Telemetry: word_attempt_history
+--
+-- ROLLBACK PROCEDURE (If ever needed to revert Phase 3.1):
+-- 1. DROP TABLE IF EXISTS public.word_attempt_history CASCADE;
+-- 2. DROP FUNCTION IF EXISTS public.record_word_attempts_batch_v2 CASCADE;
+-- 3. DROP FUNCTION IF EXISTS public.record_word_attempt_v2 CASCADE;
+-- 4. ALTER TABLE public.user_review_words 
+--    DROP COLUMN IF EXISTS mastery_status,
+--    DROP COLUMN IF EXISTS review_step,
+--    DROP COLUMN IF EXISTS attempt_count,
+--    DROP COLUMN IF EXISTS correct_count,
+--    DROP COLUMN IF EXISTS consecutive_correct,
+--    DROP COLUMN IF EXISTS consecutive_wrong,
+--    DROP COLUMN IF EXISTS mastery_score,
+--    DROP COLUMN IF EXISTS successful_review_count,
+--    DROP COLUMN IF EXISTS avg_response_time_ms,
+--    DROP COLUMN IF EXISTS first_seen_at,
+--    DROP COLUMN IF EXISTS last_seen_at,
+--    DROP COLUMN IF EXISTS last_correct_at;
 -- ====================================================================
 
 -- 1. EXTEND user_review_words SCHEMA FOR MASTERY V2

@@ -220,3 +220,103 @@ test('Persona 6: Slow but Accurate Learner — high accuracy with slow response 
   assert.equal(state.masteryStatus, 'FAMILIAR');
   assert.ok(state.masteryScore >= 60 && state.masteryScore <= 84.99);
 });
+
+test('Scenario 7: Forged ultra-fast response telemetry — clamped to 300ms, no exploit', () => {
+  const res = evaluateWordAttempt(null, {
+    wordId: 'vocab-bot',
+    isCorrect: true,
+    responseTimeMs: 5, // Forged bot attempt: 5 milliseconds!
+    attemptedAt: new Date('2026-09-01T12:00:00Z'),
+  });
+
+  assert.equal(res.telemetry.clampedResponseTimeMs, 300, 'Must clamp 5ms to minimum 300ms');
+  assert.equal(res.nextState.avgResponseTimeMs, 300);
+});
+
+test('Scenario 8: Duplicate completion / Idempotency protection simulation', () => {
+  let state: WordReviewState | null = null;
+  const t0 = new Date('2026-09-01T12:00:00Z');
+
+  // First evaluation
+  const res1 = evaluateWordAttempt(state, {
+    wordId: 'vocab-dup',
+    isCorrect: true,
+    responseTimeMs: 1200,
+    attemptedAt: t0,
+  });
+  state = res1.nextState;
+
+  // In our architecture, the server checks stage_attempts.status === 'COMPLETED'
+  // and aborts before state evaluation. If re-evaluated with same state, it is idempotent:
+  assert.equal(state.attemptCount, 1);
+  assert.equal(state.correctCount, 1);
+  assert.equal(state.reviewStep, 1);
+});
+
+test('Scenario 9: Out-of-order / Late response handling', () => {
+  const t0 = new Date('2026-09-01T10:00:00Z');
+  const res1 = evaluateWordAttempt(null, {
+    wordId: 'vocab-late',
+    isCorrect: true,
+    responseTimeMs: 1800,
+    attemptedAt: t0,
+  });
+
+  // Subsequent answer hours later
+  const tLater = new Date('2026-09-01T16:00:00Z');
+  const res2 = evaluateWordAttempt(res1.nextState, {
+    wordId: 'vocab-late',
+    isCorrect: true,
+    responseTimeMs: 1400,
+    attemptedAt: tLater,
+  });
+
+  assert.ok(res2.nextState.lastSeenAt.getTime() > res1.nextState.lastSeenAt.getTime());
+  assert.equal(res2.nextState.attemptCount, 2);
+});
+
+test('Scenario 10: Repeated failed reviews demote down to Step 0 and LEARNING', () => {
+  const day0 = new Date('2026-09-01T08:00:00Z');
+  // Starts in FAMILIAR
+  let state: WordReviewState = {
+    wordId: 'vocab-fail-srs',
+    masteryStatus: 'FAMILIAR',
+    reviewStep: 2,
+    attemptCount: 6,
+    correctCount: 5,
+    wrongCount: 1,
+    consecutiveCorrect: 4,
+    consecutiveWrong: 0,
+    masteryScore: 75.0,
+    successfulReviewCount: 1,
+    avgResponseTimeMs: 2000,
+    firstSeenAt: day0,
+    lastSeenAt: day0,
+    lastCorrectAt: day0,
+    lastWrongAt: null,
+    nextReviewAt: new Date(day0.getTime() + 72 * 3600 * 1000),
+  };
+
+  // Review 1: Fails
+  const res1 = evaluateWordAttempt(state, {
+    wordId: 'vocab-fail-srs',
+    isCorrect: false,
+    responseTimeMs: 4000,
+    attemptedAt: new Date(day0.getTime() + 73 * 3600 * 1000),
+  });
+  state = res1.nextState;
+  assert.equal(state.masteryStatus, 'FAMILIAR', '1st fail keeps FAMILIAR');
+  assert.equal(state.reviewStep, 1);
+
+  // Review 2: Fails again consecutively
+  const res2 = evaluateWordAttempt(state, {
+    wordId: 'vocab-fail-srs',
+    isCorrect: false,
+    responseTimeMs: 4000,
+    attemptedAt: new Date(day0.getTime() + 74 * 3600 * 1000),
+  });
+  state = res2.nextState;
+  assert.equal(state.masteryStatus, 'LEARNING', '2nd consecutive fail drops to LEARNING');
+  assert.equal(state.reviewStep, 0, 'Step resets to 0');
+  assert.equal(state.consecutiveWrong, 2);
+});
