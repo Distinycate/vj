@@ -111,11 +111,13 @@ export async function POST(request: Request) {
       : [];
 
     const answerMap = new Map<string, string>();
+    const responseTimeMap = new Map<string, number>();
     const responseTimeList: number[] = [];
 
     for (const ans of answers) {
       answerMap.set(ans.wordId, ans.answer);
       if (typeof ans.responseTime === 'number') {
+        responseTimeMap.set(ans.wordId, ans.responseTime);
         responseTimeList.push(ans.responseTime);
       }
     }
@@ -123,11 +125,19 @@ export async function POST(request: Request) {
     let correctCount = 0;
     const wrongWordIds: string[] = [];
     const correctWordIds: string[] = [];
+    const wordAttempts: Array<{ word_id: string; is_correct: boolean; response_time_ms: number }> = [];
 
     for (const q of originalQuestions) {
       const submitted = answerMap.get(q.id) || '';
+      const responseTime = responseTimeMap.get(q.id) || 1500;
       const isCorrect =
         normalizeAnswer(submitted) === normalizeAnswer(q.correct_answer || '');
+
+      wordAttempts.push({
+        word_id: q.id,
+        is_correct: isCorrect,
+        response_time_ms: responseTime,
+      });
 
       if (isCorrect) {
         correctCount += 1;
@@ -163,6 +173,22 @@ export async function POST(request: Request) {
         p_correct_word_ids: correctWordIds,
       }
     );
+
+    // Call Mastery V2 batch telemetry recorder (non-blocking fallback)
+    if (wordAttempts.length > 0) {
+      try {
+        const { error: batchErr } = await supabaseAdmin.rpc('record_word_attempts_batch_v2', {
+          p_student_id: session.subjectId,
+          p_stage_attempt_id: attempt.id,
+          p_attempts: wordAttempts,
+        });
+        if (batchErr) {
+          console.warn('[Mastery V2] Deferred or pending database migration:', batchErr.message);
+        }
+      } catch (err) {
+        console.warn('[Mastery V2] Record attempt batch failed non-critically:', err);
+      }
+    }
 
     if (txErr) {
       console.error('complete_stage_transaction RPC error:', txErr);

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
+import { selectAdaptiveQuestionPool } from '@/lib/learning/adaptiveSelector';
 
 const startGameSchema = z.object({
   stageNumber: z.number().int().min(1).max(100),
@@ -64,6 +65,51 @@ export async function POST(request: Request) {
       );
     }
 
+    // Fetch student's SRS review words and weakness words for adaptive selection
+    const { data: userReviewData } = await supabaseAdmin
+      .from('user_review_words')
+      .select('word_id, mastery_status, mastery_score, review_step, wrong_count, attempt_count, next_review_at, last_seen_at')
+      .eq('user_id', session.subjectId);
+
+    const reviewMap = new Map<string, any>();
+    if (userReviewData) {
+      for (const r of userReviewData) {
+        reviewMap.set(r.word_id, r);
+      }
+    }
+
+    // Additional due/weak words from other stages if available
+    let reviewWordDetails: any[] = [];
+    if (userReviewData && userReviewData.length > 0) {
+      const reviewWordIds = userReviewData.map((r: any) => r.word_id).filter(Boolean);
+      if (reviewWordIds.length > 0) {
+        const { data: revDetails } = await supabaseAdmin
+          .from('vocabulary')
+          .select('*')
+          .in('id', reviewWordIds.slice(0, 30))
+          .eq('is_active', true);
+        reviewWordDetails = revDetails || [];
+      }
+    }
+
+    // Merge stage words with review word details
+    const candidateMap = new Map<string, any>();
+    for (const w of [...stageWords, ...reviewWordDetails]) {
+      if (!candidateMap.has(w.id)) {
+        const review = reviewMap.get(w.id);
+        candidateMap.set(w.id, {
+          ...w,
+          mastery_status: review?.mastery_status,
+          mastery_score: review?.mastery_score,
+          review_step: review?.review_step,
+          wrong_count: review?.wrong_count,
+          attempt_count: review?.attempt_count,
+          next_review_at: review?.next_review_at,
+          last_seen_at: review?.last_seen_at,
+        });
+      }
+    }
+
     // Distractor pool
     const { data: allVocab } = await supabaseAdmin
       .from('vocabulary')
@@ -73,9 +119,15 @@ export async function POST(request: Request) {
 
     const distractorPool = allVocab || stageWords;
 
-    // Select 5-10 target words
-    const targetCount = isBossMode ? 10 : Math.min(stageWords.length, 6);
-    const shuffledTargets = [...stageWords].sort(() => Math.random() - 0.5).slice(0, targetCount);
+    // Select target questions using Adaptive Learning Engine
+    const targetCount = isBossMode ? 10 : Math.min(candidateMap.size, 6);
+    const { selectedWords: shuffledTargets } = selectAdaptiveQuestionPool(
+      Array.from(candidateMap.values()),
+      {
+        totalQuestions: targetCount,
+        stageNumber,
+      }
+    );
 
     const authoritativeQuestions: any[] = [];
     const clientQuestions: any[] = [];

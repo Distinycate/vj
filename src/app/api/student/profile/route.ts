@@ -25,6 +25,8 @@ export async function GET(request: Request) {
       { data: learningPath },
       { data: analyticsSummary },
       { data: wrongWords },
+      { data: reviewWords },
+      { count: totalActiveVocabCount },
     ] = await Promise.all([
       supabaseAdmin
         .from('students')
@@ -45,11 +47,43 @@ export async function GET(request: Request) {
         .from('wrong_words')
         .select('*, vocabulary(*)')
         .eq('student_id', targetStudentId),
+      supabaseAdmin
+        .from('user_review_words')
+        .select('word_id, mastery_status, mastery_score, review_step, next_review_at')
+        .eq('user_id', targetStudentId),
+      supabaseAdmin
+        .from('vocabulary')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true),
     ]);
 
     if (studentErr || !student) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
+
+    // Compute Mastery V2 Breakdown
+    const now = new Date();
+    let learningCount = 0;
+    let familiarCount = 0;
+    let masteredCount = 0;
+    let dueReviewCount = 0;
+
+    if (reviewWords) {
+      for (const r of reviewWords) {
+        const status = r.mastery_status || 'LEARNING';
+        if (status === 'MASTERED') masteredCount++;
+        else if (status === 'FAMILIAR') familiarCount++;
+        else learningCount++;
+
+        if (r.next_review_at && new Date(r.next_review_at) <= now) {
+          dueReviewCount++;
+        }
+      }
+    }
+
+    const totalUniverse = totalActiveVocabCount || 0;
+    const reviewedCount = reviewWords?.length || 0;
+    const newCount = Math.max(0, totalUniverse - reviewedCount);
 
     return NextResponse.json({
       success: true,
@@ -57,6 +91,14 @@ export async function GET(request: Request) {
       learningPath: learningPath || null,
       analyticsSummary: analyticsSummary || null,
       wrongWords: wrongWords || [],
+      masteryBreakdown: {
+        totalUniverse,
+        newCount,
+        learningCount,
+        familiarCount,
+        masteredCount,
+        dueReviewCount,
+      },
     });
   } catch (error: any) {
     if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
