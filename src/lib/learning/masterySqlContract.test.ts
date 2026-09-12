@@ -68,8 +68,43 @@ test('SQL Migration matches TypeScript Reference Model contract', () => {
     'Backfill MUST NEVER set legacy records to MASTERED directly'
   );
 
-  // Check RLS protection
+  // Check RLS protection & server-established identity boundary
   assert.match(sqlContent, /ALTER TABLE public\.word_attempt_history ENABLE ROW LEVEL SECURITY/i);
-  assert.match(sqlContent, /REVOKE ALL ON public\.word_attempt_history FROM PUBLIC, anon/i);
+  assert.match(sqlContent, /REVOKE ALL ON public\.word_attempt_history FROM PUBLIC, anon, authenticated/i);
   assert.match(sqlContent, /GRANT ALL ON public\.word_attempt_history TO service_role/i);
+
+  // Check Atomic Unified Completion RPC (Type A: Single Transaction)
+  assert.match(
+    sqlContent,
+    /CREATE OR REPLACE FUNCTION public\.complete_stage_with_mastery_v2/i,
+    'Defines unified atomic complete_stage_with_mastery_v2'
+  );
+  assert.match(
+    sqlContent,
+    /FOR UPDATE/i,
+    'Enforces FOR UPDATE row lock for attempt idempotency'
+  );
+  assert.match(
+    sqlContent,
+    /v_attempt\.status = 'COMPLETED'/i,
+    'Checks completed state to prevent duplicate rewards and mastery writes'
+  );
+  assert.match(
+    sqlContent,
+    /INSERT INTO public\.economy_transactions/i,
+    'Logs economy transaction inside unified RPC'
+  );
+  assert.match(
+    sqlContent,
+    /public\.record_word_attempt_v2/i,
+    'Records word attempt mastery within unified transaction'
+  );
+  assert.match(
+    sqlContent,
+    /REVOKE ALL ON FUNCTION public\.complete_stage_with_mastery_v2 FROM PUBLIC, anon, authenticated/i
+  );
+  assert.match(
+    sqlContent,
+    /GRANT EXECUTE ON FUNCTION public\.complete_stage_with_mastery_v2 TO service_role/i
+  );
 });

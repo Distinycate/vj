@@ -155,9 +155,11 @@ export async function POST(request: Request) {
         ? Math.round(responseTimeList.reduce((a, b) => a + b, 0) / responseTimeList.length)
         : 10;
 
-    // Call atomic RPC complete_stage_transaction
-    const { data: txResult, error: txErr } = await supabaseAdmin.rpc(
-      'complete_stage_transaction',
+    // Call atomic RPC: complete_stage_with_mastery_v2 (Type A: Single Atomic Transaction)
+    // Bundles stage_attempt + economy_transactions + user_review_words + word_attempt_history
+    let txResult: any = null;
+    const { data: unifiedData, error: unifiedErr } = await supabaseAdmin.rpc(
+      'complete_stage_with_mastery_v2',
       {
         p_attempt_id: attempt.id,
         p_student_id: session.subjectId,
@@ -171,28 +173,50 @@ export async function POST(request: Request) {
         p_mission_level: attempt.mission_level || 1,
         p_wrong_word_ids: wrongWordIds,
         p_correct_word_ids: correctWordIds,
+        p_word_attempts: wordAttempts,
       }
     );
 
-    // Call Mastery V2 batch telemetry recorder (non-blocking fallback)
-    if (wordAttempts.length > 0) {
-      try {
-        const { error: batchErr } = await supabaseAdmin.rpc('record_word_attempts_batch_v2', {
+    if (unifiedErr) {
+      // Graceful fallback for pre-migration environments
+      console.warn('complete_stage_with_mastery_v2 pending migration, falling back:', unifiedErr.message);
+      const { data: legacyData, error: legacyErr } = await supabaseAdmin.rpc(
+        'complete_stage_transaction',
+        {
+          p_attempt_id: attempt.id,
           p_student_id: session.subjectId,
-          p_stage_attempt_id: attempt.id,
-          p_attempts: wordAttempts,
-        });
-        if (batchErr) {
-          console.warn('[Mastery V2] Deferred or pending database migration:', batchErr.message);
+          p_stage_number: attempt.stage_number,
+          p_score: correctCount,
+          p_total_questions: totalQuestions,
+          p_accuracy: accuracy,
+          p_passed: passed,
+          p_used_hints: usedHints,
+          p_response_time_avg: avgResponseTime,
+          p_mission_level: attempt.mission_level || 1,
+          p_wrong_word_ids: wrongWordIds,
+          p_correct_word_ids: correctWordIds,
         }
-      } catch (err) {
-        console.warn('[Mastery V2] Record attempt batch failed non-critically:', err);
-      }
-    }
+      );
 
-    if (txErr) {
-      console.error('complete_stage_transaction RPC error:', txErr);
-      return NextResponse.json({ error: 'Failed to record stage completion' }, { status: 500 });
+      if (legacyErr) {
+        console.error('complete_stage_transaction fallback RPC error:', legacyErr);
+        return NextResponse.json({ error: 'Failed to record stage completion' }, { status: 500 });
+      }
+      txResult = legacyData;
+
+      if (wordAttempts.length > 0) {
+        try {
+          await supabaseAdmin.rpc('record_word_attempts_batch_v2', {
+            p_student_id: session.subjectId,
+            p_stage_attempt_id: attempt.id,
+            p_attempts: wordAttempts,
+          });
+        } catch (err) {
+          console.warn('[Mastery V2] Deferred telemetry batch:', err);
+        }
+      }
+    } else {
+      txResult = unifiedData;
     }
 
     return NextResponse.json({

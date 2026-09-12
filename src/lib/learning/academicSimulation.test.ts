@@ -222,15 +222,38 @@ test('Persona 6: Slow but Accurate Learner — high accuracy with slow response 
 });
 
 test('Scenario 7: Forged ultra-fast response telemetry — clamped to 300ms, no exploit', () => {
-  const res = evaluateWordAttempt(null, {
+  // 1. Single attempt clamp verification: 5ms is clamped to 300ms
+  const singleAttempt = evaluateWordAttempt(null, {
     wordId: 'vocab-bot',
     isCorrect: true,
     responseTimeMs: 5, // Forged bot attempt: 5 milliseconds!
     attemptedAt: new Date('2026-09-01T12:00:00Z'),
   });
 
-  assert.equal(res.telemetry.clampedResponseTimeMs, 300, 'Must clamp 5ms to minimum 300ms');
-  assert.equal(res.nextState.avgResponseTimeMs, 300);
+  assert.equal(singleAttempt.telemetry.clampedResponseTimeMs, 300, 'Must clamp 5ms to minimum 300ms');
+  assert.equal(singleAttempt.nextState.avgResponseTimeMs, 300);
+
+  // 2. Regression verification: Even if bot spams 10 ultra-fast perfect answers in 10 minutes,
+  // response time alone CANNOT promote to MASTERED without satisfying the 24h spaced retention constraint
+  let botState: WordReviewState | null = null;
+  const spamStartTime = new Date('2026-09-01T12:00:00Z').getTime();
+
+  for (let i = 0; i < 10; i++) {
+    const res = evaluateWordAttempt(botState, {
+      wordId: 'vocab-bot-spam',
+      isCorrect: true,
+      responseTimeMs: 10, // constant ultra-fast bot responses
+      attemptedAt: new Date(spamStartTime + i * 60 * 1000), // within 10 minutes
+    });
+    botState = res.nextState;
+  }
+
+  assert.ok(botState);
+  assert.equal(botState.consecutiveCorrect, 10);
+  assert.equal(botState.avgResponseTimeMs, 300, 'All attempts clamped to 300ms');
+  assert.equal(botState.successfulReviewCount, 1, 'Cannot advance review count on early spammed reviews');
+  assert.equal(botState.masteryStatus, 'FAMILIAR', 'Must remain FAMILIAR until 24h+ retention review');
+  assert.notEqual(botState.masteryStatus, 'MASTERED', 'Rapid 300ms spam CANNOT achieve MASTERED');
 });
 
 test('Scenario 8: Duplicate completion / Idempotency protection simulation', () => {

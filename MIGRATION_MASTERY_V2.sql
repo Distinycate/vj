@@ -6,8 +6,9 @@
 --
 -- ROLLBACK PROCEDURE (If ever needed to revert Phase 3.1):
 -- 1. DROP TABLE IF EXISTS public.word_attempt_history CASCADE;
--- 2. DROP FUNCTION IF EXISTS public.record_word_attempts_batch_v2 CASCADE;
--- 3. DROP FUNCTION IF EXISTS public.record_word_attempt_v2 CASCADE;
+-- 2. DROP FUNCTION IF EXISTS public.complete_stage_with_mastery_v2 CASCADE;
+-- 3. DROP FUNCTION IF EXISTS public.record_word_attempts_batch_v2 CASCADE;
+-- 4. DROP FUNCTION IF EXISTS public.record_word_attempt_v2 CASCADE;
 -- 4. ALTER TABLE public.user_review_words 
 --    DROP COLUMN IF EXISTS mastery_status,
 --    DROP COLUMN IF EXISTS review_step,
@@ -170,10 +171,12 @@ CREATE INDEX IF NOT EXISTS idx_word_attempt_history_word
 -- 3. ROW LEVEL SECURITY ON word_attempt_history
 ALTER TABLE public.word_attempt_history ENABLE ROW LEVEL SECURITY;
 
-REVOKE ALL ON public.word_attempt_history FROM PUBLIC, anon;
+-- Deny all direct client access (anon and authenticated) to prevent client-supplied student_id spoofing
+REVOKE ALL ON public.word_attempt_history FROM PUBLIC, anon, authenticated;
 GRANT ALL ON public.word_attempt_history TO service_role;
-GRANT SELECT ON public.word_attempt_history TO authenticated;
 
+-- Students read their historical telemetry exclusively through server endpoints
+-- that enforce cryptographic session identity (session.subjectId)
 DROP POLICY IF EXISTS "Students can view own attempt history" ON public.word_attempt_history;
 CREATE POLICY "Students can view own attempt history" 
     ON public.word_attempt_history 
@@ -494,4 +497,232 @@ GRANT EXECUTE ON FUNCTION public.record_word_attempt_v2 TO service_role;
 
 REVOKE ALL ON FUNCTION public.record_word_attempts_batch_v2 FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.record_word_attempts_batch_v2 TO service_role;
+
+-- 7. ATOMIC UNIFIED STAGE COMPLETION & MASTERY RPC (Type A: Single Atomic Transaction)
+-- Bundles stage_attempt + economy_transactions + user_review_words + word_attempt_history
+-- in ONE atomic transaction with zero split-brain and full idempotency protection.
+CREATE OR REPLACE FUNCTION public.complete_stage_with_mastery_v2(
+    p_attempt_id uuid,
+    p_student_id uuid,
+    p_stage_number integer,
+    p_score integer,
+    p_total_questions integer,
+    p_accuracy numeric,
+    p_passed boolean,
+    p_used_hints integer,
+    p_response_time_avg numeric,
+    p_mission_level integer,
+    p_wrong_word_ids uuid[],
+    p_correct_word_ids uuid[],
+    p_word_attempts jsonb,
+    p_now timestamptz DEFAULT now()
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+    v_attempt public.stage_attempts%ROWTYPE;
+    v_path public.learning_paths%ROWTYPE;
+    v_is_boss boolean;
+    v_earned_coins integer := 0;
+    v_earned_exp integer := 0;
+    v_new_coins integer;
+    v_new_exp integer;
+    v_new_total_exp integer;
+    v_next_stage integer;
+    v_star_multiplier numeric := 1.0;
+    v_previous_max_stars integer := 0;
+    v_is_replay boolean;
+    v_word_id uuid;
+    v_item jsonb;
+    v_mastery_result jsonb;
+    v_mastery_results jsonb := '[]'::jsonb;
+BEGIN
+    -- 1. Validate & Lock Attempt for Idempotency
+    SELECT * INTO v_attempt
+    FROM public.stage_attempts
+    WHERE id = p_attempt_id AND student_id = p_student_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'STAGE_ATTEMPT_NOT_FOUND';
+    END IF;
+
+    -- If already completed, return cached state without re-awarding and without re-recording mastery
+    IF v_attempt.status = 'COMPLETED' THEN
+        SELECT * INTO v_path FROM public.learning_paths WHERE student_id = p_student_id;
+        RETURN jsonb_build_object(
+            'already_completed', true,
+            'passed', (v_attempt.accuracy >= 60),
+            'score', v_attempt.score,
+            'accuracy', v_attempt.accuracy,
+            'earned_coins', v_attempt.coins_awarded,
+            'earned_exp', v_attempt.exp_awarded,
+            'current_stage', v_path.current_stage
+        );
+    END IF;
+
+    -- 2. Lock learning_paths
+    SELECT * INTO v_path
+    FROM public.learning_paths
+    WHERE student_id = p_student_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'LEARNING_PATH_NOT_FOUND';
+    END IF;
+
+    v_is_boss := (p_stage_number % 10 = 0);
+    v_is_replay := (p_stage_number < COALESCE(v_path.current_stage, 1));
+
+    -- 3. Calculate rewards on server (Anti-cheat)
+    IF p_passed THEN
+        -- Base coins & EXP by rank
+        v_earned_coins := CASE COALESCE(v_path.current_rank, 1)
+            WHEN 1 THEN 30
+            WHEN 2 THEN 40
+            WHEN 3 THEN 50
+            WHEN 4 THEN 60
+            ELSE 70
+        END;
+        v_earned_exp := 15 * CASE COALESCE(v_path.current_rank, 1)
+            WHEN 1 THEN 1.0
+            WHEN 2 THEN 1.0
+            WHEN 3 THEN 1.2
+            WHEN 4 THEN 1.4
+            WHEN 5 THEN 1.7
+            ELSE 2.0
+        END;
+
+        IF v_is_boss THEN
+            v_earned_coins := v_earned_coins * 2;
+            v_earned_exp := v_earned_exp * 2;
+        END IF;
+
+        IF p_used_hints = 0 THEN
+            v_earned_coins := round(v_earned_coins * 1.2);
+            v_earned_exp := round(v_earned_exp * 1.2);
+        END IF;
+
+        IF p_accuracy >= 100 THEN
+            v_earned_coins := round(v_earned_coins * 1.3);
+            v_earned_exp := round(v_earned_exp * 1.3);
+        END IF;
+
+        -- Replay and star multipliers
+        SELECT COALESCE(MAX(stars), 0) INTO v_previous_max_stars
+        FROM public.stage_results
+        WHERE user_id = p_student_id AND stage_number = p_stage_number;
+
+        IF p_mission_level = 1 AND v_previous_max_stars = 0 THEN
+            v_star_multiplier := 1.0;
+        ELSIF p_mission_level = 2 AND v_previous_max_stars < 2 THEN
+            v_star_multiplier := 0.3;
+        ELSIF p_mission_level = 3 AND v_previous_max_stars < 3 THEN
+            v_star_multiplier := 0.5;
+        ELSIF v_is_replay THEN
+            v_star_multiplier := 0.1; -- Replay without star upgrade (Anti-farming)
+        END IF;
+
+        v_earned_coins := round(v_earned_coins * v_star_multiplier);
+        v_earned_exp := round(v_earned_exp * v_star_multiplier);
+    END IF;
+
+    -- 4. Advance progress without regressing replay stages
+    v_new_coins := COALESCE(v_path.coins, 0) + v_earned_coins;
+    v_new_exp := COALESCE(v_path.exp, 0) + v_earned_exp;
+    v_new_total_exp := COALESCE(v_path.total_exp, v_path.exp, 0) + v_earned_exp;
+    
+    IF p_passed THEN
+        v_next_stage := LEAST(100, GREATEST(COALESCE(v_path.current_stage, 1), p_stage_number + 1));
+    ELSE
+        v_next_stage := COALESCE(v_path.current_stage, 1);
+    END IF;
+
+    UPDATE public.learning_paths
+    SET coins = v_new_coins,
+        exp = v_new_exp,
+        total_exp = v_new_total_exp,
+        current_stage = v_next_stage,
+        last_active_date = p_now
+    WHERE student_id = p_student_id;
+
+    -- 5. Mark attempt completed
+    UPDATE public.stage_attempts
+    SET status = 'COMPLETED',
+        score = p_score,
+        accuracy = p_accuracy,
+        coins_awarded = v_earned_coins,
+        exp_awarded = v_earned_exp,
+        completed_at = p_now
+    WHERE id = p_attempt_id;
+
+    -- 6. Insert into stage_results
+    INSERT INTO public.stage_results (
+        user_id, stage_number, rank_at_play, score, accuracy,
+        response_time_avg, passed, used_hints, stars
+    ) VALUES (
+        p_student_id, p_stage_number, COALESCE(v_path.current_rank, 1),
+        p_score, p_accuracy, p_response_time_avg, p_passed, p_used_hints,
+        CASE WHEN p_passed THEN p_mission_level ELSE 0 END
+    );
+
+    -- 7. Log economy transaction
+    IF v_earned_coins > 0 OR v_earned_exp > 0 THEN
+        INSERT INTO public.economy_transactions (
+            student_id, transaction_type, source, reference_id,
+            coins_delta, exp_delta, balance_after, metadata
+        ) VALUES (
+            p_student_id, 'STAGE_REWARD', 'STAGE', p_attempt_id::text,
+            v_earned_coins, v_earned_exp,
+            jsonb_build_object('coins', v_new_coins, 'total_exp', v_new_total_exp),
+            jsonb_build_object('stage_number', p_stage_number, 'stars', p_mission_level, 'passed', p_passed)
+        );
+    END IF;
+
+    -- 8. Upsert wrong words
+    IF p_wrong_word_ids IS NOT NULL AND array_length(p_wrong_word_ids, 1) > 0 THEN
+        FOREACH v_word_id IN ARRAY p_wrong_word_ids LOOP
+            INSERT INTO public.wrong_words (student_id, word_id, error_count, last_attempt_at)
+            VALUES (p_student_id, v_word_id, 1, p_now)
+            ON CONFLICT (student_id, word_id) DO UPDATE
+            SET error_count = public.wrong_words.error_count + 1,
+                last_attempt_at = p_now;
+        END LOOP;
+    END IF;
+
+    -- 9. ATOMIC MASTERY TELEMETRY & HISTORY (Executed within same transaction)
+    IF p_word_attempts IS NOT NULL AND jsonb_array_length(p_word_attempts) > 0 THEN
+        FOR v_item IN SELECT * FROM jsonb_array_elements(p_word_attempts)
+        LOOP
+            v_mastery_result := public.record_word_attempt_v2(
+                p_student_id,
+                p_attempt_id,
+                (v_item->>'word_id')::uuid,
+                (v_item->>'is_correct')::boolean,
+                (v_item->>'response_time_ms')::integer,
+                p_now
+            );
+            v_mastery_results := v_mastery_results || jsonb_build_array(v_mastery_result);
+        END LOOP;
+    END IF;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'passed', p_passed,
+        'earned_coins', v_earned_coins,
+        'earned_exp', v_earned_exp,
+        'new_coins', v_new_coins,
+        'new_total_exp', v_new_total_exp,
+        'current_stage', v_next_stage,
+        'mastery_results', v_mastery_results
+    );
+END;
+$$;
+
+-- Revoke from public/anon/authenticated and grant exclusively to service_role
+REVOKE ALL ON FUNCTION public.complete_stage_with_mastery_v2 FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.complete_stage_with_mastery_v2 TO service_role;
+
 
