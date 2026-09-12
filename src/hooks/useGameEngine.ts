@@ -18,6 +18,9 @@ export function useGameEngine() {
   const [loadError, setLoadError] = useState('');
   const [gameState, setGameState] = useState<GameStep>('play');
   const isAnsweringRef = useRef(false);
+  const answerLockRef = useRef(false);
+  const answersRecordRef = useRef<Array<{ wordId: string; answer: string; responseTime: number }>>([]);
+  const [stageAttemptId, setStageAttemptId] = useState<string | null>(null);
   
   // Game Play States
   const [score, setScore] = useState(0);
@@ -141,6 +144,30 @@ export function useGameEngine() {
       setDifficultyConfig(diffConfig);
       setTimeLeft(diffConfig.timeLimit || 15);
 
+      // Attempt to initiate server-authoritative stage attempt
+      try {
+        const startRes = await fetch('/api/game/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            stageNumber: stageNum,
+            missionLevel,
+            isBossMode,
+          }),
+        });
+        if (startRes.ok) {
+          const startData = await startRes.json();
+          if (startData.success && Array.isArray(startData.questions) && startData.questions.length > 0) {
+            setStageAttemptId(startData.attemptId);
+            setWords(startData.questions);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Server attempt initiation error, using fallback:', e);
+      }
+
       let generatedQuestions = [];
       if (isBossMode) {
         generatedQuestions = await generateWeaknessBossQuestions(student.id, 20);
@@ -198,6 +225,7 @@ export function useGameEngine() {
     setTimeLeft(difficultyConfig.timeLimit || 15);
     setIsAnswered(false);
     setSelectedAnswer(null);
+    answerLockRef.current = false;
     setQuestionStartTime(Date.now());
   }
 
@@ -205,22 +233,22 @@ export function useGameEngine() {
     if (gameState !== 'play' || loading || isAnswered || currentIndex >= words.length || lives <= 0) return;
 
     const timer = setInterval(() => {
-      setTimeLeft(t => {
-        if (t <= 1) {
-          clearInterval(timer);
-          submitAnswer('');
-          return 0;
-        }
-        return t - 1;
-      });
+      setTimeLeft(t => Math.max(0, t - 1));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameState, loading, isAnswered, currentIndex, words, lives, difficultyConfig]);
+  }, [gameState, loading, isAnswered, currentIndex, words.length, lives]);
+
+  useEffect(() => {
+    if (gameState === 'play' && !isAnswered && timeLeft === 0 && !answerLockRef.current) {
+      submitAnswer('');
+    }
+  }, [timeLeft, gameState, isAnswered]);
 
   async function submitAnswer(answer: QuizChoice | string) {
-    if (isAnswered || isAnsweringRef.current) return;
+    if (isAnswered || isAnsweringRef.current || answerLockRef.current) return;
     
+    answerLockRef.current = true;
     isAnsweringRef.current = true;
     setTimeout(() => { isAnsweringRef.current = false; }, 500);
 
@@ -232,6 +260,13 @@ export function useGameEngine() {
     setResponseTimes(finalResponseTimes);
 
     const wordObj = words[currentIndex];
+    const submittedAnswerText = typeof answer === 'string' ? answer : answer?.text || '';
+    answersRecordRef.current.push({
+      wordId: wordObj.id || wordObj.word_id,
+      answer: submittedAnswerText,
+      responseTime: elapsed,
+    });
+
     let isCorrect = false;
 
     if (qType === 'FILL_BLANK') {
@@ -349,6 +384,52 @@ export function useGameEngine() {
         if (correctCount > 0) {
           incrementMockQuestProgress(student.id, '3', correctCount);
         }
+      }
+    }
+
+    if (stageAttemptId) {
+      try {
+        const compRes = await fetch('/api/game/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            attemptId: stageAttemptId,
+            answers: answersRecordRef.current,
+            usedHints: usedHintsCount,
+          }),
+        });
+
+        if (compRes.ok) {
+          const compData = await compRes.json();
+          if (compData.success) {
+            setPassReport({
+              earnedCoins: compData.earnedCoins,
+              earnedExp: compData.earnedExp,
+              passed: compData.passed,
+              score: compData.score,
+              accuracy: compData.accuracy,
+              totalQuestions: words.length,
+              usedHints: usedHintsCount,
+              newCoins: compData.newCoins,
+              newTotalExp: compData.newTotalExp,
+              currentStage: compData.currentStage,
+            });
+
+            if (progress) {
+              setProgress({
+                ...progress,
+                coins: compData.newCoins !== undefined ? compData.newCoins : progress.coins,
+                total_exp: compData.newTotalExp !== undefined ? compData.newTotalExp : progress.total_exp,
+                current_stage: compData.currentStage !== undefined ? compData.currentStage : progress.current_stage,
+              });
+            }
+
+            setGameState('results');
+            return;
+          }
+        }
+      } catch (serverErr) {
+        console.error('Server completion error, falling back to local completeStage:', serverErr);
       }
     }
 

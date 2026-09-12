@@ -251,7 +251,7 @@ export async function generateWeaknessBossQuestions(studentId: string, limit: nu
     
     for (const targetWord of targetWords) {
       // Prioritize contextual puzzle for boss mode if sentence exists
-      let chosenType: QuestionType = (targetWord.example_sentence && Math.random() > 0.3) ? 'context_mc' : 'meaning_mc';
+      const chosenType: QuestionType = (targetWord.example_sentence && Math.random() > 0.3) ? 'context_mc' : 'meaning_mc';
 
       const question = await generateValidQuestion({
         targetWord,

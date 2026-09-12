@@ -9,7 +9,7 @@ import { playWordAudio } from '@/utils/audio';
 import { getWorldForStage } from '@/utils/adaptiveConfig';
 
 export default function StudyCamp() {
-  const { setScreen, progress, setStudiedCurrentStage } = useAppStore();
+  const { setScreen, progress, setStudiedCurrentStage, selectedStageNumber } = useAppStore();
   const isDemoMode = useDemoStore((state) => state.isDemoMode);
   const [words, setWords] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -22,7 +22,7 @@ export default function StudyCamp() {
     }
   }, [currentIndex, words.length, setStudiedCurrentStage]);
 
-  const stage = progress?.current_stage || 1;
+  const stage = selectedStageNumber ?? progress?.current_stage ?? 1;
   const isBoss = stage % 10 === 0;
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function StudyCamp() {
       setLoading(false);
     }
     fetchWords();
-  }, [progress]);
+  }, [progress, selectedStageNumber, stage, isBoss]);
 
   // Lore Book Buff Logic (5 seconds rule)
   useEffect(() => {

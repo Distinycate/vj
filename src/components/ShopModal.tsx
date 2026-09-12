@@ -44,53 +44,51 @@ export default function ShopModal({ onClose }: ShopModalProps) {
     }
 
     try {
-      // Deduct coins
-      const newCoins = (progress?.coins || 0) - price;
-      const { error: coinError } = await supabase
-        .from('learning_paths')
-        .update({ coins: newCoins })
-        .eq('student_id', student.id);
-      if (coinError) throw coinError;
-      
-      // Add to inventory. If the item already exists, increase quantity instead
-      // of inserting a duplicate row.
-      const existingInventory = inventory.find((row) => row.item_id === item.id);
-      const inventoryMutation = existingInventory
-        ? supabase
-            .from('student_inventory')
-            .update({ quantity: Number(existingInventory.quantity || 0) + 1 })
-            .eq('id', existingInventory.id)
-        : supabase
-            .from('student_inventory')
-            .insert([{ student_id: student.id, item_id: item.id, quantity: 1 }]);
-      const { error: inventoryError } = await inventoryMutation;
-      if (inventoryError) {
-        await supabase
-          .from('learning_paths')
-          .update({ coins: progress?.coins || 0 })
-          .eq('student_id', student.id);
-        throw inventoryError;
-      }
-      
-      // Update coins ledger
-      await supabase.from('coins_transactions').insert([{
-        student_id: student.id,
-        amount: -price,
-        source: `SHOP_BUY_${item.item_code}`
-      }]);
+      const purchaseRequestId = typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID() 
+        : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = (Math.random() * 16) | 0;
+            const v = c === 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+          });
 
-      setProgress({ ...progress, coins: newCoins });
-      
-      // Update local inventory state
-      setInventory((current) => existingInventory
-        ? current.map((row) => row.id === existingInventory.id ? { ...row, quantity: Number(row.quantity || 0) + 1 } : row)
-        : [...current, { id: `local-${item.id}`, item_id: item.id, quantity: 1 }]
+      const res = await fetch('/api/shop/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          itemId: item.id,
+          purchaseRequestId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        if (data.error === 'INSUFFICIENT_COINS') {
+          setMessage('เหรียญไม่พอ!');
+        } else {
+          setMessage('ซื้อไอเทมไม่สำเร็จ กรุณาลองใหม่');
+        }
+        setTimeout(() => setMessage(''), 2500);
+        return;
+      }
+
+      if (progress) {
+        setProgress({ ...progress, coins: data.newCoins });
+      }
+
+      const existingInventory = inventory.find((row) => row.item_id === item.id);
+      setInventory((current) =>
+        existingInventory
+          ? current.map((row) =>
+              row.id === existingInventory.id ? { ...row, quantity: data.newQuantity } : row
+            )
+          : [...current, { id: `item-${item.id}`, item_id: item.id, quantity: data.newQuantity }]
       );
+
       setMessage(`ซื้อ ${item.name || item.item_name} สำเร็จ!`);
       setTimeout(() => setMessage(''), 2000);
-      
     } catch (err) {
-      console.error(err);
+      console.error('Purchase error:', err);
       setMessage('ซื้อไอเทมไม่สำเร็จ กรุณาลองใหม่');
       setTimeout(() => setMessage(''), 2500);
     }

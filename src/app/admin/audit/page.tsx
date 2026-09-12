@@ -169,7 +169,7 @@ export default function QuestionAudit() {
             </h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full min-w-[640px] text-left">
               <thead className="bg-slate-950 text-slate-400 text-xs uppercase font-bold">
                 <tr>
                   <th className="p-4">วันที่ / เวลา</th>

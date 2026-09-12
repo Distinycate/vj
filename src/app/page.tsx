@@ -71,7 +71,10 @@ export default function Home() {
   // Login State
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [loginRole, setLoginRole] = useState<'student' | 'teacher' | 'executive'>('student');
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   
   // Register State
   const [regFirstName, setRegFirstName] = useState('');
@@ -92,6 +95,18 @@ export default function Home() {
     }
     checkRegistration();
 
+    // Rehydrate session from server on mount (F5 reload protection)
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.authenticated && data.role === 'STUDENT' && data.user) {
+          setStudent(data.user);
+          saveStudentSession(data.user);
+          if (data.progress) setProgress(data.progress);
+        }
+      })
+      .catch(() => {});
+
     const savedUser = localStorage.getItem('vj_saved_user');
     if (savedUser) {
       try {
@@ -103,9 +118,6 @@ export default function Home() {
       } catch (e) {}
     }
   }, []);
-  const [loginRole, setLoginRole] = useState<'student' | 'teacher' | 'executive'>('student');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleLogin = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -124,92 +136,62 @@ export default function Home() {
           setProgress(demoStore.demoProgress);
           return;
         }
+      }
 
-        // 1. Authenticate student via secure RPC
-        const { data: studentData, error: studentError } = await supabase
-          .rpc('login_student', {
-            p_username: loginUsername.trim(),
-            p_password: loginPassword.trim()
-          });
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: loginUsername.trim(),
+          password: loginPassword.trim(),
+          role: loginRole.toUpperCase(),
+        }),
+      });
 
-        if (studentError || !studentData) {
-          throw new Error('ชื่อผู้ใช้หรือรหัสผ่านนักเรียนไม่ถูกต้อง');
-        }
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+      }
 
-        // 2. Fetch learning path progression
-        const { data: progressData } = await supabase
-          .from('learning_paths')
-          .select('*')
-          .eq('student_id', studentData.id)
-          .single();
+      if (rememberMe) {
+        localStorage.setItem(
+          'vj_saved_user',
+          JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim(), role: loginRole })
+        );
+      } else {
+        localStorage.removeItem('vj_saved_user');
+      }
 
-        // 3. Fetch pre-test record count and latest attempt date
+      if (data.role === 'STUDENT') {
         const { data: pretestList, count: pretestCount } = await supabase
           .from('pre_tests')
           .select('created_at', { count: 'exact' })
-          .eq('student_id', studentData.id)
+          .eq('student_id', data.user.id)
           .order('created_at', { ascending: false });
 
         const hasCompleted5Pretests = pretestCount !== null && pretestCount >= 5;
-        const pretestDate = studentData.user_type === 'EXTERNAL'
+        const pretestDate = data.user.user_type === 'EXTERNAL'
           ? new Date().toISOString()
           : hasCompleted5Pretests && pretestList && pretestList.length > 0 ? pretestList[0].created_at : null;
 
-        if (rememberMe) {
-          localStorage.setItem('vj_saved_user', JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim(), role: loginRole }));
-        } else {
-          localStorage.removeItem('vj_saved_user');
-        }
-
-        setStudent(studentData);
-        saveStudentSession(studentData);
-        setProgress({ 
-          ...progressData, 
-          pretest_date: pretestDate 
+        setStudent(data.user);
+        saveStudentSession(data.user);
+        setProgress({
+          ...data.progress,
+          pretest_date: pretestDate,
         });
-      } else {
-        // Authenticate teacher/executive via secure RPC
-        const { data: teacherData, error: teacherError } = await supabase
-          .rpc('login_teacher', {
-            p_username: loginUsername.trim(),
-            p_password: loginPassword.trim()
-          });
-
-        if (teacherError || !teacherData) {
-          throw new Error('ชื่อผู้ใช้หรือรหัสผ่านเจ้าหน้าที่ไม่ถูกต้อง');
-        }
-
-        if (loginRole === 'teacher') {
-          if (rememberMe) {
-            localStorage.setItem('vj_saved_user', JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim(), role: loginRole }));
-          } else {
-            localStorage.removeItem('vj_saved_user');
-          }
-          if (teacherData.role === 'CARD_TEACHER') {
-            localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(teacherData));
-            window.location.href = '/card-teacher/dashboard';
-            return;
-          }
-          if (teacherData.role !== 'TEACHER' && teacherData.role !== 'ADMIN') {
-            throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานระบบครูผู้สอน');
-          }
-          localStorage.setItem('vocab_journey_teacher', JSON.stringify(teacherData));
-          window.location.href = '/admin';
-        } else if (loginRole === 'executive') {
-          if (rememberMe) {
-            localStorage.setItem('vj_saved_user', JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim(), role: loginRole }));
-          } else {
-            localStorage.removeItem('vj_saved_user');
-          }
-          if (teacherData.role !== 'EXECUTIVE' && teacherData.role !== 'ADMIN') {
-            throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานระบบผู้บริหาร');
-          }
-          localStorage.setItem('vocab_journey_executive', JSON.stringify(teacherData));
-          window.location.href = '/executive';
-        }
+      } else if (data.role === 'CARD_TEACHER') {
+        localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(data.user));
+        window.location.href = '/card-teacher/dashboard';
+      } else if (data.role === 'TEACHER' || data.role === 'ADMIN') {
+        localStorage.setItem('vocab_journey_teacher', JSON.stringify(data.user));
+        window.location.href = '/admin';
+      } else if (data.role === 'EXECUTIVE') {
+        localStorage.setItem('vocab_journey_executive', JSON.stringify(data.user));
+        window.location.href = '/executive';
       }
     } catch (err: any) {
-      console.error(err);
+      console.error('Login failure:', err);
       setError(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
     } finally {
       setIsLoading(false);

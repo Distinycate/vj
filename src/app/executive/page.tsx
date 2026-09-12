@@ -295,7 +295,7 @@ export default function ExecutiveDashboard() {
             <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-3xl">
               <h3 className="text-lg font-bold text-white mb-4">ผลการประเมินรายห้องเรียน (Ranking)</h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[640px] text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-950 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider">
                       <th className="p-4">อันดับ</th>

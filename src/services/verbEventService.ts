@@ -205,12 +205,13 @@ export async function finishAttempt(attemptId: string, eventId: string, studentI
     droppedTickets = 1;
   }
 
-  if (coinsEarned > 0 || droppedTickets > 0) {
-    const { data: path } = await supabase.from('learning_paths').select('coins, exp, free_pull_tickets').eq('student_id', studentId).maybeSingle();
+  if (coinsEarned > 0 || droppedTickets > 0 || expEarned > 0) {
+    const { data: path } = await supabase.from('learning_paths').select('coins, exp, total_exp, free_pull_tickets').eq('student_id', studentId).maybeSingle();
     if (path) {
       await supabase.from('learning_paths').update({
         coins: Number(path.coins || 0) + coinsEarned,
         exp: Number(path.exp || 0) + expEarned,
+        total_exp: (path.total_exp ?? path.exp ?? 0) + expEarned,
         free_pull_tickets: Number(path.free_pull_tickets || 0) + droppedTickets,
       }).eq('student_id', studentId);
     }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CheckCircle, Clock, Check, XCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
-import { resolveCardAction, teacherMarkCardExecuted } from '@/utils/cardBattle';
+import { announceCardAction, resolveCardAction, teacherMarkCardExecuted } from '@/utils/cardBattle';
 
 export default function CardWorkflowPanel({ teacher }: { teacher: any; classroomId?: string }) {
   const [actionLogs, setActionLogs] = useState<any[]>([]);
@@ -82,7 +82,7 @@ export default function CardWorkflowPanel({ teacher }: { teacher: any; classroom
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-black text-white flex items-center gap-2">
-              📋 รายการรอดำเนินการ (Action Required)
+              📋 รายการรอครูดำเนินการทั้งโรงเรียน (Action Required)
             </h2>
             <p className="text-xs text-slate-500 mt-1">สรุปการ์ดโจมตีที่เข้าเป้า คุณครูสามารถทยอยกดยืนยันเมื่อนักเรียนทำโทษเสร็จแล้ว</p>
           </div>

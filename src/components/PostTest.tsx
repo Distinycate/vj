@@ -13,6 +13,7 @@ import {
   shuffleArray,
   uniqueChoicesByText,
 } from '@/lib/quizUtils';
+import { calculateNormalizedGain } from '@/utils/analyticsUtils';
 
 const POSTTEST_REQUIRED_ROUNDS = 3;
 const POSTTEST_QUESTION_COUNT = 25;
@@ -209,10 +210,7 @@ export default function PostTest() {
 
         // Calculate Learning Gain (raw and normalized)
         const learningGain = posttestScoreNormalized - pretestScore;
-        const maxPossible = totalQuestions - pretestScore;
-        const normalizedGain = maxPossible > 0
-          ? Number(((learningGain / maxPossible) * 100).toFixed(2))
-          : 0;
+        const normalizedGain = calculateNormalizedGain(pretestScore, posttestScoreNormalized, totalQuestions);
 
         const previousDuration = previousPosttests.reduce(
           (sum, attempt) => sum + Number(attempt.time_spent_sec || 0),

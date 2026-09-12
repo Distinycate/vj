@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const dashboard = readFileSync('src/components/Dashboard.tsx', 'utf8');
-const game = readFileSync('src/components/Game.tsx', 'utf8');
+const gameEngine = readFileSync('src/hooks/useGameEngine.ts', 'utf8');
 const appStore = readFileSync('src/store/useAppStore.ts', 'utf8');
 const cardCenter = readFileSync('src/components/CardCenterModal.tsx', 'utf8');
 
@@ -22,9 +22,9 @@ test('completed stages are clickable replay buttons without changing current pro
 });
 
 test('game uses the selected replay stage and clears it when returning to the map', () => {
-  assert.match(game, /selectedStageNumber \|\| progress\?\.current_stage \|\| 1/);
-  assert.match(game, /setSelectedStageNumber\(null\)/);
-  assert.match(game, /const handleFinishGame = \(\) => \{/);
+  assert.match(gameEngine, /selectedStageNumber \|\| progress\?\.current_stage \|\| 1/);
+  assert.match(gameEngine, /setSelectedStageNumber\(null\)/);
+  assert.match(gameEngine, /const handleFinishGame = \(\) => \{/);
 });
 
 test('card center shows loading and query errors instead of failing silently', () => {

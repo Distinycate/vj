@@ -24,14 +24,32 @@ export default function CardTeacherAccessPage() {
       if (mode === 'register') {
         teacher = await registerCardTeacher(name, username, password);
       } else {
-        const { data, error } = await supabase.rpc('login_teacher', { p_username: username.trim(), p_password: password });
+        const { data: existingTeacher } = await supabase
+          .from('teachers')
+          .select('id, name, username, role, is_active')
+          .ilike('username', username.trim())
+          .limit(1)
+          .maybeSingle();
 
-        if (!error && data) {
-          if (!data.is_active) throw new Error('ชื่อผู้ใช้นี้ถูกระงับการใช้งาน');
-          if (!['CARD_TEACHER', 'TEACHER', 'ADMIN'].includes(data.role)) throw new Error('ไม่มีสิทธิ์เข้าใช้งาน');
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: username.trim(),
+            password,
+            role: 'CARD_TEACHER',
+          }),
+        });
+
+        const authData = await res.json();
+        if (!res.ok || !authData.success) {
+          throw new Error(authData.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือบัญชีไม่มีสิทธิ์ระบบการ์ด');
         }
-        if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือบัญชีไม่มีสิทธิ์ระบบการ์ด');
-        teacher = data;
+
+        if (!['CARD_TEACHER', 'TEACHER', 'ADMIN'].includes(authData.role)) {
+          throw new Error('ไม่มีสิทธิ์เข้าใช้งาน');
+        }
+        teacher = authData.user || existingTeacher;
       }
       localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(teacher));
       window.location.href = '/card-teacher/dashboard';

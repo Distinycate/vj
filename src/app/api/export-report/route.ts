@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
 
-import { createClient } from '@supabase/supabase-js';
+import { requireRole } from '@/lib/server/session';
+import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    await requireRole(['TEACHER', 'ADMIN', 'EXECUTIVE']);
+
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Vocab Journey';
     workbook.created = new Date();
@@ -31,7 +30,7 @@ export async function GET() {
     sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } }; // Indigo-600
 
-    const { data: rawData, error } = await supabase
+    const { data: rawData, error } = await supabaseAdmin
       .from('item_analysis')
       .select('*, vocabulary(word, meaning)')
       .order('p_value', { ascending: true });

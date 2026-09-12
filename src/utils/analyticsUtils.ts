@@ -1,12 +1,39 @@
-export function calculateLearningGain(preTestScore: number, postTestScore: number) {
+export function calculateNormalizedGain(
+  preTestScore: number,
+  postTestScore: number,
+  maxPossibleScore: number = 100
+): number | null {
+  if (preTestScore >= maxPossibleScore) {
+    return null; // Ceiling effect reached: return null for 'N/A' / 'Ceiling'
+  }
   const gain = postTestScore - preTestScore;
+  const maxGain = maxPossibleScore - preTestScore;
+  if (maxGain <= 0) return null;
+  // Hake normalized gain: g = (post - pre) / (max - pre)
+  return Number(((gain / maxGain) * 100).toFixed(2));
+}
+
+export function formatNormalizedGain(gain: number | null): string {
+  if (gain === null) return 'N/A (Ceiling)';
+  const sign = gain > 0 ? '+' : '';
+  return `${sign}${gain}%`;
+}
+
+export function calculateLearningGain(
+  preTestScore: number,
+  postTestScore: number,
+  maxPossibleScore: number = 100
+) {
+  const gain = postTestScore - preTestScore;
+  const normalizedGain = calculateNormalizedGain(preTestScore, postTestScore, maxPossibleScore);
   const percentage = preTestScore > 0 
     ? (gain / preTestScore) * 100 
     : (postTestScore > 0 ? 100 : 0);
   
   return {
     gain,
-    percentage: Math.round(percentage)
+    percentage: Math.round(percentage),
+    normalizedGain,
   };
 }
 

@@ -54,16 +54,17 @@ export const useAppStore = create<AppState>((set) => ({
   setStudiedCurrentStage: (hasStudiedCurrentStage) => set({ hasStudiedCurrentStage }),
   logout: () => {
     clearStudentSession();
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     set({
-    student: null, 
-    progress: null, 
-    currentScreen: 'dashboard',
-    selectedStageNumber: null,
-    currentCategory: null,
-    inventory: [],
-    recommendations: [],
-    isReviewMode: false,
-    hasStudiedCurrentStage: false
+      student: null, 
+      progress: null, 
+      currentScreen: 'dashboard',
+      selectedStageNumber: null,
+      currentCategory: null,
+      inventory: [],
+      recommendations: [],
+      isReviewMode: false,
+      hasStudiedCurrentStage: false
     });
   },
 }));
