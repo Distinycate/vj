@@ -216,128 +216,37 @@ export default function Home() {
         throw new Error('ระบบปิดรับลงทะเบียนชั่วคราว กรุณาติดต่อคุณครู');
       }
 
-      // 0. Check for duplicate username first to give a friendly error
-      const { data: existingUser } = await supabase
-        .from('students')
-        .select('id')
-        .eq('username', regUsername.trim())
-        .maybeSingle();
+      const regRes = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: regFirstName.trim(),
+          lastName: regLastName.trim(),
+          gradeLevel: regGrade.trim(),
+          roomNumber: regRoom.trim(),
+          username: regUsername.trim(),
+          password: regPassword.trim(),
+          userType: 'INTERNAL',
+        }),
+      });
 
-      if (existingUser) {
-        throw new Error('ชื่อผู้ใช้นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
+      const regJson = await regRes.json();
+      if (!regRes.ok) {
+        throw new Error(regJson.error || 'ไม่สามารถลงทะเบียนได้');
       }
 
-      // 1. Resolve Classroom dynamically
-      const gradeStr = regGrade.trim();
-      const roomStr = regRoom.trim();
-      const className = `${gradeStr}/${roomStr}`;
-      let classroomId = null;
-
-      const { data: existingClass } = await supabase
-        .from('classrooms')
-        .select('id')
-        .eq('class_name', className)
-        .maybeSingle();
-
-      if (existingClass) {
-        classroomId = existingClass.id;
-      } else {
-        const { data: newClass, error: classError } = await supabase
-          .from('classrooms')
-          .insert([{ class_name: className, grade_level: gradeStr, room_number: roomStr }])
-          .select()
-          .single();
-        if (classError) throw classError;
-        if (newClass) classroomId = newClass.id;
-      }
-
-      // 2. Insert Student with Retry Logic for Unique Constraints
-      const newStudentUuid = generateUUID();
-      let studentData = null;
-      let isRegistered = false;
-      let lastError = null;
-
-      for (let attempt = 1; attempt <= 5; attempt++) {
-        try {
-          const candidateStudentId = generateRandomStudentId();
-          
-          const { data: insertedStudent, error: studentError } = await supabase
-            .from('students')
-            .insert([{ 
-              id: newStudentUuid,
-              student_id: candidateStudentId,
-              student_name: fullName,
-              first_name: regFirstName.trim(),
-              last_name: regLastName.trim(),
-              grade_level: gradeStr,
-              room_number: roomStr,
-              username: regUsername.trim(),
-              password: regPassword.trim(),
-              classroom_id: classroomId,
-              academic_year: regYear.trim()
-            }])
-            .select()
-            .single();
-
-          if (studentError) {
-            // Check if it's a unique constraint violation (code 23505)
-            if (studentError.code === '23505' || studentError.message.includes('duplicate key')) {
-              // If the duplicate is on username, break immediately because a random student_id won't fix it
-              if (studentError.message.includes('username')) {
-                throw new Error('ชื่อผู้ใช้นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
-              }
-              lastError = studentError;
-              continue; // Try next iteration with new random ID
-            }
-            throw studentError; // Other errors, break loop and fail
-          }
-
-          studentData = insertedStudent;
-          isRegistered = true;
-          break; // Success! Exit loop
-
-        } catch (err: any) {
-          if (err.message === 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น') throw err;
-          lastError = err;
-          // If it's not a known unique constraint error, we probably shouldn't retry
-          if (err.code !== '23505') throw err;
-        }
-      }
-
-      if (!isRegistered || !studentData) {
-        throw new Error('ไม่สามารถสร้างบัญชีได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง');
-      }
-
-      // 3. Initialize Learning Path with basic stats
-      const { data: progressData, error: progressError } = await supabase
-        .from('learning_paths')
-        .insert([{
-          student_id: studentData.id,
-          current_rank: 1,
-          current_stage: 1,
-          coins: 0,
-          exp: 0
-        }])
-        .select()
-        .single();
-        
-      if (progressError) throw progressError;
-
-      await supabase.from('analytics_summary').upsert({
-        student_id: studentData.id,
-        pretest_score: 0,
-        posttest_score: 0,
-        learning_gain: 0,
-        normalized_gain: 0,
-        success_rate: 0,
-        attempt_count: 0,
-        total_time_on_task_sec: 0,
-      }, { onConflict: 'student_id' });
+      const studentData = regJson.student;
+      const initialProgress = {
+        current_rank: 1,
+        current_stage: 1,
+        coins: 0,
+        exp: 0,
+      };
 
       // Auto-login after register
       setStudent(studentData);
       saveStudentSession(studentData);
-      setProgress(progressData);
+      setProgress(initialProgress);
       
     } catch (err: any) {
       console.error(err);

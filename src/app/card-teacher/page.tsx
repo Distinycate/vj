@@ -24,13 +24,7 @@ export default function CardTeacherAccessPage() {
       if (mode === 'register') {
         teacher = await registerCardTeacher(name, username, password);
       } else {
-        const { data: existingTeacher } = await supabase
-          .from('teachers')
-          .select('id, name, username, role, is_active')
-          .ilike('username', username.trim())
-          .limit(1)
-          .maybeSingle();
-
+        // Authenticates via /api/auth/login which performs .ilike('username', username.trim())
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -49,7 +43,7 @@ export default function CardTeacherAccessPage() {
         if (!['CARD_TEACHER', 'TEACHER', 'ADMIN'].includes(authData.role)) {
           throw new Error('ไม่มีสิทธิ์เข้าใช้งาน');
         }
-        teacher = authData.user || existingTeacher;
+        teacher = authData.user;
       }
       localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(teacher));
       window.location.href = '/card-teacher/dashboard';

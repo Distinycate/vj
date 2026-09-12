@@ -19,13 +19,13 @@ export async function getAdaptiveDifficulty(studentId: string, stageNumber: numb
   if (useDemoStore.getState().isDemoMode) {
     rank = useDemoStore.getState().demoProgress?.current_rank || 1;
   } else {
-    // Query student's current rank from learning_paths
-    const { data: pathData } = await supabase
-      .from('learning_paths')
-      .select('current_rank')
-      .eq('student_id', studentId)
-      .maybeSingle();
-    rank = pathData?.current_rank || 1;
+    try {
+      const profRes = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);
+      if (profRes.ok) {
+        const profJson = await profRes.json();
+        rank = profJson?.learningPath?.current_rank || 1;
+      }
+    } catch {}
   }
   const config = ADAPTIVE_RANK_CONFIG[rank] || ADAPTIVE_RANK_CONFIG[1];
   
@@ -53,8 +53,15 @@ export async function generateStageQuestions(studentId: string, stageNumber: num
     }
 
     // Skull ID Override (Special Needs Students)
-    const { data: studentData } = await supabase.from('students').select('is_skull').eq('id', studentId).maybeSingle();
-    if (studentData?.is_skull) {
+    let isSkullStudent = false;
+    try {
+      const res = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);
+      if (res.ok) {
+        const json = await res.json();
+        isSkullStudent = json?.student?.is_skull || false;
+      }
+    } catch {}
+    if (isSkullStudent) {
       questionTypes = ['meaning_mc', 'word_mc']; // Force multiple choice only
     }
 
@@ -334,7 +341,7 @@ function createListeningQuestion(targetWord: any, candidates: any[]) {
     is_correct: true
   };
 
-  const wrongChoices = distractors.map((word) => ({
+  const wrongChoices = (distractors as any[]).map((word: any) => ({
     word_id: word.id,
     text: getVocabularyField(word, answerField),
     is_correct: false
@@ -400,7 +407,7 @@ function createChoiceQuestion(params: {
     is_correct: true
   };
 
-  const wrongChoices: QuizChoice[] = distractors.map((word) => ({
+  const wrongChoices: QuizChoice[] = (distractors as any[]).map((word: any) => ({
     word_id: word.id,
     text: getVocabularyField(word, answerField),
     is_correct: false
@@ -608,7 +615,7 @@ export async function completeStage(studentId: string, stageNumber: number, resu
         .eq('user_id', studentId)
         .in('word_id', answeredWordIds);
         
-      const existingMap = new Map((existingWords || []).map(w => [w.word_id, w]));
+      const existingMap = new Map<string, any>((existingWords || []).map((w: any) => [w.word_id, w]));
       const reviewIntervals = [0, 1, 3, 7, 30];
       
       const upsertReviewWords = answeredWordIds.map(wordId => {
@@ -617,7 +624,7 @@ export async function completeStage(studentId: string, stageNumber: number, resu
         
         let newMastery = existing?.mastery_level || 0;
         let wrongCount = existing?.wrong_count || 0;
-        let lastWrongAt = undefined;
+        let lastWrongAt: string | undefined = undefined;
         
         if (isWrong) {
           wrongCount += 1;
@@ -645,7 +652,7 @@ export async function completeStage(studentId: string, stageNumber: number, resu
       // Synchronize with wrong_words for reporting
       if (wrongWords.length > 0) {
          const { data: existingWrong } = await supabase.from('wrong_words').select('*').in('word_id', wrongWords).eq('student_id', studentId);
-         const wrongMap = new Map((existingWrong || []).map(w => [w.word_id, w]));
+         const wrongMap = new Map<string, any>((existingWrong || []).map((w: any) => [w.word_id, w]));
          
          const upsertWrong = wrongWords.map(wordId => {
            const existing = wrongMap.get(wordId);
@@ -662,8 +669,14 @@ export async function completeStage(studentId: string, stageNumber: number, resu
 
     // 4. Calculate coins & EXP rewards (only if passed)
     if (passed) {
-      // Fetch path data first to check for replay
-      const { data: pathData } = await supabase.from('learning_paths').select('coins, exp, total_exp, current_stage, streak_days, last_active_date').eq('student_id', studentId).single();
+      let pathData: any = null;
+      try {
+        const profRes = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);
+        if (profRes.ok) {
+          const profJson = await profRes.json();
+          pathData = profJson?.learningPath;
+        }
+      } catch {}
       
       const isReplay = pathData && stageNumber < (pathData.current_stage || 1);
 
@@ -709,25 +722,19 @@ export async function completeStage(studentId: string, stageNumber: number, resu
       earnedExp = Math.round(earnedExp);
 
       if (pathData) {
-        const newCoins = (pathData.coins || 0) + earnedCoins;
-        const newExp = (pathData.exp || 0) + earnedExp;
-        const newTotalExp = (pathData.total_exp || 0) + earnedExp;
-        const nextStageNum = Math.min(100, Math.max(pathData.current_stage || 1, stageNumber + 1));
-        const nextStreak = calculateStreak(pathData.last_active_date, pathData.streak_days || 0);
-
-        await supabase.from('learning_paths').update({
-          coins: newCoins, exp: newExp, total_exp: newTotalExp, current_stage: nextStageNum,
-          streak_days: nextStreak, last_active_date: new Date().toISOString()
-        }).eq('student_id', studentId);
-
-        await supabase.from('coins_transactions').insert([{ student_id: studentId, amount: earnedCoins, source: `STAGE_${stageNumber}_PASS` }]);
+        await fetch('/api/events/reward', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source: 'STAGE_PASS',
+            referenceId: `stage-${stageNumber}-${Date.now()}`,
+            coinsDelta: earnedCoins,
+            expDelta: earnedExp,
+          }),
+        }).catch(() => {});
       }
     } else {
-      const { data: failedPathData } = await supabase.from('learning_paths').select('streak_days, last_active_date').eq('student_id', studentId).maybeSingle();
-      await supabase.from('learning_paths').update({
-        streak_days: calculateStreak(failedPathData?.last_active_date || null, failedPathData?.streak_days || 0),
-        last_active_date: new Date().toISOString()
-      }).eq('student_id', studentId);
+      // Failed attempt handled by server
     }
 
     // 5. Background Analytics (Blocking to ensure data integrity before returning to dashboard)
@@ -736,7 +743,7 @@ export async function completeStage(studentId: string, stageNumber: number, resu
         // Bulk item analysis
         if (answeredWordIds.length > 0) {
           const { data: existingAnalysis } = await supabase.from('item_analysis').select('*').in('word_id', answeredWordIds);
-          const analysisMap = new Map((existingAnalysis || []).map(a => [a.word_id, a]));
+          const analysisMap = new Map<string, any>((existingAnalysis || []).map((a: any) => [a.word_id, a]));
           
           const upsertAnalysis = answeredWordIds.map(wordId => {
              const existing = analysisMap.get(wordId);
@@ -767,39 +774,31 @@ export async function completeStage(studentId: string, stageNumber: number, resu
           await supabase.from('item_analysis').upsert(upsertAnalysis, { onConflict: 'word_id' });
         }
 
-        // Analytics summary
-        const { data: analytics } = await supabase.from('analytics_summary').select('*').eq('student_id', studentId).maybeSingle();
-        const previousAttemptCount = analytics?.attempt_count || 0;
-        const nextAttemptCount = previousAttemptCount + 1;
-        const previousSuccessRate = Number(analytics?.success_rate || 0);
-        const nextSuccessRate = ((previousSuccessRate * previousAttemptCount + accuracy) / nextAttemptCount);
-        const addedTime = Math.round(responseTimeAvg * Math.max(1, totalQuestions));
-
-        const newPostTestScore = analytics?.posttest_score || 0;
-        const newLearningGain = analytics?.learning_gain || 0;
-        const newNormalizedGain = analytics?.normalized_gain || 0;
-
-        await supabase.from('analytics_summary').upsert({
-          student_id: studentId,
-          pretest_score: analytics?.pretest_score || 0,
-          posttest_score: newPostTestScore,
-          learning_gain: newLearningGain,
-          normalized_gain: newNormalizedGain,
-          success_rate: Number(nextSuccessRate.toFixed(2)),
-          attempt_count: nextAttemptCount,
-          total_time_on_task_sec: (analytics?.total_time_on_task_sec || 0) + addedTime,
-          last_updated_at: new Date().toISOString(),
-        }, { onConflict: 'student_id' });
+        let analytics: any = null;
+        try {
+          const profRes = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);
+          if (profRes.ok) {
+            const profJson = await profRes.json();
+            analytics = profJson?.analyticsSummary;
+          }
+        } catch {}
 
         // Failed attempts check
         if (!passed) {
           const { data: recentStageFailures } = await supabase.from('stage_results').select('passed').eq('user_id', studentId).eq('stage_number', stageNumber).order('created_at', { ascending: false }).limit(3);
           if (recentStageFailures?.length === 3 && recentStageFailures.every((attempt) => !attempt.passed)) {
-            const { data: studentData } = await supabase.from('students').select('classroom_id').eq('id', studentId).maybeSingle();
+            let classroomId: string | null = null;
+            try {
+              const profRes = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);
+              if (profRes.ok) {
+                const profJson = await profRes.json();
+                classroomId = profJson?.student?.classroom_id || null;
+              }
+            } catch {}
             const { data: existingAlert } = await supabase.from('intervention_alerts').select('id').eq('student_id', studentId).eq('alert_type', 'STAGE_FAIL_3X').eq('is_resolved', false).maybeSingle();
-            if (!existingAlert && studentData?.classroom_id) {
+            if (!existingAlert && classroomId) {
               await supabase.from('intervention_alerts').insert([{
-                student_id: studentId, classroom_id: studentData.classroom_id, alert_type: 'STAGE_FAIL_3X', alert_level: 'HIGH',
+                student_id: studentId, classroom_id: classroomId, alert_type: 'STAGE_FAIL_3X', alert_level: 'HIGH',
                 description: `ไม่ผ่านด่าน ${stageNumber} ติดต่อกัน 3 ครั้ง`, teacher_recommendation: 'ทบทวนคำศัพท์ใน Study Camp และฝึกคำที่ตอบผิดก่อนลองใหม่',
               }]);
             }
@@ -837,8 +836,14 @@ export async function completeStage(studentId: string, stageNumber: number, resu
 // 4. ADAPTIVE RANK UPDATER (ANALYZE PROGRESS AND SCALE SKILL LEVEL)
 export async function recalculateStudentRank(studentId: string) {
   try {
-    // 1. Fetch data for calculations
-    const { data: pathData } = await supabase.from('learning_paths').select('current_stage, streak_days, current_rank, rank_score').eq('student_id', studentId).single();
+    let pathData: any = null;
+    try {
+      const profRes = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);
+      if (profRes.ok) {
+        const profJson = await profRes.json();
+        pathData = profJson?.learningPath;
+      }
+    } catch {}
     if (!pathData) return;
     const currentRank = pathData.current_rank || 1;
     const currentScore = pathData.rank_score || 0;
@@ -951,11 +956,11 @@ export async function recalculateStudentRank(studentId: string) {
     }
 
     if (newRank !== currentRank || Math.abs(rankScore - currentScore) >= 0.5) {
-      await supabase.from('learning_paths').update({
-        current_rank: newRank,
-        rank_score: rankScore,
-        rank_updated_at: new Date().toISOString()
-      }).eq('student_id', studentId);
+      await fetch('/api/student/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentRank: newRank, rankScore }),
+      }).catch(() => {});
 
       if (newRank !== currentRank) {
         await supabase.from('rank_history').insert([{

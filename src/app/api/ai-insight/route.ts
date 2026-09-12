@@ -42,7 +42,9 @@ export async function POST(req: Request) {
     const insight = response.choices[0].message?.content || 'ไม่สามารถวิเคราะห์ข้อมูลได้ในขณะนี้';
 
     return NextResponse.json({ insight });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error?.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('AI Insight Error:', error);
     return NextResponse.json({ error: 'Failed to generate insight' }, { status: 500 });
   }

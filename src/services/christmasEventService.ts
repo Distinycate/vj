@@ -234,15 +234,17 @@ export async function finishChristmasAttempt(attemptId: string, studentId: strin
   }).eq('id', attemptId);
 
   if (coinsEarned > 0 || droppedTickets > 0 || expEarned > 0) {
-    const { data: path } = await supabase.from('learning_paths').select('coins, exp, total_exp, free_pull_tickets').eq('student_id', studentId).maybeSingle();
-    if (path) {
-      await supabase.from('learning_paths').update({
-        coins: Number(path.coins || 0) + coinsEarned,
-        exp: Number(path.exp || 0) + expEarned,
-        total_exp: (path.total_exp ?? path.exp ?? 0) + expEarned,
-        free_pull_tickets: Number(path.free_pull_tickets || 0) + droppedTickets,
-      }).eq('student_id', studentId);
-    }
+    await fetch('/api/events/reward', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source: 'CHRISTMAS_EVENT',
+        referenceId: attemptId,
+        coinsDelta: coinsEarned,
+        expDelta: expEarned,
+        ticketsDelta: droppedTickets,
+      }),
+    }).catch((err) => console.error('Failed to grant event reward:', err));
   }
 
   // Badges check (Snow Beginner, Gift Hunter, Christmas Master)

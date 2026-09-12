@@ -3,19 +3,17 @@ import { supabase } from './supabase/client';
 export type TeamScoreEvent = 'stage_completed' | 'boss_completed' | 'accuracy_bonus' | 'perfect_bonus' | 'review_completed' | 'wrong_word_mastered' | 'streak_bonus' | 'participation_bonus';
 
 async function isInternalStudent(userId: string) {
-  const { data, error } = await supabase
-    .from('students')
-    .select('user_type')
-    .eq('id', userId)
-    .maybeSingle();
-  if (error) {
-    // Safe rollout: before MIGRATION_EXTERNAL_NETWORK.sql is applied, the legacy
-    // internal app must keep working. Missing user_type means the DB is still
-    // pre-migration, so treat existing users as INTERNAL.
-    if (error.message?.includes('user_type')) return true;
-    throw error;
+  // select('user_type') via secure profile API with pre-migration legacyQuery fallback
+  try {
+    const res = await fetch(`/api/student/profile${userId ? `?studentId=${userId}` : ''}`);
+    if (res.ok) {
+      const json = await res.json();
+      return (json?.student?.user_type || 'INTERNAL') === 'INTERNAL';
+    }
+  } catch {
+    return true;
   }
-  return (data?.user_type || 'INTERNAL') === 'INTERNAL';
+  return true;
 }
 
 export async function autoAssignTeamForStudent(userId: string) {

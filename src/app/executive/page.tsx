@@ -50,17 +50,14 @@ export default function ExecutiveDashboard() {
     if (!executiveUser) return;
     async function loadData() {
       try {
-        const { count: sCount } = await supabase.from('students').select('*', { count: 'exact', head: true });
-        const { count: tCount } = await supabase.from('teachers').select('*', { count: 'exact', head: true });
-        setTotalStudents(sCount || 0);
-        setTotalTeachers(tCount || 0);
-
-        const { data: classData } = await supabase.from('classrooms').select('*, students(*, analytics_summary(*), learning_paths(*))');
-        
-        // Filter out non M.1 - M.3 rooms if any slipped through
-        const validClasses = (classData || []).filter(c => c.class_name.includes('ม.1') || c.class_name.includes('ม.2') || c.class_name.includes('ม.3'));
-        
-        setClassroomsData(validClasses);
+        const res = await fetch('/api/admin/analytics');
+        if (!res.ok) throw new Error('Failed to load analytics');
+        const data = await res.json();
+        if (data.success) {
+          setTotalStudents(data.totalStudents || 0);
+          setTotalTeachers(data.totalTeachers || 0);
+          setClassroomsData(data.classroomsData || []);
+        }
       } catch (e) {
         console.error(e);
       } finally {

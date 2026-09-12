@@ -22,23 +22,12 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
     async function fetchAllStudents() {
       setIsFetchingAll(true);
       try {
-        const saved = localStorage.getItem('vocab_journey_teacher');
-        const teacher = saved ? JSON.parse(saved) : null;
-        if (!teacher) return;
-        
-        let query = supabase.from('students').select('*, classrooms(class_name), analytics_summary(*), learning_paths(*)');
-        
-        if (teacher.role === 'TEACHER') {
-          // Get classrooms for this teacher
-          const { data: classes } = await supabase.from('classrooms').select('id').eq('teacher_id', teacher.id);
-          if (classes && classes.length > 0) {
-            query = query.in('classroom_id', classes.map(c => c.id));
+        const res = await fetch('/api/admin/students');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.students) {
+            setAllStudents(json.students);
           }
-        }
-        
-        const { data } = await query;
-        if (data) {
-          setAllStudents(data);
         }
       } catch (err) {
         console.error("Error fetching all students:", err);

@@ -168,7 +168,7 @@ export function useGameEngine() {
         console.warn('Server attempt initiation error, using fallback:', e);
       }
 
-      let generatedQuestions = [];
+      let generatedQuestions: any[] = [];
       if (isBossMode) {
         generatedQuestions = await generateWeaknessBossQuestions(student.id, 20);
       } else {
@@ -449,9 +449,12 @@ export function useGameEngine() {
 
       setPassReport(completeReport);
 
-      supabase.from('learning_paths').select('*').eq('student_id', student.id).single().then(({ data }) => {
-        if (data) setProgress(data);
-      }, e => console.error(e));
+      fetch('/api/student/profile')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data?.learningPath) setProgress(data.learningPath);
+        })
+        .catch((e) => console.error(e));
       
       if (currentStageId) {
         supabase.from('stage_results').select('*').eq('user_id', student.id).eq('stage_number', stageNum).order('created_at', { ascending: true }).then(({ data }) => {

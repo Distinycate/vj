@@ -53,22 +53,26 @@ export default function EditStudentModal({
     try {
       const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
       
-      const { data, error: updateError } = await supabase
-        .from('students')
-        .update({
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          student_name: fullName,
-          grade_level: gradeLevel.trim(),
-          room_number: roomNumber.trim(),
-          student_id: studentId.trim(),
-          is_skull: isSkull
-        })
-        .eq('id', student.id)
-        .select()
-        .single();
-        
-      if (updateError) throw updateError;
+      const res = await fetch('/api/admin/students', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: student.id,
+          updates: {
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            student_name: fullName,
+            grade_level: gradeLevel.trim(),
+            room_number: roomNumber.trim(),
+            student_id: studentId.trim(),
+            is_skull: isSkull,
+          },
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update student');
+      const data = json.student;
       
       onSave(data);
     } catch (err: any) {

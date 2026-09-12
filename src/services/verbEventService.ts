@@ -60,12 +60,20 @@ export async function startAttempt(eventId: string, studentId: string) {
     .order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (existing) return existing.id;
 
-  const { data: student } = await supabase.from('students').select('classroom_id').eq('id', studentId).maybeSingle();
-  if (!student) throw new Error('ไม่พบข้อมูลนักเรียน');
+  let classroomId: string | null = null;
+  try {
+    const res = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);
+    if (res.ok) {
+      const json = await res.json();
+      classroomId = json?.student?.classroom_id || null;
+    }
+  } catch (e) {
+    console.error("Failed to load student profile:", e);
+  }
   const { data, error } = await supabase.from('event_attempts').insert({
     event_id: eventId,
     user_id: studentId,
-    classroom_id: student.classroom_id,
+    classroom_id: classroomId,
     status: 'in_progress',
   }).select('id').single();
   if (error) throw error;
@@ -84,9 +92,9 @@ export async function getNextQuestion(eventId: string, studentId: string) {
   const phase = practiced < 20 ? 1 : practiced < 50 ? 2 : 3;
   const phaseLimit = phase === 1 ? Math.min(20, verbs.length) : phase === 2 ? Math.min(50, verbs.length) : verbs.length;
   const pool = verbs.slice(0, phaseLimit);
-  const levels = new Map((mastery || []).map((row) => [row.verb_id, row.mastery_level]));
-  const weakestLevel = Math.min(...pool.map((verb) => levels.get(verb.id) ?? 0));
-  const weakPool = pool.filter((verb) => (levels.get(verb.id) ?? 0) === weakestLevel);
+  const levels = new Map<any, number>((mastery || []).map((row: any) => [row.verb_id, Number(row.mastery_level) || 0]));
+  const weakestLevel = Math.min(...pool.map((verb: any) => levels.get(verb.id) ?? 0));
+  const weakPool = pool.filter((verb: any) => (levels.get(verb.id) ?? 0) === weakestLevel);
   const verb = weakPool[Math.floor(Math.random() * weakPool.length)];
   const generated = generateVerbQuestion(verb, phase, levels.get(verb.id) ?? 0);
   return {
@@ -206,15 +214,17 @@ export async function finishAttempt(attemptId: string, eventId: string, studentI
   }
 
   if (coinsEarned > 0 || droppedTickets > 0 || expEarned > 0) {
-    const { data: path } = await supabase.from('learning_paths').select('coins, exp, total_exp, free_pull_tickets').eq('student_id', studentId).maybeSingle();
-    if (path) {
-      await supabase.from('learning_paths').update({
-        coins: Number(path.coins || 0) + coinsEarned,
-        exp: Number(path.exp || 0) + expEarned,
-        total_exp: (path.total_exp ?? path.exp ?? 0) + expEarned,
-        free_pull_tickets: Number(path.free_pull_tickets || 0) + droppedTickets,
-      }).eq('student_id', studentId);
-    }
+    await fetch('/api/events/reward', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source: 'VERB_EVENT',
+        referenceId: attemptId,
+        coinsDelta: coinsEarned,
+        expDelta: expEarned,
+        ticketsDelta: droppedTickets,
+      }),
+    }).catch((err) => console.error('Failed to grant event reward:', err));
   }
   return { accuracy, coinsEarned, expEarned, score: Number(attempt.score || 0), grade, droppedTickets };
 }

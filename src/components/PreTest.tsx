@@ -43,7 +43,7 @@ export default function PreTest({
       text: getVocabularyField(correctWord, 'meaning_th'),
       is_correct: true,
     };
-    const wrongChoices: QuizChoice[] = distractors.map((word) => ({
+    const wrongChoices: QuizChoice[] = (distractors as any[]).map((word: any) => ({
       word_id: word.id,
       text: getVocabularyField(word, 'meaning_th'),
       is_correct: false,
@@ -198,53 +198,22 @@ export default function PreTest({
     }
 
     try {
-      // 1. Log to pre_tests table
-      await supabase.from('pre_tests').insert([{
-        student_id: student.id,
-        score: finalScore,
-        total_questions: questions.length,
-        time_spent_sec: duration
-      }]);
+      // 1. Submit pre-test via secure server assessment endpoint
+      const assessRes = await fetch('/api/student/assessment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'PRE_TEST',
+          score: finalScore,
+          totalQuestions: questions.length,
+          timeSpentSec: duration,
+        }),
+      });
 
-      const newCount = pretestCount + 1;
+      const assessJson = await assessRes.json();
+      const newCount = assessJson.count ?? (pretestCount + 1);
 
-      // 2. Only update learning_paths and dashboard unlocking if they complete all 5 pretests
       if (newCount >= 5) {
-        // Update learning paths
-        await supabase
-          .from('learning_paths')
-          .update({
-            initial_rank: newRank,
-            current_rank: newRank,
-            current_stage: newStage,
-            last_active_date: new Date().toISOString()
-          })
-          .eq('student_id', student.id);
-
-        const previousDuration = previousPretests.reduce(
-          (sum, attempt) => sum + Number(attempt.time_spent_sec || 0),
-          0
-        );
-        const { data: analytics } = await supabase
-          .from('analytics_summary')
-          .select('*')
-          .eq('student_id', student.id)
-          .maybeSingle();
-
-        await supabase.from('analytics_summary').upsert({
-          student_id: student.id,
-          pretest_score: averageScore,
-          posttest_score: analytics?.posttest_score || 0,
-          learning_gain: analytics?.learning_gain || 0,
-          normalized_gain: analytics?.normalized_gain || 0,
-          success_rate: analytics?.success_rate || 0,
-          attempt_count: analytics?.attempt_count || 0,
-          total_time_on_task_sec:
-            (analytics?.total_time_on_task_sec || 0) +
-            previousDuration +
-            duration,
-          last_updated_at: new Date().toISOString(),
-        }, { onConflict: 'student_id' });
 
         // Ensure stage is unlocked
         const { data: stageRecord } = await supabase

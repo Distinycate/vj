@@ -60,20 +60,17 @@ export function getRpcErrorMessage(message?: string) {
 }
 
 async function assertInternalCardUser(studentId: string) {
-  const { data, error } = await supabase
-    .from('students')
-    .select('user_type')
-    .eq('id', studentId)
-    .maybeSingle();
-  if (error) {
-    // Safe rollout while the external-network migration is being applied:
-    // pre-migration databases have no user_type column, and all existing users
-    // are internal by definition.
-    if (error.message?.includes('user_type')) return;
-    throw error;
-  }
-  if ((data?.user_type || 'INTERNAL') === 'EXTERNAL') {
-    throw new Error('บัญชีโรงเรียนเครือข่ายไม่สามารถใช้ระบบการ์ดหรือกาชาของโรงเรียนภายในได้');
+  try {
+    const res = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);
+    if (res.ok) {
+      const json = await res.json();
+      if ((json?.student?.user_type || 'INTERNAL') === 'EXTERNAL') {
+        throw new Error('บัญชีโรงเรียนเครือข่ายไม่สามารถใช้ระบบการ์ดหรือกาชาของโรงเรียนภายในได้');
+      }
+    }
+  } catch (err: any) {
+    if (err?.message?.includes('บัญชีโรงเรียนเครือข่าย')) throw err;
+    // pre-migration databases have no user_type column
   }
 }
 

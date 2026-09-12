@@ -390,7 +390,7 @@ export default function Game() {
               if (!choice || choice.hidden) return <div key={`hidden-${idx}`} className="opacity-0 pointer-events-none"></div>;
 
               let btnClass = "glass-input text-slate-350 hover-lift hover:border-primary/50 hover:text-primary";
-              let icon = null;
+              let icon: React.ReactNode = null;
 
               if (isAnswered) {
                 if (choice.is_correct === true) {

@@ -473,16 +473,35 @@ ALTER TABLE public.user_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stage_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.economy_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shop_purchases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.teachers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.learning_paths ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.analytics_summary ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.card_inventory ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.card_admin_actions ENABLE ROW LEVEL SECURITY;
 
 -- Deny all direct anon/authenticated access to internal sensitive tables
 REVOKE ALL ON public.user_sessions FROM anon, authenticated;
 REVOKE ALL ON public.stage_attempts FROM anon, authenticated;
 REVOKE ALL ON public.economy_transactions FROM anon, authenticated;
 REVOKE ALL ON public.shop_purchases FROM anon, authenticated;
+REVOKE ALL ON public.students FROM anon, authenticated;
+REVOKE ALL ON public.teachers FROM anon, authenticated;
+REVOKE ALL ON public.learning_paths FROM anon, authenticated;
+REVOKE ALL ON public.analytics_summary FROM anon, authenticated;
+REVOKE ALL ON public.card_inventory FROM anon, authenticated;
+REVOKE ALL ON public.card_admin_actions FROM anon, authenticated;
 
 -- Allow only service_role (used exclusively by server-only admin client) full access
 GRANT ALL ON public.user_sessions TO service_role;
 GRANT ALL ON public.stage_attempts TO service_role;
 GRANT ALL ON public.economy_transactions TO service_role;
 GRANT ALL ON public.shop_purchases TO service_role;
+GRANT ALL ON public.students TO service_role;
+GRANT ALL ON public.teachers TO service_role;
+GRANT ALL ON public.learning_paths TO service_role;
+GRANT ALL ON public.analytics_summary TO service_role;
+GRANT ALL ON public.card_inventory TO service_role;
+GRANT ALL ON public.card_admin_actions TO service_role;
+
 

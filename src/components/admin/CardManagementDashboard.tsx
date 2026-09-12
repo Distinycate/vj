@@ -126,57 +126,27 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     if (!classroomId) return;
     setLoading(true);
     setMessage('');
-    const studentsResult = await supabase
-      .from('students')
-      .select('id, student_id, student_name, classroom_id, learning_paths(free_pull_tickets, coins)')
-      .eq('classroom_id', classroomId)
-      .eq('is_active', true)
-      .order('student_name');
-    if (studentsResult.error) {
-      setMessage(studentsResult.error.message);
-      setLoading(false);
-      return;
-    }
+    try {
+      const res = await fetch(`/api/admin/cards?classroomId=${classroomId}`);
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to load card management data');
+      }
+      const data = await res.json();
+      const rawStudents = data.students || [];
+      if (rawStudents.length === 0) {
+        setStudents([]);
+        setInventory([]);
+        setActions([]);
+        setLoading(false);
+        return;
+      }
 
-    const rawStudents = studentsResult.data || [];
-    const studentIds = rawStudents.map((student) => student.id);
-    if (studentIds.length === 0) {
-      setStudents([]);
-      setInventory([]);
-      setActions([]);
-      setLoading(false);
-      return;
-    }
-
-    const [inventoryResult, pullsResult, actionsResult] = await Promise.all([
-      supabase
-        .from('card_inventory')
-        .select('id, student_id, card_id, quantity, reserved_quantity, cards(*)')
-        .in('student_id', studentIds)
-        .gt('quantity', 0),
-      supabase
-        .from('gacha_pulls')
-        .select('id, student_id')
-        .in('student_id', studentIds),
-      supabase
-        .from('card_admin_actions')
-        .select('*, cards(name, image_url, rarity), teachers(name), students(student_name)')
-        .in('student_id', studentIds)
-        .order('created_at', { ascending: false })
-        .limit(500),
-    ]);
-    const dataError = inventoryResult.error || pullsResult.error || actionsResult.error;
-    if (dataError) {
-      setMessage(`โหลดข้อมูลการ์ดไม่สำเร็จ: ${dataError.message}`);
-      setLoading(false);
-      return;
-    }
-
-    const inventoryRows = inventoryResult.data || [];
-    const pullRows = pullsResult.data || [];
-    const actionRows = actionsResult.data || [];
-    setInventory(inventoryRows);
-    setActions(actionRows);
+      const inventoryRows = data.inventory || [];
+      const pullRows = data.pulls || [];
+      const actionRows = data.actions || [];
+      setInventory(inventoryRows);
+      setActions(actionRows);
 
     setStudents(rawStudents.map((student) => {
       const studentInventory = inventoryRows.filter((row) => row.student_id === student.id);
@@ -199,6 +169,10 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
       };
     }));
     setLoading(false);
+  } catch (err: any) {
+    setMessage(err.message || 'Failed to load');
+    setLoading(false);
+  }
   }, [classroomId]);
 
   useEffect(() => {

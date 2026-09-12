@@ -91,7 +91,7 @@ export function filterDistractors(params: {
 
   const targetValue = normalizeAnswer(getVocabularyField(targetWord, answerField));
   const seen = new Set<string>([targetValue]);
-  const result = [];
+  const result: any[] = [];
 
   for (const candidate of candidates) {
     if (!candidate) continue;

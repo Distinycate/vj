@@ -149,8 +149,8 @@ export function validateQuestion(question: any): QuestionValidationResult {
 }
 
 export function validateQuestionSet(questions: any[]) {
-  const validQuestions = [];
-  const rejectedQuestions = [];
+  const validQuestions: any[] = [];
+  const rejectedQuestions: any[] = [];
 
   for (const question of questions) {
     const result = validateQuestion(question);

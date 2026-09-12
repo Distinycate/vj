@@ -137,11 +137,16 @@ export default function Dashboard() {
       }
 
       // 3. Fetch Learning Path with new Avatar properties
-      const { data: pathData } = await supabase
-        .from('learning_paths')
-        .select('*')
-        .eq('student_id', student.id)
-        .single();
+      let pathData: any = null;
+      try {
+        const profileRes = await fetch('/api/student/profile');
+        if (profileRes.ok) {
+          const profileJson = await profileRes.json();
+          pathData = profileJson.learningPath;
+        }
+      } catch (e) {
+        console.error("Failed to fetch student profile", e);
+      }
       
       if (pathData) {
         if (!student.is_demo_account && !useDemoStore.getState().isDemoMode) {
@@ -220,21 +225,21 @@ export default function Dashboard() {
       setStageStars(starsByStage);
 
       // 4. Fetch Leaderboard for Classroom
-      const { data: leadData } = await supabase
-        .from('students')
-        .select('id, student_name, learning_paths(coins, exp, total_exp, current_stage, avatar_seed, avatar_style)')
-        .eq('classroom_id', student.classroom_id);
+      let leadData: any[] = [];
+      try {
+        const lbRes = await fetch('/api/student/leaderboard');
+        if (lbRes.ok) {
+          const lbJson = await lbRes.json();
+          leadData = lbJson.leaderboard || [];
+        }
+      } catch (e) {
+        console.error("Failed to fetch leaderboard", e);
+      }
       
-      if (leadData) {
-        const { data: cardStatusData } = await supabase
-          .from('card_inventory')
-          .select('student_id, quantity, cards(rarity, effect_type)')
-          .in('student_id', leadData.map((row) => row.id));
+      if (leadData && leadData.length > 0) {
         const cardsByStudent = new Map<string, any[]>();
-        for (const row of cardStatusData || []) {
-          const current = cardsByStudent.get(row.student_id) || [];
-          current.push(row);
-          cardsByStudent.set(row.student_id, current);
+        for (const row of leadData) {
+          cardsByStudent.set(row.id, row.cards || []);
         }
 
         let totalCoins = 0;
@@ -388,11 +393,13 @@ export default function Dashboard() {
       const styles = ['adventurer', 'fun-emoji', 'bottts', 'micah'];
       const randomStyle = styles[Math.floor(Math.random() * styles.length)];
 
-      await supabase
-        .from('learning_paths')
-        .update({ avatar_seed: newSeed, avatar_style: randomStyle })
-        .eq('student_id', student.id);
-      
+      const patchRes = await fetch('/api/student/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatarSeed: newSeed, avatarStyle: randomStyle }),
+      });
+      if (!patchRes.ok) throw new Error('Failed to update avatar');
+
       setProgress({ ...progress, avatar_seed: newSeed, avatar_style: randomStyle });
     } catch (e) {
       console.error("Error randomizing avatar:", e);
@@ -455,23 +462,24 @@ export default function Dashboard() {
 
         if (rpcError) {
           console.error("Failed to claim quest via RPC:", rpcError);
-          // Fallback if RPC doesn't exist
-          const { error: dbError } = await supabase
-             .from('learning_paths')
-             .update({
-                 coins: updatedCoins + rewardCoins,
-                 free_pull_tickets: updatedTickets + rewardTickets
-             })
-             .eq('student_id', student.id);
-             
-          if (dbError) {
-             console.error("Failed to claim via fallback DB update", dbError);
-             alert("เกิดข้อผิดพลาดในการรับรางวัล กรุณาลองใหม่อีกครั้ง");
-             return;
+          const rewardRes = await fetch('/api/events/reward', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              source: 'DAILY_QUEST',
+              referenceId: `quest-${questId}-${new Date().toISOString().slice(0, 10)}`,
+              coinsDelta: rewardCoins,
+              ticketsDelta: rewardTickets,
+            }),
+          });
+          if (rewardRes.ok) {
+            updatedCoins += rewardCoins;
+            updatedTickets += rewardTickets;
+            claimSuccess = true;
+          } else {
+            alert("เกิดข้อผิดพลาดในการรับรางวัล กรุณาลองใหม่อีกครั้ง");
+            return;
           }
-          updatedCoins += rewardCoins;
-          updatedTickets += rewardTickets;
-          claimSuccess = true;
         } else {
           updatedCoins = rpcData.new_coins;
           updatedTickets = rpcData.new_tickets;

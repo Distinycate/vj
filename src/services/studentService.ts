@@ -34,15 +34,11 @@ export const studentService = {
   /**
    * Fetch Learning Path
    */
-  async getLearningPath(studentId: string) {
-    const { data, error } = await supabase
-      .from('learning_paths')
-      .select('*')
-      .eq('student_id', studentId)
-      .single();
-
-    if (error) throw error;
-    return data;
+  async getLearningPath(studentId?: string) {
+    const res = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);
+    if (!res.ok) throw new Error('Failed to fetch learning path');
+    const data = await res.json();
+    return data.learningPath;
   },
 
   /**

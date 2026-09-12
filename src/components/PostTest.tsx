@@ -41,7 +41,7 @@ export default function PostTest() {
       text: getVocabularyField(correctWord, 'meaning_th'),
       is_correct: true,
     };
-    const wrongChoices: QuizChoice[] = distractors.map((word) => ({
+    const wrongChoices: QuizChoice[] = (distractors as any[]).map((word: any) => ({
       word_id: word.id,
       text: getVocabularyField(word, 'meaning_th'),
       is_correct: false,
@@ -184,53 +184,21 @@ export default function PostTest() {
     }
 
     try {
-      // 1. Log to post_tests table
-      await supabase.from('post_tests').insert([{
-        student_id: student.id,
-        score: finalScore,
-        total_questions: questions.length,
-        time_spent_sec: duration,
-      }]);
+      await fetch('/api/student/assessment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'POST_TEST',
+          score: finalScore,
+          totalQuestions: questions.length,
+          timeSpentSec: duration,
+        }),
+      });
 
       const newCount = posttestCount + 1;
+      const posttestScoreNormalized = finalScore;
 
-      // 2. Update analytics_summary with post-test results when all rounds are completed
       if (newCount >= POSTTEST_REQUIRED_ROUNDS) {
-        const { data: analytics } = await supabase
-          .from('analytics_summary')
-          .select('*')
-          .eq('student_id', student.id)
-          .maybeSingle();
-
-        const pretestScore = analytics?.pretest_score || 0;
-        const totalQuestions = questions.length || POSTTEST_QUESTION_COUNT;
-        
-        // Convert to percentage scale matching pretest (out of 25)
-        const posttestScoreNormalized = averageScore;
-
-        // Calculate Learning Gain (raw and normalized)
-        const learningGain = posttestScoreNormalized - pretestScore;
-        const normalizedGain = calculateNormalizedGain(pretestScore, posttestScoreNormalized, totalQuestions);
-
-        const previousDuration = previousPosttests.reduce(
-          (sum, attempt) => sum + Number(attempt.time_spent_sec || 0),
-          0
-        );
-
-        await supabase.from('analytics_summary').upsert({
-          student_id: student.id,
-          pretest_score: analytics?.pretest_score || 0,
-          posttest_score: posttestScoreNormalized,
-          learning_gain: Number(learningGain.toFixed(2)),
-          normalized_gain: normalizedGain,
-          success_rate: analytics?.success_rate || 0,
-          attempt_count: analytics?.attempt_count || 0,
-          total_time_on_task_sec:
-            (analytics?.total_time_on_task_sec || 0) +
-            previousDuration +
-            duration,
-          last_updated_at: new Date().toISOString(),
-        }, { onConflict: 'student_id' });
 
         setProgress({
           ...progress,

@@ -6,18 +6,16 @@ import {
   submitAnswer, 
   finishAttempt 
 } from '../../../services/verbEventService';
-import { supabase } from '../../../utils/supabase/client'; // Server actions can run server-side logic
-
-
+import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 
 async function getRealEventId() {
-  const { data } = await supabase.from('events').select('id').eq('slug', 'verb-master').single();
+  const { data } = await supabaseAdmin.from('events').select('id').eq('slug', 'verb-master').single();
   return data?.id;
 }
 
 async function requireStudent(studentId: string) {
   if (!studentId) throw new Error('กรุณาเข้าสู่ระบบนักเรียนอีกครั้ง');
-  const { data } = await supabase.from('students').select('id').eq('id', studentId).maybeSingle();
+  const { data } = await supabaseAdmin.from('students').select('id').eq('id', studentId).maybeSingle();
   if (!data) throw new Error('ไม่พบข้อมูลนักเรียน');
   return data.id;
 }
@@ -82,13 +80,13 @@ import verbData from '../../../data/verb-master-words.json';
 
 export async function actionSetupVerbMasterEvent() {
   try {
-    const { data: existingEvent } = await supabase
+    const { data: existingEvent } = await supabaseAdmin
       .from('events')
       .select('id, status')
       .eq('slug', 'verb-master')
       .maybeSingle();
 
-    const { data: event, error: eventError } = await supabase
+    const { data: event, error: eventError } = await supabaseAdmin
       .from('events')
       .upsert({
         ...(existingEvent?.id ? { id: existingEvent.id } : {}),
@@ -115,7 +113,7 @@ export async function actionSetupVerbMasterEvent() {
       is_active: true
     }));
 
-    const { error: verbsError } = await supabase
+    const { error: verbsError } = await supabaseAdmin
       .from('event_verbs')
       .upsert(formattedVerbs, { onConflict: 'event_id,base_form' });
 

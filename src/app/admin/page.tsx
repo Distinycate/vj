@@ -163,8 +163,9 @@ export default function AdminPage() {
       return;
     }
     try {
-      const { error } = await supabase.from('students').delete().eq('id', studentId);
-      if (error) throw error;
+      const res = await fetch(`/api/admin/students?studentId=${studentId}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to delete student');
       setStudentsList(prev => prev.filter(s => s.id !== studentId));
       alert(`ลบข้อมูลนักเรียน ${studentName} เรียบร้อยแล้ว`);
     } catch (err: any) {
@@ -177,8 +178,13 @@ export default function AdminPage() {
       return;
     }
     try {
-      const { error } = await supabase.from('students').update({ is_verified: true }).eq('id', studentId);
-      if (error) throw error;
+      const res = await fetch('/api/admin/students', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, updates: { is_verified: true } }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to verify student');
       setStudentsList(prev => prev.map(s => s.id === studentId ? { ...s, is_verified: true } : s));
       alert(`ยืนยันตัวตนนักเรียน ${studentName} เรียบร้อยแล้ว`);
     } catch (err: any) {
@@ -208,12 +214,18 @@ export default function AdminPage() {
         setClassrooms(validClasses);
         setSelectedClassroom(validClasses[0].id);
 
-        const { data: countRows } = await supabase
-          .from('students')
-          .select('id, classroom_id')
-          .in('classroom_id', validClasses.map(c => c.id));
+        let countRows: any[] = [];
+        try {
+          const res = await fetch('/api/admin/students');
+          if (res.ok) {
+            const json = await res.json();
+            countRows = json.students || [];
+          }
+        } catch (e) {
+          console.error("Failed to load student counts", e);
+        }
 
-        const counts = (countRows || []).reduce((acc, studentRow) => {
+        const counts = countRows.reduce((acc, studentRow) => {
           if (studentRow.classroom_id) {
             acc[studentRow.classroom_id] = (acc[studentRow.classroom_id] || 0) + 1;
           }
@@ -238,12 +250,18 @@ export default function AdminPage() {
   useEffect(() => {
     if (!teacher || !selectedClassroom) return;
     async function loadClassroomData() {
-      const { data: students } = await supabase
-        .from('students')
-        .select('*, classrooms(class_name), analytics_summary(*), learning_paths(*)')
-        .eq('classroom_id', selectedClassroom);
+      let students: any[] = [];
+      try {
+        const res = await fetch(`/api/admin/students?classroomId=${selectedClassroom}`);
+        if (res.ok) {
+          const json = await res.json();
+          students = json.students || [];
+        }
+      } catch (e) {
+        console.error("Failed to load classroom students", e);
+      }
       
-      if (students) setStudentsList(students);
+      setStudentsList(students);
 
       const studentIds = students?.map(s => s.id) || [];
       if (studentIds.length > 0) {

@@ -39,19 +39,21 @@ export default function ExternalNetworkAdminPage() {
   async function loadRows() {
     setLoading(true);
     setError('');
-    const { data, error: queryError } = await supabase
-      .from('students')
-      .select('id, student_name, username, school_name, grade_level, created_at, learning_paths(current_stage), analytics_summary(success_rate)')
-      .eq('user_type', 'EXTERNAL')
-      .order('created_at', { ascending: false });
-
-    if (queryError) {
-      setError(queryError.message);
+    try {
+      // Queries external network students (.eq('user_type', 'EXTERNAL')) via secure API
+      const res = await fetch('/api/admin/students?userType=EXTERNAL');
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to load external network students');
+      }
+      const json = await res.json();
+      setRows((json.students || []) as ExternalStudentRow[]);
+    } catch (err: any) {
+      setError(err.message || 'Error loading data');
       setRows([]);
-    } else {
-      setRows((data || []) as ExternalStudentRow[]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => {

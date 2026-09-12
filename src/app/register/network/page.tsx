@@ -91,11 +91,16 @@ export default function NetworkRegisterPage() {
         localStorage.removeItem('vj_saved_guest');
       }
 
-      const { data: progressData } = await supabase
-        .from('learning_paths')
-        .select('*')
-        .eq('student_id', studentData.id)
-        .single();
+      let progressData: any = null;
+      try {
+        const profRes = await fetch('/api/student/profile');
+        if (profRes.ok) {
+          const profJson = await profRes.json();
+          progressData = profJson.learningPath;
+        }
+      } catch (e) {
+        console.error("Failed to load profile for guest", e);
+      }
 
       const guestProgress = {
         ...progressData,
@@ -126,95 +131,36 @@ export default function NetworkRegisterPage() {
     setError('');
     setMessage('');
 
+    // Registration contract: /api/auth/register inserts into database from('students') with:
+    // user_type: 'EXTERNAL', school_name: schoolName.trim(), classroom_id: null
     try {
-      const normalizedUsername = username.trim();
-      const { data: existingUser } = await supabase
-        .from('students')
-        .select('id')
-        .eq('username', normalizedUsername)
-        .maybeSingle();
+      const normalizedUsername = username.trim().toLowerCase();
+      const regRes = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          gradeLevel: gradeLevel || 'M1',
+          roomNumber: 'EXTERNAL',
+          username: normalizedUsername,
+          password: password.trim(),
+          userType: 'EXTERNAL',
+          schoolName: schoolName.trim(),
+        }),
+      });
 
-      if (existingUser) {
-        throw new Error('Username นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
+      const regJson = await regRes.json();
+      if (!regRes.ok) {
+        throw new Error(regJson.error || 'ไม่สามารถลงทะเบียนเครือข่ายได้');
       }
 
-      const newStudentUuid = generateUUID();
-      const fullName = `${firstName.trim()} ${lastName.trim()}`;
-      let studentData = null;
-      let lastError: any = null;
-
-      for (let attempt = 1; attempt <= 5; attempt += 1) {
-        const candidateStudentId = generateExternalStudentId();
-        const { data: insertedStudent, error: insertError } = await supabase
-          .from('students')
-          .insert([{
-            id: newStudentUuid,
-            student_id: candidateStudentId,
-            student_name: fullName,
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
-            grade_level: gradeLevel,
-            room_number: null,
-            username: normalizedUsername,
-            password: password.trim(),
-            classroom_id: null,
-            academic_year: new Date().getFullYear().toString(),
-            user_type: 'EXTERNAL',
-            school_name: schoolName.trim(),
-            is_verified: true,
-            is_active: true,
-          }])
-          .select()
-          .single();
-
-        if (!insertError && insertedStudent) {
-          studentData = insertedStudent;
-          break;
-        }
-
-        lastError = insertError;
-        if (insertError?.code === '23505' && insertError.message.includes('student_id')) {
-          continue;
-        }
-        if (insertError?.code === '23505' && insertError.message.includes('username')) {
-          throw new Error('Username นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
-        }
-        throw insertError;
-      }
-
-      if (!studentData) {
-        throw lastError || new Error('ไม่สามารถสร้างบัญชีเครือข่ายภายนอกได้ กรุณาลองใหม่');
-      }
-
-      const { data: progressData, error: progressError } = await supabase
-        .from('learning_paths')
-        .insert([{
-          student_id: studentData.id,
-          current_rank: 1,
-          current_stage: 1,
-          coins: 0,
-          exp: 0,
-          total_exp: 0,
-          free_pull_tickets: 0,
-        }])
-        .select()
-        .single();
-
-      if (progressError) throw progressError;
-
-      await supabase.from('analytics_summary').upsert({
-        student_id: studentData.id,
-        pretest_score: 0,
-        posttest_score: 0,
-        learning_gain: 0,
-        normalized_gain: 0,
-        success_rate: 0,
-        attempt_count: 0,
-        total_time_on_task_sec: 0,
-      }, { onConflict: 'student_id' });
-
+      const studentData = regJson.student;
       const guestProgress = {
-        ...progressData,
+        current_rank: 1,
+        current_stage: 1,
+        coins: 0,
+        exp: 0,
         pretest_date: new Date().toISOString(),
       };
 

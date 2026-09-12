@@ -43,28 +43,29 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
       setLoading(true);
       setLoadError('');
 
-      const profileResult = await supabase
-        .from('students')
-        .select('*, classrooms(class_name), analytics_summary(*), learning_paths(*)')
-        .eq('id', student.id)
-        .single();
-      if (profileResult.error) {
-        setLoadError(profileResult.error.message);
+      const profileRes = await fetch(`/api/student/profile?studentId=${student.id}`);
+      if (!profileRes.ok) {
+        setLoadError('Failed to load student profile');
         setLoading(false);
         return;
       }
+      const profileData = await profileRes.json();
+      // Profile includes analytics_summary(*) and learning_paths(*) via /api/student/profile
+      const studentProfile = {
+        ...profileData.student,
+        analytics_summary: profileData.analyticsSummary,
+        learning_paths: profileData.learningPath,
+      };
 
-      const classroomId = profileResult.data.classroom_id;
-      const { data: classmates, error: classmatesError } = await supabase
-        .from('students')
-        .select('id')
-        .eq('classroom_id', classroomId);
-      if (classmatesError) {
-        setLoadError(classmatesError.message);
-        setLoading(false);
-        return;
+      const classroomId = studentProfile.classroom_id;
+      let classStudentIds: string[] = [];
+      if (classroomId) {
+        const classRes = await fetch(`/api/admin/students?classroomId=${classroomId}`);
+        if (classRes.ok) {
+          const classJson = await classRes.json();
+          classStudentIds = (classJson.students || []).map((item: any) => item.id);
+        }
       }
-      const classStudentIds = (classmates || []).map((item) => item.id);
 
       const [attemptResult, classAttemptResult, wrongResult, classWrongResult, pretestResult, posttestResult] = await Promise.all([
         supabase
@@ -95,7 +96,7 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
 
       const error = attemptResult.error || classAttemptResult.error || wrongResult.error || classWrongResult.error || pretestResult.error || posttestResult.error;
       if (error) setLoadError(error.message);
-      setProfile(profileResult.data);
+      setProfile(studentProfile);
       setAttempts(attemptResult.data || []);
       setClassAttempts(classAttemptResult.data || []);
       setWrongWords(wrongResult.data || []);

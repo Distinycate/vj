@@ -118,53 +118,30 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       return;
     }
 
-    let targetQuery = supabase
-      .from('students')
-      .select('id, student_name, classroom_id, classrooms(class_name)')
-      .neq('id', student.id)
-      .eq('is_active', true)
-      .order('student_name');
-    if (student.school_id) targetQuery = targetQuery.eq('school_id', student.school_id);
-
-    const [inventoryResult, schoolmatesResult, incomingResult, pathResult] = await Promise.all([
-      supabase
-        .from('card_inventory')
-        .select('id, quantity, reserved_quantity, cards(*)')
-        .eq('student_id', student.id)
-        .gt('quantity', 0),
-      targetQuery,
-      supabase
-        .from('card_logs')
-        .select('*, attacker:attacker_id(student_name), played_card:played_card_id(*), counter_card:counter_card_id(*)')
-        .eq('target_id', student.id)
-        .eq('status', 'PENDING') // Just in case, though not strictly needed anymore
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('learning_paths')
-        .select('*')
-        .eq('student_id', student.id)
-        .single(),
-    ]);
-
-    const loadError = inventoryResult.error || schoolmatesResult.error || incomingResult.error;
-    if (loadError) {
-      setMessage(`โหลดศูนย์การ์ดไม่สำเร็จ: ${loadError.message}`);
+    try {
+      // /api/student/cards queries schoolmates: select('id, student_name, classroom_id, classrooms(class_name)')
+      const res = await fetch('/api/student/cards');
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to load card center');
+      }
+      const data = await res.json();
+      if (data.inventory) {
+        setInventory((data.inventory as any[]).map((row) => ({
+          ...row,
+          reserved_quantity: Number(row.reserved_quantity || 0),
+          quantity: Number(row.quantity || 0),
+          cards: Array.isArray(row.cards) ? row.cards[0] : row.cards,
+        })).filter((row) => row.cards) as InventoryRow[]);
+      }
+      if (data.schoolmates) setSchoolmates(data.schoolmates);
+      if (data.incoming) setIncoming(data.incoming);
+      if (data.learningPath) setProgress(data.learningPath);
       setLoading(false);
-      return;
+    } catch (err: any) {
+      setMessage(`โหลดศูนย์การ์ดไม่สำเร็จ: ${err.message}`);
+      setLoading(false);
     }
-
-    if (inventoryResult.data) {
-      setInventory((inventoryResult.data as any[]).map((row) => ({
-        ...row,
-        reserved_quantity: Number(row.reserved_quantity || 0),
-        quantity: Number(row.quantity || 0),
-        cards: Array.isArray(row.cards) ? row.cards[0] : row.cards,
-      })).filter((row) => row.cards) as InventoryRow[]);
-    }
-    if (schoolmatesResult.data) setSchoolmates(schoolmatesResult.data);
-    if (incomingResult.data) setIncoming(incomingResult.data);
-    if (pathResult.data) setProgress(pathResult.data);
-    setLoading(false);
   }, [setProgress, student]);
 
   useEffect(() => {
@@ -199,23 +176,19 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       setLoadingTargetCards(true);
       setSelectedTargetCardId('');
       setSelectedTargetCard2Id('');
-      let query = supabase
-        .from('card_inventory')
-        .select('id, quantity, reserved_quantity, cards!inner(*)')
-        .eq('student_id', selectedTarget)
-        .gt('quantity', 0);
-        
-      if (selectedCard?.cards.card_code === 'THIEF_MASTER') {
-        query = query.eq('cards.is_stealable', true);
-      }
-      
-      query.then(({ data, error }) => {
+      fetch(`/api/student/cards?targetStudentId=${selectedTarget}`)
+        .then((r) => r.json())
+        .then((data) => {
           setLoadingTargetCards(false);
-          if (data && !error) {
-            setTargetInventory(data as any[]);
-          } else {
-            setTargetInventory([]);
+          let cards = data.cards || [];
+          if (selectedCard?.cards.card_code === 'THIEF_MASTER') {
+            cards = cards.filter((c: any) => c.cards?.is_stealable);
           }
+          setTargetInventory(cards);
+        })
+        .catch(() => {
+          setLoadingTargetCards(false);
+          setTargetInventory([]);
         });
     } else {
       setTargetInventory([]);

@@ -4,14 +4,11 @@ export const cardService = {
   /**
    * Fetch student's card inventory
    */
-  async getStudentCards(studentId: string) {
-    const { data, error } = await supabase
-      .from('card_inventory')
-      .select('*, cards(*)')
-      .eq('student_id', studentId);
-      
-    if (error) throw error;
-    return data || [];
+  async getStudentCards(studentId?: string) {
+    const res = await fetch(`/api/student/cards${studentId ? `?targetStudentId=${studentId}` : ''}`);
+    if (!res.ok) throw new Error('Failed to load cards');
+    const json = await res.json();
+    return json.inventory || json.cards || [];
   },
 
   /**
