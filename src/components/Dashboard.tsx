@@ -57,6 +57,23 @@ export default function Dashboard() {
   const [stageStars, setStageStars] = useState<Record<number, number>>({});
   const [realAccuracy, setRealAccuracy] = useState<number | null>(null);
 
+  // V3 Progression Authority State
+  const [v3Progression, setV3Progression] = useState<{
+    authority: 'V3' | 'LEGACY' | null;
+    unlockedStages: Set<number>;
+    completedStages: Map<number, { bestStars: number; completed: boolean; stageType: string }>;
+    campaignCompleted: boolean;
+    loading: boolean;
+    error: string | null;
+  }>({
+    authority: null,
+    unlockedStages: new Set(),
+    completedStages: new Map(),
+    campaignCompleted: false,
+    loading: true,
+    error: null,
+  });
+
   // Inbox & Quests States
   const [messages, setMessages] = useState<any[]>([]);
   const [showMessages, setShowMessages] = useState(false);
@@ -75,6 +92,58 @@ export default function Dashboard() {
     if (!student) return;
     
     async function loadDashboardData() {
+      // Load V3 progression authority first
+      try {
+        const progRes = await fetch('/api/student/progression');
+        if (progRes.ok) {
+          const progData = await progRes.json();
+          const unlocked = new Set<number>(progData.unlockedStages || []);
+          const completed = new Map<number, { bestStars: number; completed: boolean; stageType: string }>();
+          const starsByStage: Record<number, number> = {};
+          for (const s of progData.completedStages || []) {
+            completed.set(s.stageNumber, {
+              bestStars: s.bestStars ?? 0,
+              completed: s.completed ?? false,
+              stageType: s.stageType ?? 'STANDARD',
+            });
+            if (s.completed && s.bestStars > 0) {
+              starsByStage[s.stageNumber] = s.bestStars;
+            }
+          }
+          setV3Progression({
+            authority: progData.authority,
+            unlockedStages: unlocked,
+            completedStages: completed,
+            campaignCompleted: progData.campaignCompleted ?? false,
+            loading: false,
+            error: null,
+          });
+          // Merge server stars with any existing stageStars
+          setStageStars(prev => ({ ...prev, ...starsByStage }));
+          setRealAccuracy(progData.globalAccuracy ?? null);
+        } else if (progRes.status === 503) {
+          // V3 exists but errored — FAIL CLOSED, show error, don't fallback
+          setV3Progression(prev => ({
+            ...prev,
+            loading: false,
+            error: 'Progression service temporarily unavailable',
+          }));
+        } else {
+          // Other errors — still fail closed for non-404
+          setV3Progression(prev => ({
+            ...prev,
+            loading: false,
+            error: progRes.status === 401 ? null : 'Could not load progression data',
+          }));
+        }
+      } catch (e) {
+        console.warn('V3 progression load failed:', e);
+        setV3Progression(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Network error loading progression',
+        }));
+      }
       if (student.is_demo_account || useDemoStore.getState().isDemoMode) {
         const demoStore = useDemoStore.getState();
         const demoExp = demoStore.demoProgress?.total_exp || 3400;
@@ -167,62 +236,8 @@ export default function Dashboard() {
       }
 
       // 3.1 Fetch real gameplay accuracy and stage stars.
-      // stage_results is the newer source, but the live DB has historical attempts
-      // without stage_results rows, so attempts is the safe fallback for display.
-      const [{ data: stageResultRows }, { data: attemptRows }] = await Promise.all([
-        supabase
-          .from('stage_results')
-          .select('stage_number, accuracy, stars, passed')
-          .eq('user_id', student.id),
-        supabase
-          .from('attempts')
-          .select('score, total_questions, is_passed, stages(stage_number)')
-          .eq('student_id', student.id),
-      ]);
-
-      const accuracySource = (stageResultRows && stageResultRows.length > 0)
-        ? stageResultRows.map((row: any) => ({
-            accuracy: Number(row.accuracy || 0),
-            totalQuestions: 1,
-          }))
-        : (attemptRows || []).map((row: any) => {
-            const totalQuestions = Number(row.total_questions || 0);
-            return {
-              accuracy: totalQuestions > 0 ? (Number(row.score || 0) / totalQuestions) * 100 : 0,
-              totalQuestions,
-            };
-          }).filter((row: any) => row.totalQuestions > 0);
-
-      if (accuracySource.length > 0) {
-        const averageAccuracy = accuracySource.reduce((sum: number, row: any) => sum + row.accuracy, 0) / accuracySource.length;
-        setRealAccuracy(Math.round(averageAccuracy));
-      } else {
-        setRealAccuracy(null);
-      }
-
-      const starsByStage: Record<number, number> = {};
-      for (const row of stageResultRows || []) {
-        const stageNumber = Number(row.stage_number || 0);
-        if (!stageNumber) continue;
-        const derivedStars = Number(row.stars || 0) || (row.passed ? 1 : 0);
-        starsByStage[stageNumber] = Math.max(starsByStage[stageNumber] || 0, derivedStars);
-      }
-
-      for (const row of attemptRows || []) {
-        if (!row.is_passed) continue;
-        const stageRelation = Array.isArray(row.stages) ? row.stages[0] : row.stages;
-        const stageNumber = Number(stageRelation?.stage_number || 0);
-        const totalQuestions = Number(row.total_questions || 0);
-        if (!stageNumber || totalQuestions <= 0) continue;
-        
-        // Only use legacy attempt data if the stage isn't already recorded in the new stage_results table
-        if (starsByStage[stageNumber] === undefined) {
-          const accuracy = (Number(row.score || 0) / totalQuestions) * 100;
-          const derivedStars = accuracy >= 90 ? 3 : accuracy >= 75 ? 2 : 1;
-          starsByStage[stageNumber] = derivedStars;
-        }
-      }
-      setStageStars(starsByStage);
+      // Removed insecure direct client queries. Dashboard now uses /api/student/progression
+      // which securely provides stageStars and realAccuracy.
 
       // 4. Fetch Leaderboard for Classroom
       let leadData: any[] = [];
@@ -693,6 +708,18 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-6 text-left"
             >
+              {/* V3 Progression Error Banner (fail-closed) */}
+              {v3Progression.error && (
+                <div className="glass-card border-amber-500/50 p-4 mb-4 text-center">
+                  <p className="text-amber-400 text-sm font-bold">
+                    ⚠️ {v3Progression.error}
+                  </p>
+                  <p className="text-slate-500 text-xs mt-1">
+                    ไม่สามารถโหลดข้อมูลความคืบหน้าได้ กรุณารีเฟรชหน้า
+                  </p>
+                </div>
+              )}
+
               {/* Weakness Boss Mode Banner */}
               {reviewWords.length >= 5 && (
                 <div className="glass-card border-rose-500/50 p-5 sm:p-6 mb-6 shadow-[0_0_30px_rgba(225,29,72,0.2)] flex flex-col sm:flex-row items-center gap-6 justify-between animate-in zoom-in-95 duration-500 bg-gradient-to-r from-rose-950/40 to-transparent">
@@ -723,9 +750,17 @@ export default function Dashboard() {
               {/* World roadmap navigation */}
               <div data-demo-guide="stage-map" className="space-y-4">
                 {STORY_WORLDS.map((world) => {
-                  const isCurrentWorld = currentStage >= world.stageRange[0] && currentStage <= world.stageRange[1];
-                  const isUnlockedWorld = currentStage >= world.stageRange[0];
-                  const isCompletedWorld = currentStage > world.stageRange[1];
+                  const worldFirstStage = world.stageRange[0];
+                  const worldLastStage = world.stageRange[1];
+
+                  // V3 authority: world unlock based on whether any stage in this world is unlocked
+                  const isUnlockedWorld = v3Progression.authority
+                    ? Array.from({ length: 10 }, (_, i) => worldFirstStage + i).some(s => v3Progression.unlockedStages.has(s))
+                    : currentStage >= worldFirstStage;
+                  const isCompletedWorld = v3Progression.authority
+                    ? Array.from({ length: 10 }, (_, i) => worldFirstStage + i).every(s => v3Progression.completedStages.get(s)?.completed ?? false)
+                    : currentStage > worldLastStage;
+                  const isCurrentWorld = isUnlockedWorld && !isCompletedWorld;
                   const isOpen = expandedWorld === world.worldNumber;
 
                   return (
@@ -768,14 +803,23 @@ export default function Dashboard() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {Array.from({ length: 10 }).map((_, idx) => {
                               const stageNum = world.stageRange[0] + idx;
-                              const isCompletedStage = stageNum < currentStage;
-                              const isCurrentStage = stageNum === currentStage;
                               const isBossStage = stageNum % 10 === 0;
                               const isFinalBossStage = stageNum === 100;
+                              const isMini = stageNum % 10 === 5;
+
+                              // V3 authority: use server-computed unlock/complete state
+                              const v3Entry = v3Progression.completedStages.get(stageNum);
+                              const isCompletedStage = v3Progression.authority
+                                ? (v3Entry?.completed ?? false)
+                                : stageNum < currentStage;
+                              const isUnlocked = v3Progression.authority
+                                ? v3Progression.unlockedStages.has(stageNum)
+                                : stageNum <= currentStage;
+                              const isCurrentStage = !isCompletedStage && isUnlocked;
 
                               let stageState = 'locked';
                               if (isCompletedStage) stageState = 'completed';
-                              if (isCurrentStage) stageState = 'current';
+                              else if (isCurrentStage) stageState = 'current';
 
                               const canPlayStage = stageState === 'completed' || stageState === 'current';
                               const stageActionLabel = stageState === 'completed' ? 'เล่นซ้ำ' : stageState === 'current' ? 'เล่นเลย' : 'ล็อก';
@@ -783,6 +827,9 @@ export default function Dashboard() {
                               const handleStageClick = () => {
                                 if (!canPlayStage) return;
                                 setMissionLevel(1);
+                                // Set boss mode for boss stages (5, 10, 15, 20, ... 100)
+                                const shouldBeBoss = stageNum % 5 === 0;
+                                useAppStore.getState().setBossMode(shouldBeBoss);
                                 setSelectedStageNumber(stageState === 'current' ? null : stageNum);
                                 setScreen('game');
                               };
@@ -816,14 +863,14 @@ export default function Dashboard() {
                                             {Array.from({ length: 3 }).map((_, i) => (
                                               <Star 
                                                 key={i} 
-                                                className={`w-3 h-3 ${i < (stageStars[stageNum] || 1) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-600'}`} 
+                                                className={`w-3 h-3 ${i < (stageStars[stageNum] || (v3Entry?.bestStars ?? 1)) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-600'}`} 
                                               />
                                             ))}
                                           </span>
                                         )}
                                       </span>
                                       <span className="text-[10px] text-slate-500 tracking-wider">
-                                        {isFinalBossStage ? '👑 Final Boss ผู้พิชิต O-NET' : isBossStage ? '👹 ด่านบอสประจำโลก' : '🧭 โจทย์ระดับปกติ'}
+                                        {isFinalBossStage ? '👑 Final Boss ผู้พิชิต O-NET' : isBossStage ? '👹 ด่านบอสประจำโลก' : isMini ? '⚔️ Mini Boss' : '🧭 โจทย์ระดับปกติ'}
                                       </span>
                                     </div>
                                   </div>

@@ -12,8 +12,8 @@ const adminSource = readFileSync(
 );
 
 test('individual profile reads real gameplay and wrong-word tables', () => {
-  assert.match(profileSource, /\.from\('attempts'\)/);
-  assert.match(profileSource, /\.from\('wrong_words'\)/);
+  assert.match(profileSource, /getAdminStudentAttempts/);
+  assert.match(profileSource, /getAdminStudentWrongWords/);
   assert.match(profileSource, /analytics_summary\(\*\)/);
   assert.match(profileSource, /learning_paths\(\*\)/);
 });

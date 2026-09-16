@@ -4,11 +4,18 @@ import { requireRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
 import { selectAdaptiveQuestionPool } from '@/lib/learning/adaptiveSelector';
+import { selectBossQuestionPool } from '@/lib/progression/bossEngine';
+import {
+  getStageType,
+  isBossStage,
+  isCampaignStage,
+  isLegacyOverflow,
+} from '@/lib/progression/worldHierarchy';
+import { isStageUnlocked } from '@/lib/progression/unlockRules';
 
 const startGameSchema = z.object({
   stageNumber: z.number().int().min(1).max(100),
   missionLevel: z.number().int().min(1).max(3).optional().default(1),
-  isBossMode: z.boolean().optional().default(false),
 });
 
 export async function POST(request: Request) {
@@ -25,24 +32,72 @@ export async function POST(request: Request) {
       );
     }
 
-    const { stageNumber, missionLevel, isBossMode } = parsed.data;
+    const { stageNumber, missionLevel } = parsed.data;
 
-    // Check student progress eligibility
+    // ── Phase 3.2F: Campaign boundary guard ─────────────────────────────────
+    // Reject LEGACY_OVERFLOW stages 101–105 explicitly.
+    // (The schema max(100) already blocks this, but explicit guard matches V3 invariant.)
+    if (!isCampaignStage(stageNumber) || isLegacyOverflow(stageNumber)) {
+      return NextResponse.json(
+        { error: 'Stage is outside the Main Campaign (1–100).' },
+        { status: 400 }
+      );
+    }
+
+    // ── Phase 3.2F: Authoritative unlock check ───────────────────────────────
+    // Load V3 progression authority first, then fall back to legacy current_stage
+    // ONLY when V3 migration data is unavailable.
+
+    // Load legacy learning_path for coins/exp context and fallback unlock
     const { data: path } = await supabaseAdmin
       .from('learning_paths')
-      .select('current_stage, current_rank')
+      .select('current_stage, current_rank, coins, total_exp, campaign_completed_at')
       .eq('student_id', session.subjectId)
       .maybeSingle();
 
-    const maxAllowedStage = path?.current_stage || 1;
-    if (stageNumber > maxAllowedStage) {
+    const legacyCurrentStage = path?.current_stage ?? 1;
+
+    // Try to load V3 progression data (student_stage_progress)
+    let completedStages: Set<number> | null = null;
+    try {
+      const { data: progressRows } = await supabaseAdmin
+        .from('student_stage_progress')
+        .select('stage_number')
+        .eq('student_id', session.subjectId)
+        .eq('completed', true);
+
+      if (progressRows && progressRows.length > 0) {
+        completedStages = new Set(progressRows.map((r: any) => r.stage_number as number));
+      } else if (progressRows !== null) {
+        // Table exists and query succeeded but no rows — V3 migration is present,
+        // student just hasn't completed anything. Use empty set (V3 authority).
+        completedStages = new Set();
+      }
+      // If progressRows is null (query error / table missing), completedStages stays null
+      // → legacy fallback will be used.
+    } catch {
+      // V3 migration table absent — fall back to legacy pointer
+      completedStages = null;
+    }
+
+    const unlocked = isStageUnlocked({
+      targetStageNumber: stageNumber,
+      completedStages,
+      legacyCurrentStage,
+    });
+
+    if (!unlocked) {
       return NextResponse.json(
-        { error: 'Stage locked. You must complete previous stages first.' },
+        { error: 'Stage locked. You must complete all prerequisite stages first.' },
         { status: 403 }
       );
     }
 
-    // Fetch active vocabulary for this stage (or fallback to pool)
+    // ── Derive stage type from registry ─────────────────────────────────────
+    const stageType = getStageType(stageNumber);
+    const isBossMode = isBossStage(stageNumber);
+
+    // ── Fetch active vocabulary ──────────────────────────────────────────────
     let { data: stageWords } = await supabaseAdmin
       .from('vocabulary')
       .select('*')
@@ -65,7 +120,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch student's SRS review words and weakness words for adaptive selection
+    // ── Fetch student SRS review data ────────────────────────────────────────
     const { data: userReviewData } = await supabaseAdmin
       .from('user_review_words')
       .select('word_id, mastery_status, mastery_score, review_step, wrong_count, attempt_count, next_review_at, last_seen_at')
@@ -78,7 +133,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Additional due/weak words from other stages if available
+    // ── Merge stage words with review metadata ───────────────────────────────
     let reviewWordDetails: any[] = [];
     if (userReviewData && userReviewData.length > 0) {
       const reviewWordIds = userReviewData.map((r: any) => r.word_id).filter(Boolean);
@@ -92,7 +147,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Merge stage words with review word details
     const candidateMap = new Map<string, any>();
     for (const w of [...stageWords, ...reviewWordDetails]) {
       if (!candidateMap.has(w.id)) {
@@ -110,7 +164,9 @@ export async function POST(request: Request) {
       }
     }
 
-    // Distractor pool
+    const allCandidates = Array.from(candidateMap.values());
+
+    // ── Distractor pool ──────────────────────────────────────────────────────
     const { data: allVocab } = await supabaseAdmin
       .from('vocabulary')
       .select('id, word, meaning, meaning_th')
@@ -119,16 +175,24 @@ export async function POST(request: Request) {
 
     const distractorPool = allVocab || stageWords;
 
-    // Select target questions using Adaptive Learning Engine
-    const targetCount = isBossMode ? 10 : Math.min(candidateMap.size, 6);
-    const { selectedWords: shuffledTargets } = selectAdaptiveQuestionPool(
-      Array.from(candidateMap.values()),
-      {
+    // ── Question selection ───────────────────────────────────────────────────
+    // Boss stages: bossEngine.ts 50/30/20 scoped pool (10 questions)
+    // Standard stages: existing adaptive selector
+    let shuffledTargets: any[];
+
+    if (isBossMode) {
+      const plan = selectBossQuestionPool(stageNumber, allCandidates, new Date());
+      shuffledTargets = plan.selectedWords;
+    } else {
+      const targetCount = Math.min(allCandidates.length, 6);
+      const { selectedWords } = selectAdaptiveQuestionPool(allCandidates, {
         totalQuestions: targetCount,
         stageNumber,
-      }
-    );
+      });
+      shuffledTargets = selectedWords;
+    }
 
+    // ── Build question objects ───────────────────────────────────────────────
     const authoritativeQuestions: any[] = [];
     const clientQuestions: any[] = [];
 
@@ -148,7 +212,6 @@ export async function POST(request: Request) {
         ...distractors,
       ].sort(() => Math.random() - 0.5);
 
-      // Server stores authoritative answer key
       authoritativeQuestions.push({
         id: target.id,
         word: target.word,
@@ -157,14 +220,14 @@ export async function POST(request: Request) {
         choices: allChoices,
       });
 
-      // Client receives choices WITHOUT is_correct flag
       clientQuestions.push({
         id: target.id,
         word_id: target.id,
         word: target.word,
         part_of_speech: target.part_of_speech,
-        correct_answer: meaningText, // Kept for client animations if needed, but not trusted on submit
+        correct_answer: meaningText,
         qType: 'MEANING_MC',
+        stageType,
         choices: allChoices.map((c) => ({
           word_id: c.word_id,
           text: c.text,
@@ -172,7 +235,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // Create stage_attempt in database
+    // ── Create authoritative ACTIVE attempt ──────────────────────────────────
     const { data: attempt, error: attemptErr } = await supabaseAdmin
       .from('stage_attempts')
       .insert({
@@ -194,7 +257,9 @@ export async function POST(request: Request) {
       success: true,
       attemptId: attempt.id,
       stageNumber,
+      stageType,
       missionLevel,
+      isBossMode,
       questions: clientQuestions,
     });
   } catch (error: any) {

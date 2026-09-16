@@ -84,6 +84,25 @@ export async function POST(request: Request) {
           total_time_on_task_sec: Number(analytics?.total_time_on_task_sec || 0) + totalDuration,
           last_updated_at: new Date().toISOString(),
         }, { onConflict: 'student_id' });
+
+        // Ensure stage is unlocked and insert initial attempt
+        const { data: stageRecord } = await supabaseAdmin
+          .from('stages')
+          .select('id')
+          .eq('stage_number', newStage)
+          .limit(1);
+
+        if (stageRecord && stageRecord.length > 0) {
+          const stageId = stageRecord[0].id;
+          await supabaseAdmin.from('attempts').insert([{
+            student_id: studentId,
+            stage_id: stageId,
+            score: 0,
+            total_questions: 10,
+            time_spent_sec: 0,
+            is_passed: false
+          }]);
+        }
       }
 
       return NextResponse.json({

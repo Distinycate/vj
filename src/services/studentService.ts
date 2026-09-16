@@ -44,22 +44,16 @@ export const studentService = {
   /**
    * Fetch Gameplay Accuracy and Stage Stars
    */
-  async getGameplayStats(studentId: string) {
-    const [{ data: stageResultRows, error: stageError }, { data: attemptRows, error: attemptError }] = await Promise.all([
-      supabase
-        .from('stage_results')
-        .select('stage_number, accuracy, stars, passed')
-        .eq('user_id', studentId),
-      supabase
-        .from('attempts')
-        .select('score, total_questions, is_passed, stages(stage_number)')
-        .eq('student_id', studentId),
-    ]);
-
-    if (stageError) throw stageError;
-    if (attemptError) throw attemptError;
-
-    return { stageResultRows, attemptRows };
+  async getGameplayStats() {
+    const res = await fetch('/api/student/progression');
+    if (!res.ok) throw new Error('Failed to fetch gameplay stats');
+    const data = await res.json();
+    return {
+      completedStages: data.completedStages,
+      globalAccuracy: data.globalAccuracy,
+      currentStage: data.currentStage,
+      unlockedStages: data.unlockedStages,
+    };
   },
 
   /**

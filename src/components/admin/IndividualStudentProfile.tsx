@@ -10,6 +10,7 @@ import {
   RefreshCw, Target, User, X,
 } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
+import { getAdminStudentAttempts, getAdminClassAttempts, getAdminStudentWrongWords, getAdminClassWrongWords, getAdminStudentTests } from '@/app/admin/actions';
 
 interface IndividualStudentProfileProps {
   student: any;
@@ -67,44 +68,36 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
         }
       }
 
-      const [attemptResult, classAttemptResult, wrongResult, classWrongResult, pretestResult, posttestResult] = await Promise.all([
-        supabase
-          .from('attempts')
-          .select('id, score, total_questions, time_spent_sec, error_count, is_passed, created_at, stages(stage_number, description)')
-          .eq('student_id', student.id)
-          .order('created_at', { ascending: true }),
+      const [attemptResult, classAttemptResult, wrongResult, classWrongResult, testsResult] = await Promise.all([
+        getAdminStudentAttempts(student.id)
+          .then(data => ({ data, error: null }))
+          .catch(error => ({ data: [], error })),
         classStudentIds.length
-          ? supabase
-              .from('attempts')
-              .select('student_id, score, total_questions')
-              .in('student_id', classStudentIds)
+          ? getAdminClassAttempts(classStudentIds)
+              .then(data => ({ data, error: null }))
+              .catch(error => ({ data: [], error }))
           : Promise.resolve({ data: [], error: null }),
-        supabase
-          .from('wrong_words')
-          .select('id, error_count, last_attempt_at, vocabulary(word, meaning_th, part_of_speech)')
-          .eq('student_id', student.id)
-          .order('error_count', { ascending: false }),
+        getAdminStudentWrongWords(student.id)
+          .then(data => ({ data, error: null }))
+          .catch(error => ({ data: [], error })),
         classStudentIds.length
-          ? supabase
-              .from('wrong_words')
-              .select('student_id, error_count, vocabulary(part_of_speech)')
-              .in('student_id', classStudentIds)
+          ? getAdminClassWrongWords(classStudentIds)
+              .then(data => ({ data, error: null }))
+              .catch(error => ({ data: [], error }))
           : Promise.resolve({ data: [], error: null }),
-        supabase.from('pre_tests').select('id').eq('student_id', student.id),
-        supabase.from('post_tests').select('id').eq('student_id', student.id),
+        getAdminStudentTests(student.id)
+          .then(data => ({ data, error: null }))
+          .catch(error => ({ data: { pre: 0, post: 0 }, error })),
       ]);
 
-      const error = attemptResult.error || classAttemptResult.error || wrongResult.error || classWrongResult.error || pretestResult.error || posttestResult.error;
+      const error = attemptResult.error || classAttemptResult.error || wrongResult.error || classWrongResult.error || testsResult.error;
       if (error) setLoadError(error.message);
       setProfile(studentProfile);
       setAttempts(attemptResult.data || []);
       setClassAttempts(classAttemptResult.data || []);
       setWrongWords(wrongResult.data || []);
       setClassWrongWords(classWrongResult.data || []);
-      setAssessmentCounts({
-        pre: pretestResult.data?.length || 0,
-        post: posttestResult.data?.length || 0,
-      });
+      setAssessmentCounts(testsResult.data || { pre: 0, post: 0 });
       setLoading(false);
     }
     loadProfile();

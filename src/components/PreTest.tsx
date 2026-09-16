@@ -214,26 +214,6 @@ export default function PreTest({
       const newCount = assessJson.count ?? (pretestCount + 1);
 
       if (newCount >= 5) {
-
-        // Ensure stage is unlocked
-        const { data: stageRecord } = await supabase
-          .from('stages')
-          .select('id')
-          .eq('stage_number', newStage)
-          .limit(1);
-
-        if (stageRecord && stageRecord.length > 0) {
-          const stageId = stageRecord[0].id;
-          await supabase.from('attempts').insert([{
-            student_id: student.id,
-            stage_id: stageId,
-            score: 0,
-            total_questions: 10,
-            time_spent_sec: 0,
-            is_passed: false
-          }]);
-        }
-
         setProgress({
           ...progress,
           initial_rank: newRank,

@@ -1,0 +1,1266 @@
+
+> vj@0.1.0 test
+> node --test 'src/lib/**/*.test.ts'
+
+✖ individual profile reads real gameplay and wrong-word tables (2.29175ms)
+✔ individual charts do not fabricate retention or fixed start dates (0.406542ms)
+✔ admin team tab includes selected-classroom and school leaderboards (0.258458ms)
+✔ teacher card and ticket changes are audited (1.021584ms)
+✔ migration upgrades the existing first-version audit table without deleting history (2.272958ms)
+✔ self-registered card teachers receive a card-only role (0.088834ms)
+✔ card-teacher and admin sessions use separate dashboard entry points (0.068208ms)
+✔ card-teacher login accepts existing teacher usernames case-insensitively (0.064667ms)
+✔ coin awards and deductions use the learning path balance and audit log (0.066ms)
+✔ conduct records require a supported behavior category (0.075334ms)
+✔ ticket adjustment locks balance and prevents a negative result (0.076167ms)
+✔ card removal cannot consume reserved cards (0.073875ms)
+✔ bulk teacher awards reuse the audited adjustment function (0.100625ms)
+✔ students can target card actions across classrooms while teacher approval remains required (0.607458ms)
+✔ teacher card workflow shows schoolwide pending actions and classroom labels (0.196458ms)
+✔ teacher card dashboard exposes the full card catalog (0.158708ms)
+✔ card battle migration exposes every atomic workflow RPC (1.23275ms)
+✔ gacha consumes free tickets before coins (0.111292ms)
+✔ drop weights match the O2O 55/20/15/5/4/1 specification (0.10725ms)
+✔ every tenth paid pull excludes dud cards without counting tickets (0.08825ms)
+✔ announcement opens a thirty minute counter window (0.107125ms)
+✔ card stock is reserved before approval and consumed only on resolve (0.074625ms)
+✔ season rewards cannot be distributed twice to the same student (0.0615ms)
+✔ demo pretest exit returns to the demo dashboard instead of logging out (1.089417ms)
+✔ real pretest still uses the normal logout and dashboard navigation fallbacks (0.216291ms)
+✔ demo bottom navigation leaves safe space for Study Camp controls (0.206042ms)
+✔ Concurrency Test 1: Same purchaseRequestId dispatched concurrently -> exactly 1 debit (3.063083ms)
+✔ Concurrency Test 2: Different request IDs exceeding total balance -> cannot overspend / negative balance (0.47075ms)
+✔ Concurrency Test 3: Same attemptId stage completion sent concurrently -> awarded exactly once (0.415584ms)
+✔ Concurrency Test 4: Event reward replay -> ledger and reward awarded once only (0.3775ms)
+▶ Event Utilities - Answer Check
+  ✔ normalizeAnswer trims and lowercases (1.011083ms)
+  ✔ parseAcceptableAnswers handles slash answers (0.233458ms)
+  ✔ checkTypingAnswer - exact match (0.101666ms)
+  ✔ checkTypingAnswer - blank answer (0.065916ms)
+  ✔ checkTypingAnswer - near miss (Levenshtein distance <= 1 for length <= 4) (0.116833ms)
+  ✔ checkTypingAnswer - near miss (Levenshtein distance <= 2 for length > 4) (1.496041ms)
+  ✔ checkTypingAnswer - completely wrong (0.079458ms)
+  ✔ compound answers require both verb forms in order (0.173666ms)
+✔ Event Utilities - Answer Check (4.667667ms)
+▶ Event Utilities - Scoring
+  ✔ Incorrect answer (not near miss) deducts heart (0.115042ms)
+  ✔ Near miss does not deduct heart (0.256ms)
+  ✔ Correct answer attempt 1 gets 100 pts (0.109083ms)
+  ✔ Correct answer attempt 2 gets 70 pts (0.109458ms)
+  ✔ Using hint deducts 20 pts (0.055542ms)
+✔ Event Utilities - Scoring (0.833333ms)
+✔ event workflow supports the internal student session and records wrong answers (0.797291ms)
+✔ event pages no longer use fixed 83-word or zero-progress placeholders (0.329042ms)
+✔ external network migration adds isolated user type columns with internal defaults (0.506833ms)
+✔ network registration forces external users without classroom or team assignment (0.132875ms)
+✔ external users do not see internal card, gacha, team, leaderboard, or event surfaces (0.145584ms)
+✔ team and card utilities protect backend calls from external users (0.07625ms)
+✔ external admin report lists only external users and supports exports (0.073083ms)
+✔ Persona 1: Fast Learner — Consistent accuracy, achieves MASTERED across 4 days (0.698292ms)
+✔ Persona 2: Grinder / Crammer — 50 attempts in 2 hours CANNOT achieve MASTERED (0.204708ms)
+✔ Persona 3: Struggling Learner — frequent errors keep student in LEARNING (0.088ms)
+✔ Persona 4: Dormant Learner — returns after 14 days, review is overdue (0.081291ms)
+✔ Persona 5: Regressing Learner — was MASTERED, errs and immediately drops to FAMILIAR (0.078709ms)
+✔ Persona 6: Slow but Accurate Learner — high accuracy with slow response time (0.07575ms)
+✔ Scenario 7: Forged ultra-fast response telemetry — clamped to 300ms, no exploit (0.824334ms)
+✔ Scenario 8: Duplicate completion / Idempotency protection simulation (0.09ms)
+✔ Scenario 9: Out-of-order / Late response handling (0.094209ms)
+✔ Scenario 10: Repeated failed reviews demote down to Step 0 and LEARNING (0.137292ms)
+✔ 1. Priority scoring awards overdue and weakness, penalizes recent exposure (0.468625ms)
+✔ 2. Ideal 60/20/20 distribution across 10 questions (0.26825ms)
+✔ 3. Graceful fallback when due and weakness pools are completely empty (0.108833ms)
+✔ 1. Response Time Clamping and EWMA calculation (0.472375ms)
+✔ 2. First attempt (New word) enters LEARNING immediately (0.465209ms)
+✔ 3. Promotion to FAMILIAR requires 3 consecutive correct and score >= 60 (0.307584ms)
+✔ 4. Anti-Grinding: 5 rapid correct answers in the same hour CANNOT become MASTERED (0.280167ms)
+✔ 5. Promotion to MASTERED succeeds with 24h+ retention and spaced review (0.623333ms)
+✔ 6. Demotion from MASTERED: Single wrong answer demotes to FAMILIAR (0.1105ms)
+✔ 7. Demotion from FAMILIAR: 1 wrong keeps FAMILIAR, 2 consecutive wrongs demotes to LEARNING (0.087167ms)
+✔ SQL Migration matches TypeScript Reference Model contract (1.462ms)
+✔ Password check: isBcryptHash correctly identifies standard bcrypt hashes and rejects plaintext (97.76575ms)
+✔ Legacy password login transparently upgrades to bcrypt hash (165.834792ms)
+✔ Bcrypt accounts have ZERO plaintext fallback (174.152459ms)
+✔ Student registration uses bcrypt immediately with zero plaintext fallback (0.132416ms)
+✔ Zero credential material leakage: sensitive fields (password, token_hash) are sanitized from all endpoints (0.105958ms)
+✔ 1. computeBossBattle: boss defeated when accuracy >= 60 (1.877833ms)
+✔ 2. computeBossBattle: boss NOT defeated when accuracy < 60 (0.071834ms)
+✔ 3. CRITICAL: damage formula uses integer division (Math.trunc), not rounding (0.060709ms)
+✔ 4. computeBossBattle: damage capped at 100 (0.05425ms)
+✔ 5. computeBossBattle: remainingHp = 100 - damage, minimum 0 (0.057833ms)
+✔ 6. computeBossBattle: 0 correct = 0 damage, 100 HP remaining (0.060417ms)
+✔ 7. isBossDefeated: accuracy >= 60 is the sole authority (0.054333ms)
+✔ 8. ECONOMY FORMULA: FIRST_CLEAR boss = base × 2 (not base + base × 2) (0.070833ms)
+✔ 9. ECONOMY FORMULA: WORLD_CLEAR bonus is additive flat (not multiplied) (0.058708ms)
+✔ 10. ECONOMY FORMULA: FINAL_BOSS_CLEAR is additive flat (0.093292ms)
+✔ 11. ECONOMY FORMULA: PRACTICE_REPLAY has no economy impact from STAR_UPGRADE (0.067208ms)
+✔ 12. ECONOMY FORMULA: STAR_UPGRADE base values (0.048459ms)
+✔ 13. ECONOMY FORMULA: BOSS_FIRST_CLEAR on STAR_UPGRADE (edge case) (0.040667ms)
+✔ 14. selectBossQuestionPool: MINI_BOSS stage 5 returns 10 questions (0.445917ms)
+✔ 15. selectBossQuestionPool: no duplicate words in selection (0.134834ms)
+✔ 16. selectBossQuestionPool: throws for non-boss stage (0.131625ms)
+✔ 17. selectBossQuestionPool: FINAL_BOSS stage 100 draws from all campaign stages (0.298834ms)
+✔ 18. FROZEN SPEC: weakness words fill the 50% bucket first (0.162375ms)
+✔ 19. FROZEN SPEC: learning/early-familiar fills 30% bucket (0.161917ms)
+✔ 20. FINAL_BOSS: world-balancing cap — no single world exceeds 50% of 10 questions (0.162042ms)
+[Scenario 35] Staging credentials absent — skipping. Set STAGING_SUPABASE_URL + STAGING_SUPABASE_SERVICE_ROLE_KEY and REQUIRE_STAGING_DB=1 to enforce execution for release gate.
+[Scenario 36] Staging credentials absent — skipping. Set STAGING_SUPABASE_URL + STAGING_SUPABASE_SERVICE_ROLE_KEY and REQUIRE_STAGING_DB=1 to enforce execution for release gate.
+[Scenario 37] Staging credentials absent — skipping. Set STAGING_SUPABASE_URL + STAGING_SUPABASE_SERVICE_ROLE_KEY and REQUIRE_STAGING_DB=1 to enforce execution for release gate.
+[Scenario 38] Staging credentials absent — skipping. Set STAGING_SUPABASE_URL + STAGING_SUPABASE_SERVICE_ROLE_KEY and REQUIRE_STAGING_DB=1 to enforce execution for release gate.
+[Scenario 39] Staging credentials absent — skipping. Set STAGING_SUPABASE_URL + STAGING_SUPABASE_SERVICE_ROLE_KEY and REQUIRE_STAGING_DB=1 to enforce execution for release gate.
+[Scenario 40] Staging credentials absent — skipping. Set STAGING_SUPABASE_URL + STAGING_SUPABASE_SERVICE_ROLE_KEY and REQUIRE_STAGING_DB=1 to enforce execution for release gate.
+✔ 35. Concurrent identical hint requests create exactly one hint event (0.669791ms)
+✔ 36. Concurrent duplicate completion grants economy exactly once (0.102208ms)
+✔ 37. Forced mastery/history failure rolls back ALL V3 completion state (0.077375ms)
+✔ 38. PostgreSQL catalog confirms privileged V3 functions are restricted (0.067667ms)
+✔ 39. Backfill conflict resolution proves STAGE_RESULT > LEGACY_ATTEMPT > INFERRED (0.068083ms)
+✔ 40. One submitted answer creates exactly one word_attempt_history record (0.063583ms)
+✔ 1. computeEarnedStars: 0 stars when accuracy < 60 (0.603375ms)
+✔ 2. computeEarnedStars: 3 stars when accuracy >= 90, hints = 0, time <= 12000ms (0.077708ms)
+✔ 3. computeEarnedStars: NOT 3 stars if hints > 0 even with high accuracy and fast time (0.23675ms)
+✔ 4. computeEarnedStars: NOT 3 stars if response time > 12000ms (0.154584ms)
+✔ 5. computeEarnedStars: 2 stars when accuracy >= 80, hints <= 1 (0.162917ms)
+✔ 6. computeEarnedStars: NOT 2 stars if hints > 1 (0.082375ms)
+✔ 7. computeEarnedStars: 1 star when passed (accuracy >= 60) but not 2 or 3 (0.808ms)
+✔ 8. getTrustedPerformanceTier: FAILED when accuracy < 60 (0.081542ms)
+✔ 9. getTrustedPerformanceTier: SKILLED when accuracy >= 80 AND hints <= 1 (0.061792ms)
+✔ 10. getTrustedPerformanceTier: NOT SKILLED if hints > 1 even with high accuracy (0.088625ms)
+✔ 11. getTrustedPerformanceTier: PASSED when accuracy >= 60 but not SKILLED (0.067333ms)
+✔ 12. getTrustedPerformanceTier: response time has NO effect on trusted tier (0.051208ms)
+✔ 13. computePrimaryReason: FIRST_CLEAR when first clear and passed (0.054042ms)
+✔ 14. computePrimaryReason: PRACTICE_REPLAY when first clear but failed (0.046459ms)
+✔ 15. computePrimaryReason: STAR_UPGRADE when not first clear, SKILLED, prevBestStars < 2 (0.037292ms)
+✔ 16. computePrimaryReason: 2→3 star is PRACTICE_REPLAY (prevBestStars = 2) (0.03925ms)
+✔ 17. computePrimaryReason: PRACTICE_REPLAY when not first clear and not SKILLED (0.0325ms)
+✔ 18. isEconomyStarUpgradeEligible: true only for 1-star to 2-star on completed stage (0.046542ms)
+✔ 19. isEconomyStarUpgradeEligible: false for 2→3 (prevBestStars = 2) (0.037166ms)
+✔ 20. isEconomyStarUpgradeEligible: false for first clear (0.034833ms)
+✔ 21. isEconomyStarUpgradeEligible: false when tier is not SKILLED (0.033875ms)
+✔ 1. Stage 1 has no prerequisites (always unlocked) (0.820209ms)
+✔ 2. STANDARD stage N requires N-1 (0.267917ms)
+✔ 3. REVIEW_CHECKPOINT stage requires N-1 (standard rule) (0.143417ms)
+✔ 4. MINI_BOSS (stage 5) requires all preceding chapter stages (1–4) (0.179125ms)
+✔ 5. MINI_BOSS (stage 15) requires stages 11–14 (0.161708ms)
+✔ 6. WORLD_BOSS (stage 10) requires stages 1–9 (0.153209ms)
+✔ 7. WORLD_BOSS (stage 20) requires stages 11–19 (0.12925ms)
+✔ 8. First stage of new world (e.g. stage 11) requires previous world boss (stage 10) (0.110334ms)
+✔ 9. First stage of new world (e.g. stage 21) requires world boss (stage 20) (0.123875ms)
+✔ 10. FINAL_BOSS (stage 100) requires ALL of stages 91–99 (0.241292ms)
+✔ 11. LEGACY_OVERFLOW stages return empty prerequisites (0.122959ms)
+✔ 12. Stage 1 is always unlocked with or without progression data (0.206375ms)
+✔ 13. Completed stage is always replayable (0.098959ms)
+✔ 14. Stage unlocked when all prerequisites completed (0.114083ms)
+✔ 15. CRITICAL: max-completed shortcut must NOT work — gaps in progression block unlock (0.105041ms)
+✔ 16. CRITICAL: Stage 100 locked if any of 91–99 are missing (0.135208ms)
+✔ 17. Stage 100 unlocked when all of 91–99 are completed (0.126083ms)
+✔ 18. LEGACY_OVERFLOW stages 101–105 are always locked (0.102292ms)
+✔ 19. Legacy fallback: unlocks stages up to legacyCurrentStage when completedStages is null (0.098917ms)
+✔ 20. Legacy fallback: stage 1 still always unlocked (0.066375ms)
+✔ 21. V3 data takes priority over legacy pointer — no union (0.075709ms)
+✔ 22. getMaxUnlockedStage: stage 1 with empty completedStages (0.093625ms)
+✔ 23. getMaxUnlockedStage: increments correctly with sequential completion (0.085ms)
+✔ 1. isCampaignStage: stages 1–100 are campaign stages (0.494542ms)
+✔ 2. isLegacyOverflow: stages 101–105 are legacy overflow (0.073833ms)
+✔ 3. getStageType: FINAL_BOSS for stage 100 (0.06025ms)
+✔ 4. getStageType: WORLD_BOSS for multiples of 10 (not 100) (0.067083ms)
+✔ 5. getStageType: MINI_BOSS for stages ending in 5 (0.055542ms)
+✔ 6. getStageType: REVIEW_CHECKPOINT for stages ending in 4 or 9 (0.045875ms)
+✔ 7. getStageType: STANDARD for all other campaign stages (0.063417ms)
+✔ 8. getStageType: LEGACY_OVERFLOW for 101–105 (0.043625ms)
+✔ 9. getWorldNumber: Math.ceil(stageNumber / 10) for campaign stages (0.064667ms)
+✔ 10. getWorldNumber: returns null for LEGACY_OVERFLOW stages (NOT 11) (0.095583ms)
+✔ 11. getChapterNumber: chapter position within world (0.06225ms)
+✔ 12. getWorldStageRange: correct range for each world (0.38375ms)
+✔ 13. getChapterStageRange: world range excluding World Boss (0.053583ms)
+✔ 14. getWorldBossStage and getMinieBossStage correct values (0.0455ms)
+✔ 15. isBossStage: true for mini, world, final boss (0.054084ms)
+✔ 16. isWorldBossStage: only world bosses (0.040958ms)
+✔ 17. isFinalBossStage: only stage 100 (0.042667ms)
+✔ 18. getCampaignStageRange: campaign is 1–100 (0.048708ms)
+✔ question answer languages and fields follow the shared contract (0.696417ms)
+✔ duplicate English words can never become distractors (0.177ms)
+✔ Thai meanings support the legacy meaning column without duplicate choices (0.119958ms)
+✔ registration toggle uses the custom teacher RPC instead of relying on Supabase Auth uid (0.473833ms)
+✔ student registration re-checks the latest database setting before insert (0.081125ms)
+✔ student admin tab renders room and id organization even when analytics metrics are missing (0.12425ms)
+✔ landing page explains Vocab Journey and presents the innovator profile (0.478ms)
+✔ pre-test is gated by five attempts and uses the average score for initial rank (0.088625ms)
+✖ stage map treats every tenth stage as a boss and stage 100 as Final Boss (2.893833ms)
+✖ rank formula, stars, SRS, vocabulary collection, and intervention alerts are backed by real tables (0.861834ms)
+✖ team battle and teacher dashboard report views are implemented as live sections (0.779542ms)
+✔ Hake normalized gain handles ceiling and negative gains canonically (0.532959ms)
+✔ CSRF assertSameOrigin blocks forged origins while allowing same origin (0.16375ms)
+✔ Session tokens are hashed with SHA-256 before database lookup (0.428542ms)
+✔ Forged role in login payload cannot elevate privilege (0.06925ms)
+✔ Game complete endpoint strictly rejects client-supplied scores and reward overrides (0.064333ms)
+✔ Game attempts are server-created with authoritative answer keys (0.072459ms)
+✔ Shop purchases enforce idempotency via purchaseRequestId and atomic row locks (0.058459ms)
+✔ Database hardening migration revokes privileged RPC execution from anon/public and grants only to service_role (0.253375ms)
+✔ Stage completion RPC enforces attempt idempotency and anti-farming replay rewards (0.070458ms)
+✔ Session validation checks real-time database account status and active role (0.109167ms)
+✔ Stage attempt lifecycle strictly blocks expired attempts and enforces owner validation (0.064ms)
+✔ Sensitive tables enforce Row Level Security and deny direct anon/authenticated access (0.073584ms)
+✔ Economy ledger enforces append-only constraint and idempotency (0.049292ms)
+✔ Attack 1: Role downgrade ADMIN -> TEACHER immediately blocks old session from admin actions (2.856125ms)
+✔ Attack 2: Suspended student session is rejected immediately with 401 (0.1675ms)
+✔ Attack 3: Password reset revokes all existing sessions in database (0.173792ms)
+✔ Attack 4: Expired session returns 401 and cannot be used (0.091709ms)
+✔ Attack 5: Revoked session calling /api/auth/me returns 401 (0.085333ms)
+✔ student dashboard opens exactly one card center modal (0.460625ms)
+✔ completed stages are clickable replay buttons without changing current progress (0.102833ms)
+✔ game uses the selected replay stage and clears it when returning to the map (0.080292ms)
+✔ card center shows loading and query errors instead of failing silently (0.079334ms)
+✔ card center demo mode uses mock data and does not write real card actions (0.062542ms)
+✔ team repair seeds school teams and one active season (0.480125ms)
+✔ team assignment and scoring are atomic database functions (0.079666ms)
+✔ score events require a currently active season (0.071625ms)
+✔ starting a season closes the previous season in one transaction (0.09ms)
+✔ team season migration only writes statuses allowed by the database constraint (0.069166ms)
+ℹ tests 203
+ℹ suites 2
+ℹ pass 199
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 681.287166
+
+✖ failing tests:
+
+test at src/lib/adminProfileContracts.test.ts:14:1
+✖ individual profile reads real gameplay and wrong-word tables (2.29175ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /\.from\('attempts'\)/. Input:
+  
+  "'use client';\n" +
+    '\n' +
+    "import { useEffect, useMemo, useState } from 'react';\n" +
+    'import {\n' +
+    '  Bar, BarChart, CartesianGrid, Legend, Line, LineChart,\n' +
+    '  ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis,\n' +
+    "} from 'recharts';\n" +
+    'import {\n' +
+    '  Activity, AlertTriangle, BookOpen, CheckCircle2, Clock,\n' +
+    '  RefreshCw, Target, User, X,\n' +
+    "} from 'lucide-react';\n" +
+    "import { supabase } from '@/utils/supabase/client';\n" +
+    "import { getAdminStudentAttempts, getAdminClassAttempts, getAdminStudentWrongWords, getAdminClassWrongWords, getAdminStudentTests } from '@/app/admin/actions';\n" +
+    '\n' +
+    'interface IndividualStudentProfileProps {\n' +
+    '  student: any;\n' +
+    '  onClose: () => void;\n' +
+    '}\n' +
+    '\n' +
+    'function relationObject(value: any) {\n' +
+    '  return Array.isArray(value) ? value[0] : value;\n' +
+    '}\n' +
+    '\n' +
+    'function formatDuration(totalSeconds: number) {\n' +
+    "  if (!totalSeconds) return '0 นาที';\n" +
+    '  const minutes = Math.floor(totalSeconds / 60);\n' +
+    '  const seconds = totalSeconds % 60;\n' +
+    '  return minutes > 0 ? `${minutes} นาที ${seconds} วินาที` : `${seconds} วินาที`;\n' +
+    '}\n' +
+    '\n' +
+    'export default function IndividualStudentProfile({ student, onClose }: IndividualStudentProfileProps) {\n' +
+    '  const [profile, setProfile] = useState<any>(null);\n' +
+    '  const [attempts, setAttempts] = useState<any[]>([]);\n' +
+    '  const [classAttempts, setClassAttempts] = useState<any[]>([]);\n' +
+    '  const [wrongWords, setWrongWords] = useState<any[]>([]);\n' +
+    '  const [classWrongWords, setClassWrongWords] = useState<any[]>([]);\n' +
+    '  const [assessmentCounts, setAssessmentCounts] = useState({ pre: 0, post: 0 });\n' +
+    '  const [loading, setLoading] = useState(true);\n' +
+    "  const [loadError, setLoadError] = useState('');\n" +
+    '\n' +
+    '  useEffect(() => {\n' +
+    '    async function loadProfile() {\n' +
+    '      if (!student?.id) return;\n' +
+    '      setLoading(true);\n' +
+    "      setLoadError('');\n" +
+    '\n' +
+    '      const profileRes = await fetch(`/api/student/profile?studentId=${student.id}`);\n' +
+    '      if (!profileRes.ok) {\n' +
+    "        setLoadError('Failed to load student profile');\n" +
+    '        setLoading(false);\n' +
+    '        return;\n' +
+    '      }\n' +
+    '      const profileData = await profileRes.json();\n' +
+    '      // Profile includes analytics_summary(*) and learning_paths(*) via /api/student/profile\n' +
+    '      const studentProfile = {\n' +
+    '        ...profileData.student,\n' +
+    '        analytics_summary: profileData.analyticsSummary,\n' +
+    '        learning_paths: profileData.learningPath,\n' +
+    '      };\n' +
+    '\n' +
+    '      const classroomId = studentProfile.classroom_id;\n' +
+    '      let classStudentIds: string[] = [];\n' +
+    '      if (classroomId) {\n' +
+    '        const classRes = await fetch(`/api/admin/students?classroomId=${classroomId}`);\n' +
+    '        if (classRes.ok) {\n' +
+    '          const classJson = await classRes.json();\n' +
+    '          classStudentIds = (classJson.students || []).map((item: any) => item.id);\n' +
+    '        }\n' +
+    '      }\n' +
+    '\n' +
+    '      const [attemptResult, classAttemptResult, wrongResult, classWrongResult, testsResult] = await Promise.all([\n' +
+    '        getAdminStudentAttempts(student.id)\n' +
+    '          .then(data => ({ data, error: null }))\n' +
+    '          .catch(error => ({ data: [], error })),\n' +
+    '        classStudentIds.length\n' +
+    '          ? getAdminClassAttempts(classStudentIds)\n' +
+    '              .then(data => ({ data, error: null }))\n' +
+    '              .catch(error => ({ data: [], error }))\n' +
+    '          : Promise.resolve({ data: [], error: null }),\n' +
+    '        getAdminStudentWrongWords(student.id)\n' +
+    '          .then(data => ({ data, error: null }))\n' +
+    '          .catch(error => ({ data: [], error })),\n' +
+    '        classStudentIds.length\n' +
+    '          ? getAdminClassWrongWords(classStudentIds)\n' +
+    '              .then(data => ({ data, error: null }))\n' +
+    '              .catch(error => ({ data: [], error }))\n' +
+    '          : Promise.resolve({ data: [], error: null }),\n' +
+    '        getAdminStudentTests(student.id)\n' +
+    '          .then(data => ({ data, error: null }))\n' +
+    '          .catch(error => ({ data: { pre: 0, post: 0 }, error })),\n' +
+    '      ]);\n' +
+    '\n' +
+    '      const error = attemptResult.error || classAttemptResult.error || wrongResult.error || classWrongResult.error || testsResult.error;\n' +
+    '      if (error) setLoadError(error.message);\n' +
+    '      setProfile(studentProfile);\n' +
+    '      setAttempts(attemptResult.data || []);\n' +
+    '      setClassAttempts(classAttemptResult.data || []);\n' +
+    '      setWrongWords(wrongResult.data || []);\n' +
+    '      setClassWrongWords(classWrongResult.data || []);\n' +
+    '      setAssessmentCounts(testsResult.data || { pre: 0, post: 0 });\n' +
+    '      setLoading(false);\n' +
+    '    }\n' +
+    '    loadProfile();\n' +
+    '  }, [student?.id]);\n' +
+    '\n' +
+    '  const metrics = useMemo(() => {\n' +
+    '    const totalQuestions = attempts.reduce((sum, attempt) => sum + Number(attempt.total_questions || 0), 0);\n' +
+    '    const totalCorrect = attempts.reduce((sum, attempt) => sum + Number(attempt.score || 0), 0);\n' +
+    '    const totalTime = attempts.reduce((sum, attempt) => sum + Number(attempt.time_spent_sec || 0), 0);\n' +
+    '    const passed = attempts.filter((attempt) => attempt.is_passed).length;\n' +
+    '    return {\n' +
+    '      attempts: attempts.length,\n' +
+    '      accuracy: totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : null,\n' +
+    '      passRate: attempts.length > 0 ? Math.round((passed / attempts.length) * 100) : null,\n' +
+    '      totalTime,\n' +
+    '      wrongWordCount: wrongWords.length,\n' +
+    '      totalErrors: wrongWords.reduce((sum, row) => sum + Number(row.error_count || 0), 0),\n' +
+    '    };\n' +
+    '  }, [attempts, wrongWords]);\n' +
+    '\n' +
+    '  const progressData = useMemo(() => attempts.slice(-30).map((attempt, index) => ({\n' +
+    '    label: `ครั้ง ${Math.max(1, attempts.length - Math.min(30, attempts.length) + index + 1)}`,\n' +
+    "    stage: relationObject(attempt.stages)?.stage_number || '-',\n" +
+    '    accuracy: Number(attempt.total_questions) > 0\n' +
+    '      ? Math.round((Number(attempt.score) / Number(attempt.total_questions)) * 100)\n' +
+    '      : 0,\n' +
+    '    classAverage: (() => {\n' +
+    '      const total = classAttempts.reduce((sum, row) => sum + Number(row.total_questions || 0), 0);\n' +
+    '      const correct = classAttempts.reduce((sum, row) => sum + Number(row.score || 0), 0);\n' +
+    '      return total > 0 ? Math.round((correct / total) * 100) : 0;\n' +
+    '    })(),\n' +
+    '  })), [attempts, classAttempts]);\n' +
+    '\n' +
+    '  const errorPatternData = useMemo(() => {\n' +
+    '    const studentMap: Record<string, number> = {};\n' +
+    '    const classMap: Record<string, number> = {};\n' +
+    '    for (const row of wrongWords) {\n' +
+    "      const key = relationObject(row.vocabulary)?.part_of_speech || 'Other';\n" +
+    '      studentMap[key] = (studentMap[key] || 0) + Number(row.error_count || 0);\n' +
+    '    }\n' +
+    '    for (const row of classWrongWords) {\n' +
+    "      const key = relationObject(row.vocabulary)?.part_of_speech || 'Other';\n" +
+    '      classMap[key] = (classMap[key] || 0) + Number(row.error_count || 0);\n' +
+    '    }\n' +
+    '    const classSize = Math.max(1, new Set(classWrongWords.map((row) => row.student_id)).size);\n' +
+    '    return [...new Set([...Object.keys(studentMap), ...Object.keys(classMap)])]\n' +
+    '      .map((category) => ({\n' +
+    '        category,\n' +
+    '        studentErrors: studentMap[category] || 0,\n' +
+    '        classAverage: Number(((classMap[category] || 0) / classSize).toFixed(1)),\n' +
+    '      }))\n' +
+    '      .sort((a, b) => b.studentErrors - a.studentErrors)\n' +
+    '      .slice(0, 8);\n' +
+    '  }, [wrongWords, classWrongWords]);\n' +
+    '\n' +
+    '  const analytics = relationObject(profile?.analytics_summary) || {};\n' +
+    '  const learningPath = relationObject(profile?.learning_paths) || {};\n' +
+    '  const classroom = relationObject(profile?.classrooms);\n' +
+    '  const pretest = Number(analytics.pretest_score || 0);\n' +
+    '  const posttest = Number(analytics.posttest_score || 0);\n' +
+    '\n' +
+    '  return (\n' +
+    '    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm p-4 overflow-y-auto">\n' +
+    '      <div className="max-w-6xl mx-auto my-6 bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl overflow-hidden">\n' +
+    '        <div className="p-5 sm:p-6 border-b border-slate-800 flex items-center justify-between gap-4">\n' +
+    '          <div className="flex items-center gap-4">\n' +
+    '            <div className="w-12 h-12 bg-indigo-500/15 text-indigo-300 rounded-2xl flex items-center justify-center">\n' +
+    '              <User className="w-6 h-6" />\n' +
+    '            </div>\n' +
+    '            <div>\n' +
+    '              <h2 className="text-xl sm:text-2xl font-black text-white">{profile?.student_name || student.student_name}</h2>\n' +
+    '              <p className="text-xs sm:text-sm text-slate-400">\n' +
+    "                {profile?.student_id || student.student_id} • {classroom?.class_name || 'ไม่พบข้อมูลห้อง'}\n" +
+    '              </p>\n' +
+    '            </div>\n' +
+    '          </div>\n' +
+    '          <button onClick={onClose} className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl">\n' +
+    '            <X className="w-5 h-5" />\n' +
+    '          </button>\n' +
+    '        </div>\n' +
+    '\n' +
+    '        {loading ? (\n' +
+    '          <div className="p-20 text-center text-slate-400">\n' +
+    '            <RefreshCw className="w-7 h-7 animate-spin mx-auto mb-3" /> กำลังโหลดข้อมูลจริง...\n' +
+    '          </div>\n' +
+    '        ) : (\n' +
+    '          <div className="p-5 sm:p-6 space-y-6">\n' +
+    '            {loadError && (\n' +
+    '              <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-2xl">\n' +
+    '                โหลดข้อมูลบางส่วนไม่สำเร็จ: {loadError}\n' +
+    '              </div>\n' +
+    '            )}\n' +
+    '\n' +
+    '            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">\n' +
+    '              {[\n' +
+    "                { label: 'ด่านปัจจุบัน', value: learningPath.current_stage || 1, icon: Target, color: 'text-indigo-300' },\n" +
+    "                { label: 'เล่นทั้งหมด', value: `${metrics.attempts} ครั้ง`, icon: Activity, color: 'text-sky-300' },\n" +
+    "                { label: 'Accuracy จริง', value: metrics.accuracy === null ? 'ไม่มีข้อมูล' : `${metrics.accuracy}%`, icon: CheckCircle2, color: 'text-emerald-300' },\n" +
+    "                { label: 'ผ่านด่าน', value: metrics.passRate === null ? 'ไม่มีข้อมูล' : `${metrics.passRate}%`, icon: Target, color: 'text-amber-300' },\n" +
+    "                { label: 'เวลาเรียนรวม', value: formatDuration(metrics.totalTime), icon: Clock, color: 'text-violet-300' },\n" +
+    "                { label: 'คำที่เคยผิด', value: `${metrics.wrongWordCount} คำ`, icon: BookOpen, color: 'text-rose-300' },\n" +
+    '              ].map((card) => (\n' +
+    '                <div key={card.label} className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">\n' +
+    '                  <card.icon className={`w-5 h-5 ${card.color}`} />\n' +
+    '                  <div className="text-lg font-black text-white mt-3">{card.value}</div>\n' +
+    '                  <div className="text-xs text-slate-500 mt-1">{card.lab'... 5771 more characters
+  
+      at TestContext.<anonymous> (file:///Users/distinycate/Desktop/vj/src/lib/adminProfileContracts.test.ts:15:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\'use client\';\n\nimport { useEffect, useMemo, useState } from \'react\';\nimport {\n  Bar, BarChart, CartesianGrid, Legend, Line, LineChart,\n  ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis,\n} from \'recharts\';\nimport {\n  Activity, AlertTriangle, BookOpen, CheckCircle2, Clock,\n  RefreshCw, Target, User, X,\n} from \'lucide-react\';\nimport { supabase } from \'@/utils/supabase/client\';\nimport { getAdminStudentAttempts, getAdminClassAttempts, getAdminStudentWrongWords, getAdminClassWrongWords, getAdminStudentTests } from \'@/app/admin/actions\';\n\ninterface IndividualStudentProfileProps {\n  student: any;\n  onClose: () => void;\n}\n\nfunction relationObject(value: any) {\n  return Array.isArray(value) ? value[0] : value;\n}\n\nfunction formatDuration(totalSeconds: number) {\n  if (!totalSeconds) return \'0 นาที\';\n  const minutes = Math.floor(totalSeconds / 60);\n  const seconds = totalSeconds % 60;\n  return minutes > 0 ? `${minutes} นาที ${seconds} วินาที` : `${seconds} วินาที`;\n}\n\nexport default function IndividualStudentProfile({ student, onClose }: IndividualStudentProfileProps) {\n  const [profile, setProfile] = useState<any>(null);\n  const [attempts, setAttempts] = useState<any[]>([]);\n  const [classAttempts, setClassAttempts] = useState<any[]>([]);\n  const [wrongWords, setWrongWords] = useState<any[]>([]);\n  const [classWrongWords, setClassWrongWords] = useState<any[]>([]);\n  const [assessmentCounts, setAssessmentCounts] = useState({ pre: 0, post: 0 });\n  const [loading, setLoading] = useState(true);\n  const [loadError, setLoadError] = useState(\'\');\n\n  useEffect(() => {\n    async function loadProfile() {\n      if (!student?.id) return;\n      setLoading(true);\n      setLoadError(\'\');\n\n      const profileRes = await fetch(`/api/student/profile?studentId=${student.id}`);\n      if (!profileRes.ok) {\n        setLoadError(\'Failed to load student profile\');\n        setLoading(false);\n        return;\n      }\n      const profileData = await profileRes.json();\n      // Profile includes analytics_summary(*) and learning_paths(*) via /api/student/profile\n      const studentProfile = {\n        ...profileData.student,\n        analytics_summary: profileData.analyticsSummary,\n        learning_paths: profileData.learningPath,\n      };\n\n      const classroomId = studentProfile.classroom_id;\n      let classStudentIds: string[] = [];\n      if (classroomId) {\n        const classRes = await fetch(`/api/admin/students?classroomId=${classroomId}`);\n        if (classRes.ok) {\n          const classJson = await classRes.json();\n          classStudentIds = (classJson.students || []).map((item: any) => item.id);\n        }\n      }\n\n      const [attemptResult, classAttemptResult, wrongResult, classWrongResult, testsResult] = await Promise.all([\n        getAdminStudentAttempts(student.id)\n          .then(data => ({ data, error: null }))\n          .catch(error => ({ data: [], error })),\n        classStudentIds.length\n          ? getAdminClassAttempts(classStudentIds)\n              .then(data => ({ data, error: null }))\n              .catch(error => ({ data: [], error }))\n          : Promise.resolve({ data: [], error: null }),\n        getAdminStudentWrongWords(student.id)\n          .then(data => ({ data, error: null }))\n          .catch(error => ({ data: [], error })),\n        classStudentIds.length\n          ? getAdminClassWrongWords(classStudentIds)\n              .then(data => ({ data, error: null }))\n              .catch(error => ({ data: [], error }))\n          : Promise.resolve({ data: [], error: null }),\n        getAdminStudentTests(student.id)\n          .then(data => ({ data, error: null }))\n          .catch(error => ({ data: { pre: 0, post: 0 }, error })),\n      ]);\n\n      const error = attemptResult.error || classAttemptResult.error || wrongResult.error || classWrongResult.error || testsResult.error;\n      if (error) setLoadError(error.message);\n      setProfile(studentProfile);\n      setAttempts(attemptResult.data || []);\n      setClassAttempts(classAttemptResult.data || []);\n      setWrongWords(wrongResult.data || []);\n      setClassWrongWords(classWrongResult.data || []);\n      setAssessmentCounts(testsResult.data || { pre: 0, post: 0 });\n      setLoading(false);\n    }\n    loadProfile();\n  }, [student?.id]);\n\n  const metrics = useMemo(() => {\n    const totalQuestions = attempts.reduce((sum, attempt) => sum + Number(attempt.total_questions || 0), 0);\n    const totalCorrect = attempts.reduce((sum, attempt) => sum + Number(attempt.score || 0), 0);\n    const totalTime = attempts.reduce((sum, attempt) => sum + Number(attempt.time_spent_sec || 0), 0);\n    const passed = attempts.filter((attempt) => attempt.is_passed).length;\n    return {\n      attempts: attempts.length,\n      accuracy: totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : null,\n      passRate: attempts.length > 0 ? Math.round((passed / attempts.length) * 100) : null,\n      totalTime,\n      wrongWordCount: wrongWords.length,\n      totalErrors: wrongWords.reduce((sum, row) => sum + Number(row.error_count || 0), 0),\n    };\n  }, [attempts, wrongWords]);\n\n  const progressData = useMemo(() => attempts.slice(-30).map((attempt, index) => ({\n    label: `ครั้ง ${Math.max(1, attempts.length - Math.min(30, attempts.length) + index + 1)}`,\n    stage: relationObject(attempt.stages)?.stage_number || \'-\',\n    accuracy: Number(attempt.total_questions) > 0\n      ? Math.round((Number(attempt.score) / Number(attempt.total_questions)) * 100)\n      : 0,\n    classAverage: (() => {\n      const total = classAttempts.reduce((sum, row) => sum + Number(row.total_questions || 0), 0);\n      const correct = classAttempts.reduce((sum, row) => sum + Number(row.score || 0), 0);\n      return total > 0 ? Math.round((correct / total) * 100) : 0;\n    })(),\n  })), [attempts, classAttempts]);\n\n  const errorPatternData = useMemo(() => {\n    const studentMap: Record<string, number> = {};\n    const classMap: Record<string, number> = {};\n    for (const row of wrongWords) {\n      const key = relationObject(row.vocabulary)?.part_of_speech || \'Other\';\n      studentMap[key] = (studentMap[key] || 0) + Number(row.error_count || 0);\n    }\n    for (const row of classWrongWords) {\n      const key = relationObject(row.vocabulary)?.part_of_speech || \'Other\';\n      classMap[key] = (classMap[key] || 0) + Number(row.error_count || 0);\n    }\n    const classSize = Math.max(1, new Set(classWrongWords.map((row) => row.student_id)).size);\n    return [...new Set([...Object.keys(studentMap), ...Object.keys(classMap)])]\n      .map((category) => ({\n        category,\n        studentErrors: studentMap[category] || 0,\n        classAverage: Number(((classMap[category] || 0) / classSize).toFixed(1)),\n      }))\n      .sort((a, b) => b.studentErrors - a.studentErrors)\n      .slice(0, 8);\n  }, [wrongWords, classWrongWords]);\n\n  const analytics = relationObject(profile?.analytics_summary) || {};\n  const learningPath = relationObject(profile?.learning_paths) || {};\n  const classroom = relationObject(profile?.classrooms);\n  const pretest = Number(analytics.pretest_score || 0);\n  const posttest = Number(analytics.posttest_score || 0);\n\n  return (\n    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm p-4 overflow-y-auto">\n      <div className="max-w-6xl mx-auto my-6 bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl overflow-hidden">\n        <div className="p-5 sm:p-6 border-b border-slate-800 flex items-center justify-between gap-4">\n          <div className="flex items-center gap-4">\n            <div className="w-12 h-12 bg-indigo-500/15 text-indigo-300 rounded-2xl flex items-center justify-center">\n              <User className="w-6 h-6" />\n            </div>\n            <div>\n              <h2 className="text-xl sm:text-2xl font-black text-white">{profile?.student_name || student.student_name}</h2>\n              <p className="text-xs sm:text-sm text-slate-400">\n                {profile?.student_id || student.student_id} • {classroom?.class_name || \'ไม่พบข้อมูลห้อง\'}\n              </p>\n            </div>\n          </div>\n          <button onClick={onClose} className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl">\n            <X className="w-5 h-5" />\n          </button>\n        </div>\n\n        {loading ? (\n          <div className="p-20 text-center text-slate-400">\n            <RefreshCw className="w-7 h-7 animate-spin mx-auto mb-3" /> กำลังโหลดข้อมูลจริง...\n          </div>\n        ) : (\n          <div className="p-5 sm:p-6 space-y-6">\n            {loadError && (\n              <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-2xl">\n                โหลดข้อมูลบางส่วนไม่สำเร็จ: {loadError}\n              </div>\n            )}\n\n            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">\n              {[\n                { label: \'ด่านปัจจุบัน\', value: learningPath.current_stage || 1, icon: Target, color: \'text-indigo-300\' },\n                { label: \'เล่นทั้งหมด\', value: `${metrics.attempts} ครั้ง`, icon: Activity, color: \'text-sky-300\' },\n                { label: \'Accuracy จริง\', value: metrics.accuracy === null ? \'ไม่มีข้อมูล\' : `${metrics.accuracy}%`, icon: CheckCircle2, color: \'text-emerald-300\' },\n                { label: \'ผ่านด่าน\', value: metrics.passRate === null ? \'ไม่มีข้อมูล\' : `${metrics.passRate}%`, icon: Target, color: \'text-amber-300\' },\n                { label: \'เวลาเรียนรวม\', value: formatDuration(metrics.totalTime), icon: Clock, color: \'text-violet-300\' },\n                { label: \'คำที่เคยผิด\', value: `${metrics.wrongWordCount} คำ`, icon: BookOpen, color: \'text-rose-300\' },\n              ].map((card) => (\n                <div key={card.label} className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">\n                  <card.icon className={`w-5 h-5 ${card.color}`} />\n                  <div className="text-lg font-black text-white mt-3">{card.value}</div>\n                  <div className="text-xs text-slate-500 mt-1">{card.lab'... 5771 more characters,
+    expected: /\.from\('attempts'\)/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at src/lib/reportReadinessContracts.test.ts:34:1
+✖ stage map treats every tenth stage as a boss and stage 100 as Final Boss (2.893833ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /10, 20, 30, 40, 50, 60, 70, 80, 90, 100/. Input:
+  
+  "import { supabase } from '@/utils/supabase/client';\n" +
+    "import { createTeamScoreEvent } from '@/utils/teamBattleEngine';\n" +
+    "import { ADAPTIVE_RANK_CONFIG, RankConfig, getWorldForStage } from './adaptiveConfig';\n" +
+    "import { useDemoStore } from '@/store/useDemoStore';\n" +
+    'import {\n' +
+    '  filterDistractors,\n' +
+    '  getVocabularyField,\n' +
+    '  QUESTION_ANSWER_CONFIG,\n' +
+    '  QuestionType,\n' +
+    '  QuizChoice,\n' +
+    '  shuffleArray,\n' +
+    '  uniqueChoicesByText,\n' +
+    "} from '@/lib/quizUtils';\n" +
+    "import { validateQuestion, logQuestionValidationError } from '@/utils/questionValidator';\n" +
+    '\n' +
+    '// 1. GET ADAPTIVE DIFFICULTY PARAMETERS\n' +
+    'export async function getAdaptiveDifficulty(studentId: string, stageNumber: number): Promise<RankConfig & { rank: number }> {\n' +
+    '  let rank = 1;\n' +
+    '  if (useDemoStore.getState().isDemoMode) {\n' +
+    '    rank = useDemoStore.getState().demoProgress?.current_rank || 1;\n' +
+    '  } else {\n' +
+    '    try {\n' +
+    "      const profRes = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);\n" +
+    '      if (profRes.ok) {\n' +
+    '        const profJson = await profRes.json();\n' +
+    '        rank = profJson?.learningPath?.current_rank || 1;\n' +
+    '      }\n' +
+    '    } catch {}\n' +
+    '  }\n' +
+    '  const config = ADAPTIVE_RANK_CONFIG[rank] || ADAPTIVE_RANK_CONFIG[1];\n' +
+    '  \n' +
+    '  return {\n' +
+    '    rank,\n' +
+    '    ...config\n' +
+    '  };\n' +
+    '}\n' +
+    '\n' +
+    '// 2. GENERATE STAGE QUESTIONS (ADAPTIVE QUESTION GENERATION ENGINE)\n' +
+    'export async function generateStageQuestions(studentId: string, stageNumber: number, missionLevel: number = 1): Promise<any[]> {\n' +
+    '  try {\n' +
+    '    // 1. Fetch current rank configuration\n' +
+    '    const diffInfo = await getAdaptiveDifficulty(studentId, stageNumber);\n' +
+    '    const { difficultyMix, questionCount } = diffInfo;\n' +
+    '    let { questionTypes } = diffInfo;\n' +
+    '    \n' +
+    '    // Override questionTypes based on missionLevel (Stars)\n' +
+    '    if (missionLevel === 1) {\n' +
+    "       questionTypes = ['meaning_mc', 'word_mc', 'context_mc'];\n" +
+    '    } else if (missionLevel === 2) {\n' +
+    "       questionTypes = ['listening_mc', 'meaning_mc', 'word_mc'];\n" +
+    '    } else if (missionLevel === 3) {\n' +
+    "       questionTypes = ['spelling', 'context_mc'];\n" +
+    '    }\n' +
+    '\n' +
+    '    // Skull ID Override (Special Needs Students)\n' +
+    '    let isSkullStudent = false;\n' +
+    '    try {\n' +
+    "      const res = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);\n" +
+    '      if (res.ok) {\n' +
+    '        const json = await res.json();\n' +
+    '        isSkullStudent = json?.student?.is_skull || false;\n' +
+    '      }\n' +
+    '    } catch {}\n' +
+    '    if (isSkullStudent) {\n' +
+    "      questionTypes = ['meaning_mc', 'word_mc']; // Force multiple choice only\n" +
+    '    }\n' +
+    '\n' +
+    '    const isBoss = stageNumber % 10 === 0;\n' +
+    '    const targetCount = isBoss ? Math.round(questionCount * 1.5) : questionCount;\n' +
+    '\n' +
+    '    // 2. Resolve Word Pool based on stage (Normal vs. Boss Stage)\n' +
+    "    let wordsQuery = supabase.from('vocabulary').select('*').eq('is_active', true);\n" +
+    '    \n' +
+    '    if (isBoss) {\n' +
+    '      // Boss stage combines vocabulary from the current world range.\n' +
+    '      // E.g. Stage 10 combines Stages 1-10; Stage 20 combines Stages 11-20.\n' +
+    '      const world = getWorldForStage(stageNumber);\n' +
+    '      wordsQuery = wordsQuery\n' +
+    "        .gte('stage_number', world.stageRange[0])\n" +
+    "        .lte('stage_number', world.stageRange[1]);\n" +
+    '    } else {\n' +
+    '      // Normal stage uses vocab assigned to this stage number\n' +
+    "      wordsQuery = wordsQuery.eq('stage_number', stageNumber);\n" +
+    '    }\n' +
+    '\n' +
+    '    const { data: stageWords, error: wordsErr } = await wordsQuery;\n' +
+    '    if (wordsErr || !stageWords || stageWords.length === 0) {\n' +
+    '      console.warn("No words found for stage:", stageNumber, wordsErr);\n' +
+    '      return [];\n' +
+    '    }\n' +
+    '\n' +
+    '    // 3. Spaced Repetition: Fetch wrong words due for review to insert them\n' +
+    '    const { data: reviewWordsData } = await supabase\n' +
+    "      .from('user_review_words')\n" +
+    "      .select('word_id, wrong_count, mastery_level')\n" +
+    "      .eq('user_id', studentId)\n" +
+    "      .lt('mastery_level', 4) // Not fully mastered\n" +
+    "      .lte('next_review_at', new Date().toISOString())\n" +
+    "      .order('wrong_count', { ascending: false })\n" +
+    '      .limit(3); // Fetch up to 3 wrong words\n' +
+    '\n' +
+    '    let wrongVocab: any[] = [];\n' +
+    '    if (reviewWordsData && reviewWordsData.length > 0) {\n' +
+    '      const wrongWordIds = reviewWordsData.map(r => r.word_id);\n' +
+    '      const { data: wrongWords } = await supabase\n' +
+    "        .from('vocabulary')\n" +
+    "        .select('*')\n" +
+    "        .in('id', wrongWordIds);\n" +
+    '      if (wrongWords) wrongVocab = wrongWords;\n' +
+    '    }\n' +
+    '\n' +
+    '    // 4. Categorize stage words by difficulty level\n' +
+    "    const easyPool = stageWords.filter(w => w.difficulty_level === 'easy' || !w.difficulty_level);\n" +
+    "    const normalPool = stageWords.filter(w => w.difficulty_level === 'normal');\n" +
+    "    const hardPool = stageWords.filter(w => w.difficulty_level === 'hard');\n" +
+    "    const expertPool = stageWords.filter(w => w.difficulty_level === 'expert');\n" +
+    '\n' +
+    '    // Helper to sample randomly from a pool\n' +
+    '    const sample = (pool: any[], num: number) => {\n' +
+    '      const shuffled = [...pool].sort(() => 0.5 - Math.random());\n' +
+    '      return shuffled.slice(0, num);\n' +
+    '    };\n' +
+    '\n' +
+    '    // Calculate how many words to pick for each difficulty category\n' +
+    '    const easyCount = Math.round(targetCount * (difficultyMix.easy / 100));\n' +
+    '    const normalCount = Math.round(targetCount * (difficultyMix.normal / 100));\n' +
+    '    const hardCount = Math.round(targetCount * (difficultyMix.hard / 100));\n' +
+    '    const expertCount = Math.round(targetCount * (difficultyMix.expert / 100));\n' +
+    '\n' +
+    '    let selectedWords: any[] = [];\n' +
+    '\n' +
+    '    if (isBoss) {\n' +
+    '      // Boss Stage: Guarantee coverage across all stages in the world\n' +
+    '      const world = getWorldForStage(stageNumber);\n' +
+    '      const stagesInWorld = world.stageRange[1] - world.stageRange[0] + 1;\n' +
+    '      \n' +
+    '      // Calculate how many words we can safely take from each stage as a baseline\n' +
+    '      const basePerStage = Math.max(1, Math.floor(targetCount / stagesInWorld));\n' +
+    '      \n' +
+    '      // Group words by stage_number\n' +
+    '      const wordsByStage: Record<number, any[]> = {};\n' +
+    '      stageWords.forEach(w => {\n' +
+    '         if (!wordsByStage[w.stage_number]) wordsByStage[w.stage_number] = [];\n' +
+    '         wordsByStage[w.stage_number].push(w);\n' +
+    '      });\n' +
+    '      \n' +
+    '      // 1. Pick base coverage from each stage to test overall knowledge\n' +
+    '      for (let s = world.stageRange[0]; s <= world.stageRange[1]; s++) {\n' +
+    '         if (wordsByStage[s] && wordsByStage[s].length > 0) {\n' +
+    '            selectedWords.push(...sample(wordsByStage[s], basePerStage));\n' +
+    '         }\n' +
+    '      }\n' +
+    '      \n' +
+    '      // 2. Fill the rest to meet targetCount using random sample from remaining words\n' +
+    '      if (selectedWords.length < targetCount) {\n' +
+    '         const remainingCount = targetCount - selectedWords.length;\n' +
+    '         const unselected = stageWords.filter(sw => !selectedWords.some(w => w.id === sw.id));\n' +
+    '         selectedWords.push(...sample(unselected, remainingCount));\n' +
+    '      }\n' +
+    '    } else {\n' +
+    '      // Normal Stage: Sample from categories based on difficulty mix\n' +
+    '      selectedWords.push(...sample(easyPool, easyCount));\n' +
+    '      selectedWords.push(...sample(normalPool, normalCount));\n' +
+    '      selectedWords.push(...sample(hardPool, hardCount));\n' +
+    '      selectedWords.push(...sample(expertPool, expertCount));\n' +
+    '\n' +
+    '      // Fill in from general pool if selected words count is less than target (due to rounding or empty pools)\n' +
+    '      if (selectedWords.length < targetCount) {\n' +
+    '        const remainingCount = targetCount - selectedWords.length;\n' +
+    '        const unselected = stageWords.filter(sw => !selectedWords.some(w => w.id === sw.id));\n' +
+    '        selectedWords.push(...sample(unselected, remainingCount));\n' +
+    '      }\n' +
+    '    }\n' +
+    '\n' +
+    '    // Mix in the Spaced Repetition wrong words (replacing general words, prioritizing them)\n' +
+    '    if (wrongVocab.length > 0) {\n' +
+    '      wrongVocab.forEach(wv => {\n' +
+    '        // Insert wrong word if it is not already selected\n' +
+    '        if (!selectedWords.some(w => w.id === wv.id)) {\n' +
+    "          // Replace a random word that isn't a wrong word\n" +
+    '          const replaceIndex = Math.floor(Math.random() * selectedWords.length);\n' +
+    '          selectedWords[replaceIndex] = wv;\n' +
+    '        }\n' +
+    '      });\n' +
+    '    }\n' +
+    '\n' +
+    '    // Trim or pad to exact target count\n' +
+    '    selectedWords = selectedWords.slice(0, targetCount);\n' +
+    '\n' +
+    '    // 5. Generate multiple choices and questions structure\n' +
+    '    // 5. Fetch vocabulary list for distractors\n' +
+    '    const allVocabularyList = await supabase\n' +
+    "      .from('vocabulary')\n" +
+    "      .select('*')\n" +
+    "      .eq('is_active', true)\n" +
+    '      .limit(250)\n' +
+    '      .then((response) => response.data?.length ? response.data : stageWords);\n' +
+    '    \n' +
+    '    // Auto-healing logic\n' +
+    '    const questions: any[] = [];\n' +
+    '    \n' +
+    '    for (const targetWord of selectedWords) {\n' +
+    "      let chosenType = questionTypes[Math.floor(Math.random() * questionTypes.length)] as QuestionType | 'mixed_challenge';\n" +
+    "      if (chosenType === 'mixed_challenge') {\n" +
+    "        const standardTypes: QuestionType[] = ['meaning_mc', 'word_mc', 'listening_mc', 'context_mc', 'spelling'];\n" +
+    '        chosenType = standardTypes[Math.floor(Math.random() * standardTypes.length)];\n' +
+    '      }\n' +
+    '\n' +
+    '      const question = await generateValidQuestion({\n' +
+    '        targetWord,\n' +
+    '        questionType: chosenType as QuestionType,\n' +
+    '        candidates: allVocabularyList\n' +
+    '      });\n' +
+    '\n' +
+    '      if (question) {\n' +
+    '        questions.push(question);\n' +
+    '      }\n' +
+    '    }\n' +
+    '\n' +
+    '    const minRequired = Math.min(5, Math.floor(targetCount * 0.6));\n' +
+    '    if (questions.length < minRequired) {\n' +
+    '      console.warn(`Only generated ${questions.length} questions out of ${targetCount}. Rejecting to prevent auto-pass exploit.`);\n' +
+    '      return [];\n' +
+    '    }\n' +
+    '\n' +
+    '    return questions;\n' +
+    '  } catch (err) {\n' +
+    '    console.error("Error generating stage questions:", err);\n' +
+    '    return [];\n' +
+    '  }\n' +
+    '}\n' +
+    '\n' +
+    'export async function generateWeaknessBossQuestions(studentId: string, limit: number = 20) {\n' +
+    '  try {\n' +
+    "    // Fetch user's weakest words (mastery < 3, ordered by mastery ascending or next_review_at)\n" +
+    '    const { data: weakWordsData, error } = await supabase\n' +
+    "      .from('user_review_words')\n" +
+    "      .select('*, vocabulary:word_id(*)')\n" +
+    "      .eq('user_id', studentId)\n" +
+    "      .lt('mastery_level', 4)\n" +
+    "      .order('mastery_level', { ascending: true })\n" +
+    '      .limit(limit);\n' +
+    '\n' +
+    '    if (error) throw error;\n' +
+    '    if (!weakWordsData || weakWordsData.length === 0) return [];\n' +
+    '\n' +
+    '    const targetWords = weakWordsData.map(w => w.vocabulary).filter(Boolean);\n' +
+    '\n' +
+    '    // Fetch all word'... 8083 more characters
+  
+      at TestContext.<anonymous> (file:///Users/distinycate/Desktop/vj/src/lib/reportReadinessContracts.test.ts:39:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import { supabase } from \'@/utils/supabase/client\';\nimport { createTeamScoreEvent } from \'@/utils/teamBattleEngine\';\nimport { ADAPTIVE_RANK_CONFIG, RankConfig, getWorldForStage } from \'./adaptiveConfig\';\nimport { useDemoStore } from \'@/store/useDemoStore\';\nimport {\n  filterDistractors,\n  getVocabularyField,\n  QUESTION_ANSWER_CONFIG,\n  QuestionType,\n  QuizChoice,\n  shuffleArray,\n  uniqueChoicesByText,\n} from \'@/lib/quizUtils\';\nimport { validateQuestion, logQuestionValidationError } from \'@/utils/questionValidator\';\n\n// 1. GET ADAPTIVE DIFFICULTY PARAMETERS\nexport async function getAdaptiveDifficulty(studentId: string, stageNumber: number): Promise<RankConfig & { rank: number }> {\n  let rank = 1;\n  if (useDemoStore.getState().isDemoMode) {\n    rank = useDemoStore.getState().demoProgress?.current_rank || 1;\n  } else {\n    try {\n      const profRes = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : \'\'}`);\n      if (profRes.ok) {\n        const profJson = await profRes.json();\n        rank = profJson?.learningPath?.current_rank || 1;\n      }\n    } catch {}\n  }\n  const config = ADAPTIVE_RANK_CONFIG[rank] || ADAPTIVE_RANK_CONFIG[1];\n  \n  return {\n    rank,\n    ...config\n  };\n}\n\n// 2. GENERATE STAGE QUESTIONS (ADAPTIVE QUESTION GENERATION ENGINE)\nexport async function generateStageQuestions(studentId: string, stageNumber: number, missionLevel: number = 1): Promise<any[]> {\n  try {\n    // 1. Fetch current rank configuration\n    const diffInfo = await getAdaptiveDifficulty(studentId, stageNumber);\n    const { difficultyMix, questionCount } = diffInfo;\n    let { questionTypes } = diffInfo;\n    \n    // Override questionTypes based on missionLevel (Stars)\n    if (missionLevel === 1) {\n       questionTypes = [\'meaning_mc\', \'word_mc\', \'context_mc\'];\n    } else if (missionLevel === 2) {\n       questionTypes = [\'listening_mc\', \'meaning_mc\', \'word_mc\'];\n    } else if (missionLevel === 3) {\n       questionTypes = [\'spelling\', \'context_mc\'];\n    }\n\n    // Skull ID Override (Special Needs Students)\n    let isSkullStudent = false;\n    try {\n      const res = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : \'\'}`);\n      if (res.ok) {\n        const json = await res.json();\n        isSkullStudent = json?.student?.is_skull || false;\n      }\n    } catch {}\n    if (isSkullStudent) {\n      questionTypes = [\'meaning_mc\', \'word_mc\']; // Force multiple choice only\n    }\n\n    const isBoss = stageNumber % 10 === 0;\n    const targetCount = isBoss ? Math.round(questionCount * 1.5) : questionCount;\n\n    // 2. Resolve Word Pool based on stage (Normal vs. Boss Stage)\n    let wordsQuery = supabase.from(\'vocabulary\').select(\'*\').eq(\'is_active\', true);\n    \n    if (isBoss) {\n      // Boss stage combines vocabulary from the current world range.\n      // E.g. Stage 10 combines Stages 1-10; Stage 20 combines Stages 11-20.\n      const world = getWorldForStage(stageNumber);\n      wordsQuery = wordsQuery\n        .gte(\'stage_number\', world.stageRange[0])\n        .lte(\'stage_number\', world.stageRange[1]);\n    } else {\n      // Normal stage uses vocab assigned to this stage number\n      wordsQuery = wordsQuery.eq(\'stage_number\', stageNumber);\n    }\n\n    const { data: stageWords, error: wordsErr } = await wordsQuery;\n    if (wordsErr || !stageWords || stageWords.length === 0) {\n      console.warn("No words found for stage:", stageNumber, wordsErr);\n      return [];\n    }\n\n    // 3. Spaced Repetition: Fetch wrong words due for review to insert them\n    const { data: reviewWordsData } = await supabase\n      .from(\'user_review_words\')\n      .select(\'word_id, wrong_count, mastery_level\')\n      .eq(\'user_id\', studentId)\n      .lt(\'mastery_level\', 4) // Not fully mastered\n      .lte(\'next_review_at\', new Date().toISOString())\n      .order(\'wrong_count\', { ascending: false })\n      .limit(3); // Fetch up to 3 wrong words\n\n    let wrongVocab: any[] = [];\n    if (reviewWordsData && reviewWordsData.length > 0) {\n      const wrongWordIds = reviewWordsData.map(r => r.word_id);\n      const { data: wrongWords } = await supabase\n        .from(\'vocabulary\')\n        .select(\'*\')\n        .in(\'id\', wrongWordIds);\n      if (wrongWords) wrongVocab = wrongWords;\n    }\n\n    // 4. Categorize stage words by difficulty level\n    const easyPool = stageWords.filter(w => w.difficulty_level === \'easy\' || !w.difficulty_level);\n    const normalPool = stageWords.filter(w => w.difficulty_level === \'normal\');\n    const hardPool = stageWords.filter(w => w.difficulty_level === \'hard\');\n    const expertPool = stageWords.filter(w => w.difficulty_level === \'expert\');\n\n    // Helper to sample randomly from a pool\n    const sample = (pool: any[], num: number) => {\n      const shuffled = [...pool].sort(() => 0.5 - Math.random());\n      return shuffled.slice(0, num);\n    };\n\n    // Calculate how many words to pick for each difficulty category\n    const easyCount = Math.round(targetCount * (difficultyMix.easy / 100));\n    const normalCount = Math.round(targetCount * (difficultyMix.normal / 100));\n    const hardCount = Math.round(targetCount * (difficultyMix.hard / 100));\n    const expertCount = Math.round(targetCount * (difficultyMix.expert / 100));\n\n    let selectedWords: any[] = [];\n\n    if (isBoss) {\n      // Boss Stage: Guarantee coverage across all stages in the world\n      const world = getWorldForStage(stageNumber);\n      const stagesInWorld = world.stageRange[1] - world.stageRange[0] + 1;\n      \n      // Calculate how many words we can safely take from each stage as a baseline\n      const basePerStage = Math.max(1, Math.floor(targetCount / stagesInWorld));\n      \n      // Group words by stage_number\n      const wordsByStage: Record<number, any[]> = {};\n      stageWords.forEach(w => {\n         if (!wordsByStage[w.stage_number]) wordsByStage[w.stage_number] = [];\n         wordsByStage[w.stage_number].push(w);\n      });\n      \n      // 1. Pick base coverage from each stage to test overall knowledge\n      for (let s = world.stageRange[0]; s <= world.stageRange[1]; s++) {\n         if (wordsByStage[s] && wordsByStage[s].length > 0) {\n            selectedWords.push(...sample(wordsByStage[s], basePerStage));\n         }\n      }\n      \n      // 2. Fill the rest to meet targetCount using random sample from remaining words\n      if (selectedWords.length < targetCount) {\n         const remainingCount = targetCount - selectedWords.length;\n         const unselected = stageWords.filter(sw => !selectedWords.some(w => w.id === sw.id));\n         selectedWords.push(...sample(unselected, remainingCount));\n      }\n    } else {\n      // Normal Stage: Sample from categories based on difficulty mix\n      selectedWords.push(...sample(easyPool, easyCount));\n      selectedWords.push(...sample(normalPool, normalCount));\n      selectedWords.push(...sample(hardPool, hardCount));\n      selectedWords.push(...sample(expertPool, expertCount));\n\n      // Fill in from general pool if selected words count is less than target (due to rounding or empty pools)\n      if (selectedWords.length < targetCount) {\n        const remainingCount = targetCount - selectedWords.length;\n        const unselected = stageWords.filter(sw => !selectedWords.some(w => w.id === sw.id));\n        selectedWords.push(...sample(unselected, remainingCount));\n      }\n    }\n\n    // Mix in the Spaced Repetition wrong words (replacing general words, prioritizing them)\n    if (wrongVocab.length > 0) {\n      wrongVocab.forEach(wv => {\n        // Insert wrong word if it is not already selected\n        if (!selectedWords.some(w => w.id === wv.id)) {\n          // Replace a random word that isn\'t a wrong word\n          const replaceIndex = Math.floor(Math.random() * selectedWords.length);\n          selectedWords[replaceIndex] = wv;\n        }\n      });\n    }\n\n    // Trim or pad to exact target count\n    selectedWords = selectedWords.slice(0, targetCount);\n\n    // 5. Generate multiple choices and questions structure\n    // 5. Fetch vocabulary list for distractors\n    const allVocabularyList = await supabase\n      .from(\'vocabulary\')\n      .select(\'*\')\n      .eq(\'is_active\', true)\n      .limit(250)\n      .then((response) => response.data?.length ? response.data : stageWords);\n    \n    // Auto-healing logic\n    const questions: any[] = [];\n    \n    for (const targetWord of selectedWords) {\n      let chosenType = questionTypes[Math.floor(Math.random() * questionTypes.length)] as QuestionType | \'mixed_challenge\';\n      if (chosenType === \'mixed_challenge\') {\n        const standardTypes: QuestionType[] = [\'meaning_mc\', \'word_mc\', \'listening_mc\', \'context_mc\', \'spelling\'];\n        chosenType = standardTypes[Math.floor(Math.random() * standardTypes.length)];\n      }\n\n      const question = await generateValidQuestion({\n        targetWord,\n        questionType: chosenType as QuestionType,\n        candidates: allVocabularyList\n      });\n\n      if (question) {\n        questions.push(question);\n      }\n    }\n\n    const minRequired = Math.min(5, Math.floor(targetCount * 0.6));\n    if (questions.length < minRequired) {\n      console.warn(`Only generated ${questions.length} questions out of ${targetCount}. Rejecting to prevent auto-pass exploit.`);\n      return [];\n    }\n\n    return questions;\n  } catch (err) {\n    console.error("Error generating stage questions:", err);\n    return [];\n  }\n}\n\nexport async function generateWeaknessBossQuestions(studentId: string, limit: number = 20) {\n  try {\n    // Fetch user\'s weakest words (mastery < 3, ordered by mastery ascending or next_review_at)\n    const { data: weakWordsData, error } = await supabase\n      .from(\'user_review_words\')\n      .select(\'*, vocabulary:word_id(*)\')\n      .eq(\'user_id\', studentId)\n      .lt(\'mastery_level\', 4)\n      .order(\'mastery_level\', { ascending: true })\n      .limit(limit);\n\n    if (error) throw error;\n    if (!weakWordsData || weakWordsData.length === 0) return [];\n\n    const targetWords = weakWordsData.map(w => w.vocabulary).filter(Boolean);\n\n    // Fetch all word'... 8083 more characters,
+    expected: /10, 20, 30, 40, 50, 60, 70, 80, 90, 100/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at src/lib/reportReadinessContracts.test.ts:42:1
+✖ rank formula, stars, SRS, vocabulary collection, and intervention alerts are backed by real tables (0.861834ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /progressScore \* 0\.35/. Input:
+  
+  "import { supabase } from '@/utils/supabase/client';\n" +
+    "import { createTeamScoreEvent } from '@/utils/teamBattleEngine';\n" +
+    "import { ADAPTIVE_RANK_CONFIG, RankConfig, getWorldForStage } from './adaptiveConfig';\n" +
+    "import { useDemoStore } from '@/store/useDemoStore';\n" +
+    'import {\n' +
+    '  filterDistractors,\n' +
+    '  getVocabularyField,\n' +
+    '  QUESTION_ANSWER_CONFIG,\n' +
+    '  QuestionType,\n' +
+    '  QuizChoice,\n' +
+    '  shuffleArray,\n' +
+    '  uniqueChoicesByText,\n' +
+    "} from '@/lib/quizUtils';\n" +
+    "import { validateQuestion, logQuestionValidationError } from '@/utils/questionValidator';\n" +
+    '\n' +
+    '// 1. GET ADAPTIVE DIFFICULTY PARAMETERS\n' +
+    'export async function getAdaptiveDifficulty(studentId: string, stageNumber: number): Promise<RankConfig & { rank: number }> {\n' +
+    '  let rank = 1;\n' +
+    '  if (useDemoStore.getState().isDemoMode) {\n' +
+    '    rank = useDemoStore.getState().demoProgress?.current_rank || 1;\n' +
+    '  } else {\n' +
+    '    try {\n' +
+    "      const profRes = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);\n" +
+    '      if (profRes.ok) {\n' +
+    '        const profJson = await profRes.json();\n' +
+    '        rank = profJson?.learningPath?.current_rank || 1;\n' +
+    '      }\n' +
+    '    } catch {}\n' +
+    '  }\n' +
+    '  const config = ADAPTIVE_RANK_CONFIG[rank] || ADAPTIVE_RANK_CONFIG[1];\n' +
+    '  \n' +
+    '  return {\n' +
+    '    rank,\n' +
+    '    ...config\n' +
+    '  };\n' +
+    '}\n' +
+    '\n' +
+    '// 2. GENERATE STAGE QUESTIONS (ADAPTIVE QUESTION GENERATION ENGINE)\n' +
+    'export async function generateStageQuestions(studentId: string, stageNumber: number, missionLevel: number = 1): Promise<any[]> {\n' +
+    '  try {\n' +
+    '    // 1. Fetch current rank configuration\n' +
+    '    const diffInfo = await getAdaptiveDifficulty(studentId, stageNumber);\n' +
+    '    const { difficultyMix, questionCount } = diffInfo;\n' +
+    '    let { questionTypes } = diffInfo;\n' +
+    '    \n' +
+    '    // Override questionTypes based on missionLevel (Stars)\n' +
+    '    if (missionLevel === 1) {\n' +
+    "       questionTypes = ['meaning_mc', 'word_mc', 'context_mc'];\n" +
+    '    } else if (missionLevel === 2) {\n' +
+    "       questionTypes = ['listening_mc', 'meaning_mc', 'word_mc'];\n" +
+    '    } else if (missionLevel === 3) {\n' +
+    "       questionTypes = ['spelling', 'context_mc'];\n" +
+    '    }\n' +
+    '\n' +
+    '    // Skull ID Override (Special Needs Students)\n' +
+    '    let isSkullStudent = false;\n' +
+    '    try {\n' +
+    "      const res = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);\n" +
+    '      if (res.ok) {\n' +
+    '        const json = await res.json();\n' +
+    '        isSkullStudent = json?.student?.is_skull || false;\n' +
+    '      }\n' +
+    '    } catch {}\n' +
+    '    if (isSkullStudent) {\n' +
+    "      questionTypes = ['meaning_mc', 'word_mc']; // Force multiple choice only\n" +
+    '    }\n' +
+    '\n' +
+    '    const isBoss = stageNumber % 10 === 0;\n' +
+    '    const targetCount = isBoss ? Math.round(questionCount * 1.5) : questionCount;\n' +
+    '\n' +
+    '    // 2. Resolve Word Pool based on stage (Normal vs. Boss Stage)\n' +
+    "    let wordsQuery = supabase.from('vocabulary').select('*').eq('is_active', true);\n" +
+    '    \n' +
+    '    if (isBoss) {\n' +
+    '      // Boss stage combines vocabulary from the current world range.\n' +
+    '      // E.g. Stage 10 combines Stages 1-10; Stage 20 combines Stages 11-20.\n' +
+    '      const world = getWorldForStage(stageNumber);\n' +
+    '      wordsQuery = wordsQuery\n' +
+    "        .gte('stage_number', world.stageRange[0])\n" +
+    "        .lte('stage_number', world.stageRange[1]);\n" +
+    '    } else {\n' +
+    '      // Normal stage uses vocab assigned to this stage number\n' +
+    "      wordsQuery = wordsQuery.eq('stage_number', stageNumber);\n" +
+    '    }\n' +
+    '\n' +
+    '    const { data: stageWords, error: wordsErr } = await wordsQuery;\n' +
+    '    if (wordsErr || !stageWords || stageWords.length === 0) {\n' +
+    '      console.warn("No words found for stage:", stageNumber, wordsErr);\n' +
+    '      return [];\n' +
+    '    }\n' +
+    '\n' +
+    '    // 3. Spaced Repetition: Fetch wrong words due for review to insert them\n' +
+    '    const { data: reviewWordsData } = await supabase\n' +
+    "      .from('user_review_words')\n" +
+    "      .select('word_id, wrong_count, mastery_level')\n" +
+    "      .eq('user_id', studentId)\n" +
+    "      .lt('mastery_level', 4) // Not fully mastered\n" +
+    "      .lte('next_review_at', new Date().toISOString())\n" +
+    "      .order('wrong_count', { ascending: false })\n" +
+    '      .limit(3); // Fetch up to 3 wrong words\n' +
+    '\n' +
+    '    let wrongVocab: any[] = [];\n' +
+    '    if (reviewWordsData && reviewWordsData.length > 0) {\n' +
+    '      const wrongWordIds = reviewWordsData.map(r => r.word_id);\n' +
+    '      const { data: wrongWords } = await supabase\n' +
+    "        .from('vocabulary')\n" +
+    "        .select('*')\n" +
+    "        .in('id', wrongWordIds);\n" +
+    '      if (wrongWords) wrongVocab = wrongWords;\n' +
+    '    }\n' +
+    '\n' +
+    '    // 4. Categorize stage words by difficulty level\n' +
+    "    const easyPool = stageWords.filter(w => w.difficulty_level === 'easy' || !w.difficulty_level);\n" +
+    "    const normalPool = stageWords.filter(w => w.difficulty_level === 'normal');\n" +
+    "    const hardPool = stageWords.filter(w => w.difficulty_level === 'hard');\n" +
+    "    const expertPool = stageWords.filter(w => w.difficulty_level === 'expert');\n" +
+    '\n' +
+    '    // Helper to sample randomly from a pool\n' +
+    '    const sample = (pool: any[], num: number) => {\n' +
+    '      const shuffled = [...pool].sort(() => 0.5 - Math.random());\n' +
+    '      return shuffled.slice(0, num);\n' +
+    '    };\n' +
+    '\n' +
+    '    // Calculate how many words to pick for each difficulty category\n' +
+    '    const easyCount = Math.round(targetCount * (difficultyMix.easy / 100));\n' +
+    '    const normalCount = Math.round(targetCount * (difficultyMix.normal / 100));\n' +
+    '    const hardCount = Math.round(targetCount * (difficultyMix.hard / 100));\n' +
+    '    const expertCount = Math.round(targetCount * (difficultyMix.expert / 100));\n' +
+    '\n' +
+    '    let selectedWords: any[] = [];\n' +
+    '\n' +
+    '    if (isBoss) {\n' +
+    '      // Boss Stage: Guarantee coverage across all stages in the world\n' +
+    '      const world = getWorldForStage(stageNumber);\n' +
+    '      const stagesInWorld = world.stageRange[1] - world.stageRange[0] + 1;\n' +
+    '      \n' +
+    '      // Calculate how many words we can safely take from each stage as a baseline\n' +
+    '      const basePerStage = Math.max(1, Math.floor(targetCount / stagesInWorld));\n' +
+    '      \n' +
+    '      // Group words by stage_number\n' +
+    '      const wordsByStage: Record<number, any[]> = {};\n' +
+    '      stageWords.forEach(w => {\n' +
+    '         if (!wordsByStage[w.stage_number]) wordsByStage[w.stage_number] = [];\n' +
+    '         wordsByStage[w.stage_number].push(w);\n' +
+    '      });\n' +
+    '      \n' +
+    '      // 1. Pick base coverage from each stage to test overall knowledge\n' +
+    '      for (let s = world.stageRange[0]; s <= world.stageRange[1]; s++) {\n' +
+    '         if (wordsByStage[s] && wordsByStage[s].length > 0) {\n' +
+    '            selectedWords.push(...sample(wordsByStage[s], basePerStage));\n' +
+    '         }\n' +
+    '      }\n' +
+    '      \n' +
+    '      // 2. Fill the rest to meet targetCount using random sample from remaining words\n' +
+    '      if (selectedWords.length < targetCount) {\n' +
+    '         const remainingCount = targetCount - selectedWords.length;\n' +
+    '         const unselected = stageWords.filter(sw => !selectedWords.some(w => w.id === sw.id));\n' +
+    '         selectedWords.push(...sample(unselected, remainingCount));\n' +
+    '      }\n' +
+    '    } else {\n' +
+    '      // Normal Stage: Sample from categories based on difficulty mix\n' +
+    '      selectedWords.push(...sample(easyPool, easyCount));\n' +
+    '      selectedWords.push(...sample(normalPool, normalCount));\n' +
+    '      selectedWords.push(...sample(hardPool, hardCount));\n' +
+    '      selectedWords.push(...sample(expertPool, expertCount));\n' +
+    '\n' +
+    '      // Fill in from general pool if selected words count is less than target (due to rounding or empty pools)\n' +
+    '      if (selectedWords.length < targetCount) {\n' +
+    '        const remainingCount = targetCount - selectedWords.length;\n' +
+    '        const unselected = stageWords.filter(sw => !selectedWords.some(w => w.id === sw.id));\n' +
+    '        selectedWords.push(...sample(unselected, remainingCount));\n' +
+    '      }\n' +
+    '    }\n' +
+    '\n' +
+    '    // Mix in the Spaced Repetition wrong words (replacing general words, prioritizing them)\n' +
+    '    if (wrongVocab.length > 0) {\n' +
+    '      wrongVocab.forEach(wv => {\n' +
+    '        // Insert wrong word if it is not already selected\n' +
+    '        if (!selectedWords.some(w => w.id === wv.id)) {\n' +
+    "          // Replace a random word that isn't a wrong word\n" +
+    '          const replaceIndex = Math.floor(Math.random() * selectedWords.length);\n' +
+    '          selectedWords[replaceIndex] = wv;\n' +
+    '        }\n' +
+    '      });\n' +
+    '    }\n' +
+    '\n' +
+    '    // Trim or pad to exact target count\n' +
+    '    selectedWords = selectedWords.slice(0, targetCount);\n' +
+    '\n' +
+    '    // 5. Generate multiple choices and questions structure\n' +
+    '    // 5. Fetch vocabulary list for distractors\n' +
+    '    const allVocabularyList = await supabase\n' +
+    "      .from('vocabulary')\n" +
+    "      .select('*')\n" +
+    "      .eq('is_active', true)\n" +
+    '      .limit(250)\n' +
+    '      .then((response) => response.data?.length ? response.data : stageWords);\n' +
+    '    \n' +
+    '    // Auto-healing logic\n' +
+    '    const questions: any[] = [];\n' +
+    '    \n' +
+    '    for (const targetWord of selectedWords) {\n' +
+    "      let chosenType = questionTypes[Math.floor(Math.random() * questionTypes.length)] as QuestionType | 'mixed_challenge';\n" +
+    "      if (chosenType === 'mixed_challenge') {\n" +
+    "        const standardTypes: QuestionType[] = ['meaning_mc', 'word_mc', 'listening_mc', 'context_mc', 'spelling'];\n" +
+    '        chosenType = standardTypes[Math.floor(Math.random() * standardTypes.length)];\n' +
+    '      }\n' +
+    '\n' +
+    '      const question = await generateValidQuestion({\n' +
+    '        targetWord,\n' +
+    '        questionType: chosenType as QuestionType,\n' +
+    '        candidates: allVocabularyList\n' +
+    '      });\n' +
+    '\n' +
+    '      if (question) {\n' +
+    '        questions.push(question);\n' +
+    '      }\n' +
+    '    }\n' +
+    '\n' +
+    '    const minRequired = Math.min(5, Math.floor(targetCount * 0.6));\n' +
+    '    if (questions.length < minRequired) {\n' +
+    '      console.warn(`Only generated ${questions.length} questions out of ${targetCount}. Rejecting to prevent auto-pass exploit.`);\n' +
+    '      return [];\n' +
+    '    }\n' +
+    '\n' +
+    '    return questions;\n' +
+    '  } catch (err) {\n' +
+    '    console.error("Error generating stage questions:", err);\n' +
+    '    return [];\n' +
+    '  }\n' +
+    '}\n' +
+    '\n' +
+    'export async function generateWeaknessBossQuestions(studentId: string, limit: number = 20) {\n' +
+    '  try {\n' +
+    "    // Fetch user's weakest words (mastery < 3, ordered by mastery ascending or next_review_at)\n" +
+    '    const { data: weakWordsData, error } = await supabase\n' +
+    "      .from('user_review_words')\n" +
+    "      .select('*, vocabulary:word_id(*)')\n" +
+    "      .eq('user_id', studentId)\n" +
+    "      .lt('mastery_level', 4)\n" +
+    "      .order('mastery_level', { ascending: true })\n" +
+    '      .limit(limit);\n' +
+    '\n' +
+    '    if (error) throw error;\n' +
+    '    if (!weakWordsData || weakWordsData.length === 0) return [];\n' +
+    '\n' +
+    '    const targetWords = weakWordsData.map(w => w.vocabulary).filter(Boolean);\n' +
+    '\n' +
+    '    // Fetch all word'... 8083 more characters
+  
+      at TestContext.<anonymous> (file:///Users/distinycate/Desktop/vj/src/lib/reportReadinessContracts.test.ts:43:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import { supabase } from \'@/utils/supabase/client\';\nimport { createTeamScoreEvent } from \'@/utils/teamBattleEngine\';\nimport { ADAPTIVE_RANK_CONFIG, RankConfig, getWorldForStage } from \'./adaptiveConfig\';\nimport { useDemoStore } from \'@/store/useDemoStore\';\nimport {\n  filterDistractors,\n  getVocabularyField,\n  QUESTION_ANSWER_CONFIG,\n  QuestionType,\n  QuizChoice,\n  shuffleArray,\n  uniqueChoicesByText,\n} from \'@/lib/quizUtils\';\nimport { validateQuestion, logQuestionValidationError } from \'@/utils/questionValidator\';\n\n// 1. GET ADAPTIVE DIFFICULTY PARAMETERS\nexport async function getAdaptiveDifficulty(studentId: string, stageNumber: number): Promise<RankConfig & { rank: number }> {\n  let rank = 1;\n  if (useDemoStore.getState().isDemoMode) {\n    rank = useDemoStore.getState().demoProgress?.current_rank || 1;\n  } else {\n    try {\n      const profRes = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : \'\'}`);\n      if (profRes.ok) {\n        const profJson = await profRes.json();\n        rank = profJson?.learningPath?.current_rank || 1;\n      }\n    } catch {}\n  }\n  const config = ADAPTIVE_RANK_CONFIG[rank] || ADAPTIVE_RANK_CONFIG[1];\n  \n  return {\n    rank,\n    ...config\n  };\n}\n\n// 2. GENERATE STAGE QUESTIONS (ADAPTIVE QUESTION GENERATION ENGINE)\nexport async function generateStageQuestions(studentId: string, stageNumber: number, missionLevel: number = 1): Promise<any[]> {\n  try {\n    // 1. Fetch current rank configuration\n    const diffInfo = await getAdaptiveDifficulty(studentId, stageNumber);\n    const { difficultyMix, questionCount } = diffInfo;\n    let { questionTypes } = diffInfo;\n    \n    // Override questionTypes based on missionLevel (Stars)\n    if (missionLevel === 1) {\n       questionTypes = [\'meaning_mc\', \'word_mc\', \'context_mc\'];\n    } else if (missionLevel === 2) {\n       questionTypes = [\'listening_mc\', \'meaning_mc\', \'word_mc\'];\n    } else if (missionLevel === 3) {\n       questionTypes = [\'spelling\', \'context_mc\'];\n    }\n\n    // Skull ID Override (Special Needs Students)\n    let isSkullStudent = false;\n    try {\n      const res = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : \'\'}`);\n      if (res.ok) {\n        const json = await res.json();\n        isSkullStudent = json?.student?.is_skull || false;\n      }\n    } catch {}\n    if (isSkullStudent) {\n      questionTypes = [\'meaning_mc\', \'word_mc\']; // Force multiple choice only\n    }\n\n    const isBoss = stageNumber % 10 === 0;\n    const targetCount = isBoss ? Math.round(questionCount * 1.5) : questionCount;\n\n    // 2. Resolve Word Pool based on stage (Normal vs. Boss Stage)\n    let wordsQuery = supabase.from(\'vocabulary\').select(\'*\').eq(\'is_active\', true);\n    \n    if (isBoss) {\n      // Boss stage combines vocabulary from the current world range.\n      // E.g. Stage 10 combines Stages 1-10; Stage 20 combines Stages 11-20.\n      const world = getWorldForStage(stageNumber);\n      wordsQuery = wordsQuery\n        .gte(\'stage_number\', world.stageRange[0])\n        .lte(\'stage_number\', world.stageRange[1]);\n    } else {\n      // Normal stage uses vocab assigned to this stage number\n      wordsQuery = wordsQuery.eq(\'stage_number\', stageNumber);\n    }\n\n    const { data: stageWords, error: wordsErr } = await wordsQuery;\n    if (wordsErr || !stageWords || stageWords.length === 0) {\n      console.warn("No words found for stage:", stageNumber, wordsErr);\n      return [];\n    }\n\n    // 3. Spaced Repetition: Fetch wrong words due for review to insert them\n    const { data: reviewWordsData } = await supabase\n      .from(\'user_review_words\')\n      .select(\'word_id, wrong_count, mastery_level\')\n      .eq(\'user_id\', studentId)\n      .lt(\'mastery_level\', 4) // Not fully mastered\n      .lte(\'next_review_at\', new Date().toISOString())\n      .order(\'wrong_count\', { ascending: false })\n      .limit(3); // Fetch up to 3 wrong words\n\n    let wrongVocab: any[] = [];\n    if (reviewWordsData && reviewWordsData.length > 0) {\n      const wrongWordIds = reviewWordsData.map(r => r.word_id);\n      const { data: wrongWords } = await supabase\n        .from(\'vocabulary\')\n        .select(\'*\')\n        .in(\'id\', wrongWordIds);\n      if (wrongWords) wrongVocab = wrongWords;\n    }\n\n    // 4. Categorize stage words by difficulty level\n    const easyPool = stageWords.filter(w => w.difficulty_level === \'easy\' || !w.difficulty_level);\n    const normalPool = stageWords.filter(w => w.difficulty_level === \'normal\');\n    const hardPool = stageWords.filter(w => w.difficulty_level === \'hard\');\n    const expertPool = stageWords.filter(w => w.difficulty_level === \'expert\');\n\n    // Helper to sample randomly from a pool\n    const sample = (pool: any[], num: number) => {\n      const shuffled = [...pool].sort(() => 0.5 - Math.random());\n      return shuffled.slice(0, num);\n    };\n\n    // Calculate how many words to pick for each difficulty category\n    const easyCount = Math.round(targetCount * (difficultyMix.easy / 100));\n    const normalCount = Math.round(targetCount * (difficultyMix.normal / 100));\n    const hardCount = Math.round(targetCount * (difficultyMix.hard / 100));\n    const expertCount = Math.round(targetCount * (difficultyMix.expert / 100));\n\n    let selectedWords: any[] = [];\n\n    if (isBoss) {\n      // Boss Stage: Guarantee coverage across all stages in the world\n      const world = getWorldForStage(stageNumber);\n      const stagesInWorld = world.stageRange[1] - world.stageRange[0] + 1;\n      \n      // Calculate how many words we can safely take from each stage as a baseline\n      const basePerStage = Math.max(1, Math.floor(targetCount / stagesInWorld));\n      \n      // Group words by stage_number\n      const wordsByStage: Record<number, any[]> = {};\n      stageWords.forEach(w => {\n         if (!wordsByStage[w.stage_number]) wordsByStage[w.stage_number] = [];\n         wordsByStage[w.stage_number].push(w);\n      });\n      \n      // 1. Pick base coverage from each stage to test overall knowledge\n      for (let s = world.stageRange[0]; s <= world.stageRange[1]; s++) {\n         if (wordsByStage[s] && wordsByStage[s].length > 0) {\n            selectedWords.push(...sample(wordsByStage[s], basePerStage));\n         }\n      }\n      \n      // 2. Fill the rest to meet targetCount using random sample from remaining words\n      if (selectedWords.length < targetCount) {\n         const remainingCount = targetCount - selectedWords.length;\n         const unselected = stageWords.filter(sw => !selectedWords.some(w => w.id === sw.id));\n         selectedWords.push(...sample(unselected, remainingCount));\n      }\n    } else {\n      // Normal Stage: Sample from categories based on difficulty mix\n      selectedWords.push(...sample(easyPool, easyCount));\n      selectedWords.push(...sample(normalPool, normalCount));\n      selectedWords.push(...sample(hardPool, hardCount));\n      selectedWords.push(...sample(expertPool, expertCount));\n\n      // Fill in from general pool if selected words count is less than target (due to rounding or empty pools)\n      if (selectedWords.length < targetCount) {\n        const remainingCount = targetCount - selectedWords.length;\n        const unselected = stageWords.filter(sw => !selectedWords.some(w => w.id === sw.id));\n        selectedWords.push(...sample(unselected, remainingCount));\n      }\n    }\n\n    // Mix in the Spaced Repetition wrong words (replacing general words, prioritizing them)\n    if (wrongVocab.length > 0) {\n      wrongVocab.forEach(wv => {\n        // Insert wrong word if it is not already selected\n        if (!selectedWords.some(w => w.id === wv.id)) {\n          // Replace a random word that isn\'t a wrong word\n          const replaceIndex = Math.floor(Math.random() * selectedWords.length);\n          selectedWords[replaceIndex] = wv;\n        }\n      });\n    }\n\n    // Trim or pad to exact target count\n    selectedWords = selectedWords.slice(0, targetCount);\n\n    // 5. Generate multiple choices and questions structure\n    // 5. Fetch vocabulary list for distractors\n    const allVocabularyList = await supabase\n      .from(\'vocabulary\')\n      .select(\'*\')\n      .eq(\'is_active\', true)\n      .limit(250)\n      .then((response) => response.data?.length ? response.data : stageWords);\n    \n    // Auto-healing logic\n    const questions: any[] = [];\n    \n    for (const targetWord of selectedWords) {\n      let chosenType = questionTypes[Math.floor(Math.random() * questionTypes.length)] as QuestionType | \'mixed_challenge\';\n      if (chosenType === \'mixed_challenge\') {\n        const standardTypes: QuestionType[] = [\'meaning_mc\', \'word_mc\', \'listening_mc\', \'context_mc\', \'spelling\'];\n        chosenType = standardTypes[Math.floor(Math.random() * standardTypes.length)];\n      }\n\n      const question = await generateValidQuestion({\n        targetWord,\n        questionType: chosenType as QuestionType,\n        candidates: allVocabularyList\n      });\n\n      if (question) {\n        questions.push(question);\n      }\n    }\n\n    const minRequired = Math.min(5, Math.floor(targetCount * 0.6));\n    if (questions.length < minRequired) {\n      console.warn(`Only generated ${questions.length} questions out of ${targetCount}. Rejecting to prevent auto-pass exploit.`);\n      return [];\n    }\n\n    return questions;\n  } catch (err) {\n    console.error("Error generating stage questions:", err);\n    return [];\n  }\n}\n\nexport async function generateWeaknessBossQuestions(studentId: string, limit: number = 20) {\n  try {\n    // Fetch user\'s weakest words (mastery < 3, ordered by mastery ascending or next_review_at)\n    const { data: weakWordsData, error } = await supabase\n      .from(\'user_review_words\')\n      .select(\'*, vocabulary:word_id(*)\')\n      .eq(\'user_id\', studentId)\n      .lt(\'mastery_level\', 4)\n      .order(\'mastery_level\', { ascending: true })\n      .limit(limit);\n\n    if (error) throw error;\n    if (!weakWordsData || weakWordsData.length === 0) return [];\n\n    const targetWords = weakWordsData.map(w => w.vocabulary).filter(Boolean);\n\n    // Fetch all word'... 8083 more characters,
+    expected: /progressScore \* 0\.35/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at src/lib/reportReadinessContracts.test.ts:57:1
+✖ team battle and teacher dashboard report views are implemented as live sections (0.779542ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /\.from\('item_analysis'\)/. Input:
+  
+  "'use client';\n" +
+    "import { useState, useEffect, useMemo } from 'react';\n" +
+    "import { motion, AnimatePresence } from 'framer-motion';\n" +
+    "import { supabase } from '@/utils/supabase/client';\n" +
+    'import { \n' +
+    '  Users, AlertTriangle, LogOut, Shield, CheckCircle2,\n' +
+    '  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings, Gift, Star, Globe2, Target\n' +
+    "} from 'lucide-react';\n" +
+    'import { \n' +
+    '  BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,\n' +
+    '  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer \n' +
+    "} from 'recharts';\n" +
+    "import { calculateLearningGain, calculateRiskScore, getRiskLevel, getProgressTrend, calculateClassroomWeakestSkill, calculateStudentSkillRadar } from '@/utils/analyticsUtils';\n" +
+    "import { generateStudentInsight } from '@/utils/aiTeacherInsight';\n" +
+    '\n' +
+    "import TeamLeaderboard from '@/components/TeamLeaderboard';\n" +
+    "import SeasonManager from '@/components/admin/SeasonManager';\n" +
+    "import SchoolLevelDashboard from '@/components/admin/SchoolLevelDashboard';\n" +
+    "import ClassLevelAnalytics from '@/components/admin/ClassLevelAnalytics';\n" +
+    "import IndividualStudentProfile from '@/components/admin/IndividualStudentProfile';\n" +
+    "import EventAnalyticsTab from '@/components/admin/EventAnalyticsTab';\n" +
+    "import SettingsTab from '@/components/admin/SettingsTab';\n" +
+    "import EditStudentModal from '@/components/admin/EditStudentModal';\n" +
+    "import IndividualComparisonTable from '@/components/admin/IndividualComparisonTable';\n" +
+    '\n' +
+    "type AdminTab = 'school-overview' | 'overview' | 'students' | 'assessments' | 'teams' | 'weak-words' | 'risks' | 'events' | 'settings';\n" +
+    '\n' +
+    "import { getAdminInitialData, getAdminClassroomStats } from './actions';\n" +
+    '\n' +
+    'export default function AdminPage() {\n' +
+    '  const [teacher, setTeacher] = useState<any>(null);\n' +
+    "  const [username, setUsername] = useState('');\n" +
+    "  const [password, setPassword] = useState('');\n" +
+    "  const [loginError, setLoginError] = useState('');\n" +
+    '  const [isLoading, setIsLoading] = useState(false);\n' +
+    '  const [isDeletingUnplayed, setIsDeletingUnplayed] = useState(false);\n' +
+    '  const [isRandomizingTeams, setIsRandomizingTeams] = useState(false);\n' +
+    '  const [isResettingAll, setIsResettingAll] = useState(false);\n' +
+    '\n' +
+    "  const [activeTab, setActiveTab] = useState<AdminTab>('school-overview');\n" +
+    '  const [classrooms, setClassrooms] = useState<any[]>([]);\n' +
+    "  const [selectedClassroom, setSelectedClassroom] = useState<string>('');\n" +
+    '  const [classroomStudentCounts, setClassroomStudentCounts] = useState<Record<string, number>>({});\n' +
+    '  \n' +
+    '  // Data\n' +
+    '  const [studentsList, setStudentsList] = useState<any[]>([]);\n' +
+    '  const [vocabList, setVocabList] = useState<any[]>([]);\n' +
+    '  const [itemAnalysis, setItemAnalysis] = useState<any[]>([]);\n' +
+    '  const [wrongWords, setWrongWords] = useState<any[]>([]);\n' +
+    '  const [totalStars, setTotalStars] = useState(0);\n' +
+    '  const [totalThefts, setTotalThefts] = useState(0);\n' +
+    '  \n' +
+    '  // Student Detail Modal\n' +
+    '  const [selectedStudent, setSelectedStudent] = useState<any>(null);\n' +
+    '  const [editingStudent, setEditingStudent] = useState<any>(null);\n' +
+    "  const [studentTab, setStudentTab] = useState<'overview' | 'skills' | 'wrong-words'>('overview');\n" +
+    '  const [isPurging, setIsPurging] = useState(false);\n' +
+    '\n' +
+    '  useEffect(() => {\n' +
+    "    const saved = localStorage.getItem('vocab_journey_teacher');\n" +
+    '    if (saved) setTeacher(JSON.parse(saved));\n' +
+    '  }, []);\n' +
+    '\n' +
+    '  const handleLogin = async (e: React.FormEvent) => {\n' +
+    '    e.preventDefault();\n' +
+    "    if (!username.trim() || !password.trim()) return setLoginError('กรุณากรอก Username และ Password');\n" +
+    "    setIsLoading(true); setLoginError('');\n" +
+    '    try {\n' +
+    "      const { data, error } = await supabase.rpc('login_teacher', { p_username: username.trim(), p_password: password.trim() });\n" +
+    "      if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านครูไม่ถูกต้อง');\n" +
+    "      if (!['TEACHER', 'ADMIN'].includes(data.role)) {\n" +
+    "        throw new Error('บัญชีนี้ใช้ได้เฉพาะระบบการ์ด กรุณาเข้าผ่านเมนูระบบการ์ดสำหรับคุณครู');\n" +
+    '      }\n' +
+    '      setTeacher(data);\n' +
+    "      localStorage.setItem('vocab_journey_teacher', JSON.stringify(data));\n" +
+    '    } catch (err: any) {\n' +
+    '      setLoginError(err.message);\n' +
+    '    } finally {\n' +
+    '      setIsLoading(false);\n' +
+    '    }\n' +
+    '  };\n' +
+    '\n' +
+    '  const handleLogout = () => {\n' +
+    "    localStorage.removeItem('vocab_journey_teacher');\n" +
+    '    window.location.reload();\n' +
+    '  };\n' +
+    '\n' +
+    '  const handlePurgeUnverified = async () => {\n' +
+    '    if (!teacher || !selectedClassroom) return;\n' +
+    '    if (!window.confirm("คุณแน่ใจหรือไม่ที่จะลบบัญชีนักเรียนที่ยังไม่ยืนยันตัวตนในห้องนี้ทั้งหมด? ข้อมูลจะถูกลบทิ้งและไม่สามารถกู้คืนได้")) return;\n' +
+    '    \n' +
+    '    setIsPurging(true);\n' +
+    '    try {\n' +
+    "      const { data, error } = await supabase.rpc('teacher_purge_unverified', {\n" +
+    '        p_teacher_id: teacher.id,\n' +
+    '        p_classroom_id: selectedClassroom\n' +
+    '      });\n' +
+    '      if (error) throw error;\n' +
+    '      alert(`ลบบัญชีที่ไม่ยืนยันตัวตนสำเร็จจำนวน ${data} บัญชี`);\n' +
+    '      window.location.reload();\n' +
+    '    } catch (err: any) {\n' +
+    '      alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + err.message);\n' +
+    '    } finally {\n' +
+    '      setIsPurging(false);\n' +
+    '    }\n' +
+    '  };\n' +
+    '\n' +
+    '  const handleRandomizeTeams = async () => {\n' +
+    '    if (!teacher) return;\n' +
+    '    \n' +
+    "    if (!confirm('คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการสุ่มทีมระดับโรงเรียนและห้องเรียนใหม่ทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้')) {\n" +
+    '      return;\n' +
+    '    }\n' +
+    '\n' +
+    `    const userInput = prompt('พิมพ์ "SHUFFLE" เพื่อยืนยันการสุ่มทีมใหม่');\n` +
+    "    if (userInput !== 'SHUFFLE') {\n" +
+    "      alert('การพิมพ์ยืนยันไม่ถูกต้อง ยกเลิกการสุ่มทีม');\n" +
+    '      return;\n' +
+    '    }\n' +
+    '\n' +
+    '    setIsRandomizingTeams(true);\n' +
+    '    try {\n' +
+    "      const { error: rpcError } = await supabase.rpc('randomize_all_teams');\n" +
+    '      if (rpcError) throw rpcError;\n' +
+    '      \n' +
+    "      alert('สุ่มทีมใหม่ทั้งหมดสำเร็จแล้ว');\n" +
+    '      window.location.reload();\n' +
+    '    } catch (err: any) {\n' +
+    "      alert(err.message || 'เกิดข้อผิดพลาดในการสุ่มทีม กรุณาลองใหม่อีกครั้ง');\n" +
+    '    } finally {\n' +
+    '      setIsRandomizingTeams(false);\n' +
+    '    }\n' +
+    '  };\n' +
+    '\n' +
+    '  const handleResetAllStudents = async () => {\n' +
+    '    if (!teacher) return;\n' +
+    '    \n' +
+    `    if (!confirm('คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตข้อมูลนักเรียน "ทุกคน" ทั้งด่านและการ์ด? การกระทำนี้ไม่สามารถย้อนกลับได้')) {\n` +
+    '      return;\n' +
+    '    }\n' +
+    '\n' +
+    `    const userInput = prompt('พิมพ์ "RESET ALL" เพื่อยืนยันการล้างข้อมูลทั้งหมด');\n` +
+    "    if (userInput !== 'RESET ALL') {\n" +
+    "      alert('การพิมพ์ยืนยันไม่ถูกต้อง ยกเลิกการรีเซ็ต');\n" +
+    '      return;\n' +
+    '    }\n' +
+    '\n' +
+    '    setIsResettingAll(true);\n' +
+    '    try {\n' +
+    "      const { error } = await supabase.rpc('teacher_reset_all_students', {\n" +
+    '        p_teacher_id: teacher.id\n' +
+    '      });\n' +
+    '      if (error) throw error;\n' +
+    "      alert('รีเซ็ตข้อมูลนักเรียนทุกคนสำเร็จแล้ว');\n" +
+    '      window.location.reload();\n' +
+    '    } catch (err: any) {\n' +
+    "      alert(err.message || 'เกิดข้อผิดพลาดในการรีเซ็ตข้อมูล');\n" +
+    '    } finally {\n' +
+    '      setIsResettingAll(false);\n' +
+    '    }\n' +
+    '  };\n' +
+    '\n' +
+    '  const handleDeleteStudent = async (studentId: string, studentName: string) => {\n' +
+    '    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลของนักเรียน: ${studentName}? การกระทำนี้ไม่สามารถย้อนกลับได้`)) {\n' +
+    '      return;\n' +
+    '    }\n' +
+    '    try {\n' +
+    "      const res = await fetch(`/api/admin/students?studentId=${studentId}`, { method: 'DELETE' });\n" +
+    '      const json = await res.json();\n' +
+    "      if (!res.ok) throw new Error(json.error || 'Failed to delete student');\n" +
+    '      setStudentsList(prev => prev.filter(s => s.id !== studentId));\n' +
+    '      alert(`ลบข้อมูลนักเรียน ${studentName} เรียบร้อยแล้ว`);\n' +
+    '    } catch (err: any) {\n' +
+    "      alert(err.message || 'เกิดข้อผิดพลาดในการลบข้อมูล');\n" +
+    '    }\n' +
+    '  };\n' +
+    '\n' +
+    '  const handleVerifyStudent = async (studentId: string, studentName: string) => {\n' +
+    '    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการยืนยันตัวตนให้นักเรียน: ${studentName}?`)) {\n' +
+    '      return;\n' +
+    '    }\n' +
+    '    try {\n' +
+    "      const res = await fetch('/api/admin/students', {\n" +
+    "        method: 'PATCH',\n" +
+    "        headers: { 'Content-Type': 'application/json' },\n" +
+    '        body: JSON.stringify({ studentId, updates: { is_verified: true } }),\n' +
+    '      });\n' +
+    '      const json = await res.json();\n' +
+    "      if (!res.ok) throw new Error(json.error || 'Failed to verify student');\n" +
+    '      setStudentsList(prev => prev.map(s => s.id === studentId ? { ...s, is_verified: true } : s));\n' +
+    '      alert(`ยืนยันตัวตนนักเรียน ${studentName} เรียบร้อยแล้ว`);\n' +
+    '    } catch (err: any) {\n' +
+    "      alert(err.message || 'เกิดข้อผิดพลาดในการยืนยันตัวตน');\n" +
+    '    }\n' +
+    '  };\n' +
+    '\n' +
+    '\n' +
+    '  useEffect(() => {\n' +
+    '    if (!teacher) return;\n' +
+    '    async function loadInitialData() {\n' +
+    '      try {\n' +
+    '        const data = await getAdminInitialData(teacher.id, teacher.role);\n' +
+    '        \n' +
+    '        if (data.validClasses.length > 0) {\n' +
+    '          setClassrooms(data.validClasses);\n' +
+    '          setSelectedClassroom(data.validClasses[0].id);\n' +
+    '\n' +
+    '          let countRows: any[] = [];\n' +
+    '          try {\n' +
+    "            const res = await fetch('/api/admin/students');\n" +
+    '            if (res.ok) {\n' +
+    '              const json = await res.json();\n' +
+    '              countRows = json.students || [];\n' +
+    '            }\n' +
+    '          } catch (e) {\n' +
+    '            console.error("Failed to load student counts", e);\n' +
+    '          }\n' +
+    '\n' +
+    '          const counts = countRows.reduce((acc, studentRow) => {\n' +
+    '            if (studentRow.classroom_id) {\n' +
+    '              acc[studentRow.classroom_id] = (acc[studentRow.classroom_id] || 0) + 1;\n' +
+    '            }\n' +
+    '            return acc;\n' +
+    '          }, {} as Record<string, number>);\n' +
+    '          setClassroomStudentCounts(counts);\n' +
+    '        } else {\n' +
+    '          setClassrooms([]);\n' +
+    "          setSelectedClassroom('');\n" +
+    '          setClassroomStudentCounts({});\n' +
+    '        }\n' +
+    '\n' +
+    '        setVocabList(data.vocabList);\n' +
+    '        setItemAnalysis(data.itemAnalysis);\n' +
+    '      } catch (err) {\n' +
+    '        console.error("Failed to load initial admin data", err);\n' +
+    '      }\n' +
+    '    }\n' +
+    '    loadInitialData();\n' +
+    '  }, [teacher]);\n' +
+    '\n' +
+    '  useEffect(() => {\n' +
+    '    if (!teacher || !selectedClassroom) return;\n' +
+    '    async function loadClassroomData() {\n' +
+    '      let students: any[] = [];\n' +
+    '      try {\n' +
+    '        const res = await fetch(`/api/admin/students?classroomId=${selectedClassroom}`);\n' +
+    '        if (res.ok) {\n' +
+    '          const json = await res.json();\n' +
+    '          students = json.students || [];\n' +
+    '        }\n' +
+    '      } catch (e) {\n' +
+    '        console.error("Failed to load classroom students", e);\n' +
+    '      }\n' +
+    '      \n' +
+    '      setStudentsList(students);\n' +
+    '\n' +
+    '      const studentIds = students?.map(s => s.id) || []'... 45064 more characters
+  
+      at TestContext.<anonymous> (file:///Users/distinycate/Desktop/vj/src/lib/reportReadinessContracts.test.ts:62:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\'use client\';\nimport { useState, useEffect, useMemo } from \'react\';\nimport { motion, AnimatePresence } from \'framer-motion\';\nimport { supabase } from \'@/utils/supabase/client\';\nimport { \n  Users, AlertTriangle, LogOut, Shield, CheckCircle2,\n  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings, Gift, Star, Globe2, Target\n} from \'lucide-react\';\nimport { \n  BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,\n  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer \n} from \'recharts\';\nimport { calculateLearningGain, calculateRiskScore, getRiskLevel, getProgressTrend, calculateClassroomWeakestSkill, calculateStudentSkillRadar } from \'@/utils/analyticsUtils\';\nimport { generateStudentInsight } from \'@/utils/aiTeacherInsight\';\n\nimport TeamLeaderboard from \'@/components/TeamLeaderboard\';\nimport SeasonManager from \'@/components/admin/SeasonManager\';\nimport SchoolLevelDashboard from \'@/components/admin/SchoolLevelDashboard\';\nimport ClassLevelAnalytics from \'@/components/admin/ClassLevelAnalytics\';\nimport IndividualStudentProfile from \'@/components/admin/IndividualStudentProfile\';\nimport EventAnalyticsTab from \'@/components/admin/EventAnalyticsTab\';\nimport SettingsTab from \'@/components/admin/SettingsTab\';\nimport EditStudentModal from \'@/components/admin/EditStudentModal\';\nimport IndividualComparisonTable from \'@/components/admin/IndividualComparisonTable\';\n\ntype AdminTab = \'school-overview\' | \'overview\' | \'students\' | \'assessments\' | \'teams\' | \'weak-words\' | \'risks\' | \'events\' | \'settings\';\n\nimport { getAdminInitialData, getAdminClassroomStats } from \'./actions\';\n\nexport default function AdminPage() {\n  const [teacher, setTeacher] = useState<any>(null);\n  const [username, setUsername] = useState(\'\');\n  const [password, setPassword] = useState(\'\');\n  const [loginError, setLoginError] = useState(\'\');\n  const [isLoading, setIsLoading] = useState(false);\n  const [isDeletingUnplayed, setIsDeletingUnplayed] = useState(false);\n  const [isRandomizingTeams, setIsRandomizingTeams] = useState(false);\n  const [isResettingAll, setIsResettingAll] = useState(false);\n\n  const [activeTab, setActiveTab] = useState<AdminTab>(\'school-overview\');\n  const [classrooms, setClassrooms] = useState<any[]>([]);\n  const [selectedClassroom, setSelectedClassroom] = useState<string>(\'\');\n  const [classroomStudentCounts, setClassroomStudentCounts] = useState<Record<string, number>>({});\n  \n  // Data\n  const [studentsList, setStudentsList] = useState<any[]>([]);\n  const [vocabList, setVocabList] = useState<any[]>([]);\n  const [itemAnalysis, setItemAnalysis] = useState<any[]>([]);\n  const [wrongWords, setWrongWords] = useState<any[]>([]);\n  const [totalStars, setTotalStars] = useState(0);\n  const [totalThefts, setTotalThefts] = useState(0);\n  \n  // Student Detail Modal\n  const [selectedStudent, setSelectedStudent] = useState<any>(null);\n  const [editingStudent, setEditingStudent] = useState<any>(null);\n  const [studentTab, setStudentTab] = useState<\'overview\' | \'skills\' | \'wrong-words\'>(\'overview\');\n  const [isPurging, setIsPurging] = useState(false);\n\n  useEffect(() => {\n    const saved = localStorage.getItem(\'vocab_journey_teacher\');\n    if (saved) setTeacher(JSON.parse(saved));\n  }, []);\n\n  const handleLogin = async (e: React.FormEvent) => {\n    e.preventDefault();\n    if (!username.trim() || !password.trim()) return setLoginError(\'กรุณากรอก Username และ Password\');\n    setIsLoading(true); setLoginError(\'\');\n    try {\n      const { data, error } = await supabase.rpc(\'login_teacher\', { p_username: username.trim(), p_password: password.trim() });\n      if (error || !data) throw new Error(\'ชื่อผู้ใช้หรือรหัสผ่านครูไม่ถูกต้อง\');\n      if (![\'TEACHER\', \'ADMIN\'].includes(data.role)) {\n        throw new Error(\'บัญชีนี้ใช้ได้เฉพาะระบบการ์ด กรุณาเข้าผ่านเมนูระบบการ์ดสำหรับคุณครู\');\n      }\n      setTeacher(data);\n      localStorage.setItem(\'vocab_journey_teacher\', JSON.stringify(data));\n    } catch (err: any) {\n      setLoginError(err.message);\n    } finally {\n      setIsLoading(false);\n    }\n  };\n\n  const handleLogout = () => {\n    localStorage.removeItem(\'vocab_journey_teacher\');\n    window.location.reload();\n  };\n\n  const handlePurgeUnverified = async () => {\n    if (!teacher || !selectedClassroom) return;\n    if (!window.confirm("คุณแน่ใจหรือไม่ที่จะลบบัญชีนักเรียนที่ยังไม่ยืนยันตัวตนในห้องนี้ทั้งหมด? ข้อมูลจะถูกลบทิ้งและไม่สามารถกู้คืนได้")) return;\n    \n    setIsPurging(true);\n    try {\n      const { data, error } = await supabase.rpc(\'teacher_purge_unverified\', {\n        p_teacher_id: teacher.id,\n        p_classroom_id: selectedClassroom\n      });\n      if (error) throw error;\n      alert(`ลบบัญชีที่ไม่ยืนยันตัวตนสำเร็จจำนวน ${data} บัญชี`);\n      window.location.reload();\n    } catch (err: any) {\n      alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + err.message);\n    } finally {\n      setIsPurging(false);\n    }\n  };\n\n  const handleRandomizeTeams = async () => {\n    if (!teacher) return;\n    \n    if (!confirm(\'คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการสุ่มทีมระดับโรงเรียนและห้องเรียนใหม่ทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้\')) {\n      return;\n    }\n\n    const userInput = prompt(\'พิมพ์ "SHUFFLE" เพื่อยืนยันการสุ่มทีมใหม่\');\n    if (userInput !== \'SHUFFLE\') {\n      alert(\'การพิมพ์ยืนยันไม่ถูกต้อง ยกเลิกการสุ่มทีม\');\n      return;\n    }\n\n    setIsRandomizingTeams(true);\n    try {\n      const { error: rpcError } = await supabase.rpc(\'randomize_all_teams\');\n      if (rpcError) throw rpcError;\n      \n      alert(\'สุ่มทีมใหม่ทั้งหมดสำเร็จแล้ว\');\n      window.location.reload();\n    } catch (err: any) {\n      alert(err.message || \'เกิดข้อผิดพลาดในการสุ่มทีม กรุณาลองใหม่อีกครั้ง\');\n    } finally {\n      setIsRandomizingTeams(false);\n    }\n  };\n\n  const handleResetAllStudents = async () => {\n    if (!teacher) return;\n    \n    if (!confirm(\'คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตข้อมูลนักเรียน "ทุกคน" ทั้งด่านและการ์ด? การกระทำนี้ไม่สามารถย้อนกลับได้\')) {\n      return;\n    }\n\n    const userInput = prompt(\'พิมพ์ "RESET ALL" เพื่อยืนยันการล้างข้อมูลทั้งหมด\');\n    if (userInput !== \'RESET ALL\') {\n      alert(\'การพิมพ์ยืนยันไม่ถูกต้อง ยกเลิกการรีเซ็ต\');\n      return;\n    }\n\n    setIsResettingAll(true);\n    try {\n      const { error } = await supabase.rpc(\'teacher_reset_all_students\', {\n        p_teacher_id: teacher.id\n      });\n      if (error) throw error;\n      alert(\'รีเซ็ตข้อมูลนักเรียนทุกคนสำเร็จแล้ว\');\n      window.location.reload();\n    } catch (err: any) {\n      alert(err.message || \'เกิดข้อผิดพลาดในการรีเซ็ตข้อมูล\');\n    } finally {\n      setIsResettingAll(false);\n    }\n  };\n\n  const handleDeleteStudent = async (studentId: string, studentName: string) => {\n    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลของนักเรียน: ${studentName}? การกระทำนี้ไม่สามารถย้อนกลับได้`)) {\n      return;\n    }\n    try {\n      const res = await fetch(`/api/admin/students?studentId=${studentId}`, { method: \'DELETE\' });\n      const json = await res.json();\n      if (!res.ok) throw new Error(json.error || \'Failed to delete student\');\n      setStudentsList(prev => prev.filter(s => s.id !== studentId));\n      alert(`ลบข้อมูลนักเรียน ${studentName} เรียบร้อยแล้ว`);\n    } catch (err: any) {\n      alert(err.message || \'เกิดข้อผิดพลาดในการลบข้อมูล\');\n    }\n  };\n\n  const handleVerifyStudent = async (studentId: string, studentName: string) => {\n    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการยืนยันตัวตนให้นักเรียน: ${studentName}?`)) {\n      return;\n    }\n    try {\n      const res = await fetch(\'/api/admin/students\', {\n        method: \'PATCH\',\n        headers: { \'Content-Type\': \'application/json\' },\n        body: JSON.stringify({ studentId, updates: { is_verified: true } }),\n      });\n      const json = await res.json();\n      if (!res.ok) throw new Error(json.error || \'Failed to verify student\');\n      setStudentsList(prev => prev.map(s => s.id === studentId ? { ...s, is_verified: true } : s));\n      alert(`ยืนยันตัวตนนักเรียน ${studentName} เรียบร้อยแล้ว`);\n    } catch (err: any) {\n      alert(err.message || \'เกิดข้อผิดพลาดในการยืนยันตัวตน\');\n    }\n  };\n\n\n  useEffect(() => {\n    if (!teacher) return;\n    async function loadInitialData() {\n      try {\n        const data = await getAdminInitialData(teacher.id, teacher.role);\n        \n        if (data.validClasses.length > 0) {\n          setClassrooms(data.validClasses);\n          setSelectedClassroom(data.validClasses[0].id);\n\n          let countRows: any[] = [];\n          try {\n            const res = await fetch(\'/api/admin/students\');\n            if (res.ok) {\n              const json = await res.json();\n              countRows = json.students || [];\n            }\n          } catch (e) {\n            console.error("Failed to load student counts", e);\n          }\n\n          const counts = countRows.reduce((acc, studentRow) => {\n            if (studentRow.classroom_id) {\n              acc[studentRow.classroom_id] = (acc[studentRow.classroom_id] || 0) + 1;\n            }\n            return acc;\n          }, {} as Record<string, number>);\n          setClassroomStudentCounts(counts);\n        } else {\n          setClassrooms([]);\n          setSelectedClassroom(\'\');\n          setClassroomStudentCounts({});\n        }\n\n        setVocabList(data.vocabList);\n        setItemAnalysis(data.itemAnalysis);\n      } catch (err) {\n        console.error("Failed to load initial admin data", err);\n      }\n    }\n    loadInitialData();\n  }, [teacher]);\n\n  useEffect(() => {\n    if (!teacher || !selectedClassroom) return;\n    async function loadClassroomData() {\n      let students: any[] = [];\n      try {\n        const res = await fetch(`/api/admin/students?classroomId=${selectedClassroom}`);\n        if (res.ok) {\n          const json = await res.json();\n          students = json.students || [];\n        }\n      } catch (e) {\n        console.error("Failed to load classroom students", e);\n      }\n      \n      setStudentsList(students);\n\n      const studentIds = students?.map(s => s.id) || []'... 45064 more characters,
+    expected: /\.from\('item_analysis'\)/,
+    operator: 'match',
+    diff: 'simple'
+  }

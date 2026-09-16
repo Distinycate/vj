@@ -25,6 +25,8 @@ import IndividualComparisonTable from '@/components/admin/IndividualComparisonTa
 
 type AdminTab = 'school-overview' | 'overview' | 'students' | 'assessments' | 'teams' | 'weak-words' | 'risks' | 'events' | 'settings';
 
+import { getAdminInitialData, getAdminClassroomStats } from './actions';
+
 export default function AdminPage() {
   const [teacher, setTeacher] = useState<any>(null);
   const [username, setUsername] = useState('');
@@ -196,53 +198,42 @@ export default function AdminPage() {
   useEffect(() => {
     if (!teacher) return;
     async function loadInitialData() {
-      let classQuery = supabase.from('classrooms').select('*');
-      if (teacher.role === 'TEACHER') {
-        classQuery = classQuery.eq('teacher_id', teacher.id);
-      }
-      let { data: classData } = await classQuery;
-      
-      // Fallback for prototype: if teacher has no classrooms assigned, show all classrooms
-      if (teacher.role === 'TEACHER' && (!classData || classData.length === 0)) {
-        const { data: allClassData } = await supabase.from('classrooms').select('*');
-        classData = allClassData;
-      }
-      
-      const validClasses = (classData || []).filter(c => c.class_name.includes('ม.1') || c.class_name.includes('ม.2') || c.class_name.includes('ม.3'));
-      
-      if (validClasses.length > 0) {
-        setClassrooms(validClasses);
-        setSelectedClassroom(validClasses[0].id);
+      try {
+        const data = await getAdminInitialData(teacher.id, teacher.role);
+        
+        if (data.validClasses.length > 0) {
+          setClassrooms(data.validClasses);
+          setSelectedClassroom(data.validClasses[0].id);
 
-        let countRows: any[] = [];
-        try {
-          const res = await fetch('/api/admin/students');
-          if (res.ok) {
-            const json = await res.json();
-            countRows = json.students || [];
+          let countRows: any[] = [];
+          try {
+            const res = await fetch('/api/admin/students');
+            if (res.ok) {
+              const json = await res.json();
+              countRows = json.students || [];
+            }
+          } catch (e) {
+            console.error("Failed to load student counts", e);
           }
-        } catch (e) {
-          console.error("Failed to load student counts", e);
+
+          const counts = countRows.reduce((acc, studentRow) => {
+            if (studentRow.classroom_id) {
+              acc[studentRow.classroom_id] = (acc[studentRow.classroom_id] || 0) + 1;
+            }
+            return acc;
+          }, {} as Record<string, number>);
+          setClassroomStudentCounts(counts);
+        } else {
+          setClassrooms([]);
+          setSelectedClassroom('');
+          setClassroomStudentCounts({});
         }
 
-        const counts = countRows.reduce((acc, studentRow) => {
-          if (studentRow.classroom_id) {
-            acc[studentRow.classroom_id] = (acc[studentRow.classroom_id] || 0) + 1;
-          }
-          return acc;
-        }, {} as Record<string, number>);
-        setClassroomStudentCounts(counts);
-      } else {
-        setClassrooms([]);
-        setSelectedClassroom('');
-        setClassroomStudentCounts({});
+        setVocabList(data.vocabList);
+        setItemAnalysis(data.itemAnalysis);
+      } catch (err) {
+        console.error("Failed to load initial admin data", err);
       }
-
-      const { data: vData } = await supabase.from('vocabulary').select('*');
-      if (vData) setVocabList(vData);
-
-      const { data: iData } = await supabase.from('item_analysis').select('*');
-      if (iData) setItemAnalysis(iData);
     }
     loadInitialData();
   }, [teacher]);
@@ -265,17 +256,16 @@ export default function AdminPage() {
 
       const studentIds = students?.map(s => s.id) || [];
       if (studentIds.length > 0) {
-        const { data: wData } = await supabase.from('wrong_words').select('*, vocabulary(*)').in('student_id', studentIds);
-        if (wData) setWrongWords(wData);
-        
-        const { data: sData } = await supabase.from('stage_results').select('stars').in('user_id', studentIds);
-        if (sData) {
-           setTotalStars(sData.reduce((acc, curr) => acc + (curr.stars || 0), 0));
-        }
-
-        const { data: tData } = await supabase.from('card_transactions').select('id').in('actor_user_id', studentIds).in('action_type', ['random_card_stolen', 'selected_card_stolen']);
-        if (tData) {
-           setTotalThefts(tData.length);
+        try {
+          const stats = await getAdminClassroomStats(studentIds);
+          setWrongWords(stats.wrongWords);
+          setTotalStars(stats.totalStars);
+          setTotalThefts(stats.totalThefts);
+        } catch (err) {
+          console.error("Failed to load classroom stats", err);
+          setWrongWords([]);
+          setTotalStars(0);
+          setTotalThefts(0);
         }
       } else {
         setWrongWords([]);

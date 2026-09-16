@@ -3,14 +3,58 @@ import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
 import { useDemoStore } from '@/store/useDemoStore';
-import { generateStageQuestions, completeStage, getAdaptiveDifficulty, generateWeaknessBossQuestions } from '@/utils/adaptiveEngine';
+import { generateStageQuestions, getAdaptiveDifficulty, generateWeaknessBossQuestions } from '@/utils/adaptiveEngine';
 import { normalizeAnswer, QuizChoice } from '@/lib/quizUtils';
 import { useAntiCheat } from '@/hooks/useAntiCheat';
 import { incrementMockQuestProgress } from '@/utils/questUtils';
 
 export type GameStep = 'play' | 'reflection' | 'results';
 
-export function useGameEngine() {
+export type UseGameEngineReturn = {
+  student: any;
+  progress: any;
+  isBossMode: boolean;
+  words: any[];
+  currentIndex: number;
+  loading: boolean;
+  loadError: string;
+  gameState: GameStep;
+  score: number;
+  showScorePopup: boolean;
+  shakeScreen: boolean;
+  lives: number;
+  timeLeft: number;
+  isAnswered: boolean;
+  selectedAnswer: QuizChoice | string | null;
+  comboCount: number;
+  maxCombo: number;
+  wrongWords: string[];
+  assistedWords: string[];
+  usedHintsCount: number;
+  difficultyConfig: any;
+  qType: string;
+  choices: QuizChoice[];
+  fillAnswer: string;
+  setFillAnswer: React.Dispatch<React.SetStateAction<string>>;
+  showHint: boolean;
+  inventory: any[];
+  usedItemsThisStage: string[];
+  refWordsLearned: string;
+  setRefWordsLearned: React.Dispatch<React.SetStateAction<string>>;
+  refHardestWord: string;
+  setRefHardestWord: React.Dispatch<React.SetStateAction<string>>;
+  refFeeling: string;
+  setRefFeeling: React.Dispatch<React.SetStateAction<string>>;
+  previousAttempts: any[];
+  passReport: any;
+  cheatWarning: number | null;
+  cheatDetected: string | null;
+  submitAnswer: (answer: QuizChoice | string) => Promise<void>;
+  applyPowerup: (itemCode: string) => Promise<void>;
+  handleFinishGame: () => void;
+};
+
+export function useGameEngine(): UseGameEngineReturn {
   const { setScreen, progress, student, setProgress, missionLevel, selectedStageNumber, setSelectedStageNumber, isBossMode, setBossMode } = useAppStore();
   const [words, setWords] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -395,7 +439,6 @@ export function useGameEngine() {
           body: JSON.stringify({
             attemptId: stageAttemptId,
             answers: answersRecordRef.current,
-            usedHints: usedHintsCount,
           }),
         });
 
@@ -409,10 +452,17 @@ export function useGameEngine() {
               score: compData.score,
               accuracy: compData.accuracy,
               totalQuestions: words.length,
-              usedHints: usedHintsCount,
               newCoins: compData.newCoins,
               newTotalExp: compData.newTotalExp,
               currentStage: compData.currentStage,
+              // V3 progression fields
+              stars: compData.stars ?? 0,
+              primaryReason: compData.primaryReason ?? null,
+              bonusFlags: compData.bonusFlags ?? [],
+              bossDefeated: compData.bossDefeated ?? false,
+              bossDamage: compData.bossDamage ?? 0,
+              bossRemainingHp: compData.bossRemainingHp ?? 100,
+              campaignCompleted: compData.campaignCompleted ?? false,
             });
 
             if (progress) {
@@ -421,52 +471,32 @@ export function useGameEngine() {
                 coins: compData.newCoins !== undefined ? compData.newCoins : progress.coins,
                 total_exp: compData.newTotalExp !== undefined ? compData.newTotalExp : progress.total_exp,
                 current_stage: compData.currentStage !== undefined ? compData.currentStage : progress.current_stage,
+                campaign_completed_at: compData.campaignCompleted ? new Date().toISOString() : progress.campaign_completed_at,
               });
             }
 
             setGameState('results');
             return;
+          } else {
+            console.error('Server completion failed:', compData.error);
+            alert('Failed to submit results: ' + (compData.error || 'Server error. Please try again.'));
+            return; // Fail closed, allow retry
           }
+        } else {
+          console.error('Server completion failed, HTTP:', compRes.status);
+          alert('Failed to submit results. Please check your connection and try again.');
+          return; // Fail closed, allow retry
         }
       } catch (serverErr) {
-        console.error('Server completion error, falling back to local completeStage:', serverErr);
+        console.error('Server completion network error:', serverErr);
+        alert('Network error. Please check your connection and try again.');
+        return; // Fail closed, allow retry
       }
+    } else {
+      console.error('No stageAttemptId available for submission.');
+      alert('Error: Missing attempt ID. Please refresh and try again.');
+      return;
     }
-
-    try {
-      const completeReport = await completeStage(student.id, stageNum, {
-        score: finalScore,
-        accuracy: accuracyVal,
-        responseTimeAvg: avgResponseTime,
-        wrongWords: [...new Set(finalWrongWords)],
-        correctWords: words
-          .map((question) => question.word_id || question.id)
-          .filter((wordId) => wordId && !finalWrongWords.includes(wordId)),
-        totalQuestions: words.length,
-        usedHints: usedHintsCount,
-        assistedWords: [...new Set(assistedWords)]
-      }, missionLevel);
-
-      setPassReport(completeReport);
-
-      fetch('/api/student/profile')
-        .then((r) => r.json())
-        .then((data) => {
-          if (data?.learningPath) setProgress(data.learningPath);
-        })
-        .catch((e) => console.error(e));
-      
-      if (currentStageId) {
-        supabase.from('stage_results').select('*').eq('user_id', student.id).eq('stage_number', stageNum).order('created_at', { ascending: true }).then(({ data }) => {
-          setPreviousAttempts(data || []);
-        }, e => console.error(e));
-      }
-
-    } catch (err) {
-      console.error('Error submitting stage result:', err);
-    }
-
-    setGameState('results');
   };
 
   const handleFinishGame = () => {

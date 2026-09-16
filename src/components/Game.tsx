@@ -8,6 +8,7 @@ import {
 import { playWordAudio } from '@/utils/audio';
 import { normalizeAnswer, QuizChoice } from '@/lib/quizUtils';
 import { useGameEngine } from '@/hooks/useGameEngine';
+import BossHpBar from '@/components/BossHpBar';
 
 type GameStep = 'play' | 'reflection' | 'results';
 
@@ -89,50 +90,161 @@ export default function Game() {
   // STEP 2: RESULTS SCREEN
   if (gameState === 'results') {
     const passed = passReport?.passed || false;
-    const accuracyVal = Math.round((score / words.length) * 100);
+    const accuracyVal = passReport?.accuracy ?? Math.round((score / words.length) * 100);
     const isPerfect = accuracyVal === 100;
-    const isNoHint = usedHintsCount === 0;
+    const earnedStars = passReport?.stars ?? 0;
+    const primaryReason = passReport?.primaryReason ?? null;
+    const bonusFlags: string[] = passReport?.bonusFlags ?? [];
+    const campaignCompleted = passReport?.campaignCompleted ?? false;
+
+    // Server-authoritative boss result (presentation-only client HP is discarded here)
+    const serverBossDefeated = passReport?.bossDefeated ?? false;
+    const serverBossDamage = passReport?.bossDamage ?? 0;
+    const serverBossRemainingHp = passReport?.bossRemainingHp ?? 100;
+
+    const BONUS_FLAG_LABELS: Record<string, { icon: string; label: string; color: string }> = {
+      BOSS_FIRST_CLEAR: { icon: '⚔️', label: 'Boss First Clear ×2', color: 'rose' },
+      WORLD_CLEAR: { icon: '🌍', label: 'World Complete!', color: 'cyan' },
+      FINAL_BOSS_CLEAR: { icon: '👑', label: 'Campaign Victory!', color: 'amber' },
+    };
+
+    const REASON_LABELS: Record<string, string> = {
+      FIRST_CLEAR: '🏆 ผ่านครั้งแรก!',
+      STAR_UPGRADE: '⬆️ เลื่อนระดับดาว!',
+      PRACTICE_REPLAY: '🔄 ฝึกซ้อม',
+    };
 
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-8 relative overflow-hidden">
+        {/* Campaign Completion Celebration */}
+        {campaignCompleted && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.6, type: 'spring' }}
+            className="absolute inset-0 flex items-center justify-center z-50 bg-slate-950/90 backdrop-blur-sm"
+          >
+            <div className="text-center p-12 max-w-lg">
+              <motion.div 
+                initial={{ rotateY: 180, opacity: 0 }} 
+                animate={{ rotateY: 0, opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.8 }}
+                className="text-8xl mb-6"
+              >
+                👑
+              </motion.div>
+              <h1 className="text-5xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent mb-4">
+                CAMPAIGN COMPLETE!
+              </h1>
+              <p className="text-slate-300 text-lg mb-8">
+                ยินดีด้วย! คุณพิชิต Vocab Journey ทั้ง 100 ด่านสำเร็จแล้ว!
+              </p>
+              <button
+                onClick={handleFinishGame}
+                className="px-8 py-4 premium-btn bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black text-lg shadow-lg shadow-amber-500/30"
+              >
+                🎉 กลับสู่แผนที่ผจญภัย
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
           className="text-center glass-card p-8 sm:p-12 max-w-lg w-full shadow-2xl relative z-10"
         >
-          {passed ? (
-            <Trophy className="w-24 h-24 text-amber-400 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(245,158,11,0.2)]" />
-          ) : (
-            <XCircle className="w-24 h-24 text-rose-500 mx-auto mb-6" />
-          )}
-          <h2 className="text-4xl font-black mb-2">{passed ? 'ภารกิจสำเร็จ! 🎉' : 'ไม่ผ่านเกณฑ์ 💔'}</h2>
-          <p className="text-slate-400 mb-6">
-            {passed 
-              ? `คุณผ่านเกณฑ์ที่ระบบตั้งเป้าหมายไว้แล้ว! (${passReport?.targetPassScore}%)` 
-              : `ด่านนี้ต้องทำคะแนนให้ได้มากกว่า ${passReport?.targetPassScore}% เพื่อก้าวข้ามไป`
-            }
-          </p>
-
-          {/* Reward Bonus Badges */}
-          {passed && (isPerfect || isNoHint) && (
-            <div className="flex justify-center gap-2 mb-6">
-              {isPerfect && (
-                <span className="flex items-center gap-1 text-[10px] bg-amber-500/20 text-amber-400 font-extrabold px-3 py-1.5 rounded-full border border-amber-500/30">
-                  🎉 PERFECT BONUS (+30%)
-                </span>
-              )}
-              {isNoHint && (
-                <span className="flex items-center gap-1 text-[10px] bg-indigo-500/20 text-indigo-400 font-extrabold px-3 py-1.5 rounded-full border border-indigo-500/30">
-                  🧠 NO HINT BONUS (+20%)
-                </span>
-              )}
+          {/* Boss Result Header (server-authoritative) */}
+          {isBossMode && passReport && (
+            <div className="mb-6">
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-black text-sm mb-4 ${
+                serverBossDefeated 
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                  : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+              }`}>
+                {serverBossDefeated ? '⚔️ BOSS DEFEATED!' : '💀 BOSS SURVIVED'}
+              </div>
+              {/* HP Bar (shows server-authoritative final state) */}
+              <div className="w-full bg-slate-800 rounded-full h-4 overflow-hidden mb-2">
+                <motion.div
+                  initial={{ width: '100%' }}
+                  animate={{ width: `${serverBossRemainingHp}%` }}
+                  transition={{ duration: 1.5, ease: 'easeOut', delay: 0.3 }}
+                  className={`h-full rounded-full ${
+                    serverBossRemainingHp > 60 ? 'bg-emerald-500' :
+                    serverBossRemainingHp > 30 ? 'bg-amber-500' : 'bg-rose-500'
+                  }`}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-slate-500">
+                <span>Damage: {serverBossDamage}</span>
+                <span>HP: {serverBossRemainingHp}/100</span>
+              </div>
             </div>
           )}
-          
-          <div className="grid grid-cols-3 gap-3 mb-6">
+
+          {/* Pass/Fail Icon */}
+          {passed ? (
+            <Trophy className="w-20 h-20 text-amber-400 mx-auto mb-4 drop-shadow-[0_0_15px_rgba(245,158,11,0.2)]" />
+          ) : (
+            <XCircle className="w-20 h-20 text-rose-500 mx-auto mb-4" />
+          )}
+
+          {/* Star Display (0–3 stars from V3) */}
+          {passed && (
+            <div className="flex justify-center gap-2 mb-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: i < earnedStars ? 1 : 0.6, rotate: 0 }}
+                  transition={{ delay: 0.3 + i * 0.2, type: 'spring', stiffness: 200 }}
+                >
+                  <Star
+                    className={`w-10 h-10 ${
+                      i < earnedStars
+                        ? 'text-yellow-400 fill-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.4)]'
+                        : 'text-slate-700'
+                    }`}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          <h2 className="text-3xl font-black mb-1">{passed ? 'ภารกิจสำเร็จ! 🎉' : 'ไม่ผ่านเกณฑ์ 💔'}</h2>
+
+          {/* Primary Reason Label */}
+          {primaryReason && REASON_LABELS[primaryReason] && (
+            <p className="text-slate-400 text-sm mb-4">{REASON_LABELS[primaryReason]}</p>
+          )}
+
+          {/* Bonus Flags */}
+          {bonusFlags.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-2 mb-4">
+              {bonusFlags.map((flag) => {
+                const cfg = BONUS_FLAG_LABELS[flag];
+                if (!cfg) return null;
+                return (
+                  <motion.span
+                    key={flag}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', delay: 0.5 }}
+                    className={`flex items-center gap-1 text-[10px] bg-${cfg.color}-500/20 text-${cfg.color}-400 font-extrabold px-3 py-1.5 rounded-full border border-${cfg.color}-500/30`}
+                  >
+                    {cfg.icon} {cfg.label}
+                  </motion.span>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Score Grid */}
+          <div className="grid grid-cols-3 gap-3 mb-4">
             <div className="glass-input p-4 border-none shadow-none">
               <span className="text-[10px] text-slate-500 block">คะแนนสะสม</span>
-              <strong className="text-xl text-white">{score} / {words.length}</strong>
+              <strong className="text-xl text-white">{passReport?.score ?? score} / {words.length}</strong>
             </div>
             <div className="glass-input p-4 border-none shadow-none">
               <span className="text-[10px] text-slate-500 block">คอมโบสูงสุด</span>
@@ -144,9 +256,35 @@ export default function Game() {
             </div>
           </div>
 
+          {/* Economy Rewards */}
+          {passed && (passReport?.earnedCoins > 0 || passReport?.earnedExp > 0) && (
+            <div className="flex justify-center gap-4 mb-4">
+              {passReport.earnedCoins > 0 && (
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="flex items-center gap-1.5 bg-amber-500/10 text-amber-400 px-4 py-2 rounded-xl border border-amber-500/20 font-bold text-sm"
+                >
+                  🪙 +{passReport.earnedCoins} Coins
+                </motion.div>
+              )}
+              {passReport.earnedExp > 0 && (
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                  className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-xl border border-indigo-500/20 font-bold text-sm"
+                >
+                  ✨ +{passReport.earnedExp} EXP
+                </motion.div>
+              )}
+            </div>
+          )}
+
           {/* Previous attempts for this stage */}
           {previousAttempts.length > 0 && (
-            <div className="mt-2 mb-6 border-t border-slate-850 pt-4 text-left">
+            <div className="mt-2 mb-4 border-t border-slate-850 pt-4 text-left">
               <p className="text-slate-400 text-xs font-bold mb-2">📜 ประวัติความแม่นยำในการผจญภัยด่านนี้:</p>
               <div className="grid grid-cols-2 gap-2 max-h-24 overflow-y-auto pr-1">
                 {previousAttempts.slice(-4).map((att, idx) => (
@@ -248,6 +386,16 @@ export default function Game() {
           <X className="w-4 h-4 text-rose-400" /> ยอมแพ้
         </button>
       </div>
+
+      {/* Boss HP Bar — provisional client presentation, NOT authority */}
+      {isBossMode && (
+        <BossHpBar
+          stageNumber={progress?.current_stage ?? 1}
+          correctCount={score}
+          totalQuestions={words.length}
+          currentQuestionIndex={currentIndex}
+        />
+      )}
 
       {/* Item powerups inventory dock */}
       <div className="w-full max-w-2xl flex flex-wrap justify-center gap-2 mb-6 relative z-10">
