@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { requireRole, requireSession } from '@/lib/server/session';
+import { requireInternalTeacherRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 
 export async function GET(request: Request) {
   try {
-    await requireRole(['TEACHER', 'ADMIN', 'CARD_TEACHER', 'EXECUTIVE']);
+    await requireInternalTeacherRole(['TEACHER', 'ADMIN', 'CARD_TEACHER', 'EXECUTIVE']);
     const { data: seasons, error } = await supabaseAdmin
       .from('team_battle_seasons')
       .select('*')
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await requireRole(['TEACHER', 'ADMIN', 'CARD_TEACHER', 'EXECUTIVE']);
+    const session = await requireInternalTeacherRole(['TEACHER', 'ADMIN', 'CARD_TEACHER', 'EXECUTIVE']);
     const teacherId = session.subjectId;
     const body = await request.json();
     const { action, seasonName, seasonId } = body;

@@ -11,6 +11,7 @@ const StudyCamp = dynamic(() => import('@/components/StudyCamp'));
 const Game = dynamic(() => import('@/components/Game'));
 const PreTest = dynamic(() => import('@/components/PreTest'));
 const PostTest = dynamic(() => import('@/components/PostTest'));
+import { Globe2, School, User } from 'lucide-react';
 import { saveStudentSession } from '@/utils/studentSession';
 import { useDemoStore } from '@/store/useDemoStore';
 
@@ -573,19 +574,50 @@ export default function Home() {
             </button>
           </div>
         ) : null}
+        {/* Divider for Network Schools */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-800" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-slate-900 px-3 text-slate-400 font-bold tracking-wider">
+              โรงเรียนเครือข่ายและพันธมิตร
+            </span>
+          </div>
+        </div>
+
+        {/* Network School Entry Card */}
+        <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center gap-2 text-indigo-300 text-xs font-bold">
+            <Globe2 className="w-4 h-4 text-indigo-400 shrink-0" />
+            <span>สำหรับโรงเรียนเครือข่าย (VJ Network)</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => router.push('/network')}
+              className="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>นักเรียนโรงเรียนเครือข่าย</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push('/network/teacher')}
+              className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+            >
+              <School className="w-3.5 h-3.5" />
+              <span>ครูโรงเรียนเครือข่าย</span>
+            </button>
+          </div>
+        </div>
+
         <button
           type="button"
           onClick={() => window.location.href = '/card-teacher'}
-          className="w-full mt-5 py-3 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/20 text-fuchsia-300 rounded-xl font-bold text-sm"
+          className="w-full mt-3 py-2.5 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/20 text-fuchsia-300 rounded-xl font-bold text-xs transition-colors"
         >
           🃏 ระบบการ์ดสำหรับคุณครู (สมัคร/เข้าใช้)
-        </button>
-        <button
-          type="button"
-          onClick={() => router.push('/register/network')}
-          className="w-full mt-3 py-3 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 text-cyan-300 rounded-xl font-bold text-sm"
-        >
-          🌐 สมัครใช้งานโรงเรียนเครือข่าย (Guest)
         </button>
       </motion.div>
       </div>

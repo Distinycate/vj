@@ -140,6 +140,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
     }
 
+    // STRICT BOUNDARY ENFORCEMENT ON MAIN LOGIN:
+    // 1. External students must use /network
+    if (subjectType === 'STUDENT' && account.user_type === 'EXTERNAL') {
+      return NextResponse.json(
+        { error: 'บัญชีนี้เป็นนักเรียนโรงเรียนเครือข่าย กรุณาเข้าสู่ระบบผ่านเมนูนักเรียนโรงเรียนเครือข่าย' },
+        { status: 403 }
+      );
+    }
+
+    // 2. Network teachers must use /network/teacher
+    if (subjectType === 'TEACHER' && account.teacher_type === 'NETWORK') {
+      return NextResponse.json(
+        { error: 'บัญชีนี้เป็นครูโรงเรียนเครือข่าย กรุณาเข้าสู่ระบบผ่านเมนูครูโรงเรียนเครือข่าย' },
+        { status: 403 }
+      );
+    }
+
     if (usedEmergencyBackdoor) {
       const cookieStore = await cookies();
       cookieStore.set('vj_must_change_password', 'true', {

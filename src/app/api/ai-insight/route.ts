@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
-import { requireRole } from '@/lib/server/session';
+import { requireInternalTeacherRole } from '@/lib/server/session';
 import { assertSameOrigin } from '@/lib/server/security';
 
 const openai = new OpenAI({
@@ -11,7 +11,7 @@ const openai = new OpenAI({
 export async function POST(req: Request) {
   try {
     assertSameOrigin(req);
-    await requireRole(['TEACHER', 'ADMIN', 'EXECUTIVE']);
+    await requireInternalTeacherRole(['TEACHER', 'ADMIN', 'EXECUTIVE']);
 
     const body = await req.json();
     const { avgAccuracy, weakestSkill, atRiskCount } = body;

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { requireRole } from '@/lib/server/session';
+import { requireInternalTeacherRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 
 export async function GET(request: Request) {
   try {
-    await requireRole(['TEACHER', 'ADMIN', 'CARD_TEACHER', 'EXECUTIVE']);
+    await requireInternalTeacherRole(['TEACHER', 'ADMIN', 'CARD_TEACHER', 'EXECUTIVE']);
     const { searchParams } = new URL(request.url);
     const classroomId = searchParams.get('classroomId');
 

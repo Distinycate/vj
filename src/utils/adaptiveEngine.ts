@@ -52,16 +52,16 @@ export async function generateStageQuestions(studentId: string, stageNumber: num
        questionTypes = ['spelling', 'context_mc'];
     }
 
-    // Skull ID Override (Special Needs Students)
-    let isSkullStudent = false;
+    // Skull Mode / External Student Override (100% Multiple Choice only)
+    let isSkullOrExternal = false;
     try {
       const res = await fetch(`/api/student/profile${studentId ? `?studentId=${studentId}` : ''}`);
       if (res.ok) {
         const json = await res.json();
-        isSkullStudent = json?.student?.is_skull || false;
+        isSkullOrExternal = json?.student?.is_skull || json?.student?.user_type === 'EXTERNAL' || false;
       }
     } catch {}
-    if (isSkullStudent) {
+    if (isSkullOrExternal) {
       questionTypes = ['meaning_mc', 'word_mc']; // Force multiple choice only
     }
 

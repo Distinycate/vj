@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
 
-import { requireRole } from '@/lib/server/session';
+import { requireInternalTeacherRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 
 export async function GET(request: Request) {
   try {
-    await requireRole(['TEACHER', 'ADMIN', 'EXECUTIVE']);
+    await requireInternalTeacherRole(['TEACHER', 'ADMIN', 'EXECUTIVE']);
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Vocab Journey';

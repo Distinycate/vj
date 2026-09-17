@@ -12,7 +12,7 @@ export default function CardTeacherDashboardPage() {
       const saved = localStorage.getItem('vocab_journey_card_teacher');
       const parsed = saved ? JSON.parse(saved) : null;
       setTeacher(
-        parsed && ['CARD_TEACHER', 'TEACHER', 'ADMIN'].includes(parsed.role)
+        parsed && ['CARD_TEACHER', 'TEACHER', 'ADMIN'].includes(parsed.role) && parsed.teacherType !== 'NETWORK'
           ? parsed
           : null,
       );

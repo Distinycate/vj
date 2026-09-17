@@ -220,11 +220,12 @@ export async function POST(request: Request) {
       const target = shuffledTargets[i];
       const meaningText = target.meaning_th || target.meaning || '';
       
-      // Alternate between MEANING_MC, WORD_MC, and FILL_BLANK (ข้อเขียน / พิมพ์สะกดคำ)
-      const qPattern = i % 3;
+      // For EXTERNAL students (VJ Network Lite), enforce Skull Mode: 100% Multiple Choice only (no FILL_BLANK/spelling)
+      const isExternalStudent = session.user.userType === 'EXTERNAL';
+      const qPattern = isExternalStudent ? (i % 2) : (i % 3);
 
       if (qPattern === 2) {
-        // 1. FILL_BLANK (ข้อเขียน / พิมพ์สะกดคำ)
+        // 1. FILL_BLANK (ข้อเขียน / พิมพ์สะกดคำ) - INTERNAL Full Mode only
         authoritativeQuestions.push({
           id: target.id,
           word_id: target.id,

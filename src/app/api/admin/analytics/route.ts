@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { requireRole } from '@/lib/server/session';
+import { requireInternalTeacherRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 
 export async function GET() {
   try {
-    const session = await requireRole(['TEACHER', 'ADMIN', 'EXECUTIVE']);
+    const session = await requireInternalTeacherRole(['TEACHER', 'ADMIN', 'EXECUTIVE']);
 
     const [
       { count: totalStudents },

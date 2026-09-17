@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { requireRole } from '@/lib/server/session';
+import { requireInternalTeacherRole, requireRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
 
 export async function GET(request: Request) {
   try {
-    await requireRole(['ADMIN', 'TEACHER', 'CARD_TEACHER', 'EXECUTIVE']);
+    await requireInternalTeacherRole(['ADMIN', 'TEACHER', 'CARD_TEACHER', 'EXECUTIVE']);
     const { searchParams } = new URL(request.url);
     const classroomId = searchParams.get('classroomId');
     const userType = searchParams.get('userType');
@@ -83,7 +83,7 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     assertSameOrigin(request);
-    await requireRole(['TEACHER', 'ADMIN']);
+    await requireInternalTeacherRole(['TEACHER', 'ADMIN']);
 
     const body = await request.json().catch(() => null);
     if (!body || !body.studentId) {
