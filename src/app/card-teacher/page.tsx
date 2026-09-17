@@ -40,6 +40,11 @@ export default function CardTeacherAccessPage() {
           throw new Error(authData.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือบัญชีไม่มีสิทธิ์ระบบการ์ด');
         }
 
+        if (authData.requires_password_change) {
+          window.location.href = '/force-password-change';
+          return;
+        }
+
         if (!['CARD_TEACHER', 'TEACHER', 'ADMIN'].includes(authData.role)) {
           throw new Error('ไม่มีสิทธิ์เข้าใช้งาน');
         }

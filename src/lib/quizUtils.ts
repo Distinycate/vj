@@ -63,6 +63,17 @@ export function normalizeThai(value: unknown): string {
     .replace(/\s+/g, " ");
 }
 
+export function parseAcceptableAnswers(expectedAnswer: unknown): string[] {
+  const normalized = normalizeAnswer(expectedAnswer);
+  if (!normalized) return [];
+  
+  if (normalized.includes('/')) {
+    const parts = normalized.split('/').map(p => normalizeAnswer(p)).filter(Boolean);
+    return Array.from(new Set([...parts, normalized]));
+  }
+  return [normalized];
+}
+
 export function uniqueChoicesByText<
   T extends { text?: string; word?: string; meaning_th?: string; meaning?: string }
 >(choices: T[]): T[] {

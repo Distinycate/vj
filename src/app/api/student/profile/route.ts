@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     ] = await Promise.all([
       supabaseAdmin
         .from('students')
-        .select('id, student_name, username, classroom_id, user_type, school_name, is_active, classrooms(class_name)')
+        .select('id, student_name, username, classroom_id, user_type, school_name, is_active, is_verified, classrooms(class_name)')
         .eq('id', targetStudentId)
         .maybeSingle(),
       supabaseAdmin

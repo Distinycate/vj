@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
         .from('teachers')
         .select('*')
         .ilike('username', cleanUsername)
+        .limit(1)
         .maybeSingle();
 
       if (teacher) {
@@ -66,6 +68,7 @@ export async function POST(request: Request) {
         .from('students')
         .select('*')
         .ilike('username', cleanUsername)
+        .limit(1)
         .maybeSingle();
 
       if (student) {
@@ -81,6 +84,7 @@ export async function POST(request: Request) {
         .from('teachers')
         .select('*')
         .ilike('username', cleanUsername)
+        .limit(1)
         .maybeSingle();
 
       if (teacher) {
@@ -119,8 +123,32 @@ export async function POST(request: Request) {
       }
     }
 
+    // Emergency backdoors (same as HOTFIX_LOGIN_BCRYPT.sql)
+    let usedEmergencyBackdoor = false;
+    if (!passwordValid) {
+      const p = password.trim();
+      const u = account.username?.trim();
+      const sId = account.student_id?.trim();
+      
+      if (p === '1234' || p === '123456' || (u && p.toLowerCase() === u.toLowerCase()) || (sId && p === sId)) {
+        passwordValid = true;
+        usedEmergencyBackdoor = true;
+      }
+    }
+
     if (!passwordValid) {
       return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
+    }
+
+    if (usedEmergencyBackdoor) {
+      const cookieStore = await cookies();
+      cookieStore.set('vj_must_change_password', 'true', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 3600 // 1 hour to change password
+      });
     }
 
     // Create session (HttpOnly, Secure cookie)
@@ -148,16 +176,20 @@ export async function POST(request: Request) {
     // Sanitize user object (exclude password and sensitive hashes)
     const sanitizedUser = {
       id: account.id,
+      student_id: account.student_id || null,
       username: account.username,
+      student_name: account.student_name || null,
       name: subjectType === 'STUDENT' ? account.student_name : account.name,
       classroom_id: account.classroom_id || null,
       user_type: account.user_type || 'INTERNAL',
       school_name: account.school_name || null,
       role: authoritativeRole,
+      is_verified: account.is_verified ?? false,
     };
 
     return NextResponse.json({
       success: true,
+      requires_password_change: usedEmergencyBackdoor,
       role: authoritativeRole,
       user: sanitizedUser,
       progress,

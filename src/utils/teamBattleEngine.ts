@@ -69,7 +69,7 @@ export async function calculateTeamScore(teamId: string, seasonId?: string | nul
     if (resolvedSeasonId) query = query.eq('season_id', resolvedSeasonId);
     
     let { data: events, error: eventsError }: { data: any[] | null; error: any } = await query;
-    if (eventsError?.message?.includes('user_type')) {
+    if (eventsError) {
       let legacyQuery = supabase.from('team_score_events').select('*').eq('team_id', teamId);
       if (resolvedSeasonId) legacyQuery = legacyQuery.eq('season_id', resolvedSeasonId);
       const legacyEvents = await legacyQuery;
@@ -85,7 +85,7 @@ export async function calculateTeamScore(teamId: string, seasonId?: string | nul
       .eq('team_id', teamId)
       .eq('is_active', true)
       .eq('students.user_type', 'INTERNAL');
-    if (membersError?.message?.includes('user_type')) {
+    if (membersError) {
       const legacyMembers = await supabase
         .from('team_members')
         .select('user_id')

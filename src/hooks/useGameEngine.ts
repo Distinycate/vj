@@ -4,7 +4,7 @@ import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
 import { useDemoStore } from '@/store/useDemoStore';
 import { generateStageQuestions, getAdaptiveDifficulty, generateWeaknessBossQuestions } from '@/utils/adaptiveEngine';
-import { normalizeAnswer, QuizChoice } from '@/lib/quizUtils';
+import { normalizeAnswer, parseAcceptableAnswers, QuizChoice } from '@/lib/quizUtils';
 import { useAntiCheat } from '@/hooks/useAntiCheat';
 import { incrementMockQuestProgress } from '@/utils/questUtils';
 
@@ -35,16 +35,16 @@ export type UseGameEngineReturn = {
   qType: string;
   choices: QuizChoice[];
   fillAnswer: string;
-  setFillAnswer: React.Dispatch<React.SetStateAction<string>>;
+  setFillAnswer: (val: string) => void;
   showHint: boolean;
   inventory: any[];
   usedItemsThisStage: string[];
   refWordsLearned: string;
-  setRefWordsLearned: React.Dispatch<React.SetStateAction<string>>;
+  setRefWordsLearned: (val: string) => void;
   refHardestWord: string;
-  setRefHardestWord: React.Dispatch<React.SetStateAction<string>>;
+  setRefHardestWord: (val: string) => void;
   refFeeling: string;
-  setRefFeeling: React.Dispatch<React.SetStateAction<string>>;
+  setRefFeeling: (val: string) => void;
   previousAttempts: any[];
   passReport: any;
   cheatWarning: number | null;
@@ -143,7 +143,7 @@ export function useGameEngine(): UseGameEngineReturn {
           { id: 'dv1', word: 'Advocate', meaning_th: 'สนับสนุน / ผู้สนับสนุน', part_of_speech: 'v./n.', stage_number: stageNum, difficulty_level: 'normal', example_sentence: null },
           { id: 'dv2', word: 'Elaborate', meaning_th: 'อธิบายอย่างละเอียด', part_of_speech: 'v.', stage_number: stageNum, difficulty_level: 'hard', example_sentence: null },
           { id: 'dv3', word: 'Persevere', meaning_th: 'อดทน / มุ่งมั่น', part_of_speech: 'v.', stage_number: stageNum, difficulty_level: 'normal', example_sentence: null },
-          { id: 'dv4', word: 'Comprehend', meaning_th: 'เข้าใจ / รับรู้', part_of_speech: 'v.', stage_number: stageNum, difficulty_level: 'easy', example_sentence: null },
+          { id: 'dv4', word: 'Accomplish', meaning_th: 'ทำสำเร็จ', part_of_speech: 'v.', stage_number: stageNum, difficulty_level: 'normal', example_sentence: null },
         ];
 
         const shuffleArr = (a: any[]) => [...a].sort(() => Math.random() - 0.5);
@@ -303,7 +303,7 @@ export function useGameEngine(): UseGameEngineReturn {
     const finalResponseTimes = [...responseTimes, elapsed];
     setResponseTimes(finalResponseTimes);
 
-    const wordObj = words[currentIndex];
+    const wordObj = words[currentIndex] || {};
     const submittedAnswerText = typeof answer === 'string' ? answer : answer?.text || '';
     answersRecordRef.current.push({
       wordId: wordObj.id || wordObj.word_id,
@@ -313,15 +313,41 @@ export function useGameEngine(): UseGameEngineReturn {
 
     let isCorrect = false;
 
-    if (qType === 'FILL_BLANK') {
-      isCorrect = normalizeAnswer(answer as string) === normalizeAnswer(wordObj.correct_answer);
-    } else if (typeof answer === 'object') {
+    if (qType === 'FILL_BLANK' || typeof answer === 'string') {
+      const normInput = normalizeAnswer(answer as string);
+      const normCorrect = normalizeAnswer(wordObj.correct_answer);
+      const normWord = normalizeAnswer(wordObj.word);
+      const normBlank = normalizeAnswer(wordObj.blank_answer);
+
+      const acceptable = [
+        ...parseAcceptableAnswers(wordObj.correct_answer),
+        ...parseAcceptableAnswers(wordObj.word),
+        ...parseAcceptableAnswers(wordObj.blank_answer),
+      ].filter(Boolean);
+
+      isCorrect = Boolean(normInput) && (
+        acceptable.includes(normInput) ||
+        normInput === normCorrect ||
+        normInput === normWord ||
+        (Boolean(normBlank) && normInput === normBlank)
+      );
+    } else if (typeof answer === 'object' && answer !== null) {
       const selectedText = normalizeAnswer(answer.text);
       const correctText = normalizeAnswer(wordObj.correct_answer);
-      isCorrect =
-        answer.is_correct === true &&
-        answer.word_id === wordObj.correct_word_id &&
-        selectedText === correctText;
+      const wordText = normalizeAnswer(wordObj.word);
+      const meaningText = normalizeAnswer(wordObj.meaning || wordObj.meaning_th);
+      const targetWordId = wordObj.correct_word_id || wordObj.id || wordObj.word_id;
+      const isIdMatch = Boolean(targetWordId) && (answer.word_id === targetWordId);
+      const isFlagMatch = answer.is_correct === true;
+      const isTextMatch = Boolean(selectedText) && (
+        (Boolean(correctText) && selectedText === correctText) ||
+        (Boolean(wordText) && selectedText === wordText) ||
+        (Boolean(meaningText) && selectedText === meaningText) ||
+        parseAcceptableAnswers(wordObj.correct_answer).includes(selectedText) ||
+        parseAcceptableAnswers(wordObj.meaning_th || wordObj.meaning).includes(selectedText)
+      );
+
+      isCorrect = isFlagMatch || isIdMatch || isTextMatch;
     }
 
     const finalScore = score + (isCorrect ? 1 : 0);

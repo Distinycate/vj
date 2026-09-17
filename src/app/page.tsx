@@ -153,6 +153,11 @@ export default function Home() {
         throw new Error(data.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
       }
 
+      if (data.requires_password_change) {
+        window.location.href = '/force-password-change';
+        return;
+      }
+
       if (rememberMe) {
         localStorage.setItem(
           'vj_saved_user',

@@ -6,7 +6,7 @@ import {
   Heart, Sparkles, AlertTriangle, Star, Flame
 } from 'lucide-react';
 import { playWordAudio } from '@/utils/audio';
-import { normalizeAnswer, QuizChoice } from '@/lib/quizUtils';
+import { normalizeAnswer, parseAcceptableAnswers, QuizChoice } from '@/lib/quizUtils';
 import { useGameEngine } from '@/hooks/useGameEngine';
 import BossHpBar from '@/components/BossHpBar';
 
@@ -484,12 +484,16 @@ export default function Game() {
               <div className="glass-card p-6 sm:p-8 shadow-xl w-full break-words border-none">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">พิมพ์สะกด / เติมประโยค (Contextual Puzzle)</span>
                 
-                {currentWord.prompt?.includes('________') ? (
+                {(currentWord.prompt?.includes('________') || currentWord.prompt?.includes('_____')) ? (
                   <div className="glass-input p-4 sm:p-6 mb-6 italic text-slate-200 text-lg sm:text-xl font-medium leading-relaxed notranslate break-words border-none shadow-inner" translate="no">
                     &ldquo;{currentWord.prompt}&rdquo;
                   </div>
                 ) : (
-                  <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-6 break-words">{currentWord.prompt}</h2>
+                  <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-6 break-words">
+                    {normalizeAnswer(currentWord.prompt) === normalizeAnswer(currentWord.word) && (currentWord.meaning || currentWord.meaning_th)
+                      ? (currentWord.meaning || currentWord.meaning_th)
+                      : currentWord.prompt}
+                  </h2>
                 )}
                 
                 <form 
@@ -541,10 +545,27 @@ export default function Game() {
               let icon: React.ReactNode = null;
 
               if (isAnswered) {
-                if (choice.is_correct === true) {
+                const normChoice = normalizeAnswer(choice.text);
+                const normCorrect = normalizeAnswer(currentWord.correct_answer);
+                const normWord = normalizeAnswer(currentWord.word);
+                const normMeaning = normalizeAnswer(currentWord.meaning_th || currentWord.meaning);
+                const targetWordId = currentWord.correct_word_id || currentWord.id || currentWord.word_id;
+
+                const isThisChoiceCorrect = choice.is_correct === true || 
+                  (Boolean(targetWordId) && choice.word_id === targetWordId) ||
+                  (Boolean(normCorrect) && normChoice === normCorrect) ||
+                  (Boolean(normWord) && normChoice === normWord) ||
+                  (Boolean(normMeaning) && normChoice === normMeaning) ||
+                  parseAcceptableAnswers(currentWord.correct_answer).includes(normChoice) ||
+                  parseAcceptableAnswers(currentWord.meaning_th || currentWord.meaning).includes(normChoice);
+
+                const isSelected = selectedAnswer !== null && typeof selectedAnswer === 'object' && 
+                  (selectedAnswer.word_id === choice.word_id || normalizeAnswer(selectedAnswer.text) === normChoice);
+
+                if (isThisChoiceCorrect) {
                   btnClass = "bg-primary/20 border border-primary text-emerald-300 font-extrabold shadow-lg shadow-primary/10";
                   icon = <CheckCircle className="w-5 h-5 text-emerald-400" />;
-                } else if (selectedAnswer !== null && typeof selectedAnswer === 'object' && selectedAnswer.word_id === choice.word_id && selectedAnswer.text === choice.text) {
+                } else if (isSelected) {
                   btnClass = "bg-secondary/20 border border-secondary text-rose-300 font-extrabold shadow-lg";
                   icon = <XCircle className="w-5 h-5 text-rose-400" />;
                 } else {
@@ -568,9 +589,15 @@ export default function Game() {
         )}
 
         {/* Feedback block for spelling input mode */}
-        {isAnswered && qType === 'FILL_BLANK' && (
+        {isAnswered && (qType === 'FILL_BLANK' || typeof selectedAnswer === 'string') && (
           <div data-demo-guide="feedback-result" className="text-center mt-6">
-            {typeof selectedAnswer === 'string' && normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.correct_answer) ? (
+            {typeof selectedAnswer === 'string' && (
+              normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.correct_answer) ||
+              normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.word) ||
+              normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.blank_answer) ||
+              parseAcceptableAnswers(currentWord.correct_answer).includes(normalizeAnswer(selectedAnswer)) ||
+              parseAcceptableAnswers(currentWord.word).includes(normalizeAnswer(selectedAnswer))
+            ) ? (
               <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-lg">
                 <CheckCircle className="w-5 h-5" /> ถูกต้องสมบูรณ์แบบ!
               </div>
@@ -579,7 +606,7 @@ export default function Game() {
                 <div className="flex items-center gap-2">
                   <XCircle className="w-5 h-5" /> พิมพ์สะกดไม่ถูกต้อง
                 </div>
-                <span className="text-slate-400 text-sm">ตัวสะกดที่ถูกต้องคือ: <strong className="text-slate-200 font-extrabold text-base">{currentWord.word}</strong></span>
+                <span className="text-slate-400 text-sm">ตัวสะกดที่ถูกต้องคือ: <strong className="text-slate-200 font-extrabold text-base">{currentWord.word || currentWord.correct_answer}</strong></span>
               </div>
             )}
           </div>

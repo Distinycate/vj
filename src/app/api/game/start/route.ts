@@ -10,6 +10,8 @@ import {
   isBossStage,
   isCampaignStage,
   isLegacyOverflow,
+  getWorldNumber,
+  getWorldStageRange,
 } from '@/lib/progression/worldHierarchy';
 import { isStageUnlocked } from '@/lib/progression/unlockRules';
 
@@ -98,11 +100,29 @@ export async function POST(request: Request) {
     const isBossMode = isBossStage(stageNumber);
 
     // ── Fetch active vocabulary ──────────────────────────────────────────────
-    let { data: stageWords } = await supabaseAdmin
+    let stageWordsQuery = supabaseAdmin
       .from('vocabulary')
       .select('*')
-      .eq('stage_number', stageNumber)
       .eq('is_active', true);
+
+    if (isBossMode) {
+      if (stageNumber === 100) {
+        stageWordsQuery = stageWordsQuery.gte('stage_number', 1).lte('stage_number', 100);
+      } else {
+        const worldNum = getWorldNumber(stageNumber);
+        if (worldNum) {
+          const { first, last } = getWorldStageRange(worldNum);
+          const maxStage = (stageNumber % 10 === 5) ? stageNumber : last;
+          stageWordsQuery = stageWordsQuery.gte('stage_number', first).lte('stage_number', maxStage);
+        } else {
+          stageWordsQuery = stageWordsQuery.eq('stage_number', stageNumber);
+        }
+      }
+    } else {
+      stageWordsQuery = stageWordsQuery.eq('stage_number', stageNumber);
+    }
+
+    let { data: stageWords } = await stageWordsQuery;
 
     if (!stageWords || stageWords.length < 4) {
       const { data: fallbackWords } = await supabaseAdmin
@@ -208,13 +228,16 @@ export async function POST(request: Request) {
         }));
 
       const allChoices = [
-        { word_id: target.id, text: meaningText },
-        ...distractors,
+        { word_id: target.id, text: meaningText, is_correct: true },
+        ...distractors.map((d) => ({ word_id: d.word_id, text: d.text, is_correct: false })),
       ].sort(() => Math.random() - 0.5);
 
       authoritativeQuestions.push({
         id: target.id,
+        word_id: target.id,
         word: target.word,
+        meaning: target.meaning || '',
+        meaning_th: target.meaning_th || '',
         correct_answer: meaningText,
         correct_word_id: target.id,
         choices: allChoices,
@@ -224,13 +247,17 @@ export async function POST(request: Request) {
         id: target.id,
         word_id: target.id,
         word: target.word,
+        meaning: target.meaning || '',
+        meaning_th: target.meaning_th || '',
         part_of_speech: target.part_of_speech,
         correct_answer: meaningText,
+        correct_word_id: target.id,
         qType: 'MEANING_MC',
         stageType,
         choices: allChoices.map((c) => ({
           word_id: c.word_id,
           text: c.text,
+          is_correct: c.word_id === target.id,
         })),
       });
     }

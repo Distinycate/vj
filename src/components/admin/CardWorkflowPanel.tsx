@@ -12,16 +12,19 @@ export default function CardWorkflowPanel({ teacher }: { teacher: any; classroom
   const [busyId, setBusyId] = useState('');
 
   const loadData = useCallback(async () => {
-    const { data } = await supabase
-      .from('card_logs')
-      .select('*, attacker:attacker_id(student_name, classroom_id, classrooms(class_name)), target:target_id(student_name, classroom_id, classrooms(class_name)), played_card:played_card_id(*)')
-      .or('status.eq.PENDING,and(status.eq.RESOLVED,teacher_executed.eq.false)')
-      .order('created_at', { ascending: true });
-
-    if (data) {
-      setPendingLogs(data.filter(d => d.status === 'PENDING'));
-      // Only show attacks in the execution queue
-      setActionLogs(data.filter(d => d.status === 'RESOLVED' && d.played_card?.effect_type === 'ATTACK' && !d.teacher_executed));
+    try {
+      const res = await fetch('/api/admin/card-workflows');
+      if (!res.ok) throw new Error('Failed to load card workflows');
+      const { logs } = await res.json();
+      
+      if (logs) {
+        setPendingLogs(logs.filter((d: any) => d.status === 'PENDING'));
+        // Only show attacks in the execution queue
+        setActionLogs(logs.filter((d: any) => d.status === 'RESOLVED' && d.played_card?.effect_type === 'ATTACK' && !d.teacher_executed));
+      }
+    } catch (err: any) {
+      console.error(err);
+      setMessage('โหลดข้อมูลคำขอไม่สำเร็จ');
     }
   }, []);
 

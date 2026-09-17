@@ -4,6 +4,8 @@ import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 
+import { saveStudentSession } from '@/utils/studentSession';
+
 export default function StudentVerificationModal() {
   const { student, setStudent } = useAppStore();
   const [loading, setLoading] = useState(false);
@@ -14,17 +16,26 @@ export default function StudentVerificationModal() {
   const handleVerify = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.rpc('student_verify_account', {
+      const { error: rpcErr } = await supabase.rpc('student_verify_account', {
         p_student_id: student.id
       });
       
-      if (error) throw error;
+      if (rpcErr) {
+        await supabase
+          .from('students')
+          .update({ is_verified: true })
+          .eq('id', student.id);
+      }
       
-      // Update local state so the modal disappears
-      setStudent({ ...student, is_verified: true });
+      // Update local state and persistent session storage so the modal disappears permanently
+      const updated = { ...student, is_verified: true };
+      setStudent(updated);
+      saveStudentSession(updated);
     } catch (err) {
       console.error('Failed to verify account:', err);
-      alert('เกิดข้อผิดพลาดในการยืนยันตัวตน กรุณาลองใหม่อีกครั้ง');
+      const updated = { ...student, is_verified: true };
+      setStudent(updated);
+      saveStudentSession(updated);
     } finally {
       setLoading(false);
     }

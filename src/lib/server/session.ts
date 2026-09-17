@@ -18,10 +18,12 @@ export interface ActiveSession {
     id: string;
     username: string;
     name: string;
+    student_name?: string;
     classroomId?: string | null;
     userType?: string;
     schoolName?: string | null;
     isActive: boolean;
+    is_verified?: boolean;
   };
 }
 
@@ -86,7 +88,7 @@ export async function getSession(): Promise<ActiveSession | null> {
   if (sessionRow.subject_type === 'STUDENT') {
     const { data: student, error: studentErr } = await supabaseAdmin
       .from('students')
-      .select('id, student_name, username, is_active, classroom_id, user_type, school_name')
+      .select('id, student_name, username, is_active, classroom_id, user_type, school_name, is_verified')
       .eq('id', sessionRow.subject_id)
       .maybeSingle();
 
@@ -104,10 +106,12 @@ export async function getSession(): Promise<ActiveSession | null> {
         id: student.id,
         username: student.username,
         name: student.student_name,
+        student_name: student.student_name,
         classroomId: student.classroom_id,
         userType: student.user_type || 'INTERNAL',
         schoolName: student.school_name,
         isActive: student.is_active !== false,
+        is_verified: student.is_verified ?? false,
       },
     };
   } else {

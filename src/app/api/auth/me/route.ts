@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { getSession } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 
@@ -27,8 +28,12 @@ export async function GET() {
       };
     }
 
+    const cookieStore = await cookies();
+    const mustChange = cookieStore.get('vj_must_change_password')?.value === 'true';
+
     return NextResponse.json({
       authenticated: true,
+      requires_password_change: mustChange,
       role: session.role,
       user: session.user,
       progress,

@@ -1,9 +1,9 @@
-import { supabase } from '@/utils/supabase/client';
+import { supabase } from './supabase/client.ts';
 import {
   normalizeAnswer,
   QUESTION_ANSWER_CONFIG,
-  QuestionType,
-} from '@/lib/quizUtils';
+  type QuestionType,
+} from '../lib/quizUtils.ts';
 
 export interface QuestionValidationResult {
   valid: boolean;
@@ -64,6 +64,41 @@ export function validateQuestion(question: any): QuestionValidationResult {
     normalizeAnswer(question.correct_answer) !== normalizeAnswer(question.meaning)
   ) {
     return { valid: false, reason: "THAI_ANSWER_MUST_MATCH_MEANING" };
+  }
+
+  // Anti-Leak Checks: Ensure the prompt NEVER reveals the answer
+  if (question.prompt && question.word) {
+    const normPrompt = normalizeAnswer(question.prompt);
+    const normWord = normalizeAnswer(question.word);
+    const hasBlank = question.prompt.includes('________') || question.prompt.includes('_____');
+
+    if (questionType === "word_mc" && normPrompt === normWord) {
+      return { valid: false, reason: "WORD_MC_PROMPT_LEAKS_ENGLISH_WORD" };
+    }
+
+    if (questionType === "spelling" || question.qType === "FILL_BLANK") {
+      if (!hasBlank && normPrompt === normWord) {
+        return { valid: false, reason: "SPELLING_PROMPT_LEAKS_WORD" };
+      }
+      if (hasBlank) {
+        const escapedWord = normWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`\\b${escapedWord}\\b`, 'i');
+        if (regex.test(normPrompt)) {
+          return { valid: false, reason: "BLANKED_PROMPT_LEAKS_WORD" };
+        }
+      }
+    }
+
+    if (questionType === "context_mc") {
+      if (!hasBlank) {
+        return { valid: false, reason: "CONTEXT_MC_PROMPT_MISSING_BLANK" };
+      }
+      const escapedWord = normWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\b${escapedWord}\\b`, 'i');
+      if (regex.test(normPrompt)) {
+        return { valid: false, reason: "CONTEXT_MC_PROMPT_LEAKS_WORD" };
+      }
+    }
   }
 
   if (questionType !== "spelling") {

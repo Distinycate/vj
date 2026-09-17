@@ -303,12 +303,46 @@ async function generateValidQuestion(params: { targetWord: any, questionType: Qu
   return null;
 }
 
-function buildRawQuestion({ targetWord, questionType, candidates }: { targetWord: any, questionType: QuestionType, candidates: any[] }) {
-  // Contextual Puzzle override
-  if (targetWord.example_sentence && Math.random() > 0.5) {
-    return createContextFillQuestion(targetWord);
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function createBlankedSentence(sentence: string | null | undefined, word: string): string | null {
+  if (!sentence || typeof sentence !== 'string') return null;
+  const trimmed = sentence.trim();
+  if (!trimmed) return null;
+
+  // If already explicitly blanked in DB
+  if (trimmed.includes('________') || trimmed.includes('_____')) {
+    return trimmed;
   }
 
+  if (!word || typeof word !== 'string') return null;
+  const cleanWord = word.trim();
+  if (!cleanWord) return null;
+
+  // Try matching whole word + optional morphological suffix (e.g. advocate/advocated/advocates/advocating)
+  const escaped = escapeRegExp(cleanWord);
+  const regexWithSuffix = new RegExp(`\\b${escaped}(?:s|es|d|ed|ing|ly)?\\b`, 'gi');
+  let blanked = trimmed.replace(regexWithSuffix, '_____');
+
+  if (blanked.includes('_____')) {
+    return blanked;
+  }
+
+  // Fallback: simple case-insensitive substring replacement if word is >= 3 chars
+  if (cleanWord.length >= 3) {
+    const directRegex = new RegExp(escaped, 'gi');
+    blanked = trimmed.replace(directRegex, '_____');
+    if (blanked.includes('_____')) {
+      return blanked;
+    }
+  }
+
+  return null;
+}
+
+function buildRawQuestion({ targetWord, questionType, candidates }: { targetWord: any, questionType: QuestionType, candidates: any[] }) {
   switch (questionType) {
     case 'listening_mc':
       return createListeningQuestion(targetWord, candidates);
@@ -319,6 +353,12 @@ function buildRawQuestion({ targetWord, questionType, candidates }: { targetWord
     case 'context_mc':
       return createContextMcQuestion(targetWord, candidates);
     case 'spelling':
+      if (targetWord.example_sentence || targetWord.example) {
+        const blanked = createBlankedSentence(targetWord.example_sentence || targetWord.example, targetWord.word);
+        if (blanked) {
+          return createContextFillQuestion(targetWord);
+        }
+      }
       return createSpellingQuestion(targetWord);
     default:
       return createMeaningMcQuestion(targetWord, candidates);
@@ -328,6 +368,7 @@ function buildRawQuestion({ targetWord, questionType, candidates }: { targetWord
 function createListeningQuestion(targetWord: any, candidates: any[]) {
   const config = QUESTION_ANSWER_CONFIG.listening_mc;
   const answerField = config.choiceField || config.answerField;
+  const targetId = targetWord.id || targetWord.word_id;
   const distractors = filterDistractors({
     targetWord,
     candidates,
@@ -336,13 +377,13 @@ function createListeningQuestion(targetWord: any, candidates: any[]) {
   });
 
   const correctChoice = {
-    word_id: targetWord.id,
+    word_id: targetId,
     text: getVocabularyField(targetWord, config.answerField),
     is_correct: true
   };
 
   const wrongChoices = (distractors as any[]).map((word: any) => ({
-    word_id: word.id,
+    word_id: word.id || word.word_id,
     text: getVocabularyField(word, answerField),
     is_correct: false
   }));
@@ -350,11 +391,11 @@ function createListeningQuestion(targetWord: any, candidates: any[]) {
   const choices = shuffleArray(uniqueChoicesByText([correctChoice, ...wrongChoices]));
 
   return {
-    id: targetWord.id,
+    id: targetId,
     qType: "LISTENING_MC",
     question_type: "listening_mc",
-    word_id: targetWord.id,
-    correct_word_id: targetWord.id,
+    word_id: targetId,
+    correct_word_id: targetId,
     audio_url: targetWord.audio_url || null,
     prompt: "ฟังเสียงแล้วเลือกคำศัพท์ที่ได้ยิน",
     correct_answer: getVocabularyField(targetWord, config.answerField),
@@ -366,19 +407,21 @@ function createListeningQuestion(targetWord: any, candidates: any[]) {
 }
 
 function createContextFillQuestion(targetWord: any) {
+  const blanked = createBlankedSentence(targetWord.example_sentence || targetWord.example, targetWord.word);
+  const thaiMeaning = getVocabularyField(targetWord, "meaning_th");
+  const targetId = targetWord.id || targetWord.word_id;
+
   return {
-    id: targetWord.id,
+    id: targetId,
     qType: "FILL_BLANK",
     question_type: "spelling",
-    word_id: targetWord.id,
-    correct_word_id: targetWord.id,
-    prompt: targetWord.example_sentence?.includes('________') 
-      ? targetWord.example_sentence 
-      : (targetWord.example_sentence || '').replace(new RegExp(`\\b${targetWord.word}\\b`, 'gi'), '________') || targetWord.word,
+    word_id: targetId,
+    correct_word_id: targetId,
+    prompt: blanked || thaiMeaning,
     correct_answer: targetWord.blank_answer || targetWord.word,
     answer_language: 'en',
     word: targetWord.word,
-    meaning: getVocabularyField(targetWord, "meaning_th")
+    meaning: thaiMeaning
   };
 }
 
@@ -394,6 +437,7 @@ function createChoiceQuestion(params: {
   const config = QUESTION_ANSWER_CONFIG[questionType];
   const answerField = config.choiceField;
   const correctAnswer = getVocabularyField(targetWord, config.answerField);
+  const targetId = targetWord.id || targetWord.word_id;
   const distractors = filterDistractors({
     targetWord,
     candidates,
@@ -402,13 +446,13 @@ function createChoiceQuestion(params: {
   });
 
   const correctChoice: QuizChoice = {
-    word_id: targetWord.id,
+    word_id: targetId,
     text: correctAnswer,
     is_correct: true
   };
 
   const wrongChoices: QuizChoice[] = (distractors as any[]).map((word: any) => ({
-    word_id: word.id,
+    word_id: word.id || word.word_id,
     text: getVocabularyField(word, answerField),
     is_correct: false
   }));
@@ -416,11 +460,11 @@ function createChoiceQuestion(params: {
   const choices = shuffleArray(uniqueChoicesByText([correctChoice, ...wrongChoices]));
 
   return {
-    id: targetWord.id,
+    id: targetId,
     qType,
     question_type: questionType,
-    word_id: targetWord.id,
-    correct_word_id: targetWord.id,
+    word_id: targetId,
+    correct_word_id: targetId,
     prompt,
     correct_answer: correctAnswer,
     answer_language: config.answerLanguage,
@@ -452,19 +496,19 @@ function createMeaningMcQuestion(targetWord: any, candidates: any[]) {
 }
 
 function createContextMcQuestion(targetWord: any, candidates: any[]) {
-  const sentence = String(targetWord.example_sentence || targetWord.example || "");
-  const blankSentence = sentence.replace(
-    new RegExp(`\\b${targetWord.word}\\b`, "i"),
-    "_____"
-  );
+  const blanked = createBlankedSentence(targetWord.example_sentence || targetWord.example, targetWord.word);
+
+  if (!blanked) {
+    return createMeaningMcQuestion(targetWord, candidates);
+  }
 
   return createChoiceQuestion({
     targetWord,
     candidates,
     questionType: "context_mc",
     qType: "CONTEXT_MC",
-    prompt: blankSentence,
-    example: sentence,
+    prompt: blanked,
+    example: String(targetWord.example_sentence || targetWord.example || ""),
   });
 }
 

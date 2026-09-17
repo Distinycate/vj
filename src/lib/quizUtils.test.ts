@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   filterDistractors,
   getVocabularyField,
+  parseAcceptableAnswers,
   QUESTION_ANSWER_CONFIG,
   uniqueChoicesByText,
 } from "./quizUtils.ts";
@@ -57,3 +58,78 @@ test("Thai meanings support the legacy meaning column without duplicate choices"
   assert.equal(unique.length, 2);
   assert.equal(unique[0].word_id, "1");
 });
+
+test("validateQuestion blocks questions that leak answers in their prompts", async () => {
+  const { validateQuestion } = await import("../utils/questionValidator.ts");
+
+  // 1. Leaked spelling/fill-in-blank prompt (prompt is the word itself without blank)
+  const leakedSpelling = {
+    id: "w1",
+    question_type: "spelling",
+    qType: "FILL_BLANK",
+    word_id: "w1",
+    correct_word_id: "w1",
+    correct_answer: "advocate",
+    answer_language: "en",
+    word: "advocate",
+    prompt: "advocate", // LEAK!
+    meaning: "ผู้สนับสนุน",
+  };
+  const spellingRes = validateQuestion(leakedSpelling);
+  assert.equal(spellingRes.valid, false);
+  assert.equal(spellingRes.reason, "SPELLING_PROMPT_LEAKS_WORD");
+
+  // 2. Leaked context_mc prompt (sentence without blank containing the word)
+  const leakedContext = {
+    id: "w2",
+    question_type: "context_mc",
+    qType: "CONTEXT_MC",
+    word_id: "w2",
+    correct_word_id: "w2",
+    correct_answer: "advocate",
+    answer_language: "en",
+    word: "advocate",
+    prompt: "She was a passionate advocate for civil rights.", // LEAK! No blank!
+    meaning: "ผู้สนับสนุน",
+    choices: [
+      { word_id: "w2", text: "advocate", is_correct: true },
+      { word_id: "w3", text: "oppose", is_correct: false },
+      { word_id: "w4", text: "reject", is_correct: false },
+      { word_id: "w5", text: "ignore", is_correct: false },
+    ],
+  };
+  const contextRes = validateQuestion(leakedContext);
+  assert.equal(contextRes.valid, false);
+  assert.equal(contextRes.reason, "CONTEXT_MC_PROMPT_MISSING_BLANK");
+
+  // 3. Valid blanked context question
+  const validContext = {
+    id: "w2",
+    question_type: "context_mc",
+    qType: "CONTEXT_MC",
+    word_id: "w2",
+    correct_word_id: "w2",
+    correct_answer: "advocate",
+    answer_language: "en",
+    word: "advocate",
+    prompt: "She was a passionate _____ for civil rights.",
+    meaning: "ผู้สนับสนุน",
+    choices: [
+      { word_id: "w2", text: "advocate", is_correct: true },
+      { word_id: "w3", text: "oppose", is_correct: false },
+      { word_id: "w4", text: "reject", is_correct: false },
+      { word_id: "w5", text: "ignore", is_correct: false },
+    ],
+  };
+  const validRes = validateQuestion(validContext);
+  assert.equal(validRes.valid, true);
+});
+
+test("parseAcceptableAnswers correctly splits and normalizes slashes", () => {
+  assert.deepEqual(parseAcceptableAnswers("advocate / supporter"), ["advocate", "supporter", "advocate / supporter"]);
+  assert.deepEqual(parseAcceptableAnswers("is/am"), ["is", "am", "is/am"]);
+  assert.deepEqual(parseAcceptableAnswers("abandon"), ["abandon"]);
+  assert.deepEqual(parseAcceptableAnswers(""), []);
+  assert.deepEqual(parseAcceptableAnswers(null), []);
+});
+

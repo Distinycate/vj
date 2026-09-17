@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { requireRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
-import { normalizeAnswer } from '@/lib/quizUtils';
+import { normalizeAnswer, parseAcceptableAnswers } from '@/lib/quizUtils';
 
 /**
  * POST /api/game/complete
@@ -185,16 +185,44 @@ export async function POST(request: Request) {
     }> = [];
 
     for (const q of originalQuestions) {
-      const submitted = answerMap.get(q.id) || '';
+      const qKey = q.id || q.word_id;
+      const submitted = answerMap.get(q.id) ?? (q.word_id ? answerMap.get(q.word_id) : '') ?? '';
       // Clamp response time: mirrors V3 SQL GREATEST(300, LEAST(60000, ...))
-      const rawTime = responseTimeMap.get(q.id) ?? 1500;
+      const rawTime = responseTimeMap.get(q.id) ?? (q.word_id ? responseTimeMap.get(q.word_id) : 1500) ?? 1500;
       const clampedTime = Math.max(300, Math.min(60000, rawTime));
 
-      const isCorrect =
-        normalizeAnswer(submitted) === normalizeAnswer(q.correct_answer || '');
+      const normSub = normalizeAnswer(submitted);
+      const normCorrect = normalizeAnswer(q.correct_answer || '');
+      const normWord = normalizeAnswer(q.word || '');
+      const normMeaning = normalizeAnswer(q.meaning_th || q.meaning || '');
+      const normBlank = normalizeAnswer(q.blank_answer || '');
+
+      const acceptable = [
+        ...parseAcceptableAnswers(q.correct_answer),
+        ...parseAcceptableAnswers(q.word),
+        ...parseAcceptableAnswers(q.blank_answer),
+        ...parseAcceptableAnswers(q.meaning_th || q.meaning),
+      ].filter(Boolean);
+
+      // Check if submitted text matches a correct choice from choices array
+      const matchingChoice = Array.isArray(q.choices)
+        ? q.choices.find((c: any) => c && normalizeAnswer(c.text) === normSub)
+        : null;
+      const isChoiceCorrect = matchingChoice
+        ? (matchingChoice.is_correct === true || matchingChoice.word_id === q.id || matchingChoice.word_id === q.correct_word_id)
+        : false;
+
+      const isCorrect = Boolean(normSub) && (
+        acceptable.includes(normSub) ||
+        normSub === normCorrect ||
+        normSub === normWord ||
+        normSub === normMeaning ||
+        (Boolean(normBlank) && normSub === normBlank) ||
+        isChoiceCorrect
+      );
 
       wordAttempts.push({
-        word_id: q.id,
+        word_id: qKey,
         is_correct: isCorrect,
         response_time_ms: clampedTime,
       });
