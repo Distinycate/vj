@@ -24,8 +24,9 @@ import EditStudentModal from '@/components/admin/EditStudentModal';
 import IndividualComparisonTable from '@/components/admin/IndividualComparisonTable';
 
 type AdminTab = 'school-overview' | 'overview' | 'students' | 'assessments' | 'teams' | 'weak-words' | 'risks' | 'events' | 'settings';
+type AnalyticsDataStatus = 'IDLE' | 'LOADING' | 'LOADED' | 'ERROR';
 
-import { getAdminInitialData, getAdminClassroomStats } from './actions';
+import { getAdminInitialData, getAdminClassroomStats, getAdminAnalyticsDatasets } from './actions';
 
 export default function AdminPage() {
   const [teacher, setTeacher] = useState<any>(null);
@@ -43,6 +44,7 @@ export default function AdminPage() {
   const [classroomStudentCounts, setClassroomStudentCounts] = useState<Record<string, number>>({});
   
   // Data
+  const [analyticsDataStatus, setAnalyticsDataStatus] = useState<AnalyticsDataStatus>('IDLE');
   const [studentsList, setStudentsList] = useState<any[]>([]);
   const [vocabList, setVocabList] = useState<any[]>([]);
   const [itemAnalysis, setItemAnalysis] = useState<any[]>([]);
@@ -220,7 +222,7 @@ export default function AdminPage() {
 
           let countRows: any[] = [];
           try {
-            const res = await fetch('/api/admin/students');
+            const res = await fetch('/api/admin/students?countOnly=true');
             if (res.ok) {
               const json = await res.json();
               countRows = json.students || [];
@@ -241,9 +243,6 @@ export default function AdminPage() {
           setSelectedClassroom('');
           setClassroomStudentCounts({});
         }
-
-        setVocabList(data.vocabList);
-        setItemAnalysis(data.itemAnalysis);
       } catch (err) {
         console.error("Failed to load initial admin data", err);
       }
@@ -251,9 +250,36 @@ export default function AdminPage() {
     loadInitialData();
   }, [teacher]);
 
+  const loadAnalyticsDatasets = async () => {
+    setAnalyticsDataStatus('LOADING');
+    try {
+      const data = await getAdminAnalyticsDatasets();
+      setVocabList(data.vocabList || []);
+      setItemAnalysis(data.itemAnalysis || []);
+      setAnalyticsDataStatus('LOADED');
+    } catch (err) {
+      console.error("Failed to load analytics datasets", err);
+      setAnalyticsDataStatus('ERROR');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'overview' && analyticsDataStatus === 'IDLE') {
+      loadAnalyticsDatasets();
+    }
+  }, [activeTab, analyticsDataStatus]);
+
   useEffect(() => {
     if (!teacher || !selectedClassroom) return;
+    let isCancelled = false;
+
     async function loadClassroomData() {
+      // Clear classroom-scoped data immediately on classroom switch to prevent stale presentation
+      setStudentsList([]);
+      setWrongWords([]);
+      setTotalStars(0);
+      setTotalThefts(0);
+
       let students: any[] = [];
       try {
         const res = await fetch(`/api/admin/students?classroomId=${selectedClassroom}`);
@@ -265,28 +291,30 @@ export default function AdminPage() {
         console.error("Failed to load classroom students", e);
       }
       
-      setStudentsList(students);
+      if (isCancelled) return;
 
       const studentIds = students?.map(s => s.id) || [];
+      let stats: { wrongWords: any[]; totalStars: number; totalThefts: number } = { wrongWords: [], totalStars: 0, totalThefts: 0 };
       if (studentIds.length > 0) {
         try {
-          const stats = await getAdminClassroomStats(studentIds);
-          setWrongWords(stats.wrongWords);
-          setTotalStars(stats.totalStars);
-          setTotalThefts(stats.totalThefts);
+          stats = await getAdminClassroomStats(studentIds);
         } catch (err) {
           console.error("Failed to load classroom stats", err);
-          setWrongWords([]);
-          setTotalStars(0);
-          setTotalThefts(0);
         }
-      } else {
-        setWrongWords([]);
-        setTotalStars(0);
-        setTotalThefts(0);
       }
+
+      if (isCancelled) return;
+
+      setStudentsList(students);
+      setWrongWords(stats.wrongWords || []);
+      setTotalStars(stats.totalStars || 0);
+      setTotalThefts(stats.totalThefts || 0);
     }
     loadClassroomData();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [teacher, selectedClassroom]);
 
   const groupedClassrooms = useMemo(() => {
@@ -332,6 +360,9 @@ export default function AdminPage() {
     });
 
     const activeToday = processedStudents.filter(s => s.daysInactive === 0).length;
+    const weakestSkill = analyticsDataStatus === 'LOADED' 
+      ? calculateClassroomWeakestSkill(itemAnalysis, vocabList)
+      : null;
 
     return {
       students: processedStudents,
@@ -341,9 +372,9 @@ export default function AdminPage() {
       avgAcc: (totalAcc / processedStudents.length).toFixed(1),
       activeToday,
       highRiskCount,
-      weakestSkill: calculateClassroomWeakestSkill(itemAnalysis, vocabList)
+      weakestSkill
     };
-  }, [studentsList, wrongWords, itemAnalysis, vocabList]);
+  }, [studentsList, wrongWords, itemAnalysis, vocabList, analyticsDataStatus]);
 
   const aggregatedWeakWords = useMemo(() => {
     if (!wrongWords || wrongWords.length === 0) return [];
@@ -502,7 +533,7 @@ export default function AdminPage() {
           {/* TAB: SCHOOL OVERVIEW */}
           {activeTab === 'school-overview' && classroomMetrics && (
             <motion.div key="school-overview" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
-              <SchoolLevelDashboard studentsList={classroomMetrics.students} />
+              <SchoolLevelDashboard studentsList={classroomMetrics.students} wrongWords={wrongWords} />
             </motion.div>
           )}
 
@@ -540,7 +571,24 @@ export default function AdminPage() {
                 <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
                   <BrainCircuit className="w-5 h-5 text-fuchsia-400 mb-2" />
                   <span className="text-xs text-slate-400 font-bold">จุดอ่อนห้อง</span>
-                  <span className="text-sm font-black text-fuchsia-400 uppercase">{classroomMetrics.weakestSkill}</span>
+                  {analyticsDataStatus === 'LOADING' || analyticsDataStatus === 'IDLE' ? (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <div className="w-3.5 h-3.5 border-2 border-fuchsia-500/30 border-t-fuchsia-500 rounded-full animate-spin"></div>
+                      <span className="text-[11px] text-slate-400">กำลังวิเคราะห์...</span>
+                    </div>
+                  ) : analyticsDataStatus === 'ERROR' ? (
+                    <div className="flex flex-col items-center mt-1">
+                      <span className="text-[11px] text-rose-400 font-bold">โหลดไม่สำเร็จ</span>
+                      <button 
+                        onClick={() => loadAnalyticsDatasets()}
+                        className="text-[10px] text-fuchsia-400 underline hover:text-fuchsia-300 mt-0.5"
+                      >
+                        ลองใหม่
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-sm font-black text-fuchsia-400 uppercase">{classroomMetrics.weakestSkill || 'N/A'}</span>
+                  )}
                 </div>
                 <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
                   <Star className="w-5 h-5 text-yellow-400 mb-2" />
@@ -568,18 +616,45 @@ export default function AdminPage() {
                   
                   <div className="bg-slate-900/60 rounded-2xl p-4 mb-3 border border-slate-800">
                     <span className="text-xs font-bold text-slate-400 uppercase block mb-1">💡 ข้อค้นพบหลัก</span>
-                    <p className="text-sm text-indigo-200">ห้องเรียนนี้มีพัฒนาการเฉลี่ย ({classroomMetrics.avgGain}%) ทักษะที่เป็นจุดอ่อนที่สุดคือ <strong className="text-fuchsia-400 uppercase">{classroomMetrics.weakestSkill}</strong></p>
+                    {analyticsDataStatus === 'LOADING' || analyticsDataStatus === 'IDLE' ? (
+                      <div className="flex items-center gap-2 text-sm text-slate-400 py-1">
+                        <div className="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+                        <span>กำลังวิเคราะห์ข้อมูลทักษะและคำศัพท์...</span>
+                      </div>
+                    ) : analyticsDataStatus === 'ERROR' ? (
+                      <div className="flex items-center justify-between text-sm text-rose-300 py-1">
+                        <span>ไม่สามารถโหลดข้อมูลทักษะจุดอ่อนได้</span>
+                        <button 
+                          onClick={() => loadAnalyticsDatasets()}
+                          className="text-xs text-indigo-400 underline hover:text-indigo-300 font-bold"
+                        >
+                          ลองโหลดใหม่
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-indigo-200">
+                        ห้องเรียนนี้มีพัฒนาการเฉลี่ย ({classroomMetrics.avgGain}%) ทักษะที่เป็นจุดอ่อนที่สุดคือ <strong className="text-fuchsia-400 uppercase">{classroomMetrics.weakestSkill || 'N/A'}</strong>
+                      </p>
+                    )}
                   </div>
                   
                   <div className="bg-slate-900/60 rounded-2xl p-4 border border-slate-800">
                     <span className="text-xs font-bold text-slate-400 uppercase block mb-1">🎯 สิ่งที่ควรทำ</span>
-                    <p className="text-sm text-indigo-200">ควรเน้นจัดกิจกรรมกลุ่มหรือมอบหมายใบงานเสริมในทักษะ {classroomMetrics.weakestSkill} และติดตามนักเรียนกลุ่มเสี่ยง {classroomMetrics.highRiskCount} คนอย่างใกล้ชิด</p>
+                    {analyticsDataStatus === 'LOADING' || analyticsDataStatus === 'IDLE' ? (
+                      <p className="text-sm text-slate-400 py-1">รอการวิเคราะห์จุดอ่อนเพื่อสร้างคำแนะนำ...</p>
+                    ) : analyticsDataStatus === 'ERROR' ? (
+                      <p className="text-sm text-slate-400 py-1">ติดตามนักเรียนกลุ่มเสี่ยง {classroomMetrics.highRiskCount} คนอย่างใกล้ชิด</p>
+                    ) : (
+                      <p className="text-sm text-indigo-200">
+                        ควรเน้นจัดกิจกรรมกลุ่มหรือมอบหมายใบงานเสริมในทักษะ {classroomMetrics.weakestSkill || 'N/A'} และติดตามนักเรียนกลุ่มเสี่ยง {classroomMetrics.highRiskCount} คนอย่างใกล้ชิด
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
 
               <div className="mt-8">
-                <ClassLevelAnalytics studentsList={classroomMetrics.students} weakestSkill={classroomMetrics.weakestSkill} />
+                <ClassLevelAnalytics studentsList={classroomMetrics.students} weakestSkill={classroomMetrics.weakestSkill || 'Listening'} />
               </div>
             </motion.div>
           )}

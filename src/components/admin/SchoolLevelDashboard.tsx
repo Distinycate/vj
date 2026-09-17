@@ -7,13 +7,26 @@ import { TrendingUp, Target, Info, AlertTriangle, BookOpen } from 'lucide-react'
 import RankDistribution from './RankDistribution';
 import { supabase } from '@/utils/supabase/client';
 
+export interface WrongWordItem {
+  id?: string;
+  student_id?: string;
+  error_count?: number;
+  vocabulary?: {
+    word?: string;
+    meaning?: string;
+    meaning_th?: string;
+    part_of_speech?: string;
+  } | null;
+}
+
 interface SchoolLevelDashboardProps {
   studentsList: any[];
+  wrongWords?: WrongWordItem[];
 }
 
 const THAI_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
-export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashboardProps) {
+export default function SchoolLevelDashboard({ studentsList, wrongWords = [] }: SchoolLevelDashboardProps) {
   
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [isFetchingAll, setIsFetchingAll] = useState(true);
@@ -22,7 +35,7 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
     async function fetchAllStudents() {
       setIsFetchingAll(true);
       try {
-        const res = await fetch('/api/admin/students');
+        const res = await fetch('/api/admin/students?fields=rank');
         if (res.ok) {
           const json = await res.json();
           if (json.students) {
@@ -38,52 +51,39 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
     fetchAllStudents();
   }, []);
 
-  const [frequentWrongWords, setFrequentWrongWords] = useState<any[]>([]);
-  const [topWrongWord, setTopWrongWord] = useState<string>('-');
-  const [topWrongCount, setTopWrongCount] = useState<number>(0);
+  const { frequentWrongWords, topWrongWord, topWrongCount } = useMemo(() => {
+    if (!wrongWords || wrongWords.length === 0 || !studentsList || studentsList.length === 0) {
+      return { frequentWrongWords: [], topWrongWord: '-', topWrongCount: 0 };
+    }
+
+    const wordCounts: Record<string, { count: number; meaning: string }> = {};
+    wrongWords.forEach((row) => {
+      const word = row.vocabulary?.word || 'Unknown';
+      const meaning = row.vocabulary?.meaning || row.vocabulary?.meaning_th || '';
+      if (!wordCounts[word]) {
+        wordCounts[word] = { count: 0, meaning };
+      }
+      wordCounts[word].count += row.error_count || 1;
+    });
+
+    const sorted = Object.keys(wordCounts)
+      .map(word => ({
+        word,
+        count: wordCounts[word].count,
+        meaning: wordCounts[word].meaning
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    return {
+      frequentWrongWords: sorted,
+      topWrongWord: sorted.length > 0 ? sorted[0].word : '-',
+      topWrongCount: sorted.length > 0 ? sorted[0].count : 0
+    };
+  }, [wrongWords, studentsList]);
+
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchWrongWords() {
-      if (!studentsList || studentsList.length === 0) return;
-      
-      const studentIds = studentsList.map(s => s.id);
-      
-      const { data } = await supabase
-        .from('wrong_words')
-        .select('error_count, vocabulary(word, meaning)')
-        .in('student_id', studentIds);
-
-      if (data) {
-        const wordCounts: Record<string, { count: number, meaning: string }> = {};
-        data.forEach((row: any) => {
-          const word = row.vocabulary?.word || 'Unknown';
-          const meaning = row.vocabulary?.meaning || '';
-          if (!wordCounts[word]) {
-            wordCounts[word] = { count: 0, meaning };
-          }
-          wordCounts[word].count += row.error_count || 1;
-        });
-
-        const sorted = Object.keys(wordCounts)
-          .map(word => ({
-            word,
-            count: wordCounts[word].count,
-            meaning: wordCounts[word].meaning
-          }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 10);
-
-        setFrequentWrongWords(sorted);
-        if (sorted.length > 0) {
-          setTopWrongWord(sorted[0].word);
-          setTopWrongCount(sorted[0].count);
-        }
-      }
-    }
-    fetchWrongWords();
-  }, [studentsList]);
 
   // Fetch real pre_tests and post_tests data grouped by month
   useEffect(() => {

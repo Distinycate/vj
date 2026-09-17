@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Trophy, Star, LogOut, Award, Compass, Store,
@@ -88,100 +88,111 @@ export default function Dashboard() {
     highestLevel: 1,
   });
 
-  useEffect(() => {
+  // Loading states for on-demand tabs
+  const [collectionLoading, setCollectionLoading] = useState(false);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [teamsLoading, setTeamsLoading] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [questsLoading, setQuestsLoading] = useState(false);
+
+  // Tab cache timestamps for dynamic invalidation (TTL: 60s for dynamic tabs)
+  const tabLoadTimestamps = useRef<Record<string, number>>({});
+  const TAB_CACHE_TTL_MS = 60 * 1000;
+
+  // 1. Core Initial Dashboard Load (Critical Profile + Progression + Due Review Words + Card Decay)
+  const loadDashboardData = useCallback(async () => {
     if (!student) return;
-    
-    async function loadDashboardData() {
-      // Load V3 progression authority first
-      try {
-        const progRes = await fetch('/api/student/progression');
-        if (progRes.ok) {
-          const progData = await progRes.json();
-          const unlocked = new Set<number>(progData.unlockedStages || []);
-          const completed = new Map<number, { bestStars: number; completed: boolean; stageType: string }>();
-          const starsByStage: Record<number, number> = {};
-          for (const s of progData.completedStages || []) {
-            completed.set(s.stageNumber, {
-              bestStars: s.bestStars ?? 0,
-              completed: s.completed ?? false,
-              stageType: s.stageType ?? 'STANDARD',
-            });
-            if (s.completed && s.bestStars > 0) {
-              starsByStage[s.stageNumber] = s.bestStars;
-            }
-          }
-          setV3Progression({
-            authority: progData.authority,
-            unlockedStages: unlocked,
-            completedStages: completed,
-            campaignCompleted: progData.campaignCompleted ?? false,
-            loading: false,
-            error: null,
+
+    // Load V3 progression authority first
+    try {
+      const progRes = await fetch('/api/student/progression');
+      if (progRes.ok) {
+        const progData = await progRes.json();
+        const unlocked = new Set<number>(progData.unlockedStages || []);
+        const completed = new Map<number, { bestStars: number; completed: boolean; stageType: string }>();
+        const starsByStage: Record<number, number> = {};
+        for (const s of progData.completedStages || []) {
+          completed.set(s.stageNumber, {
+            bestStars: s.bestStars ?? 0,
+            completed: s.completed ?? false,
+            stageType: s.stageType ?? 'STANDARD',
           });
-          // Merge server stars with any existing stageStars
-          setStageStars(prev => ({ ...prev, ...starsByStage }));
-          setRealAccuracy(progData.globalAccuracy ?? null);
-        } else if (progRes.status === 503) {
-          // V3 exists but errored — FAIL CLOSED, show error, don't fallback
-          setV3Progression(prev => ({
-            ...prev,
-            loading: false,
-            error: 'Progression service temporarily unavailable',
-          }));
-        } else {
-          // Other errors — still fail closed for non-404
-          setV3Progression(prev => ({
-            ...prev,
-            loading: false,
-            error: progRes.status === 401 ? null : 'Could not load progression data',
-          }));
+          if (s.completed && s.bestStars > 0) {
+            starsByStage[s.stageNumber] = s.bestStars;
+          }
         }
-      } catch (e) {
-        console.warn('V3 progression load failed:', e);
+        setV3Progression({
+          authority: progData.authority,
+          unlockedStages: unlocked,
+          completedStages: completed,
+          campaignCompleted: progData.campaignCompleted ?? false,
+          loading: false,
+          error: null,
+        });
+        setStageStars(prev => ({ ...prev, ...starsByStage }));
+        setRealAccuracy(progData.globalAccuracy ?? null);
+      } else if (progRes.status === 503) {
         setV3Progression(prev => ({
           ...prev,
           loading: false,
-          error: 'Network error loading progression',
+          error: 'Progression service temporarily unavailable',
+        }));
+      } else {
+        setV3Progression(prev => ({
+          ...prev,
+          loading: false,
+          error: progRes.status === 401 ? null : 'Could not load progression data',
         }));
       }
-      if (student.is_demo_account || useDemoStore.getState().isDemoMode) {
-        const demoStore = useDemoStore.getState();
-        const demoExp = demoStore.demoProgress?.total_exp || 3400;
-        setReviewWords([
-            { id: 1, english_word: 'Demonstrate', thai_meaning: 'สาธิต', part_of_speech: 'v.' },
-            { id: 2, english_word: 'Evaluation', thai_meaning: 'การประเมิน', part_of_speech: 'n.' }
-        ]);
-        setWordCollection([
-            { mastery_level: 4, vocabulary: { english_word: 'Example', thai_meaning: 'ตัวอย่าง', part_of_speech: 'n.' } },
-            { mastery_level: 2, vocabulary: { english_word: 'Mock', thai_meaning: 'จำลอง', part_of_speech: 'adj.' } }
-        ]);
-        setStats({ xp: demoExp, level: Math.floor(demoExp / 100) + 1 });
-        setLeaderboard([
-            { 
-              id: student.id, 
-              name: student.student_name, 
-              avatar_seed: student.id, 
-              avatar_style: 'adventurer', 
-              coins: demoStore.demoProgress?.coins || 1250, 
-              exp: demoExp, 
-              stage: demoStore.demoProgress?.current_stage || 35, 
-              rareCardStatus: { rarity: 'SSR', icon: '✨', label: 'ผู้ครอบครอง SSR' }, 
-              isSelf: true 
-            },
-            { id: 'mock2', name: 'เด็กชาย ขยันเรียน', avatar_seed: 'mock2', avatar_style: 'avataaars', coins: 950, exp: 2800, stage: 28, rareCardStatus: { rarity: 'SR', icon: '🛡️', label: 'ผู้ครอบครอง SR' }, isSelf: false },
-            { id: 'mock3', name: 'เด็กหญิง ตั้งใจ', avatar_seed: 'mock3', avatar_style: 'bottts', coins: 450, exp: 1500, stage: 15, isSelf: false }
-        ]);
-        setClassroomStats({
-          totalCoins: (demoStore.demoProgress?.coins || 1250) + 950 + 450,
-          averageStage: Math.round(((demoStore.demoProgress?.current_stage || 35) + 28 + 15) / 3),
-          highestLevel: Math.floor(demoExp / 100) + 1,
-        });
-        setMyTeams([]);
-        setTeamScores({});
-        return;
-      }
+    } catch (e) {
+      console.warn('V3 progression load failed:', e);
+      setV3Progression(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Network error loading progression',
+      }));
+    }
 
-      // 1. Fetch Spaced Repetition Due Words
+    // Demo Mode Handler
+    if (student.is_demo_account || useDemoStore.getState().isDemoMode) {
+      const demoStore = useDemoStore.getState();
+      const demoExp = demoStore.demoProgress?.total_exp || 3400;
+      setReviewWords([
+        { id: 1, english_word: 'Demonstrate', thai_meaning: 'สาธิต', part_of_speech: 'v.' },
+        { id: 2, english_word: 'Evaluation', thai_meaning: 'การประเมิน', part_of_speech: 'n.' }
+      ]);
+      setWordCollection([
+        { mastery_level: 4, vocabulary: { english_word: 'Example', thai_meaning: 'ตัวอย่าง', part_of_speech: 'n.' } },
+        { mastery_level: 2, vocabulary: { english_word: 'Mock', thai_meaning: 'จำลอง', part_of_speech: 'adj.' } }
+      ]);
+      setStats({ xp: demoExp, level: Math.floor(demoExp / 100) + 1 });
+      setLeaderboard([
+        { 
+          id: student.id, 
+          name: student.student_name, 
+          avatar_seed: student.id, 
+          avatar_style: 'adventurer', 
+          coins: demoStore.demoProgress?.coins || 1250, 
+          exp: demoExp, 
+          stage: demoStore.demoProgress?.current_stage || 35, 
+          rareCardStatus: { rarity: 'SSR', icon: '✨', label: 'ผู้ครอบครอง SSR' }, 
+          isSelf: true 
+        },
+        { id: 'mock2', name: 'เด็กชาย ขยันเรียน', avatar_seed: 'mock2', avatar_style: 'avataaars', coins: 950, exp: 2800, stage: 28, rareCardStatus: { rarity: 'SR', icon: '🛡️', label: 'ผู้ครอบครอง SR' }, isSelf: false },
+        { id: 'mock3', name: 'เด็กหญิง ตั้งใจ', avatar_seed: 'mock3', avatar_style: 'bottts', coins: 450, exp: 1500, stage: 15, isSelf: false }
+      ]);
+      setClassroomStats({
+        totalCoins: (demoStore.demoProgress?.coins || 1250) + 950 + 450,
+        averageStage: Math.round(((demoStore.demoProgress?.current_stage || 35) + 28 + 15) / 3),
+        highestLevel: Math.floor(demoExp / 100) + 1,
+      });
+      setMyTeams([]);
+      setTeamScores({});
+      return;
+    }
+
+    // 1. Fetch Spaced Repetition Due Words (Preserves reviewWords and reviewWords.length)
+    try {
       const { data: repData } = await supabase
         .from('user_review_words')
         .select('*, vocabulary:word_id(*)')
@@ -193,8 +204,48 @@ export default function Dashboard() {
       if (repData) {
         setReviewWords(repData.map(r => r.vocabulary).filter(Boolean));
       }
+    } catch (e) {
+      console.warn('Failed to fetch review words:', e);
+    }
 
-      // 2. Fetch All Words Ever Encountered (Collection)
+    // 2. Fetch Learning Path with Avatar properties
+    let pathData: any = null;
+    try {
+      const profileRes = await fetch('/api/student/profile');
+      if (profileRes.ok) {
+        const profileJson = await profileRes.json();
+        pathData = profileJson.learningPath;
+      }
+    } catch (e) {
+      console.error("Failed to fetch student profile", e);
+    }
+    
+    if (pathData) {
+      if (!student.is_demo_account && !useDemoStore.getState().isDemoMode) {
+        try {
+          const { data: decayedCount } = await supabase.rpc('trigger_card_decay', { p_student_id: student.id });
+          if (decayedCount && decayedCount > 0) {
+            alert(`😱 คุณหายไปนานเกิน 3 วัน! บทลงโทษ: การ์ดในคลังของคุณถูกทำลายไป ${decayedCount} ใบ!`);
+          }
+        } catch (e) {
+          console.error("Decay Error:", e);
+        }
+      }
+      if (!pathData.avatar_seed) pathData.avatar_seed = student.id;
+      setProgress(pathData);
+      const level = Math.floor((pathData.total_exp || pathData.exp || 0) / 100) + 1;
+      setStats({ xp: pathData.total_exp || pathData.exp || 0, level });
+    }
+  }, [student, setProgress]);
+
+  // 2. On-Demand Tab Loaders with Invalidation Strategy
+  const loadCollectionData = useCallback(async (force = false) => {
+    if (!student || student.is_demo_account || useDemoStore.getState().isDemoMode) return;
+    const lastLoaded = tabLoadTimestamps.current['collection'] || 0;
+    if (!force && lastLoaded > 0) return;
+
+    setCollectionLoading(true);
+    try {
       const { data: collectionData } = await supabase
         .from('user_review_words')
         .select('*, vocabulary:word_id(*)')
@@ -203,54 +254,29 @@ export default function Dashboard() {
 
       if (collectionData) {
         setWordCollection(collectionData.filter(c => c.vocabulary));
+        tabLoadTimestamps.current['collection'] = Date.now();
       }
+    } catch (e) {
+      console.error("Failed to fetch word collection", e);
+    } finally {
+      setCollectionLoading(false);
+    }
+  }, [student]);
 
-      // 3. Fetch Learning Path with new Avatar properties
-      let pathData: any = null;
-      try {
-        const profileRes = await fetch('/api/student/profile');
-        if (profileRes.ok) {
-          const profileJson = await profileRes.json();
-          pathData = profileJson.learningPath;
-        }
-      } catch (e) {
-        console.error("Failed to fetch student profile", e);
-      }
-      
-      if (pathData) {
-        if (!student.is_demo_account && !useDemoStore.getState().isDemoMode) {
-          try {
-            const { data: decayedCount } = await supabase.rpc('trigger_card_decay', { p_student_id: student.id });
-            if (decayedCount && decayedCount > 0) {
-              alert(`😱 คุณหายไปนานเกิน 3 วัน! บทลงโทษ: การ์ดในคลังของคุณถูกทำลายไป ${decayedCount} ใบ!`);
-            }
-          } catch (e) {
-            console.error("Decay Error:", e);
-          }
-        }
-        // Fallback seed assignment in UI state if DB hasn't populated yet
-        if (!pathData.avatar_seed) pathData.avatar_seed = student.id;
-        setProgress(pathData);
-        const level = Math.floor((pathData.total_exp || pathData.exp || 0) / 100) + 1;
-        setStats({ xp: pathData.total_exp || pathData.exp || 0, level });
-      }
+  const loadLeaderboardData = useCallback(async (force = false) => {
+    if (!student || student.is_demo_account || useDemoStore.getState().isDemoMode) return;
+    const lastLoaded = tabLoadTimestamps.current['stats'] || 0;
+    if (!force && lastLoaded > 0 && Date.now() - lastLoaded < TAB_CACHE_TTL_MS) return;
 
-      // 3.1 Fetch real gameplay accuracy and stage stars.
-      // Removed insecure direct client queries. Dashboard now uses /api/student/progression
-      // which securely provides stageStars and realAccuracy.
-
-      // 4. Fetch Leaderboard for Classroom
+    setLeaderboardLoading(true);
+    try {
       let leadData: any[] = [];
-      try {
-        const lbRes = await fetch('/api/student/leaderboard');
-        if (lbRes.ok) {
-          const lbJson = await lbRes.json();
-          leadData = lbJson.leaderboard || [];
-        }
-      } catch (e) {
-        console.error("Failed to fetch leaderboard", e);
+      const lbRes = await fetch('/api/student/leaderboard');
+      if (lbRes.ok) {
+        const lbJson = await lbRes.json();
+        leadData = lbJson.leaderboard || [];
       }
-      
+
       if (leadData && leadData.length > 0) {
         const cardsByStudent = new Map<string, any[]>();
         for (const row of leadData) {
@@ -289,42 +315,62 @@ export default function Dashboard() {
           averageStage: Math.round(totalStage / leadData.length),
           highestLevel: maxLevel,
         });
+        tabLoadTimestamps.current['stats'] = Date.now();
       }
+    } catch (e) {
+      console.error("Failed to fetch leaderboard", e);
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  }, [student]);
 
-      // 5. Team Battle
-      if (student.user_type === 'EXTERNAL') {
-        setMyTeams([]);
-        setTeamScores({});
-        setTeamError('');
-        return;
+  const loadTeamsData = useCallback(async (force = false) => {
+    if (!student || student.user_type === 'EXTERNAL' || student.is_demo_account || useDemoStore.getState().isDemoMode) {
+      setMyTeams([]);
+      setTeamScores({});
+      setTeamError('');
+      return;
+    }
+    const lastLoaded = tabLoadTimestamps.current['teams'] || 0;
+    if (!force && lastLoaded > 0 && Date.now() - lastLoaded < TAB_CACHE_TTL_MS) return;
+
+    setTeamsLoading(true);
+    setTeamError('');
+    try {
+      await autoAssignTeamForStudent(student.id);
+      const { data: teamsData, error: teamsError } = await supabase
+        .from('team_members')
+        .select('team_id, teams(*)')
+        .eq('user_id', student.id)
+        .eq('is_active', true);
+      if (teamsError) throw teamsError;
+
+      if (teamsData) {
+        const tList = teamsData.map((d: any) => d.teams).filter(Boolean);
+        setMyTeams(tList);
+
+        const scoreEntries = await Promise.all(tList.map(async (team: any) => [
+          team.id,
+          await calculateTeamScore(team.id),
+        ] as const));
+        setTeamScores(Object.fromEntries(scoreEntries));
+        tabLoadTimestamps.current['teams'] = Date.now();
       }
+    } catch (error) {
+      console.error('Team Battle load failed:', error);
+      setTeamError(error instanceof Error ? error.message : 'โหลดระบบทีมไม่สำเร็จ');
+    } finally {
+      setTeamsLoading(false);
+    }
+  }, [student]);
 
-      try {
-        setTeamError('');
-        await autoAssignTeamForStudent(student.id);
-        const { data: teamsData, error: teamsError } = await supabase
-          .from('team_members')
-          .select('team_id, teams(*)')
-          .eq('user_id', student.id)
-          .eq('is_active', true);
-        if (teamsError) throw teamsError;
+  const loadMessagesData = useCallback(async (force = false) => {
+    if (!student || student.is_demo_account || useDemoStore.getState().isDemoMode) return;
+    const lastLoaded = tabLoadTimestamps.current['inbox'] || 0;
+    if (!force && lastLoaded > 0 && Date.now() - lastLoaded < TAB_CACHE_TTL_MS) return;
 
-        if (teamsData) {
-          const tList = teamsData.map((d: any) => d.teams).filter(Boolean);
-          setMyTeams(tList);
-
-          const scoreEntries = await Promise.all(tList.map(async (team: any) => [
-            team.id,
-            await calculateTeamScore(team.id),
-          ] as const));
-          setTeamScores(Object.fromEntries(scoreEntries));
-        }
-      } catch (error) {
-        console.error('Team Battle load failed:', error);
-        setTeamError(error instanceof Error ? error.message : 'โหลดระบบทีมไม่สำเร็จ');
-      }
-
-      // 6. Fetch Messages
+    setMessagesLoading(true);
+    try {
       const { data: messagesData } = await supabase
         .from('student_messages')
         .select('*')
@@ -333,40 +379,71 @@ export default function Dashboard() {
       
       if (messagesData) {
         setMessages(messagesData);
+        tabLoadTimestamps.current['inbox'] = Date.now();
       }
+    } catch (e) {
+      console.error("Failed to fetch messages", e);
+    } finally {
+      setMessagesLoading(false);
+    }
+  }, [student]);
 
-      // 7. Fetch Daily Quests (with fallback if table not created yet)
-      try {
-        const { data: questData, error: questError } = await supabase
-          .from('student_daily_quests')
-          .select('*, daily_quests(*)')
-          .eq('student_id', student.id)
-          .eq('quest_date', new Date().toISOString().split('T')[0]);
-        
-        if (questError) throw questError;
+  const loadQuestsData = useCallback(async (force = false) => {
+    if (!student || student.is_demo_account || useDemoStore.getState().isDemoMode) return;
+    const lastLoaded = tabLoadTimestamps.current['quests'] || 0;
+    if (!force && lastLoaded > 0 && Date.now() - lastLoaded < TAB_CACHE_TTL_MS) return;
 
-        if (questData && questData.length > 0) {
-          setDailyQuests(questData.map(q => ({
-            id: q.id,
-            title: q.daily_quests.title,
-            target_value: q.daily_quests.target_value,
-            reward_coins: q.daily_quests.reward_coins,
-            reward_tickets: q.daily_quests.reward_tickets,
-            progress: q.progress,
-            claimed: q.is_claimed
-          })));
-        } else {
-          // Fallback mock quests if no data or table empty
-          setDailyQuests(getMockQuests(student.id));
-        }
-      } catch (e) {
-        console.warn("Daily quests table might not exist yet, using mock data", e);
+    setQuestsLoading(true);
+    try {
+      const { data: questData, error: questError } = await supabase
+        .from('student_daily_quests')
+        .select('*, daily_quests(*)')
+        .eq('student_id', student.id)
+        .eq('quest_date', new Date().toISOString().split('T')[0]);
+      
+      if (questError) throw questError;
+
+      if (questData && questData.length > 0) {
+        setDailyQuests(questData.map(q => ({
+          id: q.id,
+          title: q.daily_quests.title,
+          target_value: q.daily_quests.target_value,
+          reward_coins: q.daily_quests.reward_coins,
+          reward_tickets: q.daily_quests.reward_tickets,
+          progress: q.progress,
+          claimed: q.is_claimed
+        })));
+        tabLoadTimestamps.current['quests'] = Date.now();
+      } else {
         setDailyQuests(getMockQuests(student.id));
       }
+    } catch (e) {
+      console.warn("Daily quests table might not exist yet, using mock data", e);
+      setDailyQuests(getMockQuests(student.id));
+    } finally {
+      setQuestsLoading(false);
     }
+  }, [student]);
 
+  // Initial mount trigger
+  useEffect(() => {
     loadDashboardData();
-  }, [student, setProgress]);
+  }, [loadDashboardData]);
+
+  // On-demand tab activation trigger
+  useEffect(() => {
+    if (activeTab === 'collection') {
+      loadCollectionData();
+    } else if (activeTab === 'stats') {
+      loadLeaderboardData();
+    } else if (activeTab === 'teams') {
+      loadTeamsData();
+    } else if (activeTab === 'inbox') {
+      loadMessagesData();
+    } else if (activeTab === 'quests') {
+      loadQuestsData();
+    }
+  }, [activeTab, loadCollectionData, loadLeaderboardData, loadTeamsData, loadMessagesData, loadQuestsData]);
 
   // Reset studied stage state when advancing to a new stage
   useEffect(() => {
@@ -541,6 +618,16 @@ export default function Dashboard() {
     }
   };
 
+  const handleManualRefresh = useCallback(async () => {
+    tabLoadTimestamps.current = {};
+    await loadDashboardData();
+    if (activeTab === 'collection') loadCollectionData(true);
+    else if (activeTab === 'stats') loadLeaderboardData(true);
+    else if (activeTab === 'teams') loadTeamsData(true);
+    else if (activeTab === 'inbox') loadMessagesData(true);
+    else if (activeTab === 'quests') loadQuestsData(true);
+  }, [loadDashboardData, activeTab, loadCollectionData, loadLeaderboardData, loadTeamsData, loadMessagesData, loadQuestsData]);
+
   return (
     <div data-demo-guide="student-dashboard" className="min-h-screen bg-transparent text-slate-100 font-sans p-3 sm:p-4 md:p-8 safe-bottom relative">
       {/* Ambient backgrounds */}
@@ -604,7 +691,7 @@ export default function Dashboard() {
         {/* Tab Links */}
         <div className="flex flex-col min-[420px]:flex-row min-[420px]:justify-between min-[420px]:items-end gap-2 mb-2">
           <div className="text-slate-400 text-sm font-bold">เมนูหลัก</div>
-          <button onClick={() => window.location.reload()} className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-full transition-all">
+          <button onClick={handleManualRefresh} className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-full transition-all">
             <RefreshCw className="w-3 h-3" /> รีเฟรชข้อมูล
           </button>
         </div>
@@ -1031,33 +1118,38 @@ export default function Dashboard() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {wordCollection.map((item) => {
-                    const word = item.vocabulary;
-                    const stars = Array.from({ length: 4 }).map((_, i) => i < item.mastery_level ? '⭐' : '☆').join('');
-                    
-                    return (
-                      <div key={item.id} className="bg-slate-950/60 border border-slate-900/60 p-4 rounded-xl flex justify-between items-start">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-lg font-black text-white uppercase notranslate" translate="no">{word.word}</h4>
-                            <span className="text-[9px] px-1.5 py-0.5 bg-slate-900 border border-slate-800 text-slate-400 rounded-md font-mono">{word.difficulty_level || 'normal'}</span>
-                          </div>
-                          <p className="text-xs text-slate-400 font-bold mt-1 text-emerald-400">{word.meaning}</p>
-                          <p className="text-xs text-slate-500 italic font-mono truncate max-w-[200px]">"{word.example_sentence || word.example || ''}"</p>
-                        </div>
-                        
-                        <div className="text-right shrink-0">
-                          <span className="text-xs block text-slate-500 font-bold mb-1">ความจำ</span>
-                          <span className="text-xs font-mono">{stars}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {wordCollection.length === 0 && (
+                  {collectionLoading ? (
+                    <div className="col-span-full text-center py-12 text-slate-400">
+                      <div className="w-8 h-8 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mx-auto mb-3" />
+                      <p className="text-sm">กำลังโหลดสมุดคำศัพท์สะสม...</p>
+                    </div>
+                  ) : wordCollection.length === 0 ? (
                     <div className="col-span-full text-center py-12 text-slate-500 italic text-sm">
                       คุณยังไม่มีคำศัพท์ในสมุดสะสม เริ่มต้นลุยด่านผจญภัยเพื่อเปิดพจนานุกรมคำแรกกันเลย!
                     </div>
+                  ) : (
+                    wordCollection.map((item) => {
+                      const word = item.vocabulary;
+                      const stars = Array.from({ length: 4 }).map((_, i) => i < item.mastery_level ? '⭐' : '☆').join('');
+                      
+                      return (
+                        <div key={item.id} className="bg-slate-950/60 border border-slate-900/60 p-4 rounded-xl flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-lg font-black text-white uppercase notranslate" translate="no">{word.word}</h4>
+                              <span className="text-[9px] px-1.5 py-0.5 bg-slate-900 border border-slate-800 text-slate-400 rounded-md font-mono">{word.difficulty_level || 'normal'}</span>
+                            </div>
+                            <p className="text-xs text-slate-400 font-bold mt-1 text-emerald-400">{word.meaning}</p>
+                            <p className="text-xs text-slate-500 italic font-mono truncate max-w-[200px]">"{word.example_sentence || word.example || ''}"</p>
+                          </div>
+                          
+                          <div className="text-right shrink-0">
+                            <span className="text-xs block text-slate-500 font-bold mb-1">ความจำ</span>
+                            <span className="text-xs font-mono">{stars}</span>
+                          </div>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -1082,15 +1174,15 @@ export default function Dashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="bg-slate-950/80 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                        <tr className="border-b border-slate-850 bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider font-extrabold">
                           <th className="p-4 text-center">อันดับ</th>
-                          <th className="p-4">นักเรียน</th>
-                          <th className="p-4 text-center">เลเวล</th>
-                          <th className="p-4 text-center">เหรียญ</th>
-                          <th className="p-4 text-center">ด่านปัจจุบัน</th>
+                          <th className="p-4">นักผจญภัย</th>
+                          <th className="p-4 text-center">ระดับ</th>
+                          <th className="p-4 text-center">เหรียญสะสม</th>
+                          <th className="p-4 text-center">ด่านล่าสุด</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-900/60 text-slate-200 text-sm">
+                      <tbody className="divide-y divide-slate-900 text-sm">
                         {leaderboard.map((user, idx) => {
                           const rankIcons = ['🥇', '🥈', '🥉'];
                           const isTop3 = idx < 3;
@@ -1149,13 +1241,20 @@ export default function Dashboard() {
                             </tr>
                           );
                         })}
-                        {leaderboard.length === 0 && (
+                        {leaderboardLoading ? (
+                          <tr>
+                            <td colSpan={5} className="p-8 text-center text-slate-400">
+                              <div className="w-6 h-6 border-2 border-amber-500/20 border-t-amber-500 rounded-full animate-spin mx-auto mb-2" />
+                              กำลังโหลดอันดับห้องเรียน...
+                            </td>
+                          </tr>
+                        ) : leaderboard.length === 0 ? (
                           <tr>
                             <td colSpan={5} className="p-6 text-center text-slate-500 italic">
                               ไม่มีข้อมูลอันดับในห้องเรียนนี้
                             </td>
                           </tr>
-                        )}
+                        ) : null}
                       </tbody>
                     </table>
                   </div>
@@ -1227,11 +1326,16 @@ export default function Dashboard() {
                   })}
                 </div>
                 
-                {myTeams.length === 0 && (
+                {teamsLoading ? (
+                  <div className="text-center py-10">
+                    <div className="w-8 h-8 border-2 border-fuchsia-500/20 border-t-fuchsia-500 rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-slate-400 text-sm">กำลังโหลดและคำนวณคะแนนทีม...</p>
+                  </div>
+                ) : myTeams.length === 0 ? (
                   <div className="text-center py-10">
                     <p className="text-slate-400">กำลังค้นหาทีมของคุณ...</p>
                   </div>
-                )}
+                ) : null}
               </div>
 
               {/* Show Leaderboard in Teams tab */}
@@ -1257,7 +1361,12 @@ export default function Dashboard() {
                 </div>
                 
                 <div className="space-y-4">
-                  {messages.length === 0 ? (
+                  {messagesLoading ? (
+                    <div className="text-center py-12 text-slate-400">
+                      <div className="w-6 h-6 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mx-auto mb-2" />
+                      <p className="text-sm">กำลังโหลดจดหมาย...</p>
+                    </div>
+                  ) : messages.length === 0 ? (
                     <div className="text-center py-12 text-slate-500">
                       <Mail className="w-12 h-12 mx-auto mb-3 opacity-20" />
                       <p>ยังไม่มีจดหมายจากคุณครูครับ</p>
@@ -1292,11 +1401,18 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-6 text-left"
             >
-              <QuestList 
-                dailyQuests={dailyQuests}
-                claimingQuests={claimingQuests}
-                onClaimQuest={handleClaimQuest}
-              />
+              {questsLoading ? (
+                <div className="glass-card p-12 text-center text-slate-400 rounded-3xl">
+                  <div className="w-8 h-8 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mx-auto mb-2" />
+                  <p className="text-sm">กำลังโหลดภารกิจประจำวัน...</p>
+                </div>
+              ) : (
+                <QuestList 
+                  dailyQuests={dailyQuests}
+                  claimingQuests={claimingQuests}
+                  onClaimQuest={handleClaimQuest}
+                />
+              )}
             </motion.div>
           )}
 

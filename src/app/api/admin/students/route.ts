@@ -9,6 +9,46 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const classroomId = searchParams.get('classroomId');
     const userType = searchParams.get('userType');
+    const fields = searchParams.get('fields');
+    const countOnly = searchParams.get('countOnly') === 'true' || fields === 'roster_count' || fields === 'count';
+    const rankOnly = fields === 'rank';
+
+    if (countOnly) {
+      let countQuery = supabaseAdmin
+        .from('students')
+        .select('id, classroom_id');
+
+      if (classroomId) {
+        countQuery = countQuery.eq('classroom_id', classroomId);
+      }
+      if (userType) {
+        countQuery = countQuery.eq('user_type', userType);
+      }
+
+      const { data: countData, error: countError } = await countQuery;
+      if (countError) throw countError;
+
+      return NextResponse.json({ success: true, students: countData || [] });
+    }
+
+    if (rankOnly) {
+      let rankQuery = supabaseAdmin
+        .from('students')
+        .select('id, student_name, classrooms(class_name), learning_paths(current_rank)')
+        .order('student_name', { ascending: true });
+
+      if (classroomId) {
+        rankQuery = rankQuery.eq('classroom_id', classroomId);
+      }
+      if (userType) {
+        rankQuery = rankQuery.eq('user_type', userType);
+      }
+
+      const { data: rankData, error: rankError } = await rankQuery;
+      if (rankError) throw rankError;
+
+      return NextResponse.json({ success: true, students: rankData || [] });
+    }
 
     let query = supabaseAdmin
       .from('students')

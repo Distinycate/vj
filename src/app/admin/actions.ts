@@ -117,12 +117,29 @@ export async function getAdminInitialData(teacherId: string, role: string) {
   
   const validClasses = (classData || []).filter(c => c.class_name.includes('ม.1') || c.class_name.includes('ม.2') || c.class_name.includes('ม.3'));
   
-  const { data: vData } = await supabaseAdmin.from('vocabulary').select('*');
-  const { data: iData } = await supabaseAdmin.from('item_analysis').select('*');
-  
   return {
     validClasses,
-    vocabList: vData || [],
-    itemAnalysis: iData || []
+    vocabList: [],
+    itemAnalysis: []
+  };
+}
+
+export async function getAdminAnalyticsDatasets() {
+  const session = await requireSession();
+  if (!['ADMIN', 'TEACHER', 'CARD_TEACHER', 'EXECUTIVE'].includes(session.role)) {
+    throw new Error('Forbidden');
+  }
+
+  const [vocabRes, itemRes] = await Promise.all([
+    supabaseAdmin.from('vocabulary').select('*'),
+    supabaseAdmin.from('item_analysis').select('*')
+  ]);
+
+  if (vocabRes.error) throw vocabRes.error;
+  if (itemRes.error) throw itemRes.error;
+
+  return {
+    vocabList: vocabRes.data || [],
+    itemAnalysis: itemRes.data || []
   };
 }
