@@ -5,7 +5,7 @@ import { requireSession } from '@/lib/server/session';
 
 export async function getAdminClassroomStats(studentIds: string[]) {
   const session = await requireSession();
-  if (session.role !== 'ADMIN') {
+  if (!['ADMIN', 'TEACHER'].includes(session.role)) {
     throw new Error('Forbidden');
   }
 
@@ -22,7 +22,7 @@ export async function getAdminClassroomStats(studentIds: string[]) {
 
 export async function getAdminStudentAttempts(studentId: string) {
   const session = await requireSession();
-  if (session.role !== 'ADMIN') {
+  if (!['ADMIN', 'TEACHER', 'CARD_TEACHER'].includes(session.role)) {
     throw new Error('Forbidden');
   }
 
@@ -37,7 +37,7 @@ export async function getAdminStudentAttempts(studentId: string) {
 
 export async function getAdminClassAttempts(classStudentIds: string[]) {
   const session = await requireSession();
-  if (session.role !== 'ADMIN') {
+  if (!['ADMIN', 'TEACHER', 'CARD_TEACHER'].includes(session.role)) {
     throw new Error('Forbidden');
   }
   
@@ -53,7 +53,7 @@ export async function getAdminClassAttempts(classStudentIds: string[]) {
 
 export async function getAdminStudentWrongWords(studentId: string) {
   const session = await requireSession();
-  if (session.role !== 'ADMIN') {
+  if (!['ADMIN', 'TEACHER', 'CARD_TEACHER'].includes(session.role)) {
     throw new Error('Forbidden');
   }
 
@@ -68,7 +68,7 @@ export async function getAdminStudentWrongWords(studentId: string) {
 
 export async function getAdminClassWrongWords(classStudentIds: string[]) {
   const session = await requireSession();
-  if (session.role !== 'ADMIN') {
+  if (!['ADMIN', 'TEACHER', 'CARD_TEACHER'].includes(session.role)) {
     throw new Error('Forbidden');
   }
   
@@ -84,7 +84,7 @@ export async function getAdminClassWrongWords(classStudentIds: string[]) {
 
 export async function getAdminStudentTests(studentId: string) {
   const session = await requireSession();
-  if (session.role !== 'ADMIN') {
+  if (!['ADMIN', 'TEACHER', 'CARD_TEACHER'].includes(session.role)) {
     throw new Error('Forbidden');
   }
 
@@ -99,7 +99,7 @@ export async function getAdminStudentTests(studentId: string) {
 
 export async function getAdminInitialData(teacherId: string, role: string) {
   const session = await requireSession();
-  if (session.role !== 'ADMIN') {
+  if (!['ADMIN', 'TEACHER'].includes(session.role)) {
     throw new Error('Forbidden');
   }
   

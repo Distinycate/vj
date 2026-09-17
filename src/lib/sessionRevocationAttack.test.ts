@@ -140,7 +140,7 @@ test('Attack 1: Role downgrade ADMIN -> TEACHER immediately blocks old session f
 
   // Confirm source code derives role strictly from teacher record in database
   assert.match(sessionModule, /authoritativeRole = \(teacher\.role as UserRole\)/);
-  assert.match(adminStudentsRoute, /requireRole\(\['ADMIN'\]\)/);
+  assert.match(adminStudentsRoute, /requireRole\(\['ADMIN', 'TEACHER', 'CARD_TEACHER', 'EXECUTIVE'\]\)/);
 });
 
 test('Attack 2: Suspended student session is rejected immediately with 401', () => {

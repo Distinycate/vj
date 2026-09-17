@@ -258,6 +258,16 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
               <div className="text-center text-slate-500 py-10">ยังไม่มีข้อมูลการตอบผิด</div>
             )}
           </div>
+
+          <div className="mt-4 p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 text-xs text-slate-400 space-y-1">
+            <div className="flex items-center gap-1.5 font-bold text-rose-400">
+              <Info className="w-3.5 h-3.5" />
+              <span>คำแนะนำสำหรับการสอนซ่อมเสริม:</span>
+            </div>
+            <p className="leading-relaxed text-[11px]">
+              คำศัพท์เหล่านี้มีอัตราการตอบผิดสะสมสูงที่สุดในโรงเรียน แนะนำให้ครูจัดกิจกรรม Warm-up หรือ Flashcard ทบทวนคำศัพท์กลุ่มนี้หน้าชั้นเรียนเพื่อลดข้อผิดพลาด
+            </p>
+          </div>
         </div>
 
         {/* School-Wide Learning Gain Line Chart — REAL DATA */}
@@ -291,6 +301,16 @@ export default function SchoolLevelDashboard({ studentsList }: SchoolLevelDashbo
               <p className="text-xs mt-1 max-w-xs text-center">กราฟจะแสดงข้อมูลจริงเมื่อนักเรียนทำ Pre-test และ Post-test ในระบบแล้ว</p>
             </div>
           )}
+
+          <div className="mt-4 p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 text-xs text-slate-400 space-y-1">
+            <div className="flex items-center gap-1.5 font-bold text-emerald-400">
+              <Info className="w-3.5 h-3.5" />
+              <span>วิธีแปลผล Learning Gain:</span>
+            </div>
+            <p className="leading-relaxed text-[11px]">
+              กราฟเส้นเปรียบเทียบคะแนนก่อนเรียน (สีเทา) และหลังเรียน (สีเขียว) ตามช่วงเวลา หากเส้นสีเขียวอยู่สูงกว่าเส้นสีเทา แสดงถึงพัฒนาการเชิงบวกและประสิทธิผลของการจัดการเรียนรู้
+            </p>
+          </div>
         </div>
         
       </div>

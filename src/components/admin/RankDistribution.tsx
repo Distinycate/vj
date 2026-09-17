@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { ADAPTIVE_RANK_CONFIG } from '@/utils/adaptiveConfig';
-import { Trophy, ChevronDown, ChevronUp, User } from 'lucide-react';
+import { Trophy, ChevronDown, ChevronUp, User, Info } from 'lucide-react';
 
 interface RankDistributionProps {
   students: any[];
@@ -108,6 +108,19 @@ export default function RankDistribution({ students, title, subtitle }: RankDist
             </div>
           );
         })}
+      </div>
+
+      {/* Explanation Box */}
+      <div className="mt-4 p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 text-xs text-slate-400 space-y-1">
+        <div className="flex items-center gap-1.5 font-bold text-yellow-400">
+          <Info className="w-3.5 h-3.5" />
+          <span>คำอธิบายการจัดระดับความสามารถ (Adaptive Rank):</span>
+        </div>
+        <p className="leading-relaxed text-[11px]">
+          • <strong className="text-amber-500">Rank 1-2 (พื้นฐาน):</strong> นักเรียนกำลังฝึกฝนคำศัพท์ระดับเริ่มต้น ควรเน้นการทบทวนคำศัพท์ซ้ำและให้กำลังใจ<br />
+          • <strong className="text-yellow-400">Rank 3 (มาตรฐาน):</strong> นักเรียนมีความแม่นยำตามเกณฑ์มาตรฐานหลักสูตร<br />
+          • <strong className="text-cyan-400">Rank 4-5 (ก้าวหน้า/เชี่ยวชาญ):</strong> นักเรียนมีคลังคำศัพท์สูงและพร้อมสำหรับโจทย์ประยุกต์ขั้นสูง (สามารถคลิกที่แต่ละ Rank เพื่อดูรายชื่อนักเรียนได้)
+        </p>
       </div>
     </div>
   );

@@ -206,32 +206,53 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
             </ResponsiveContainer>
           </div>
           <div className="flex justify-center gap-4 mt-4 flex-wrap">
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div><span className="text-xs text-slate-400">High Achievers</span></div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div><span className="text-xs text-slate-400">Fast Learners</span></div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-500"></div><span className="text-xs text-slate-400">Needs Intervention</span></div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-rose-500"></div><span className="text-xs text-slate-400">At Risk</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div><span className="text-xs text-slate-400">High Achievers (เก่งและขยัน)</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div><span className="text-xs text-slate-400">Fast Learners (เรียนรู้ไว)</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-500"></div><span className="text-xs text-slate-400">Needs Help (พยายามแต่ยังผิด)</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-rose-500"></div><span className="text-xs text-slate-400">At Risk (น่าเป็นห่วง)</span></div>
+          </div>
+
+          {/* Friendly Chart Explanation */}
+          <div className="mt-4 p-3.5 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl text-xs text-indigo-200 leading-relaxed">
+            <div className="font-bold flex items-center gap-1.5 text-indigo-300 mb-1">
+              💡 คำอธิบายกราฟและการแปลผล:
+            </div>
+            • <strong>แกนตั้ง (Accuracy)</strong>: ความแม่นยำในการตอบคำศัพท์ถูก (%)<br />
+            • <strong>แกนนอน (Effort)</strong>: ความพยายาม/จำนวนครั้งที่เข้าเล่นด่าน<br />
+            • <em>จุดสีเหลือง/แดง</em>: กลุ่มที่ครูควรเข้าไปให้กำลังใจและแนะแนวเทคนิคจำคำศัพท์เพิ่มเติม
           </div>
         </div>
 
         {/* Skill Gap Analysis Bar Chart */}
-        <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl">
-          <h3 className="text-lg font-black text-white mb-2">Skill Gap Analysis (จุดอ่อน)</h3>
-          <p className="text-xs text-slate-400 mb-6">ความถี่ของการตอบผิดแยกตามหมวดหมู่ Part of Speech 5 อันดับแรก</p>
-          
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={skillGapData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-                <XAxis type="number" stroke="#64748b" fontSize={12} unit="%" />
-                <YAxis type="category" dataKey="category" stroke="#94a3b8" fontSize={12} width={80} />
-                <RechartsTooltip cursor={{ fill: '#1e293b' }} contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }} />
-                <Bar dataKey="errorRate" name="Error Rate" radius={[0, 8, 8, 0]}>
-                  {skillGapData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index === 0 ? '#f43f5e' : index === 1 ? '#f59e0b' : '#3b82f6'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+        <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl flex flex-col justify-between">
+          <div>
+            <h3 className="text-lg font-black text-white mb-2">Skill Gap Analysis (จุดอ่อนของห้องเรียน)</h3>
+            <p className="text-xs text-slate-400 mb-6">ความถี่ของการตอบผิดแยกตามหมวดหมู่ Part of Speech 5 อันดับแรก</p>
+            
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={skillGapData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
+                  <XAxis type="number" stroke="#64748b" fontSize={12} unit="%" />
+                  <YAxis type="category" dataKey="category" stroke="#94a3b8" fontSize={12} width={80} />
+                  <RechartsTooltip cursor={{ fill: '#1e293b' }} contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }} />
+                  <Bar dataKey="errorRate" name="สัดส่วนข้อผิดพลาด (%)" radius={[0, 8, 8, 0]}>
+                    {skillGapData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index === 0 ? '#f43f5e' : index === 1 ? '#f59e0b' : '#3b82f6'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Friendly Chart Explanation */}
+          <div className="mt-4 p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs text-rose-200 leading-relaxed">
+            <div className="font-bold flex items-center gap-1.5 text-rose-300 mb-1">
+              💡 คำอธิบายกราฟและการแปลผล:
+            </div>
+            • <strong>แท่งแนวนอน</strong>: สัดส่วนร้อยละของข้อผิดพลาดที่เกิดขึ้นในห้องเรียน<br />
+            • <em>การนำไปใช้</em>: แท่งบนสุดสีแดงคือประเภทคำที่เด็กในห้องนี้สับสนมากที่สุด คุณครูสามารถใช้สอนเสริมหรือจัดกิจกรรมเน้นคำศัพท์กลุ่มนี้ในคาบเรียนถัดไป
           </div>
         </div>
         
