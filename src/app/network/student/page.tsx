@@ -21,6 +21,8 @@ import {
   School,
   User,
   ShieldCheck,
+  BookOpen,
+  X,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useAppStore } from '@/store/useAppStore';
@@ -29,6 +31,7 @@ import { saveStudentSession } from '@/utils/studentSession';
 const Game = dynamic(() => import('@/components/Game'), { ssr: false });
 const PreTest = dynamic(() => import('@/components/PreTest'), { ssr: false });
 const PostTest = dynamic(() => import('@/components/PostTest'), { ssr: false });
+const StudyCamp = dynamic(() => import('@/components/StudyCamp'), { ssr: false });
 
 interface NetworkStudentData {
   id: string;
@@ -89,8 +92,15 @@ export default function NetworkStudentDashboardPage() {
     latestPostTest: null,
   });
 
-  const [activeView, setActiveView] = useState<'map' | 'pretest' | 'posttest' | 'game'>('map');
+  const [activeView, setActiveView] = useState<'map' | 'pretest' | 'posttest' | 'study' | 'game'>('map');
   const [selectedWorld, setSelectedWorld] = useState<number>(1);
+  const [selectedStageModal, setSelectedStageModal] = useState<{
+    stageNum: number;
+    isBoss: boolean;
+    bossType: string;
+    stars: number;
+    isCompleted: boolean;
+  } | null>(null);
 
   // Fetch initial student state
   const loadInitData = useCallback(async () => {
@@ -144,12 +154,56 @@ export default function NetworkStudentDashboardPage() {
     loadInitData();
   }, [loadInitData]);
 
-  // Handle stage click
+  // Handle stage click: open stage action modal (Study Camp or Play Quiz)
   const handleStageClick = (stageNum: number) => {
     const isUnlocked = progression.unlockedStages.includes(stageNum) || stageNum <= progression.currentStage;
     if (!isUnlocked) return;
 
+    const stars = progression.stageStarsMap[stageNum] || 0;
+    const isFinalBoss = stageNum === 100;
+    const isWorldBoss = stageNum % 10 === 0 && !isFinalBoss;
+    const isMiniBoss = stageNum % 10 === 5;
+    const isBoss = isFinalBoss || isWorldBoss || isMiniBoss;
+    const bossType = isFinalBoss ? 'FINAL BOSS' : isWorldBoss ? 'WORLD BOSS' : isMiniBoss ? 'MINI BOSS' : '';
+
+    setSelectedStageModal({
+      stageNum,
+      isBoss,
+      bossType,
+      stars,
+      isCompleted: stars > 0,
+    });
+  };
+
+  // Launch Study Camp for stage
+  const handleStartStudy = (stageNum: number) => {
     setSelectedStageNumber(stageNum);
+    const isBoss = stageNum % 5 === 0;
+    useAppStore.getState().setBossMode(isBoss);
+    setScreen('study');
+    setActiveView('study');
+    setSelectedStageModal(null);
+  };
+
+  // Launch Game directly for stage
+  const handleStartGame = (stageNum: number) => {
+    setSelectedStageNumber(stageNum);
+    const isBoss = stageNum % 5 === 0;
+    useAppStore.getState().setBossMode(isBoss);
+    setScreen('game');
+    setActiveView('game');
+    setSelectedStageModal(null);
+  };
+
+  // Exit from Study Camp to map
+  const handleFinishStudy = () => {
+    setActiveView('map');
+    setSelectedStageNumber(null);
+    setScreen('dashboard');
+  };
+
+  // Transition from Study Camp into Game quiz
+  const handleStartGameFromStudy = () => {
     setScreen('game');
     setActiveView('game');
   };
@@ -162,9 +216,9 @@ export default function NetworkStudentDashboardPage() {
     await loadInitData();
   };
 
-  // Sync screen changes: if store screen transitions back to dashboard while game view is active, switch to map
+  // Sync screen changes: if store screen transitions back to dashboard while in game or study view, return to map
   useEffect(() => {
-    if (activeView === 'game' && currentScreen === 'dashboard') {
+    if ((activeView === 'game' || activeView === 'study') && currentScreen === 'dashboard') {
       handleFinishGame();
     }
   }, [currentScreen, activeView]);
@@ -270,7 +324,27 @@ export default function NetworkStudentDashboardPage() {
     );
   }
 
-  // ── 3. GAMEPLAY VIEW (100% MCQ / SKULL MODE) ──────────────────────────────
+  // ── 3. STUDY CAMP VIEW (เรียนก่อนเล่นด่าน) ───────────────────────────────
+  if (activeView === 'study') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+        <div className="fixed top-3 left-4 z-40">
+          <button
+            onClick={handleFinishStudy}
+            className="px-3.5 py-2 rounded-xl bg-slate-900/90 border border-slate-700 hover:bg-slate-800 text-slate-300 text-xs font-bold backdrop-blur-md shadow-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            &larr; กลับหน้าแผนที่
+          </button>
+        </div>
+        <StudyCamp
+          onStartGame={handleStartGameFromStudy}
+          onExit={handleFinishStudy}
+        />
+      </div>
+    );
+  }
+
+  // ── 4. GAMEPLAY VIEW (100% MCQ / SKULL MODE) ──────────────────────────────
   if (activeView === 'game') {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
@@ -287,10 +361,14 @@ export default function NetworkStudentDashboardPage() {
     );
   }
 
-  // ── 4. LITE 100-STAGE MAP DASHBOARD VIEW ──────────────────────────────────
+  // ── 5. LITE 100-STAGE MAP DASHBOARD VIEW ──────────────────────────────────
   const currentStageNum = progression.currentStage;
   const totalStarsCount = progression.totalStars;
-  const isPostTestUnlocked = currentStageNum >= 100 || progression.stageStarsMap[100] !== undefined;
+  const isPostTestUnlocked =
+    currentStageNum >= 10 ||
+    Object.keys(progression.stageStarsMap).length >= 10 ||
+    (currentStageNum >= 100 || progression.stageStarsMap[100] !== undefined) ||
+    assessment.hasCompletedPostTest;
 
   // Build 10 Worlds
   const worlds = Array.from({ length: 10 }, (_, i) => {
@@ -380,30 +458,61 @@ export default function NetworkStudentDashboardPage() {
               <div>
                 <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black mb-1">
                   <Sparkles className="w-3 h-3" />
-                  <span>แบบทดสอบหลังเรียนเปิดแล้ว</span>
+                  <span>แบบทดสอบหลังเรียน (Post-Test) พร้อมแล้ว</span>
                 </div>
                 <h3 className="text-base sm:text-lg font-black text-white">
                   {assessment.hasCompletedPostTest
                     ? `คุณทำแบบทดสอบหลังเรียนแล้ว (คะแนน ${assessment.latestPostTest?.score}/${assessment.latestPostTest?.total_questions})`
-                    : 'ยินดีด้วย! คุณผ่านด่าน 100 แล้ว ทำแบบทดสอบหลังเรียนเพื่อดูผลลัพธ์'}
+                    : 'ยินดีด้วย! คุณเรียนรู้ผ่านเกณฑ์แล้ว ทำแบบทดสอบหลังเรียนเพื่อวัดพัฒนาการความรู้ (Normalized Gain)'}
                 </h3>
                 <p className="text-xs text-amber-200/80">
                   {assessment.hasCompletedPostTest
                     ? 'สามารถทำซ้ำเพื่อฝึกฝนและประเมินความรู้เพิ่มเติมได้'
-                    : 'ประเมินพัฒนาการคำศัพท์จากการผจญภัยทั้งหมด'}
+                    : 'ประเมินพัฒนาการคำศัพท์จากการผจญภัยเพื่อเปรียบเทียบกับ Pre-test'}
                 </p>
               </div>
             </div>
 
             <button
               onClick={handleOpenPostTest}
-              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 shrink-0"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
             >
               <span>{assessment.hasCompletedPostTest ? 'ทำแบบทดสอบอีกครั้ง' : 'เริ่มทำแบบทดสอบหลังเรียน'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </motion.div>
         )}
+
+        {/* Current Stage Action Banner (เหมือน VJ Full: เรียนก่อนเล่นด่าน / ท่องศัพท์ด่านนี้) */}
+        <div className="bg-gradient-to-tr from-slate-900 via-indigo-950/40 to-slate-950 border border-indigo-500/30 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col md:flex-row gap-5 justify-between items-center">
+          <div className="text-center md:text-left w-full md:w-auto">
+            <span className="text-[11px] bg-indigo-500/15 text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30 font-black uppercase tracking-wider">
+              ความก้าวหน้าปัจจุบัน
+            </span>
+            <h3 className="text-xl sm:text-2xl font-black text-white mt-2.5 flex items-center justify-center md:justify-start gap-2">
+              <span>ด่านผจญภัยที่ {Math.min(100, currentStageNum)} / 100</span>
+              {currentStageNum % 10 === 0 && <Crown className="w-5 h-5 text-rose-400" />}
+            </h3>
+            <p className="text-slate-400 text-xs sm:text-sm mt-1">
+              ดินแดนที่ {Math.ceil(currentStageNum / 10)} • คำถาม 10 ข้อ • แนะนำท่องคำศัพท์ประจำด่านก่อนเริ่มทดสอบ
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <button
+              onClick={() => handleStartStudy(currentStageNum)}
+              className="w-full sm:w-auto px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 font-bold rounded-2xl border border-slate-700 flex items-center justify-center gap-2 transition-all text-sm shadow-md cursor-pointer hover:scale-[1.02]"
+            >
+              <BookOpen className="w-4 h-4 text-emerald-400" /> ท่องศัพท์ด่านนี้ (Study Camp)
+            </button>
+            <button
+              onClick={() => handleStartGame(currentStageNum)}
+              className="w-full sm:w-auto px-7 py-3.5 font-black rounded-2xl flex items-center justify-center gap-2 transition-all text-sm bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 shadow-lg shadow-emerald-500/20 cursor-pointer hover:scale-[1.02]"
+            >
+              <Play className="w-4 h-4 fill-slate-950" /> เริ่มเกมท้าทาย ➡️
+            </button>
+          </div>
+        </div>
 
         {/* World Tabs Selector */}
         <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 shadow-xl space-y-3">
@@ -568,6 +677,69 @@ export default function NetworkStudentDashboardPage() {
             })}
           </div>
         </div>
+
+        {/* Stage Selection Action Modal (Study Camp or Play Quiz) */}
+        <AnimatePresence>
+          {selectedStageModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-slate-900 border border-slate-700 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 relative"
+              >
+                {/* Close button */}
+                <button
+                  onClick={() => setSelectedStageModal(null)}
+                  className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <div className="text-center space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-black">
+                    {selectedStageModal.bossType ? selectedStageModal.bossType : `STAGE ${selectedStageModal.stageNum}`}
+                  </div>
+                  <h3 className="text-2xl font-black text-white">
+                    ด่านผจญภัยที่ {selectedStageModal.stageNum}
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    ดินแดนที่ {Math.ceil(selectedStageModal.stageNum / 10)} • เลือกท่องคำศัพท์ด้วย Flashcard ก่อน หรือเริ่มทำแบบทดสอบ 10 ข้อ
+                  </p>
+                  {selectedStageModal.stars > 0 && (
+                    <div className="flex justify-center items-center gap-1 text-amber-400 pt-1">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-5 h-5 ${i < selectedStageModal.stars ? 'fill-amber-400 text-amber-400' : 'text-slate-700'}`}
+                        />
+                      ))}
+                      <span className="text-xs text-slate-400 ml-1">({selectedStageModal.stars}/3 ดาว)</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <button
+                    onClick={() => handleStartStudy(selectedStageModal.stageNum)}
+                    className="w-full py-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 hover:text-emerald-300 font-bold text-sm flex items-center justify-center gap-2.5 transition-all shadow-md hover:scale-[1.02] cursor-pointer"
+                  >
+                    <BookOpen className="w-5 h-5 text-emerald-400" />
+                    <span>📖 ท่องศัพท์ด่านนี้ก่อน (Study Camp)</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleStartGame(selectedStageModal.stageNum)}
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-sm flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-emerald-500/20 hover:scale-[1.02] cursor-pointer"
+                  >
+                    <Play className="w-5 h-5 fill-slate-950" />
+                    <span>⚔️ {selectedStageModal.isCompleted ? 'เล่นซ้ำแบบทดสอบ' : 'เริ่มเล่นแบบทดสอบทันที'}</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* Footer Info */}
         <div className="text-center text-xs text-slate-600 pb-8">

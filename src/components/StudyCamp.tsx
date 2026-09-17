@@ -8,13 +8,33 @@ import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
 import { getWorldForStage } from '@/utils/adaptiveConfig';
 
-export default function StudyCamp() {
+interface StudyCampProps {
+  onStartGame?: () => void;
+  onExit?: () => void;
+}
+
+export default function StudyCamp({ onStartGame, onExit }: StudyCampProps = {}) {
   const { setScreen, progress, setStudiedCurrentStage, selectedStageNumber } = useAppStore();
   const isDemoMode = useDemoStore((state) => state.isDemoMode);
   const [words, setWords] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [buffGranted, setBuffGranted] = useState(false);
+
+  const handleStartGame = () => {
+    setStudiedCurrentStage(true);
+    setScreen('game');
+    if (onStartGame) {
+      onStartGame();
+    }
+  };
+
+  const handleExitCamp = () => {
+    setScreen('dashboard');
+    if (onExit) {
+      onExit();
+    }
+  };
 
   useEffect(() => {
     if (words.length > 0 && currentIndex === words.length) {
@@ -94,7 +114,7 @@ export default function StudyCamp() {
           <h2 className="text-2xl font-black mb-2">ยังไม่มีคำศัพท์ในด่านนี้</h2>
           <p className="text-slate-400 text-sm mb-6">กรุณาแจ้งคุณครูให้เพิ่มคำศัพท์ก่อนเริ่มเรียน</p>
           <button
-            onClick={() => setScreen('dashboard')}
+            onClick={handleExitCamp}
             className="w-full py-3.5 premium-btn bg-slate-800 hover:bg-slate-700 font-bold"
           >
             กลับหน้าแผนที่
@@ -120,13 +140,13 @@ export default function StudyCamp() {
           <p className="text-slate-400 mb-8 leading-relaxed">คุณท่องค่ายศัพท์ประจำด่านนี้ครบทุกคำแล้ว พร้อมสำหรับทำด่านประเมินแบบทดสอบหรือยัง?</p>
           <div className="flex gap-4 justify-center">
             <button 
-              onClick={() => setScreen('dashboard')} 
+              onClick={handleExitCamp} 
               className="px-6 py-3.5 premium-btn bg-slate-800 hover:bg-slate-700 text-white font-bold"
             >
               กลับหน้าหลัก
             </button>
             <button 
-              onClick={() => setScreen('game')} 
+              onClick={handleStartGame} 
               className="px-8 py-3.5 premium-btn bg-primary hover:bg-emerald-400 text-slate-950 font-black shadow-lg shadow-emerald-500/20"
             >
               ลุยด่าน Challenge ➡️
@@ -166,17 +186,14 @@ export default function StudyCamp() {
         <div className="flex gap-2">
           {isBoss && (
             <button 
-              onClick={() => {
-                setStudiedCurrentStage(true);
-                setScreen('game');
-              }} 
+              onClick={handleStartGame} 
               className="px-4 py-2 premium-btn bg-primary hover:bg-emerald-400 text-slate-950 flex items-center gap-1.5 text-xs font-bold"
             >
               ข้ามไปลุยบอส ➡️
             </button>
           )}
           <button 
-            onClick={() => setScreen('dashboard')} 
+            onClick={handleExitCamp} 
             className="px-4 py-2 premium-btn bg-slate-900 hover:bg-slate-850 text-white flex items-center gap-1.5 text-xs font-bold"
           >
             <X className="w-4 h-4 text-rose-400" /> ปิดค่าย
@@ -219,7 +236,9 @@ export default function StudyCamp() {
                 {word.part_of_speech || 'noun'}
               </div>
 
-              <h3 className="text-2xl sm:text-3xl font-bold mb-4 break-words">{word.meaning}</h3>
+              <h3 className="text-2xl sm:text-3xl font-bold mb-4 break-words">
+                {(word.meaning_th && /[ก-๙]/.test(word.meaning_th)) ? word.meaning_th : (word.meaning || word.meaning_th)}
+              </h3>
               <p className="text-base sm:text-lg text-slate-400 italic mb-8 break-words notranslate" translate="no">"{word.example_sentence || word.example || ''}"</p>
             </div>
 
