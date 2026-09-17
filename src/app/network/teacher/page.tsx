@@ -212,7 +212,7 @@ export default function NetworkTeacherAuthPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full min-h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full min-h-[52px] bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 disabled:opacity-50 text-base"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -285,7 +285,7 @@ export default function NetworkTeacherAuthPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full min-h-12 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-black py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full min-h-[52px] bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 disabled:opacity-50 text-base"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -303,10 +303,10 @@ export default function NetworkTeacherAuthPage() {
             <button
               type="button"
               onClick={() => router.push('/network')}
-              className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white border border-slate-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+              className="py-2.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>หน้านักเรียนเครือข่าย</span>
+              <span>หน้าหลัก VJ Lite</span>
             </button>
             <button
               type="button"

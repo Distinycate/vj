@@ -5,7 +5,7 @@ import test from 'node:test';
 const gameStartRoute = readFileSync(new URL('../app/api/game/start/route.ts', import.meta.url), 'utf8');
 const studentInitRoute = readFileSync(new URL('../app/api/network/student/init/route.ts', import.meta.url), 'utf8');
 const studentDashboardPage = readFileSync(new URL('../app/network/student/page.tsx', import.meta.url), 'utf8');
-const networkLoginPage = readFileSync(new URL('../app/network/page.tsx', import.meta.url), 'utf8');
+const networkLoginPage = readFileSync(new URL('../app/network/login/page.tsx', import.meta.url), 'utf8');
 const adaptiveEngine = readFileSync(new URL('../utils/adaptiveEngine.ts', import.meta.url), 'utf8');
 
 test('A & B: Pre-test gate strictly gates first-time EXTERNAL students and allows returning students', () => {

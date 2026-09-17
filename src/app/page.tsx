@@ -506,10 +506,11 @@ export default function Home() {
             </button>
             <button 
               type="button" 
-              onClick={() => router.push('/demo')} 
-              className="w-full premium-btn bg-slate-800/50 hover:bg-slate-800 text-purple-300 border border-purple-500/30 font-bold py-3 mt-2 flex items-center justify-center gap-2"
+              onClick={() => window.location.href = '/card-teacher'} 
+              className="w-full min-h-[52px] py-3.5 px-4 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white font-black text-sm transition-all shadow-xl shadow-fuchsia-600/30 flex items-center justify-center gap-2 border border-fuchsia-400/40 mt-3 hover:scale-[1.01]"
             >
-              👑 เข้าสู่โหมดกรรมการ (Demo)
+              <span className="text-lg">🃏</span>
+              <span>ระบบการ์ดคำศัพท์สำหรับคุณครู (สมัคร/เข้าใช้) &rarr;</span>
             </button>
           </div>
         ) : mode === 'register' && !isRegistrationOpen ? (
@@ -575,31 +576,35 @@ export default function Home() {
         ) : null}
         {/* Single Navigation Entry to VJ Lite Homepage */}
         <div className="mt-6 pt-5 border-t border-slate-800">
-          <div className="bg-gradient-to-br from-indigo-950/60 to-slate-900/90 border border-indigo-500/30 rounded-2xl p-4 text-center space-y-2.5 shadow-lg">
-            <div className="inline-flex items-center gap-2 text-indigo-300 text-xs font-bold">
+          <div className="bg-gradient-to-br from-indigo-950/70 via-slate-900/90 to-indigo-950/50 border-2 border-indigo-500/40 rounded-2xl p-4 sm:p-5 text-center space-y-3 shadow-xl shadow-indigo-950/40">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-black">
               <Globe2 className="w-4 h-4 text-indigo-400 shrink-0" />
               <span>โรงเรียนเครือข่ายและพันธมิตร (VJ Lite)</span>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-200 font-medium leading-relaxed">
               สำหรับนักเรียนโรงเรียนเครือข่าย และ ครูโรงเรียนเครือข่าย เข้าสู่ระบบเพื่อฝึกคำศัพท์หรือจัดการห้องเรียน
             </p>
             <button
               type="button"
               onClick={() => router.push('/network')}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-black text-sm transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2"
+              className="w-full min-h-[58px] py-4 px-5 rounded-2xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-white font-black text-base sm:text-lg transition-all shadow-xl shadow-indigo-600/35 flex items-center justify-center gap-2.5 border border-indigo-300/40 hover:scale-[1.01]"
             >
-              <span>🌐 เข้าสู่หน้าหลัก VJ Lite &rarr;</span>
+              <Globe2 className="w-5 h-5 shrink-0" />
+              <span>🌐 เข้าสู่หน้าหลัก VJ Lite (โรงเรียนเครือข่าย) &rarr;</span>
             </button>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => window.location.href = '/card-teacher'}
-          className="w-full mt-3 py-2.5 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/20 text-fuchsia-300 rounded-xl font-bold text-xs transition-colors"
-        >
-          🃏 ระบบการ์ดสำหรับคุณครู (สมัคร/เข้าใช้)
-        </button>
+        {/* Reduced size Demo Button at the very bottom */}
+        <div className="mt-4 pt-2 text-center">
+          <button 
+            type="button" 
+            onClick={() => router.push('/demo')} 
+            className="text-xs text-slate-500 hover:text-purple-300 py-1.5 px-3 rounded-lg hover:bg-slate-800/40 transition-colors inline-flex items-center gap-1.5 font-medium"
+          >
+            <span>👑 เข้าสู่โหมดกรรมการ (Demo Mode)</span>
+          </button>
+        </div>
       </motion.div>
       </div>
     </div>

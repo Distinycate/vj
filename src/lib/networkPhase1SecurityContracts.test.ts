@@ -8,7 +8,7 @@ const studentsRoute = readFileSync(new URL('../app/api/network/students/route.ts
 const resetPasswordRoute = readFileSync(new URL('../app/api/network/students/reset-password/route.ts', import.meta.url), 'utf8');
 const networkLoginRoute = readFileSync(new URL('../app/api/network/auth/login/route.ts', import.meta.url), 'utf8');
 const teacherDashboardPage = readFileSync(new URL('../app/network/teacher/dashboard/page.tsx', import.meta.url), 'utf8');
-const networkLoginPage = readFileSync(new URL('../app/network/page.tsx', import.meta.url), 'utf8');
+const networkLoginPage = readFileSync(new URL('../app/network/login/page.tsx', import.meta.url), 'utf8');
 
 test('Teacher Registration forces role = TEACHER and never grants ADMIN/EXECUTIVE/CARD_TEACHER', () => {
   assert.match(teacherRegisterRoute, /role:\s*'TEACHER'/);
