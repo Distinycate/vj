@@ -174,19 +174,25 @@ export function useGameEngine(): UseGameEngineReturn {
         return;
       }
 
-      const { data: stageData } = await supabase
-        .from('stages')
-        .select('id')
-        .eq('stage_number', stageNum)
-        .maybeSingle();
-      
-      if (stageData) {
-        setCurrentStageId(stageData.id);
-      }
+      const isLite = student?.user_type === 'EXTERNAL' || student?.userType === 'EXTERNAL';
 
-      const diffConfig = await getAdaptiveDifficulty(student.id, stageNum);
-      setDifficultyConfig(diffConfig);
-      setTimeLeft(diffConfig.timeLimit || 15);
+      if (!isLite) {
+        const { data: stageData } = await supabase
+          .from('stages')
+          .select('id')
+          .eq('stage_number', stageNum)
+          .maybeSingle();
+        
+        if (stageData) {
+          setCurrentStageId(stageData.id);
+        }
+
+        const diffConfig = await getAdaptiveDifficulty(student.id, stageNum);
+        setDifficultyConfig(diffConfig);
+        setTimeLeft(diffConfig.timeLimit || 15);
+      } else {
+        setTimeLeft(20);
+      }
 
       // Attempt to initiate server-authoritative stage attempt
       try {
@@ -258,11 +264,34 @@ export function useGameEngine(): UseGameEngineReturn {
 
   function setupQuestion(word: any) {
     const isLite = student?.user_type === 'EXTERNAL' || student?.userType === 'EXTERNAL';
-    setQType(isLite ? 'MEANING_MC' : (word.qType || 'MEANING_MC'));
+
+    // 1. Detect choice language: Thai vs English
+    const firstChoiceText = String(word.choices?.[0]?.text || '');
+    const choicesAreThai = /[ก-๙]/.test(firstChoiceText);
+
+    // 2. Resolve question type based on choice language and contract
+    let resolvedQType = word.qType || word.question_type || 'MEANING_MC';
+    if (typeof resolvedQType === 'string') resolvedQType = resolvedQType.toUpperCase();
+
+    if (choicesAreThai) {
+      // Choices are Thai meaning -> Prompt MUST be English word (with audio)
+      resolvedQType = 'MEANING_MC';
+    } else if (word.choices && word.choices.length > 0) {
+      // Choices are English words -> Prompt MUST be Thai meaning (NO audio)
+      resolvedQType = 'WORD_MC';
+    }
+
+    if (isLite) {
+      // Lite is strictly Multiple Choice (MEANING_MC or WORD_MC)
+      setQType(resolvedQType === 'WORD_MC' ? 'WORD_MC' : 'MEANING_MC');
+    } else {
+      setQType(word.qType || resolvedQType || 'MEANING_MC');
+    }
+
     setChoices(word.choices || []);
     setShowHint(false);
 
-    if (word.question_type === 'listening_mc' || word.qType === 'LISTENING_MC') {
+    if (resolvedQType === 'LISTENING_MC' || word.question_type === 'listening_mc') {
       setTimeout(() => playWordAudio(word.word), 300);
     }
 

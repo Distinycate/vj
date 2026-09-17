@@ -54,7 +54,8 @@ export async function GET(request: Request) {
         learning_paths(current_stage, current_rank),
         pre_tests(score, total_questions, created_at),
         post_tests(score, total_questions, created_at),
-        stage_results(stars)
+        stage_results(stage_number, stars, passed),
+        student_stage_progress(stage_number, best_stars, completed)
       `)
       .eq('classroom_id', classroomId)
       .eq('user_type', 'EXTERNAL')
@@ -70,13 +71,35 @@ export async function GET(request: Request) {
       const latestPre = preList.length > 0 ? preList[preList.length - 1] : null;
       const latestPost = postList.length > 0 ? postList[postList.length - 1] : null;
       
-      const stageResultsList = (s.stage_results || []).filter((r: any) => r.passed || (Number(r.stars) || 0) > 0);
-      const maxCompleted = stageResultsList.length > 0
-        ? Math.max(...stageResultsList.map((r: any) => Number(r.stage_number) || 0))
-        : 0;
-      const currentStage = maxCompleted > 0 ? Math.min(100, maxCompleted + 1) : 1;
+      const stageStarsMap: Record<number, number> = {};
+      const completedStagesSet = new Set<number>();
 
-      const totalStars = (s.stage_results || []).reduce((sum: number, r: any) => sum + (Number(r.stars) || 0), 0);
+      if (Array.isArray(s.student_stage_progress)) {
+        for (const row of s.student_stage_progress) {
+          if (row.completed) {
+            completedStagesSet.add(row.stage_number);
+          }
+          stageStarsMap[row.stage_number] = Math.max(stageStarsMap[row.stage_number] || 0, row.best_stars || 0);
+        }
+      }
+
+      if (Array.isArray(s.stage_results)) {
+        for (const row of s.stage_results) {
+          const sNum = Number(row.stage_number);
+          if (!sNum) continue;
+          const stars = Number(row.stars) || (row.passed ? 1 : 0);
+          stageStarsMap[sNum] = Math.max(stageStarsMap[sNum] || 0, stars);
+          if (row.passed || stars > 0) {
+            completedStagesSet.add(sNum);
+          }
+        }
+      }
+
+      const maxCompleted = completedStagesSet.size > 0 ? Math.max(...Array.from(completedStagesSet)) : 0;
+      const legacyStage = lp?.current_stage || 1;
+      const currentStage = maxCompleted > 0 ? Math.min(100, maxCompleted + 1) : Math.min(100, legacyStage);
+
+      const totalStars = Object.values(stageStarsMap).reduce((sum: number, stars: number) => sum + stars, 0);
 
       return {
         id: s.id,

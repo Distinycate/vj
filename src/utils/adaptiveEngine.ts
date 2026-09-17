@@ -66,7 +66,7 @@ export async function generateStageQuestions(studentId: string, stageNumber: num
     }
 
     const isBoss = stageNumber % 10 === 0;
-    const targetCount = isBoss ? Math.round(questionCount * 1.5) : questionCount;
+    const targetCount = isSkullOrExternal ? 10 : (isBoss ? Math.round(questionCount * 1.5) : questionCount);
 
     // 2. Resolve Word Pool based on stage (Normal vs. Boss Stage)
     let wordsQuery = supabase.from('vocabulary').select('*').eq('is_active', true);

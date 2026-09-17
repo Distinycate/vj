@@ -140,30 +140,34 @@ export async function POST(request: Request) {
       );
     }
 
-    // ── Fetch student SRS review data ────────────────────────────────────────
-    const { data: userReviewData } = await supabaseAdmin
-      .from('user_review_words')
-      .select('word_id, mastery_status, mastery_score, review_step, wrong_count, attempt_count, next_review_at, last_seen_at')
-      .eq('user_id', session.subjectId);
+    const isExternalStudent = session.user.userType === 'EXTERNAL';
 
+    // ── Fetch student SRS review data (Internal full mode only, bypass for Lite to maximize speed) ──
     const reviewMap = new Map<string, any>();
-    if (userReviewData) {
-      for (const r of userReviewData) {
-        reviewMap.set(r.word_id, r);
-      }
-    }
-
-    // ── Merge stage words with review metadata ───────────────────────────────
     let reviewWordDetails: any[] = [];
-    if (userReviewData && userReviewData.length > 0) {
-      const reviewWordIds = userReviewData.map((r: any) => r.word_id).filter(Boolean);
-      if (reviewWordIds.length > 0) {
-        const { data: revDetails } = await supabaseAdmin
-          .from('vocabulary')
-          .select('*')
-          .in('id', reviewWordIds.slice(0, 30))
-          .eq('is_active', true);
-        reviewWordDetails = revDetails || [];
+
+    if (!isExternalStudent) {
+      const { data: userReviewData } = await supabaseAdmin
+        .from('user_review_words')
+        .select('word_id, mastery_status, mastery_score, review_step, wrong_count, attempt_count, next_review_at, last_seen_at')
+        .eq('user_id', session.subjectId);
+
+      if (userReviewData) {
+        for (const r of userReviewData) {
+          reviewMap.set(r.word_id, r);
+        }
+      }
+
+      if (userReviewData && userReviewData.length > 0) {
+        const reviewWordIds = userReviewData.map((r: any) => r.word_id).filter(Boolean);
+        if (reviewWordIds.length > 0) {
+          const { data: revDetails } = await supabaseAdmin
+            .from('vocabulary')
+            .select('*')
+            .in('id', reviewWordIds.slice(0, 30))
+            .eq('is_active', true);
+          reviewWordDetails = revDetails || [];
+        }
       }
     }
 
@@ -184,32 +188,89 @@ export async function POST(request: Request) {
       }
     }
 
+    // Ensure at least 10 candidates for External student stages
+    if (isExternalStudent && candidateMap.size < 10) {
+      const worldStart = Math.floor((stageNumber - 1) / 10) * 10 + 1;
+      const worldEnd = worldStart + 9;
+      const { data: extraWords } = await supabaseAdmin
+        .from('vocabulary')
+        .select('*')
+        .eq('is_active', true)
+        .gte('stage_number', worldStart)
+        .lte('stage_number', worldEnd)
+        .limit(20);
+      if (extraWords) {
+        for (const w of extraWords) {
+          if (!candidateMap.has(w.id)) {
+            candidateMap.set(w.id, w);
+            if (candidateMap.size >= 10) break;
+          }
+        }
+      }
+      // Fallback if the world range has fewer than 10 words
+      if (candidateMap.size < 10) {
+        const { data: fallbackExtra } = await supabaseAdmin
+          .from('vocabulary')
+          .select('*')
+          .eq('is_active', true)
+          .limit(15);
+        if (fallbackExtra) {
+          for (const w of fallbackExtra) {
+            if (!candidateMap.has(w.id)) {
+              candidateMap.set(w.id, w);
+              if (candidateMap.size >= 10) break;
+            }
+          }
+        }
+      }
+    }
+
     const allCandidates = Array.from(candidateMap.values());
 
-    // ── Distractor pool ──────────────────────────────────────────────────────
-    const { data: allVocab } = await supabaseAdmin
-      .from('vocabulary')
-      .select('id, word, meaning, meaning_th')
-      .eq('is_active', true)
-      .limit(100);
-
-    const distractorPool = allVocab || stageWords;
+    // ── Distractor pool (Fetch from local chunk for speed in Lite mode) ───────
+    let distractorPool = allCandidates;
+    if (isExternalStudent) {
+      if (distractorPool.length < 15) {
+        const worldStart = Math.floor((stageNumber - 1) / 10) * 10 + 1;
+        const worldEnd = worldStart + 9;
+        const { data: chunkVocab } = await supabaseAdmin
+          .from('vocabulary')
+          .select('id, word, meaning, meaning_th')
+          .eq('is_active', true)
+          .gte('stage_number', worldStart)
+          .lte('stage_number', worldEnd)
+          .limit(20);
+        if (chunkVocab) {
+          distractorPool = [...distractorPool, ...chunkVocab];
+        }
+      }
+    } else {
+      const { data: allVocab } = await supabaseAdmin
+        .from('vocabulary')
+        .select('id, word, meaning, meaning_th')
+        .eq('is_active', true)
+        .limit(100);
+      distractorPool = allVocab || stageWords;
+    }
 
     // ── Question selection ───────────────────────────────────────────────────
     // Boss stages: bossEngine.ts 50/30/20 scoped pool (10 questions)
-    // Standard stages: existing adaptive selector
+    // Standard stages: 10 questions for External Lite, 6 for Internal
     let shuffledTargets: any[];
 
     if (isBossMode) {
       const plan = selectBossQuestionPool(stageNumber, allCandidates, new Date());
       shuffledTargets = plan.selectedWords;
     } else {
-      const targetCount = Math.min(allCandidates.length, 6);
+      const targetCount = isExternalStudent ? 10 : Math.min(allCandidates.length, 6);
       const { selectedWords } = selectAdaptiveQuestionPool(allCandidates, {
-        totalQuestions: targetCount,
+        totalQuestions: Math.min(allCandidates.length, targetCount),
         stageNumber,
       });
       shuffledTargets = selectedWords;
+      if (isExternalStudent && shuffledTargets.length < 10 && allCandidates.length >= 10) {
+        shuffledTargets = allCandidates.slice(0, 10);
+      }
     }
 
     // ── Build question objects ───────────────────────────────────────────────
@@ -218,10 +279,13 @@ export async function POST(request: Request) {
 
     for (let i = 0; i < shuffledTargets.length; i++) {
       const target = shuffledTargets[i];
-      const meaningText = target.meaning_th || target.meaning || '';
+      const targetThaiMeaning = (target.meaning_th && /[ก-๙]/.test(target.meaning_th))
+        ? target.meaning_th
+        : (target.meaning && /[ก-๙]/.test(target.meaning))
+          ? target.meaning
+          : (target.meaning_th || target.meaning || '');
       
       // For EXTERNAL students (VJ Network Lite), enforce Skull Mode: 100% Multiple Choice only (no FILL_BLANK/spelling)
-      const isExternalStudent = session.user.userType === 'EXTERNAL';
       const qPattern = isExternalStudent ? (i % 2) : (i % 3);
 
       if (qPattern === 2) {
@@ -246,7 +310,7 @@ export async function POST(request: Request) {
           meaning: target.meaning || '',
           meaning_th: target.meaning_th || '',
           part_of_speech: target.part_of_speech,
-          prompt: meaningText,
+          prompt: targetThaiMeaning,
           correct_answer: target.word,
           correct_word_id: target.id,
           qType: 'FILL_BLANK',
@@ -256,8 +320,9 @@ export async function POST(request: Request) {
         });
       } else if (qPattern === 1) {
         // 2. WORD_MC (ดูความหมายภาษาไทย เลือกคำศัพท์ภาษาอังกฤษ)
+        // Prompt MUST be Thai. Choices MUST be English. NO audio button!
         const distractors = distractorPool
-          .filter((d) => d.id !== target.id && d.word !== target.word)
+          .filter((d) => d.id !== target.id && d.word !== target.word && /[a-zA-Z]/.test(d.word || ''))
           .sort(() => Math.random() - 0.5)
           .slice(0, 3)
           .map((d) => ({
@@ -290,7 +355,7 @@ export async function POST(request: Request) {
           meaning: target.meaning || '',
           meaning_th: target.meaning_th || '',
           part_of_speech: target.part_of_speech,
-          prompt: meaningText,
+          prompt: targetThaiMeaning,
           correct_answer: target.word,
           correct_word_id: target.id,
           qType: 'WORD_MC',
@@ -304,17 +369,21 @@ export async function POST(request: Request) {
         });
       } else {
         // 3. MEANING_MC (ดูคำศัพท์ภาษาอังกฤษ เลือกความหมายภาษาไทย)
+        // Prompt MUST be English. Choices MUST be Thai. Audio button active!
         const distractors = distractorPool
-          .filter((d) => d.id !== target.id && (d.meaning_th || d.meaning) !== meaningText)
+          .filter((d) => {
+            const dMeaning = (d.meaning_th && /[ก-๙]/.test(d.meaning_th)) ? d.meaning_th : d.meaning;
+            return d.id !== target.id && dMeaning !== targetThaiMeaning && /[ก-๙]/.test(dMeaning || '');
+          })
           .sort(() => Math.random() - 0.5)
           .slice(0, 3)
           .map((d) => ({
             word_id: d.id,
-            text: d.meaning_th || d.meaning || '',
+            text: (d.meaning_th && /[ก-๙]/.test(d.meaning_th)) ? d.meaning_th : (d.meaning || ''),
           }));
 
         const allChoices = [
-          { word_id: target.id, text: meaningText, is_correct: true },
+          { word_id: target.id, text: targetThaiMeaning, is_correct: true },
           ...distractors.map((d) => ({ word_id: d.word_id, text: d.text, is_correct: false })),
         ].sort(() => Math.random() - 0.5);
 
@@ -324,7 +393,7 @@ export async function POST(request: Request) {
           word: target.word,
           meaning: target.meaning || '',
           meaning_th: target.meaning_th || '',
-          correct_answer: meaningText,
+          correct_answer: targetThaiMeaning,
           correct_word_id: target.id,
           qType: 'MEANING_MC',
           question_type: 'meaning_mc',
@@ -339,7 +408,7 @@ export async function POST(request: Request) {
           meaning_th: target.meaning_th || '',
           part_of_speech: target.part_of_speech,
           prompt: target.word,
-          correct_answer: meaningText,
+          correct_answer: targetThaiMeaning,
           correct_word_id: target.id,
           qType: 'MEANING_MC',
           question_type: 'meaning_mc',

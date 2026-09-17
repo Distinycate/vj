@@ -12,7 +12,7 @@ import BossHpBar from '@/components/BossHpBar';
 
 type GameStep = 'play' | 'reflection' | 'results';
 
-export default function Game() {
+export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
   const {
     student, progress, isBossMode,
     words, currentIndex, loading, loadError, gameState,
@@ -22,8 +22,15 @@ export default function Game() {
     inventory, usedItemsThisStage,
     refWordsLearned, setRefWordsLearned, refHardestWord, setRefHardestWord, refFeeling, setRefFeeling,
     previousAttempts, passReport, cheatWarning, cheatDetected,
-    submitAnswer, applyPowerup, handleFinishGame
+    submitAnswer, applyPowerup, handleFinishGame: engineHandleFinishGame
   } = useGameEngine();
+
+  const handleFinishGame = () => {
+    engineHandleFinishGame();
+    if (onFinish) {
+      onFinish();
+    }
+  };
 
   if (loading) {
     return (
@@ -256,8 +263,8 @@ export default function Game() {
             </div>
           </div>
 
-          {/* Economy Rewards */}
-          {passed && (passReport?.earnedCoins > 0 || passReport?.earnedExp > 0) && (
+          {/* Economy Rewards (Full mode only - Lite mode has no coins/exp accumulation) */}
+          {!(student?.user_type === 'EXTERNAL' || student?.userType === 'EXTERNAL') && passed && (passReport?.earnedCoins > 0 || passReport?.earnedExp > 0) && (
             <div className="flex justify-center gap-4 mb-4">
               {passReport.earnedCoins > 0 && (
                 <motion.div
@@ -471,7 +478,15 @@ export default function Game() {
             {qType === 'WORD_MC' && (
               <div className="glass-card p-6 sm:p-8 shadow-xl w-full break-words border-none">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">ความหมายภาษาไทย</span>
-                <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-2 break-words">{currentWord.prompt}</h2>
+                <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-2 break-words">
+                  {(currentWord.meaning_th && /[ก-๙]/.test(currentWord.meaning_th))
+                    ? currentWord.meaning_th
+                    : (currentWord.meaning && /[ก-๙]/.test(currentWord.meaning))
+                      ? currentWord.meaning
+                      : (currentWord.prompt && /[ก-๙]/.test(currentWord.prompt))
+                        ? currentWord.prompt
+                        : (currentWord.prompt || currentWord.meaning_th || currentWord.meaning)}
+                </h2>
                 <p className="text-slate-400 text-sm sm:text-base">ตรงกับคำศัพท์ภาษาอังกฤษคำใด?</p>
               </div>
             )}

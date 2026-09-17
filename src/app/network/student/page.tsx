@@ -150,6 +150,7 @@ export default function NetworkStudentDashboardPage() {
     if (!isUnlocked) return;
 
     setSelectedStageNumber(stageNum);
+    setScreen('game');
     setActiveView('game');
   };
 
@@ -157,8 +158,16 @@ export default function NetworkStudentDashboardPage() {
   const handleFinishGame = async () => {
     setActiveView('map');
     setSelectedStageNumber(null);
+    setScreen('dashboard');
     await loadInitData();
   };
+
+  // Sync screen changes: if store screen transitions back to dashboard while game view is active, switch to map
+  useEffect(() => {
+    if (activeView === 'game' && currentScreen === 'dashboard') {
+      handleFinishGame();
+    }
+  }, [currentScreen, activeView]);
 
   // Handle Post-test click
   const handleOpenPostTest = () => {
@@ -273,7 +282,7 @@ export default function NetworkStudentDashboardPage() {
             &larr; กลับหน้าแผนที่
           </button>
         </div>
-        <Game />
+        <Game onFinish={handleFinishGame} />
       </div>
     );
   }

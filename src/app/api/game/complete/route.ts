@@ -250,6 +250,8 @@ export async function POST(request: Request) {
       }
     );
 
+    const isExternalStudent = session.user?.userType === 'EXTERNAL';
+
     if (!v3Err) {
       // ── V3 success path ────────────────────────────────────────────────────
       return NextResponse.json({
@@ -258,10 +260,10 @@ export async function POST(request: Request) {
         score: v3Data.score,
         accuracy: v3Data.accuracy,
         stars: v3Data.earned_stars ?? 0,
-        earnedCoins: v3Data.earned_coins ?? 0,
-        earnedExp: v3Data.earned_exp ?? 0,
-        newCoins: v3Data.new_coins,
-        newTotalExp: v3Data.new_total_exp,
+        earnedCoins: isExternalStudent ? 0 : (v3Data.earned_coins ?? 0),
+        earnedExp: isExternalStudent ? 0 : (v3Data.earned_exp ?? 0),
+        newCoins: isExternalStudent ? 0 : v3Data.new_coins,
+        newTotalExp: isExternalStudent ? 0 : v3Data.new_total_exp,
         currentStage: v3Data.current_stage,
         primaryReason: v3Data.primary_reason,
         bonusFlags: v3Data.bonus_flags ?? [],
@@ -336,10 +338,10 @@ export async function POST(request: Request) {
       score: correctCount,
       accuracy,
       stars: 0, // V2 does not compute stars in V3 format
-      earnedCoins: v2Data.earned_coins || 0,
-      earnedExp: v2Data.earned_exp || 0,
-      newCoins: v2Data.new_coins,
-      newTotalExp: v2Data.new_total_exp,
+      earnedCoins: isExternalStudent ? 0 : (v2Data.earned_coins || 0),
+      earnedExp: isExternalStudent ? 0 : (v2Data.earned_exp || 0),
+      newCoins: isExternalStudent ? 0 : v2Data.new_coins,
+      newTotalExp: isExternalStudent ? 0 : v2Data.new_total_exp,
       currentStage: v2Data.current_stage,
       primaryReason: null,
       bonusFlags: [],
