@@ -699,18 +699,21 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
+            <div className="overflow-x-auto rounded-2xl border border-slate-800/80 bg-slate-950/40 custom-scrollbar shadow-inner">
+              <table className="w-full min-w-[1300px] text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-950 border-b border-slate-800 text-slate-300 font-bold uppercase tracking-wider text-center">
-                    <th className="p-3 w-10">เลขที่</th>
-                    <th className="p-3 w-20 text-left">รหัส</th>
-                    <th className="p-3 text-left min-w-[150px]">ชื่อ - นามสกุล</th>
-                    {DESIRABLE_8_TRAITS.map((t) => (
-                      <th key={t.id} className="p-2 w-16" title={t.name}>{t.short}</th>
+                    <th className="p-3 w-12 min-w-[50px] text-center">เลขที่</th>
+                    <th className="p-3 w-24 min-w-[90px] text-center">รหัสนักเรียน</th>
+                    <th className="p-3 min-w-[180px] text-left">ชื่อ - นามสกุล</th>
+                    {DESIRABLE_8_TRAITS.map((t, idx) => (
+                      <th key={t.id} className="p-2.5 min-w-[80px] text-center" title={t.name}>
+                        <div className="text-[10px] text-emerald-400 font-bold">ข้อ {idx + 1}</div>
+                        <div className="text-xs font-black text-slate-200 mt-0.5">{t.short}</div>
+                      </th>
                     ))}
-                    <th className="p-3 w-20 text-emerald-400">สรุปผล</th>
-                    <th className="p-3 text-left min-w-[240px]">เหตุผลประกอบการวิเคราะห์ (สั้น)</th>
+                    <th className="p-3 min-w-[140px] text-center text-emerald-400 whitespace-nowrap">สรุปผล ปพ.5</th>
+                    <th className="p-3 min-w-[280px] text-left">เหตุผลประกอบการวิเคราะห์ (สั้น)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-slate-200">
@@ -719,47 +722,53 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                     const rationale = getStudentRationale(student);
                     return (
                       <tr key={student.id} className="hover:bg-slate-800/30 transition">
-                        <td className="p-3 text-center text-slate-400 font-bold">{idx + 1}</td>
-                        <td className="p-3 text-slate-500 font-mono text-[11px]">{student.student_id}</td>
-                        <td className="p-3 font-bold text-white">{student.student_name}</td>
+                        <td className="p-3 text-center text-slate-400 font-bold align-middle">{idx + 1}</td>
+                        <td className="p-3 text-center text-slate-400 font-mono text-[11px] align-middle">{student.student_id}</td>
+                        <td className="p-3 font-bold text-white align-middle">{student.student_name}</td>
                         {DESIRABLE_8_TRAITS.map((t) => {
                           const val = calculateStudentTrait(student, t.id);
                           return (
-                            <td key={t.id} className="p-2 text-center">
-                              <select
-                                value={val}
-                                onChange={(e) => {
-                                  const newVal = Number(e.target.value);
-                                  setTraitOverrides((prev) => ({
-                                    ...prev,
-                                    [student.id]: { ...(prev[student.id] || {}), [t.id]: newVal }
-                                  }));
-                                }}
-                                className={`w-10 text-center font-black rounded-lg py-1 text-xs border focus:outline-none ${
-                                  val === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
-                                  val === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
-                                  val === 1 ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
-                                  'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                                }`}
-                              >
-                                <option value={3}>3</option>
-                                <option value={2}>2</option>
-                                <option value={1}>1</option>
-                                <option value={0}>0</option>
-                              </select>
+                            <td key={t.id} className="p-2 text-center align-middle">
+                              <div className="flex items-center justify-center">
+                                <select
+                                  value={val}
+                                  onChange={(e) => {
+                                    const newVal = Number(e.target.value);
+                                    setTraitOverrides((prev) => ({
+                                      ...prev,
+                                      [student.id]: { ...(prev[student.id] || {}), [t.id]: newVal }
+                                    }));
+                                  }}
+                                  className={`w-12 h-9 text-center font-black rounded-xl text-xs border transition-all cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 appearance-none ${
+                                    val === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' :
+                                    val === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30' :
+                                    val === 1 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30' :
+                                    'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
+                                  }`}
+                                  style={{ textAlignLast: 'center' }}
+                                  title={`${t.name}: ระดับ ${val}`}
+                                >
+                                  <option value={3} className="bg-slate-900 text-emerald-300 font-bold">3</option>
+                                  <option value={2} className="bg-slate-900 text-indigo-300 font-bold">2</option>
+                                  <option value={1} className="bg-slate-900 text-amber-300 font-bold">1</option>
+                                  <option value={0} className="bg-slate-900 text-rose-300 font-bold">0</option>
+                                </select>
+                              </div>
                             </td>
                           );
                         })}
-                        <td className="p-3 text-center font-black">
-                          <span className={`px-2 py-1 rounded-lg text-xs ${
-                            overall === 3 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
-                            overall === 2 ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' :
-                            'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                        <td className="p-3 text-center whitespace-nowrap align-middle">
+                          <span className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border shadow-sm ${
+                            overall === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' :
+                            overall === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' :
+                            overall === 1 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
+                            'bg-rose-500/20 text-rose-300 border-rose-500/40'
                           }`}>
-                            {overall} ({overall === 3 ? 'ดีเยี่ยม' : overall === 2 ? 'ดี' : 'ผ่าน'})
+                            <span className="text-sm font-extrabold">{overall}</span>
+                            <span className="text-[11px] font-bold">({overall === 3 ? 'ดีเยี่ยม' : overall === 2 ? 'ดี' : overall === 1 ? 'ผ่าน' : 'ปรับปรุง'})</span>
                           </span>
                         </td>
-                        <td className="p-3 text-slate-400 text-[11px] leading-relaxed">
+                        <td className="p-3 text-slate-300 text-xs leading-relaxed align-middle">
                           {rationale}
                         </td>
                       </tr>
@@ -789,18 +798,21 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
+            <div className="overflow-x-auto rounded-2xl border border-slate-800/80 bg-slate-950/40 custom-scrollbar shadow-inner">
+              <table className="w-full min-w-[1250px] text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-950 border-b border-slate-800 text-slate-300 font-bold uppercase tracking-wider text-center">
-                    <th className="p-3 w-10">เลขที่</th>
-                    <th className="p-3 w-20 text-left">รหัส</th>
-                    <th className="p-3 text-left min-w-[150px]">ชื่อ - นามสกุล</th>
-                    {READING_5_INDICATORS.map((r) => (
-                      <th key={r.id} className="p-2 w-16" title={r.name}>{r.short}</th>
+                    <th className="p-3 w-12 min-w-[50px] text-center">เลขที่</th>
+                    <th className="p-3 w-24 min-w-[90px] text-center">รหัสนักเรียน</th>
+                    <th className="p-3 min-w-[180px] text-left">ชื่อ - นามสกุล</th>
+                    {READING_5_INDICATORS.map((r, idx) => (
+                      <th key={r.id} className="p-2.5 min-w-[90px] text-center" title={r.name}>
+                        <div className="text-[10px] text-indigo-400 font-bold">ตัวชี้วัดที่ {idx + 1}</div>
+                        <div className="text-xs font-black text-slate-200 mt-0.5">{r.short}</div>
+                      </th>
                     ))}
-                    <th className="p-3 w-20 text-indigo-400">สรุปผล</th>
-                    <th className="p-3 text-left min-w-[240px]">หลักฐานเชิงประจักษ์ & เหตุผลสรุป (Evidence)</th>
+                    <th className="p-3 min-w-[140px] text-center text-indigo-400 whitespace-nowrap">สรุปผล ปพ.5</th>
+                    <th className="p-3 min-w-[300px] text-left">หลักฐานเชิงประจักษ์ & เหตุผลสรุป (Evidence)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-slate-200">
@@ -809,48 +821,55 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                     const evidence = `Post-test ${student.posttestScore || 0}%, Gain +${Math.round(student.learningGain || 0)}%, Accuracy ${student.accuracy || 0}%`;
                     return (
                       <tr key={student.id} className="hover:bg-slate-800/30 transition">
-                        <td className="p-3 text-center text-slate-400 font-bold">{idx + 1}</td>
-                        <td className="p-3 text-slate-500 font-mono text-[11px]">{student.student_id}</td>
-                        <td className="p-3 font-bold text-white">{student.student_name}</td>
+                        <td className="p-3 text-center text-slate-400 font-bold align-middle">{idx + 1}</td>
+                        <td className="p-3 text-center text-slate-400 font-mono text-[11px] align-middle">{student.student_id}</td>
+                        <td className="p-3 font-bold text-white align-middle">{student.student_name}</td>
                         {READING_5_INDICATORS.map((r) => {
                           const val = calculateStudentReading(student, r.id);
                           return (
-                            <td key={r.id} className="p-2 text-center">
-                              <select
-                                value={val}
-                                onChange={(e) => {
-                                  const newVal = Number(e.target.value);
-                                  setReadingOverrides((prev) => ({
-                                    ...prev,
-                                    [student.id]: { ...(prev[student.id] || {}), [r.id]: newVal }
-                                  }));
-                                }}
-                                className={`w-10 text-center font-black rounded-lg py-1 text-xs border focus:outline-none ${
-                                  val === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
-                                  val === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
-                                  'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                                }`}
-                              >
-                                <option value={3}>3</option>
-                                <option value={2}>2</option>
-                                <option value={1}>1</option>
-                                <option value={0}>0</option>
-                              </select>
+                            <td key={r.id} className="p-2 text-center align-middle">
+                              <div className="flex items-center justify-center">
+                                <select
+                                  value={val}
+                                  onChange={(e) => {
+                                    const newVal = Number(e.target.value);
+                                    setReadingOverrides((prev) => ({
+                                      ...prev,
+                                      [student.id]: { ...(prev[student.id] || {}), [r.id]: newVal }
+                                    }));
+                                  }}
+                                  className={`w-12 h-9 text-center font-black rounded-xl text-xs border transition-all cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 appearance-none ${
+                                    val === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' :
+                                    val === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30' :
+                                    val === 1 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30' :
+                                    'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
+                                  }`}
+                                  style={{ textAlignLast: 'center' }}
+                                  title={`${r.name}: ระดับ ${val}`}
+                                >
+                                  <option value={3} className="bg-slate-900 text-emerald-300 font-bold">3</option>
+                                  <option value={2} className="bg-slate-900 text-indigo-300 font-bold">2</option>
+                                  <option value={1} className="bg-slate-900 text-amber-300 font-bold">1</option>
+                                  <option value={0} className="bg-slate-900 text-rose-300 font-bold">0</option>
+                                </select>
+                              </div>
                             </td>
                           );
                         })}
-                        <td className="p-3 text-center font-black">
-                          <span className={`px-2 py-1 rounded-lg text-xs ${
-                            overall === 3 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
-                            overall === 2 ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' :
-                            'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                        <td className="p-3 text-center whitespace-nowrap align-middle">
+                          <span className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border shadow-sm ${
+                            overall === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' :
+                            overall === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' :
+                            overall === 1 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
+                            'bg-rose-500/20 text-rose-300 border-rose-500/40'
                           }`}>
-                            {overall} ({overall === 3 ? 'ดีเยี่ยม' : overall === 2 ? 'ดี' : 'ผ่าน'})
+                            <span className="text-sm font-extrabold">{overall}</span>
+                            <span className="text-[11px] font-bold">({overall === 3 ? 'ดีเยี่ยม' : overall === 2 ? 'ดี' : overall === 1 ? 'ผ่าน' : 'ปรับปรุง'})</span>
                           </span>
                         </td>
-                        <td className="p-3 text-slate-400 text-[11px] leading-relaxed">
-                          <div className="text-slate-300 font-mono text-[10px]">{evidence}</div>
-                          <div className="text-slate-500 mt-0.5">{getStudentRationale(student)}</div>
+                        <td className="p-3 text-slate-300 text-xs leading-relaxed align-middle">
+                          <div className="text-indigo-300 font-mono text-[11px] font-bold">{evidence}</div>
+                          <div className="text-slate-400 mt-0.5">{getStudentRationale(student)}</div>
                         </td>
                       </tr>
                     );

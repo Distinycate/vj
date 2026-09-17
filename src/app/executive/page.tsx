@@ -372,33 +372,33 @@ export default function ExecutiveDashboard() {
                   <Award className="w-5 h-5 text-emerald-400" /> สัดส่วนระดับคุณลักษณะ ปพ.5 แยกตามห้องเรียน
                 </h3>
                 <p className="text-xs text-slate-400 mb-4">เกณฑ์ 3 (ดีเยี่ยม), 2 (ดี), 1 (ผ่าน), 0 (ปรับปรุง)</p>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                <div className="overflow-x-auto rounded-2xl border border-slate-800/80 bg-slate-950/40 custom-scrollbar shadow-inner">
+                  <table className="w-full min-w-[650px] text-left text-xs">
                     <thead>
                       <tr className="bg-slate-950 text-slate-400 font-bold border-b border-slate-800 uppercase">
-                        <th className="p-3">ห้องเรียน</th>
-                        <th className="p-3 text-center">นักเรียน</th>
-                        <th className="p-3 text-center text-emerald-400">ระดับ 3 (ดีเยี่ยม)</th>
-                        <th className="p-3 text-center text-indigo-400">ระดับ 2 (ดี)</th>
-                        <th className="p-3 text-center text-amber-400">ระดับ 1 (ผ่าน)</th>
-                        <th className="p-3">สรุปผลภาพรวม</th>
+                        <th className="p-3.5">ห้องเรียน</th>
+                        <th className="p-3.5 text-center">นักเรียน</th>
+                        <th className="p-3.5 text-center text-emerald-400">ระดับ 3 (ดีเยี่ยม)</th>
+                        <th className="p-3.5 text-center text-indigo-400">ระดับ 2 (ดี)</th>
+                        <th className="p-3.5 text-center text-amber-400">ระดับ 1 (ผ่าน)</th>
+                        <th className="p-3.5">สรุปผลภาพรวม</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60 text-slate-200">
                       {classroomSummaries.map((c) => (
                         <tr key={c.id} className="hover:bg-slate-800/30 transition">
-                          <td className="p-3 font-bold text-white">{c.class_name}</td>
-                          <td className="p-3 text-center text-slate-400">{c.studentsCount} คน</td>
-                          <td className="p-3 text-center font-bold text-emerald-400">
+                          <td className="p-3.5 font-bold text-white whitespace-nowrap">{c.class_name}</td>
+                          <td className="p-3.5 text-center text-slate-400 whitespace-nowrap">{c.studentsCount} คน</td>
+                          <td className="p-3.5 text-center font-bold text-emerald-400 whitespace-nowrap">
                             {c.traitsSummary?.level3} ({c.traitsSummary?.level3Percent}%)
                           </td>
-                          <td className="p-3 text-center font-bold text-indigo-400">
+                          <td className="p-3.5 text-center font-bold text-indigo-400 whitespace-nowrap">
                             {c.traitsSummary?.level2} ({c.traitsSummary?.level2Percent}%)
                           </td>
-                          <td className="p-3 text-center font-bold text-amber-400">
+                          <td className="p-3.5 text-center font-bold text-amber-400 whitespace-nowrap">
                             {c.traitsSummary?.level1} ({c.traitsSummary?.level1Percent}%)
                           </td>
-                          <td className="p-3 text-slate-400 text-[11px] truncate max-w-[200px]" title={c.shortRationale}>
+                          <td className="p-3.5 text-slate-300 text-xs min-w-[200px]" title={c.shortRationale}>
                             {c.shortRationale}
                           </td>
                         </tr>
@@ -442,33 +442,33 @@ export default function ExecutiveDashboard() {
                   <BookOpen className="w-5 h-5 text-emerald-400" /> ผลประเมินการอ่านคิดวิเคราะห์ แยกตามห้องเรียน
                 </h3>
                 <p className="text-xs text-slate-400 mb-4">สรุปอัตราผ่านเกณฑ์ ปพ.5 ส่วนที่ 2</p>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                <div className="overflow-x-auto rounded-2xl border border-slate-800/80 bg-slate-950/40 custom-scrollbar shadow-inner">
+                  <table className="w-full min-w-[650px] text-left text-xs">
                     <thead>
                       <tr className="bg-slate-950 text-slate-400 font-bold border-b border-slate-800 uppercase">
-                        <th className="p-3">ห้องเรียน</th>
-                        <th className="p-3 text-center">นักเรียน</th>
-                        <th className="p-3 text-center text-emerald-400">ระดับ 3 (ดีเยี่ยม)</th>
-                        <th className="p-3 text-center text-indigo-400">ระดับ 2 (ดี)</th>
-                        <th className="p-3 text-center text-amber-400">ระดับ 1 (ผ่าน)</th>
-                        <th className="p-3 text-center">Gain เฉลี่ย</th>
+                        <th className="p-3.5">ห้องเรียน</th>
+                        <th className="p-3.5 text-center">นักเรียน</th>
+                        <th className="p-3.5 text-center text-emerald-400">ระดับ 3 (ดีเยี่ยม)</th>
+                        <th className="p-3.5 text-center text-indigo-400">ระดับ 2 (ดี)</th>
+                        <th className="p-3.5 text-center text-amber-400">ระดับ 1 (ผ่าน)</th>
+                        <th className="p-3.5 text-center">Gain เฉลี่ย</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60 text-slate-200">
                       {classroomSummaries.map((c) => (
                         <tr key={c.id} className="hover:bg-slate-800/30 transition">
-                          <td className="p-3 font-bold text-white">{c.class_name}</td>
-                          <td className="p-3 text-center text-slate-400">{c.studentsCount} คน</td>
-                          <td className="p-3 text-center font-bold text-emerald-400">
+                          <td className="p-3.5 font-bold text-white whitespace-nowrap">{c.class_name}</td>
+                          <td className="p-3.5 text-center text-slate-400 whitespace-nowrap">{c.studentsCount} คน</td>
+                          <td className="p-3.5 text-center font-bold text-emerald-400 whitespace-nowrap">
                             {c.readingSummary?.level3} ({c.readingSummary?.level3Percent}%)
                           </td>
-                          <td className="p-3 text-center font-bold text-indigo-400">
+                          <td className="p-3.5 text-center font-bold text-indigo-400 whitespace-nowrap">
                             {c.readingSummary?.level2} ({c.readingSummary?.level2Percent}%)
                           </td>
-                          <td className="p-3 text-center font-bold text-amber-400">
+                          <td className="p-3.5 text-center font-bold text-amber-400 whitespace-nowrap">
                             {c.readingSummary?.level1} ({c.readingSummary?.level1Percent}%)
                           </td>
-                          <td className="p-3 text-center font-bold text-emerald-400">
+                          <td className="p-3.5 text-center font-bold text-emerald-400 whitespace-nowrap">
                             +{c.avgGain}%
                           </td>
                         </tr>
