@@ -1,12 +1,21 @@
 'use client';
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { School, Lock, User, ArrowRight, ArrowLeft, UserPlus, LogIn, CheckCircle2, Sparkles } from 'lucide-react';
 
 export default function NetworkTeacherAuthPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'login' | 'register'>('login');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const modeParam = params.get('mode');
+      if (modeParam === 'register' || modeParam === 'login') {
+        setMode(modeParam);
+      }
+    }
+  }, []);
 
   // Login Form
   const [loginUsername, setLoginUsername] = useState('');

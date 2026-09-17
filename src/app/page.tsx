@@ -439,39 +439,7 @@ export default function Home() {
           <p className="text-slate-400 text-sm font-medium">ระบบประเมินและฝึกทักษะคำศัพท์อัจฉริยะ</p>
         </div>
 
-        {/* Clear Portal Switcher & System Explanation Banner */}
-        <div className="bg-slate-950/90 border border-emerald-500/20 rounded-2xl p-3.5 mb-5 space-y-2.5 shadow-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-emerald-400 flex items-center gap-1.5">
-              🏫 ระบบโรงเรียนหลัก (บ้านโคกยาง)
-            </span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 text-[10px] font-bold border border-emerald-500/20">
-              Full Mode
-            </span>
-          </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
-            สำหรับนักเรียน ครู และผู้บริหารโรงเรียนบ้านโคกยาง เข้าสู่ระบบหรือลงทะเบียนผ่านกล่องนี้
-          </p>
-          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
-            <span className="text-xs text-indigo-300 font-bold">เป็นโรงเรียนเครือข่าย?</span>
-            <div className="flex gap-1.5">
-              <button
-                type="button"
-                onClick={() => router.push('/network')}
-                className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-md shadow-indigo-600/20"
-              >
-                นักเรียน Lite &rarr;
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push('/network/teacher')}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700"
-              >
-                ครูเครือข่าย &rarr;
-              </button>
-            </div>
-          </div>
-        </div>
+
 
         <div className="flex bg-slate-950/80 border border-slate-800 rounded-2xl p-1 mb-6">
           <button 
@@ -605,40 +573,22 @@ export default function Home() {
             </button>
           </div>
         ) : null}
-        {/* Divider for Network Schools */}
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-800" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-slate-900 px-3 text-slate-400 font-bold tracking-wider">
-              โรงเรียนเครือข่ายและพันธมิตร
-            </span>
-          </div>
-        </div>
-
-        {/* Network School Entry Card */}
-        <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 space-y-3">
-          <div className="flex items-center gap-2 text-indigo-300 text-xs font-bold">
-            <Globe2 className="w-4 h-4 text-indigo-400 shrink-0" />
-            <span>สำหรับโรงเรียนเครือข่าย (VJ Network)</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
+        {/* Single Navigation Entry to VJ Lite Homepage */}
+        <div className="mt-6 pt-5 border-t border-slate-800">
+          <div className="bg-gradient-to-br from-indigo-950/60 to-slate-900/90 border border-indigo-500/30 rounded-2xl p-4 text-center space-y-2.5 shadow-lg">
+            <div className="inline-flex items-center gap-2 text-indigo-300 text-xs font-bold">
+              <Globe2 className="w-4 h-4 text-indigo-400 shrink-0" />
+              <span>โรงเรียนเครือข่ายและพันธมิตร (VJ Lite)</span>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              สำหรับนักเรียนโรงเรียนเครือข่าย และ ครูโรงเรียนเครือข่าย เข้าสู่ระบบเพื่อฝึกคำศัพท์หรือจัดการห้องเรียน
+            </p>
             <button
               type="button"
               onClick={() => router.push('/network')}
-              className="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20"
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-black text-sm transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2"
             >
-              <User className="w-3.5 h-3.5" />
-              <span>นักเรียนโรงเรียนเครือข่าย</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push('/network/teacher')}
-              className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
-            >
-              <School className="w-3.5 h-3.5" />
-              <span>ครูโรงเรียนเครือข่าย</span>
+              <span>🌐 เข้าสู่หน้าหลัก VJ Lite &rarr;</span>
             </button>
           </div>
         </div>

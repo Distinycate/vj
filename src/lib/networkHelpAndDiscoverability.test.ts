@@ -7,15 +7,16 @@ const networkStudentPage = readFileSync(new URL('../app/network/page.tsx', impor
 const networkTeacherAuthPage = readFileSync(new URL('../app/network/teacher/page.tsx', import.meta.url), 'utf8');
 const teacherDashboardPage = readFileSync(new URL('../app/network/teacher/dashboard/page.tsx', import.meta.url), 'utf8');
 
-test('Part 2: Main landing page should have clear, visible entry buttons for Network Student and Teacher', () => {
-  // Check for discoverability section
+test('Part 2: Main landing page should have a single clean entry button for Network Schools (VJ Lite)', () => {
+  // Check for discoverability section for network schools
   assert.match(landingPage, /โรงเรียนเครือข่ายและพันธมิตร/);
   assert.match(landingPage, /นักเรียนโรงเรียนเครือข่าย/);
   assert.match(landingPage, /ครูโรงเรียนเครือข่าย/);
   
-  // Check direct router destinations
+  // Check unified direct router destination to VJ Lite homepage
   assert.match(landingPage, /router\.push\('\/network'\)/);
-  assert.match(landingPage, /router\.push\('\/network\/teacher'\)/);
+  // Verify main page does NOT have cluttered direct teacher button anymore (routed via /network)
+  assert.doesNotMatch(landingPage, /router\.push\('\/network\/teacher'\)/);
 });
 
 test('Part 3 & 5: Network Student login page should contain self-service guidance and clear steps', () => {
@@ -31,6 +32,25 @@ test('Part 3 & 5: Network Student login page should contain self-service guidanc
   assert.match(networkStudentPage, /คำถามแบบ 4 ตัวเลือก/);
   assert.match(networkStudentPage, /สะสมดาวและผ่านด่านให้ครบ 100 ด่าน/);
   assert.match(networkStudentPage, /Post-test/);
+
+  // 3 distinct gateways on VJ Lite Homepage
+  assert.match(networkStudentPage, /เข้าสู่ระบบนักเรียน/);
+  assert.match(networkStudentPage, /เข้าสู่ระบบคุณครู/);
+  assert.match(networkStudentPage, /สมัครสมาชิกครูใหม่/);
+  assert.match(networkStudentPage, /mode=login/);
+  assert.match(networkStudentPage, /mode=register/);
+
+  // Innovator profile mirrored from main VJ
+  assert.match(networkStudentPage, /นายณัฐภัทร พรมปรุ/);
+  assert.match(networkStudentPage, /Mr\. Nattapat Prompru/);
+  assert.match(networkStudentPage, /โรงเรียนบ้านโคกยาง/);
+  assert.match(networkStudentPage, /สพป\.บุรีรัมย์ เขต 3/);
+
+  // Pedagogical & Color Theory
+  assert.match(networkStudentPage, /ลดภาระทางปัญญา/);
+  assert.match(networkStudentPage, /Cognitive Load/);
+  assert.match(networkStudentPage, /Dual Coding/);
+  assert.match(networkStudentPage, /จิตวิทยาสี/);
 
   // Link for teachers
   assert.match(networkStudentPage, /\/network\/teacher/);
