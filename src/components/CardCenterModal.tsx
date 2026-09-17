@@ -261,8 +261,8 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       setMessage('กรุณาเลือกการ์ดที่ต้องการขโมย');
       return;
     }
-    if (isNinja && (!selectedTargetCardId || !selectedTargetCard2Id)) {
-      setMessage('กรุณาเลือกการ์ด 2 ใบที่ต้องการทำลาย');
+    if (isNinja && (!selectedTargetCardId || (targetInventory.length > 1 && !selectedTargetCard2Id))) {
+      setMessage(targetInventory.length > 1 ? 'กรุณาเลือกการ์ด 2 ใบที่ต้องการทำลาย' : 'กรุณาเลือกการ์ดที่ต้องการทำลาย');
       return;
     }
     const isCleanRoom = selectedCard.cards.card_code === 'CLEAN_ROOM';
@@ -300,30 +300,25 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
          ];
       }
 
-      if (isRandomThief) {
-        const data = await executeRandomThief(student.id, selectedCard.cards.id);
-        setMessage(`🎯 สำเร็จ! คุณขโมย "${data.stolen_card_name}" มาได้แล้ว`);
-      } else if (isMasterThief) {
-        const data = await executeMasterThief(student.id, selectedTarget, selectedCard.cards.id, selectedTargetCardId);
-        setMessage(`🎯 สำเร็จ! คุณขโมย "${data.stolen_card_name}" มาได้แล้ว`);
-      } else if (isBomb) {
-        const data = await executeBombCard(student.id, selectedTarget, selectedCard.cards.id);
-        setMessage(`💣 สำเร็จ! ระเบิดการ์ดเป้าหมายทิ้ง ${data.destroyed_count} ใบ!`);
-      } else if (isNinja) {
-        await executeNinjaCard(student.id, selectedTarget, selectedCard.cards.id, selectedTargetCardId, selectedTargetCard2Id);
-        setMessage('🥷 สำเร็จ! ลอบทำลายการ์ดเป้าหมายทิ้ง 2 ใบ!');
-      } else {
-        const actionResult = await createCardAction(student.id, selectedCard.cards.id, needsTarget ? selectedTarget : null, metadata);
-        if (selectedCard.cards.card_code === 'EARLY_HOME') {
-          setMessage('📨 ส่งคำขอแล้ว รอครูอนุมัติ');
-        } else if (actionResult?.final_result_text) {
-          setMessage(`✨ ${actionResult.final_result_text}`);
-        } else if (['DEFENSE', 'REFLECT', 'ANGEL'].includes(selectedCard.cards.card_code) || ['DEFENSE', 'REFLECT'].includes(selectedCard.cards.effect_type)) {
-          setMessage('🛡️ กางโล่ตั้งรับล่วงหน้าสำเร็จ!');
-        } else {
-          setMessage('ใช้งานการ์ดสำเร็จ!');
-        }
+      const res = await fetch('/api/student/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'use_card',
+          cardId: selectedCard.cards.id,
+          targetId: needsTarget || isRandomThief || isMasterThief || isBomb || isNinja ? (selectedTarget || null) : null,
+          targetCardId: selectedTargetCardId || null,
+          targetCard2Id: selectedTargetCard2Id || null,
+          metadata: metadata,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'ใช้การ์ดไม่สำเร็จ');
       }
+
+      setMessage(data.message || 'ใช้งานการ์ดสำเร็จ!');
 
       setSelectedCard(null);
       setSelectedTarget('');

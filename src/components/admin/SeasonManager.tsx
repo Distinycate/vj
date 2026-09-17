@@ -19,14 +19,15 @@ export default function SeasonManager() {
 
   async function loadSeasons() {
     setLoading(true);
-    const { data } = await supabase
-      .from('team_battle_seasons')
-      .select('*')
-      .eq('scope', 'school')
-      .order('created_at', { ascending: false });
-    
-    if (data) setSeasons(data);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/seasons');
+      const data = await res.json();
+      if (data?.seasons) setSeasons(data.seasons);
+    } catch (err) {
+      console.error('Failed to load seasons', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleCreateSeason(e: React.FormEvent) {
@@ -34,13 +35,18 @@ export default function SeasonManager() {
     if (!newSeasonName.trim() || isCreating) return;
 
     setIsCreating(true);
+    setMessage('');
     try {
-      const { error } = await supabase.rpc('start_school_team_season', {
-        p_season_name: newSeasonName.trim(),
+      const res = await fetch('/api/admin/seasons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', seasonName: newSeasonName.trim() }),
       });
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'สร้างฤดูกาลไม่สำเร็จ');
 
       setNewSeasonName('');
+      setMessage(`สร้างฤดูกาล "${data.season?.season_name}" เรียบร้อยแล้ว`);
       await loadSeasons();
     } catch (err) {
       console.error('Failed to create season', err);
@@ -51,16 +57,24 @@ export default function SeasonManager() {
   }
 
   async function handleCloseAndReward(seasonId: string) {
-    if (!teacher?.id || !window.confirm('ยืนยันปิดฤดูกาลและแจกตั๋วให้สมาชิกทีมที่ชนะ? การทำรายการนี้ซ้ำไม่ได้')) return;
+    if (!window.confirm('ยืนยันปิดฤดูกาล?\n- แจกตั๋วสุ่มฟรีให้ทีม Top 3 (10, 7, 5 ใบ)\n- ทำโทษทีม 3 อันดับสุดท้ายด้วยการลบการ์ด (3, 2, 1 ใบ)\nการทำรายการนี้ไม่สามารถย้อนกลับได้')) return;
     setMessage('');
-    const { data, error } = await supabase.rpc('close_and_reward_team_season', {
-      p_season_id: seasonId,
-      p_teacher_id: teacher.id,
-    });
-    if (error) setMessage(error.message);
-    else {
-      setMessage(`ทีม ${data.winner_team_name} ชนะ แจกตั๋วแล้ว ${data.rewarded_members} คน`);
+    try {
+      const res = await fetch('/api/admin/seasons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'close_and_reward', seasonId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'ปิดฤดูกาลไม่สำเร็จ');
+
+      const rewardSummary = (data.rewards || []).map((r: any) => `อันดับ ${r.rank}: ทีม ${r.teamName} (${r.ticketsAwarded} ใบ)`).join(', ');
+      const penaltySummary = (data.penalties || []).map((p: any) => `ทีม ${p.teamName} (ริบ ${p.penaltyCardsPerMember} ใบ)`).join(', ');
+
+      setMessage(`🎉 ปิดฤดูกาลสำเร็จ!\n🏆 ทีมชนะ: ${rewardSummary || '-'}\n⚠️ ทำโทษทีมท้าย: ${penaltySummary || '-'}`);
       await loadSeasons();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'ปิดฤดูกาลไม่สำเร็จ');
     }
   }
 
@@ -82,9 +96,36 @@ export default function SeasonManager() {
         </div>
       </div>
 
+      {/* Rules Banner */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-4 flex items-start gap-3">
+          <div className="text-2xl">🏆</div>
+          <div>
+            <h4 className="font-bold text-emerald-300 text-sm">รางวัลสำหรับ 3 อันดับแรก (Top 3)</h4>
+            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              • <strong>อันดับ 1:</strong> สมาชิกในทีมรับตั๋วสุ่มฟรีคนละ <strong>10 ใบ</strong><br />
+              • <strong>อันดับ 2:</strong> สมาชิกในทีมรับตั๋วสุ่มฟรีคนละ <strong>7 ใบ</strong><br />
+              • <strong>อันดับ 3:</strong> สมาชิกในทีมรับตั๋วสุ่มฟรีคนละ <strong>5 ใบ</strong>
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-rose-950/40 border border-rose-500/30 rounded-2xl p-4 flex items-start gap-3">
+          <div className="text-2xl">⚠️</div>
+          <div>
+            <h4 className="font-bold text-rose-300 text-sm">บทลงโทษสำหรับ 3 อันดับสุดท้าย (Bottom 3)</h4>
+            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              • <strong>อันดับสุดท้าย (บ๊วย):</strong> ทำโทษด้วยการริบการ์ดสมาชิกคนละ <strong>3 ใบ</strong><br />
+              • <strong>อันดับรองบ๊วย:</strong> ทำโทษด้วยการริบการ์ดสมาชิกคนละ <strong>2 ใบ</strong><br />
+              • <strong>อันดับ 3 จากท้าย:</strong> ทำโทษด้วยการริบการ์ดสมาชิกคนละ <strong>1 ใบ</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {message && (
-          <div className="lg:col-span-3 p-3 bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-xl">
+          <div className="lg:col-span-3 p-4 bg-indigo-500/10 text-indigo-200 border border-indigo-500/30 rounded-xl whitespace-pre-line text-sm">
             {message}
           </div>
         )}
