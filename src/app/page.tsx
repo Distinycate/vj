@@ -11,7 +11,7 @@ const StudyCamp = dynamic(() => import('@/components/StudyCamp'));
 const Game = dynamic(() => import('@/components/Game'));
 const PreTest = dynamic(() => import('@/components/PreTest'));
 const PostTest = dynamic(() => import('@/components/PostTest'));
-import { Globe2, School, User, Lock, Sparkles } from 'lucide-react';
+import { Globe2, School, User, Lock, Sparkles, LogIn, UserPlus, ArrowRight } from 'lucide-react';
 import { saveStudentSession } from '@/utils/studentSession';
 import { useDemoStore } from '@/store/useDemoStore';
 
@@ -322,28 +322,40 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-7">
-            <div className="glass-card p-5 hover-lift">
+            <div className="glass-card p-5 hover-lift border-2 border-emerald-500/30 hover:border-emerald-400/60 transition-all bg-gradient-to-br from-emerald-950/20 via-slate-900/40 to-slate-950/60 shadow-lg">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-black mb-2.5">
+                Vygotsky's ZPD • Flow Theory
+              </div>
               <h2 className="text-lg font-black text-emerald-300 mb-2">🎯 เรียนรู้ในจังหวะของตัวเอง</h2>
               <p className="text-slate-300 text-sm leading-relaxed">
                 ระบบ Adaptive Rank อิงแนวคิด ZPD ช่วยปรับความยากให้พอดีกับผู้เรียน ไม่ยากจนท้อ และไม่ง่ายจนน่าเบื่อ
                 เพื่อพาเข้าสู่สภาวะ Flow State ที่พร้อมเรียนรู้อย่างมีสมาธิ
               </p>
             </div>
-            <div className="glass-card p-5 hover-lift">
+            <div className="glass-card p-5 hover-lift border-2 border-blue-500/30 hover:border-blue-400/60 transition-all bg-gradient-to-br from-blue-950/20 via-slate-900/40 to-slate-950/60 shadow-lg">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-500/20 border border-blue-500/30 text-blue-300 text-[11px] font-black mb-2.5">
+                Ebbinghaus SRS Memory Curve
+              </div>
               <h2 className="text-lg font-black text-blue-300 mb-2">🧠 จำระยะยาวด้วย SRS</h2>
               <p className="text-slate-300 text-sm leading-relaxed">
                 คำที่ตอบผิดไม่ใช่ความล้มเหลว แต่คือข้อมูลเรียนรู้ ระบบจะบันทึกคำที่ควรทบทวน
                 และดึงกลับมาในจังหวะที่เหมาะสมตามแนวคิด Ebbinghaus Forgetting Curve
               </p>
             </div>
-            <div className="glass-card p-5 hover-lift">
+            <div className="glass-card p-5 hover-lift border-2 border-purple-500/30 hover:border-purple-400/60 transition-all bg-gradient-to-br from-purple-950/20 via-slate-900/40 to-slate-950/60 shadow-lg">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-500/20 border border-purple-500/30 text-purple-300 text-[11px] font-black mb-2.5">
+                21st Century Skills • 4Cs Framework
+              </div>
               <h2 className="text-lg font-black text-purple-300 mb-2">🌍 ทักษะแห่งศตวรรษที่ 21</h2>
               <p className="text-slate-300 text-sm leading-relaxed">
                 Context MC ฝึก Critical Thinking, Team Battle ฝึก Collaboration และ Dashboard ช่วยสะท้อนข้อมูลให้ผู้เรียนกำกับตนเอง
                 แบบ Self-Directed Learning
               </p>
             </div>
-            <div className="glass-card p-5 hover-lift">
+            <div className="glass-card p-5 hover-lift border-2 border-amber-500/30 hover:border-amber-400/60 transition-all bg-gradient-to-br from-amber-950/20 via-slate-900/40 to-slate-950/60 shadow-lg">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[11px] font-black mb-2.5">
+                Gamification • Self-Determination Theory (SDT)
+              </div>
               <h2 className="text-lg font-black text-amber-300 mb-2">⚔️ เปลี่ยนการท่องจำเป็นการผจญภัย</h2>
               <p className="text-slate-300 text-sm leading-relaxed">
                 คลังคำศัพท์ มินิเกม ด่านบอส ระบบดาว ทีม และการ์ดเวทมนตร์ ช่วยเปลี่ยนการฝึกคำศัพท์ O-NET
@@ -419,9 +431,10 @@ export default function Home() {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               }}
-              className="mt-5 xl:hidden inline-flex items-center justify-center gap-2 w-full min-h-[56px] rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-base transition-all shadow-xl shadow-emerald-500/30 py-4"
+              className="mt-5 xl:hidden inline-flex items-center justify-center gap-2.5 w-full min-h-[58px] rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-base transition-all shadow-2xl shadow-emerald-500/35 py-4 border-2 border-emerald-200/50 hover:scale-[1.02] active:scale-[0.98]"
             >
               <span>ขึ้นไปเข้าสู่ระบบ / สมัครสมาชิก 🚀</span>
+              <ArrowRight className="w-5 h-5 shrink-0" />
             </button>
           </div>
         </motion.section>
@@ -433,57 +446,89 @@ export default function Home() {
         className="order-1 xl:order-2 glass-card p-5 sm:p-8 w-full max-w-md xl:max-h-[95vh] xl:overflow-y-auto xl:sticky xl:top-4 justify-self-center mobile-scroll-panel border-2 border-slate-800/90 shadow-2xl"
       >
         <div className="text-center mb-6">
-          <div className="w-12 h-12 mx-auto mb-2.5 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/30 text-slate-950 font-black text-xl">
+          <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-xl shadow-emerald-500/35 text-slate-950 font-black text-2xl border-2 border-emerald-300/40">
             VJ
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-300 mb-1">
             Vocab Journey
           </h1>
           <p className="text-slate-400 text-xs sm:text-sm font-medium">ระบบประเมินและฝึกทักษะคำศัพท์อัจฉริยะ</p>
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[11px] font-bold mt-2">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold mt-2.5 shadow-sm">
             🏫 โรงเรียนบ้านโคกยาง • Full Mode
           </div>
         </div>
 
-        <div className="flex bg-slate-950/90 border-2 border-slate-800 rounded-2xl p-1.5 mb-5 shadow-inner">
+        {/* Prominent Mode Switcher Pill */}
+        <div className="grid grid-cols-2 gap-2 bg-slate-950/95 border-2 border-slate-800 rounded-2xl p-1.5 mb-5 shadow-inner">
           <button 
+            type="button"
             onClick={() => { setMode('login'); setError(''); }}
-            className={`flex-1 min-h-[46px] py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${mode === 'login' ? 'bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/30 scale-[1.02]' : 'text-slate-400 hover:text-white hover:bg-slate-900/50'}`}
+            className={`min-h-[50px] py-3 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 border-2 ${
+              mode === 'login' 
+                ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 text-slate-950 border-emerald-300 shadow-xl shadow-emerald-500/35 scale-[1.02]' 
+                : 'text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800/80 border-slate-800/80 hover:border-emerald-500/40'
+            }`}
           >
+            <LogIn className="w-4 h-4 shrink-0" />
             <span>เข้าสู่ระบบ</span>
           </button>
           <button 
+            type="button"
             onClick={() => { setMode('register'); setError(''); }}
-            className={`flex-1 min-h-[46px] py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${mode === 'register' ? 'bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/30 scale-[1.02]' : 'text-slate-400 hover:text-white hover:bg-slate-900/50'}`}
+            className={`min-h-[50px] py-3 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 border-2 ${
+              mode === 'register' 
+                ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 text-slate-950 border-emerald-300 shadow-xl shadow-emerald-500/35 scale-[1.02]' 
+                : 'text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800/80 border-slate-800/80 hover:border-emerald-500/40'
+            }`}
           >
+            <UserPlus className="w-4 h-4 shrink-0" />
             <span>สมัครสมาชิก</span>
           </button>
         </div>
 
-        {error && <div className="error-state mb-5 text-xs sm:text-sm p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 font-bold">{error}</div>}
+        {error && (
+          <div className="error-state mb-5 text-xs sm:text-sm p-4 rounded-xl bg-rose-500/15 border-2 border-rose-500/40 text-rose-300 font-bold flex items-center gap-2 shadow-lg">
+            <span>⚠️ {error}</span>
+          </div>
+        )}
 
         {mode === 'login' && (
-          <div className="grid grid-cols-1 min-[390px]:grid-cols-3 gap-2 bg-slate-950/80 border border-slate-800/90 rounded-2xl p-1.5 mb-5">
+          <div className="grid grid-cols-1 min-[390px]:grid-cols-3 gap-2.5 bg-slate-950/90 border-2 border-slate-800/90 rounded-2xl p-2 mb-5">
             <button 
               type="button"
               onClick={() => { setLoginRole('student'); setError(''); }}
-              className={`min-h-[46px] py-2 px-1 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${loginRole === 'student' ? 'bg-gradient-to-r from-emerald-500/30 to-teal-500/30 text-emerald-300 border-2 border-emerald-400 shadow-md shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-white hover:bg-slate-900/80 border border-transparent'}`}
+              className={`min-h-[54px] py-2 px-1 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 border-2 ${
+                loginRole === 'student' 
+                  ? 'bg-gradient-to-br from-emerald-500/30 via-teal-500/25 to-emerald-600/30 text-emerald-200 border-emerald-400 shadow-lg shadow-emerald-500/30 scale-[1.03]' 
+                  : 'text-slate-400 hover:text-emerald-300 hover:bg-slate-900/80 border-slate-800/80'
+              }`}
             >
-              <span>👩‍🎓 นักเรียน</span>
+              <span className="text-xs sm:text-sm font-black">👩‍🎓 นักเรียน</span>
+              <span className="text-[10px] text-emerald-400/90 font-bold">ผู้เรียนรู้</span>
             </button>
             <button 
               type="button"
               onClick={() => { setLoginRole('teacher'); setError(''); }}
-              className={`min-h-[46px] py-2 px-1 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${loginRole === 'teacher' ? 'bg-gradient-to-r from-indigo-500/30 to-blue-500/30 text-indigo-300 border-2 border-indigo-400 shadow-md shadow-indigo-500/25 scale-[1.02]' : 'text-slate-400 hover:text-white hover:bg-slate-900/80 border border-transparent'}`}
+              className={`min-h-[54px] py-2 px-1 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 border-2 ${
+                loginRole === 'teacher' 
+                  ? 'bg-gradient-to-br from-indigo-500/30 via-blue-500/25 to-indigo-600/30 text-indigo-200 border-indigo-400 shadow-lg shadow-indigo-500/30 scale-[1.03]' 
+                  : 'text-slate-400 hover:text-indigo-300 hover:bg-slate-900/80 border-slate-800/80'
+              }`}
             >
-              <span>👨‍🏫 ครูผู้สอน</span>
+              <span className="text-xs sm:text-sm font-black">👨‍🏫 ครูผู้สอน</span>
+              <span className="text-[10px] text-indigo-400/90 font-bold">จัดการเรียนรู้</span>
             </button>
             <button 
               type="button"
               onClick={() => { setLoginRole('executive'); setError(''); }}
-              className={`min-h-[46px] py-2 px-1 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${loginRole === 'executive' ? 'bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-300 border-2 border-purple-400 shadow-md shadow-purple-500/25 scale-[1.02]' : 'text-slate-400 hover:text-white hover:bg-slate-900/80 border border-transparent'}`}
+              className={`min-h-[54px] py-2 px-1 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 border-2 ${
+                loginRole === 'executive' 
+                  ? 'bg-gradient-to-br from-purple-500/30 via-fuchsia-500/25 to-purple-600/30 text-purple-200 border-purple-400 shadow-lg shadow-purple-500/30 scale-[1.03]' 
+                  : 'text-slate-400 hover:text-purple-300 hover:bg-slate-900/80 border-slate-800/80'
+              }`}
             >
-              <span>📊 ผู้บริหาร</span>
+              <span className="text-xs sm:text-sm font-black">📊 ผู้บริหาร</span>
+              <span className="text-[10px] text-purple-400/90 font-bold">สรุปรายงาน</span>
             </button>
           </div>
         )}
@@ -492,7 +537,7 @@ export default function Home() {
           <div className="flex flex-col gap-4" onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(e); }}>
             <div className="space-y-1.5">
               <label className="text-slate-200 text-xs sm:text-sm font-black flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-emerald-400" />
+                <User className="w-4 h-4 text-emerald-400" />
                 <span>Username</span>
               </label>
               <input 
@@ -500,13 +545,13 @@ export default function Home() {
                 autoComplete="off" 
                 value={loginUsername} 
                 onChange={(e) => setLoginUsername(e.target.value)} 
-                className="w-full bg-slate-950/90 border border-slate-800 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all placeholder:text-slate-500 shadow-inner" 
+                className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/25 rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all placeholder:text-slate-500 shadow-inner" 
                 placeholder="กรอกชื่อผู้ใช้งาน" 
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-slate-200 text-xs sm:text-sm font-black flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                <Lock className="w-4 h-4 text-emerald-400" />
                 <span>Password</span>
               </label>
               <input 
@@ -514,58 +559,67 @@ export default function Home() {
                 autoComplete="new-password" 
                 value={loginPassword} 
                 onChange={(e) => setLoginPassword(e.target.value)} 
-                className="w-full bg-slate-950/90 border border-slate-800 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all placeholder:text-slate-500 shadow-inner" 
+                className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/25 rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all placeholder:text-slate-500 shadow-inner" 
                 placeholder="กรอกรหัสผ่าน" 
               />
             </div>
             <label className="flex items-center gap-2 cursor-pointer mt-1">
               <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900" />
-              <span className="text-slate-400 text-xs sm:text-sm font-medium hover:text-white transition-colors">จดจำรหัสผ่าน</span>
+              <span className="text-slate-300 text-xs sm:text-sm font-medium hover:text-white transition-colors">จดจำรหัสผ่าน</span>
             </label>
+
+            {/* Primary Action Button */}
             <button 
               type="button" 
               onClick={handleLogin} 
               disabled={isLoading} 
-              className="w-full min-h-[58px] py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-base sm:text-lg transition-all shadow-xl shadow-emerald-500/30 flex items-center justify-center gap-2.5 mt-2 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
+              className="w-full min-h-[62px] py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500 hover:from-emerald-300 hover:to-teal-200 text-slate-950 font-black text-base sm:text-lg transition-all shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-400/60 flex items-center justify-center gap-3 mt-2 disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] border-2 border-emerald-200/50"
             >
               {isLoading ? (
                 <div className="w-6 h-6 border-3 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" />
               ) : (
-                loginRole === 'student' ? 'เข้าสู่ระบบผจญภัย 🚀' : 
-                loginRole === 'teacher' ? 'เข้าสู่ระบบจัดการเรียนรู้ 👨‍🏫' : 
-                'เข้าสู่ระบบรายงานผู้บริหาร 📊'
+                <>
+                  <span>
+                    {loginRole === 'student' ? 'เข้าสู่ระบบผจญภัย 🚀' : 
+                     loginRole === 'teacher' ? 'เข้าสู่ระบบจัดการเรียนรู้ 👨‍🏫' : 
+                     'เข้าสู่ระบบรายงานผู้บริหาร 📊'}
+                  </span>
+                  <ArrowRight className="w-5 h-5 shrink-0" />
+                </>
               )}
             </button>
+
+            {/* Prominent Card Teacher System Button */}
             <button 
               type="button" 
               onClick={() => window.location.href = '/card-teacher'} 
-              className="w-full min-h-[56px] py-4 px-5 rounded-2xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white font-black text-sm sm:text-base transition-all shadow-xl shadow-fuchsia-600/35 flex items-center justify-center gap-2.5 border-2 border-fuchsia-400/50 mt-1 hover:scale-[1.01] active:scale-[0.99]"
+              className="w-full min-h-[58px] py-4 px-5 rounded-2xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white font-black text-sm sm:text-base transition-all shadow-2xl shadow-fuchsia-600/40 hover:shadow-fuchsia-500/60 flex items-center justify-center gap-2.5 border-2 border-fuchsia-300/60 mt-1 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <Sparkles className="w-5 h-5 text-fuchsia-200" />
-              <span>ระบบการ์ดคำศัพท์สำหรับคุณครู (สมัคร/เข้าใช้) &rarr;</span>
+              <Sparkles className="w-5 h-5 text-yellow-300 shrink-0 animate-pulse" />
+              <span>🃏 ระบบการ์ดคำศัพท์สำหรับคุณครู (สมัคร/เข้าใช้) &rarr;</span>
             </button>
           </div>
         ) : mode === 'register' && !isRegistrationOpen ? (
-          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-6 rounded-2xl text-center mb-4">
-            <h3 className="font-bold text-lg mb-2">ปิดรับลงทะเบียน</h3>
+          <div className="bg-rose-500/10 border-2 border-rose-500/30 text-rose-300 p-6 rounded-2xl text-center mb-4 shadow-lg">
+            <h3 className="font-black text-lg mb-2">ปิดรับลงทะเบียน</h3>
             <p className="text-sm">ระบบถูกปิดรับการลงทะเบียนชั่วคราว<br/>กรุณาติดต่อคุณครูผู้สอนครับ</p>
           </div>
         ) : mode === 'register' ? (
           <div className="flex flex-col gap-4" onKeyDown={(e) => { if (e.key === 'Enter') handleRegister(e); }}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-slate-300 text-xs sm:text-sm font-bold block mb-1.5">ชื่อจริง</label>
-                <input type="text" value={regFirstName} onChange={(e) => setRegFirstName(e.target.value)} className="w-full bg-slate-950/90 border border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="สมชาย" />
+                <label className="text-slate-200 text-xs sm:text-sm font-black block mb-1.5">ชื่อจริง</label>
+                <input type="text" value={regFirstName} onChange={(e) => setRegFirstName(e.target.value)} className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="สมชาย" />
               </div>
               <div>
-                <label className="text-slate-300 text-xs sm:text-sm font-bold block mb-1.5">นามสกุล</label>
-                <input type="text" value={regLastName} onChange={(e) => setRegLastName(e.target.value)} className="w-full bg-slate-950/90 border border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="ใจดี" />
+                <label className="text-slate-200 text-xs sm:text-sm font-black block mb-1.5">นามสกุล</label>
+                <input type="text" value={regLastName} onChange={(e) => setRegLastName(e.target.value)} className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="ใจดี" />
               </div>
             </div>
             <div className="grid grid-cols-1 min-[390px]:grid-cols-3 gap-4">
               <div>
-                <label className="text-slate-300 text-xs sm:text-sm font-bold block mb-1.5">ระดับชั้น</label>
-                <select value={regGrade} onChange={(e) => setRegGrade(e.target.value)} className="w-full bg-slate-950/90 border border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none">
+                <label className="text-slate-200 text-xs sm:text-sm font-black block mb-1.5">ระดับชั้น</label>
+                <select value={regGrade} onChange={(e) => setRegGrade(e.target.value)} className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none">
                   <option value="ป.1">ป.1</option>
                   <option value="ป.2">ป.2</option>
                   <option value="ป.3">ป.3</option>
@@ -581,41 +635,50 @@ export default function Home() {
                 </select>
               </div>
               <div>
-                <label className="text-slate-300 text-xs sm:text-sm font-bold block mb-1.5">ห้อง</label>
-                <input type="text" value={regRoom} onChange={(e) => setRegRoom(e.target.value)} className="w-full bg-slate-950/90 border border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="1" />
+                <label className="text-slate-200 text-xs sm:text-sm font-black block mb-1.5">ห้อง</label>
+                <input type="text" value={regRoom} onChange={(e) => setRegRoom(e.target.value)} className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="1" />
               </div>
               <div>
-                <label className="text-slate-300 text-xs sm:text-sm font-bold block mb-1.5">เลขที่</label>
-                <input type="text" value={regStudentId} onChange={(e) => setRegStudentId(e.target.value)} className="w-full bg-slate-950/90 border border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="15" />
+                <label className="text-slate-200 text-xs sm:text-sm font-black block mb-1.5">เลขที่</label>
+                <input type="text" value={regStudentId} onChange={(e) => setRegStudentId(e.target.value)} className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="15" />
               </div>
             </div>
             
             <hr className="border-slate-800 my-1" />
             
             <div>
-              <label className="text-slate-300 text-xs sm:text-sm font-bold block mb-1.5">ตั้ง Username</label>
-              <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} className="w-full bg-slate-950/90 border border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="สำหรับเข้าใช้งาน" />
+              <label className="text-slate-200 text-xs sm:text-sm font-black block mb-1.5">ตั้ง Username</label>
+              <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="สำหรับเข้าใช้งาน" />
             </div>
             <div>
-              <label className="text-slate-300 text-xs sm:text-sm font-bold block mb-1.5">ตั้ง Password</label>
-              <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} className="w-full bg-slate-950/90 border border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="รหัสผ่านเข้าสู่ระบบ" />
+              <label className="text-slate-200 text-xs sm:text-sm font-black block mb-1.5">ตั้ง Password</label>
+              <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-emerald-400 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="รหัสผ่านเข้าสู่ระบบ" />
             </div>
  
+            {/* Prominent Register Submit Button */}
             <button 
               type="button" 
               onClick={handleRegister} 
               disabled={isLoading} 
-              className="w-full min-h-[58px] py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-base sm:text-lg transition-all shadow-xl shadow-emerald-500/30 flex items-center justify-center gap-2 mt-2 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
+              className="w-full min-h-[62px] py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500 hover:from-emerald-300 hover:to-teal-200 text-slate-950 font-black text-base sm:text-lg transition-all shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-400/60 flex items-center justify-center gap-3 mt-2 disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] border-2 border-emerald-200/50"
             >
-              {isLoading ? 'กำลังโหลด...' : 'ลงทะเบียนและเริ่มผจญภัย 🎉'}
+              {isLoading ? (
+                <div className="w-6 h-6 border-3 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>ลงทะเบียนและเริ่มผจญภัย 🎉</span>
+                  <ArrowRight className="w-5 h-5 shrink-0" />
+                </>
+              )}
             </button>
           </div>
         ) : null}
+
         {/* Single Navigation Entry to VJ Lite Homepage */}
         <div className="mt-6 pt-5 border-t border-slate-800/80">
-          <div className="bg-gradient-to-br from-indigo-950/80 via-slate-900/90 to-indigo-950/60 border-2 border-indigo-500/40 hover:border-indigo-400/60 rounded-3xl p-5 text-center space-y-3 shadow-2xl shadow-indigo-950/50 transition-all">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-black">
-              <Globe2 className="w-4 h-4 text-indigo-400 shrink-0" />
+          <div className="bg-gradient-to-br from-indigo-950/90 via-slate-900/95 to-sky-950/80 border-2 border-indigo-500/50 hover:border-sky-400/70 rounded-3xl p-5 text-center space-y-3.5 shadow-2xl shadow-indigo-950/60 transition-all">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 text-xs font-black shadow-sm">
+              <Globe2 className="w-4 h-4 text-cyan-400 shrink-0" />
               <span>โรงเรียนเครือข่ายและพันธมิตร (VJ Lite)</span>
             </div>
             <p className="text-xs sm:text-sm text-slate-200 font-medium leading-relaxed">
@@ -624,20 +687,20 @@ export default function Home() {
             <button
               type="button"
               onClick={() => router.push('/network')}
-              className="w-full min-h-[60px] py-4 px-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 hover:from-indigo-500 hover:to-sky-400 text-white font-black text-base sm:text-lg transition-all shadow-xl shadow-indigo-600/40 flex items-center justify-center gap-2.5 border-2 border-indigo-300/40 hover:scale-[1.02] active:scale-[0.99]"
+              className="w-full min-h-[62px] py-4 px-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-black text-base sm:text-lg transition-all shadow-2xl shadow-indigo-600/50 hover:shadow-cyan-500/50 flex items-center justify-center gap-3 border-2 border-cyan-300/50 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <Globe2 className="w-5 h-5 shrink-0" />
+              <Globe2 className="w-5 h-5 shrink-0 text-cyan-200" />
               <span>🌐 เข้าสู่หน้าหลัก VJ Lite (โรงเรียนเครือข่าย) &rarr;</span>
             </button>
           </div>
         </div>
 
-        {/* Reduced size Demo Button at the very bottom */}
-        <div className="mt-4 pt-2 text-center">
+        {/* Refined and prominent Demo Button at the bottom */}
+        <div className="mt-5 pt-3 border-t border-slate-800/60 text-center">
           <button 
             type="button" 
             onClick={() => router.push('/demo')} 
-            className="text-xs text-slate-400 hover:text-purple-300 py-2 px-4 rounded-xl bg-slate-950/60 hover:bg-slate-900 border border-slate-800 transition-all inline-flex items-center gap-2 font-bold shadow-sm hover:border-purple-500/30"
+            className="text-xs sm:text-sm text-amber-300 hover:text-amber-200 py-2.5 px-5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border-2 border-amber-500/40 hover:border-amber-400/70 transition-all inline-flex items-center gap-2 font-black shadow-lg shadow-amber-500/15 hover:scale-[1.02] active:scale-[0.98]"
           >
             <span>👑 เข้าสู่โหมดกรรมการ (Demo Mode)</span>
           </button>
