@@ -661,7 +661,49 @@ export async function POST(request: Request) {
         });
       }
 
-      // 8. DUD CARDS (DUD_SALT, DEMON_TEACHER)
+      // 8. DEMON_TEACHER: TRAP CARD (DESTROYS 10 CARDS OF THE USER)
+      if (cardCode === 'DEMON_TEACHER') {
+        const { data: ownInv } = await supabaseAdmin
+          .from('card_inventory')
+          .select('id, quantity')
+          .eq('student_id', studentId)
+          .gt('quantity', 0);
+
+        let destroyed = 0;
+        for (const item of (ownInv || [])) {
+          if (destroyed >= 10) break;
+          const toDeduct = Math.min(item.quantity, 10 - destroyed);
+          await supabaseAdmin
+            .from('card_inventory')
+            .update({ quantity: item.quantity - toDeduct, updated_at: new Date().toISOString() })
+            .eq('id', item.id);
+          destroyed += toDeduct;
+        }
+
+        await supabaseAdmin.from('card_logs').insert({
+          attacker_id: studentId,
+          target_id: null,
+          played_card_id: cardId,
+          status: 'RESOLVED',
+          final_result_text: `คำสาปครูปีศาจทำงาน! การ์ดในคลังของผู้ใช้ถูกทำลายไป ${destroyed} ใบ`,
+          teacher_executed: true,
+        });
+
+        await supabaseAdmin.from('card_notifications').insert({
+          student_id: studentId,
+          notification_type: 'CARD_ALERT',
+          title: '👹 คำสาปครูปีศาจ!',
+          message: `คำสาปครูปีศาจทำงาน! การ์ดในคลังของคุณถูกทำลายไป ${destroyed} ใบ`,
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: `👹 คำสาปครูปีศาจทำงาน! การ์ดในคลังของคุณถูกทำลายไป ${destroyed} ใบ!`,
+          destroyed_count: destroyed,
+        });
+      }
+
+      // 9. DUD CARDS (DUD_SALT)
       await supabaseAdmin.from('card_logs').insert({
         attacker_id: studentId,
         target_id: null,

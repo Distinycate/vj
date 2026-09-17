@@ -216,50 +216,140 @@ export async function POST(request: Request) {
     const authoritativeQuestions: any[] = [];
     const clientQuestions: any[] = [];
 
-    for (const target of shuffledTargets) {
+    for (let i = 0; i < shuffledTargets.length; i++) {
+      const target = shuffledTargets[i];
       const meaningText = target.meaning_th || target.meaning || '';
-      const distractors = distractorPool
-        .filter((d) => d.id !== target.id)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3)
-        .map((d) => ({
-          word_id: d.id,
-          text: d.meaning_th || d.meaning || '',
-        }));
+      
+      // Alternate between MEANING_MC, WORD_MC, and FILL_BLANK (ข้อเขียน / พิมพ์สะกดคำ)
+      const qPattern = i % 3;
 
-      const allChoices = [
-        { word_id: target.id, text: meaningText, is_correct: true },
-        ...distractors.map((d) => ({ word_id: d.word_id, text: d.text, is_correct: false })),
-      ].sort(() => Math.random() - 0.5);
+      if (qPattern === 2) {
+        // 1. FILL_BLANK (ข้อเขียน / พิมพ์สะกดคำ)
+        authoritativeQuestions.push({
+          id: target.id,
+          word_id: target.id,
+          word: target.word,
+          meaning: target.meaning || '',
+          meaning_th: target.meaning_th || '',
+          correct_answer: target.word,
+          correct_word_id: target.id,
+          qType: 'FILL_BLANK',
+          question_type: 'spelling',
+          choices: [],
+        });
 
-      authoritativeQuestions.push({
-        id: target.id,
-        word_id: target.id,
-        word: target.word,
-        meaning: target.meaning || '',
-        meaning_th: target.meaning_th || '',
-        correct_answer: meaningText,
-        correct_word_id: target.id,
-        choices: allChoices,
-      });
+        clientQuestions.push({
+          id: target.id,
+          word_id: target.id,
+          word: target.word,
+          meaning: target.meaning || '',
+          meaning_th: target.meaning_th || '',
+          part_of_speech: target.part_of_speech,
+          prompt: meaningText,
+          correct_answer: target.word,
+          correct_word_id: target.id,
+          qType: 'FILL_BLANK',
+          question_type: 'spelling',
+          stageType,
+          choices: [],
+        });
+      } else if (qPattern === 1) {
+        // 2. WORD_MC (ดูความหมายภาษาไทย เลือกคำศัพท์ภาษาอังกฤษ)
+        const distractors = distractorPool
+          .filter((d) => d.id !== target.id && d.word !== target.word)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3)
+          .map((d) => ({
+            word_id: d.id,
+            text: d.word || '',
+          }));
 
-      clientQuestions.push({
-        id: target.id,
-        word_id: target.id,
-        word: target.word,
-        meaning: target.meaning || '',
-        meaning_th: target.meaning_th || '',
-        part_of_speech: target.part_of_speech,
-        correct_answer: meaningText,
-        correct_word_id: target.id,
-        qType: 'MEANING_MC',
-        stageType,
-        choices: allChoices.map((c) => ({
-          word_id: c.word_id,
-          text: c.text,
-          is_correct: c.word_id === target.id,
-        })),
-      });
+        const allChoices = [
+          { word_id: target.id, text: target.word, is_correct: true },
+          ...distractors.map((d) => ({ word_id: d.word_id, text: d.text, is_correct: false })),
+        ].sort(() => Math.random() - 0.5);
+
+        authoritativeQuestions.push({
+          id: target.id,
+          word_id: target.id,
+          word: target.word,
+          meaning: target.meaning || '',
+          meaning_th: target.meaning_th || '',
+          correct_answer: target.word,
+          correct_word_id: target.id,
+          qType: 'WORD_MC',
+          question_type: 'word_mc',
+          choices: allChoices,
+        });
+
+        clientQuestions.push({
+          id: target.id,
+          word_id: target.id,
+          word: target.word,
+          meaning: target.meaning || '',
+          meaning_th: target.meaning_th || '',
+          part_of_speech: target.part_of_speech,
+          prompt: meaningText,
+          correct_answer: target.word,
+          correct_word_id: target.id,
+          qType: 'WORD_MC',
+          question_type: 'word_mc',
+          stageType,
+          choices: allChoices.map((c) => ({
+            word_id: c.word_id,
+            text: c.text,
+            is_correct: c.word_id === target.id,
+          })),
+        });
+      } else {
+        // 3. MEANING_MC (ดูคำศัพท์ภาษาอังกฤษ เลือกความหมายภาษาไทย)
+        const distractors = distractorPool
+          .filter((d) => d.id !== target.id && (d.meaning_th || d.meaning) !== meaningText)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3)
+          .map((d) => ({
+            word_id: d.id,
+            text: d.meaning_th || d.meaning || '',
+          }));
+
+        const allChoices = [
+          { word_id: target.id, text: meaningText, is_correct: true },
+          ...distractors.map((d) => ({ word_id: d.word_id, text: d.text, is_correct: false })),
+        ].sort(() => Math.random() - 0.5);
+
+        authoritativeQuestions.push({
+          id: target.id,
+          word_id: target.id,
+          word: target.word,
+          meaning: target.meaning || '',
+          meaning_th: target.meaning_th || '',
+          correct_answer: meaningText,
+          correct_word_id: target.id,
+          qType: 'MEANING_MC',
+          question_type: 'meaning_mc',
+          choices: allChoices,
+        });
+
+        clientQuestions.push({
+          id: target.id,
+          word_id: target.id,
+          word: target.word,
+          meaning: target.meaning || '',
+          meaning_th: target.meaning_th || '',
+          part_of_speech: target.part_of_speech,
+          prompt: target.word,
+          correct_answer: meaningText,
+          correct_word_id: target.id,
+          qType: 'MEANING_MC',
+          question_type: 'meaning_mc',
+          stageType,
+          choices: allChoices.map((c) => ({
+            word_id: c.word_id,
+            text: c.text,
+            is_correct: c.word_id === target.id,
+          })),
+        });
+      }
     }
 
     // ── Create authoritative ACTIVE attempt ──────────────────────────────────

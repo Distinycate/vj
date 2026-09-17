@@ -517,7 +517,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                         </div>
                         {!canStart && row.cards.effect_type !== 'DUD' && <div className="text-xs mt-2">ใช้ได้เมื่อถูกโจมตี</div>}
                         {row.cards.effect_type === 'DUD' && row.cards.card_code !== 'DEMON_TEACHER' && <div className="text-xs mt-2 text-slate-500">ไม่มีผลใดๆ ไม่สามารถใช้งานได้</div>}
-                        {row.cards.card_code === 'DEMON_TEACHER' && <div className="text-xs mt-2 text-slate-500">ทำงานอัตโนมัติไปแล้วตอนสุ่ม</div>}
+                        {row.cards.card_code === 'DEMON_TEACHER' && <div className="text-xs mt-2 text-rose-400 font-bold">👹 คำสาป! ทำลายการ์ดผู้เปิด 10 ใบ</div>}
                         {row.cards.effect_type === 'DEFENSE' && (
                           <div className="text-xs mt-2 text-emerald-400 font-semibold">🛡️ คลิกเพื่อกางโล่ป้องกันการโจมตีอัตโนมัติ</div>
                         )}
@@ -740,6 +740,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
               <Button disabled={busy} onClick={handleUseCard} className="bg-fuchsia-500 hover:bg-fuchsia-400 text-white">
                 {selectedCard.cards.card_code === 'THIEF_RANDOM' || selectedCard.cards.card_code === 'THIEF_MASTER' ? 'ขโมยเลย!' : 
                  ['BOMB', 'NINJA'].includes(selectedCard.cards.card_code) ? 'ทำลายทิ้ง!' :
+                 selectedCard.cards.card_code === 'DEMON_TEACHER' ? 'ระเบิดการ์ดตัวเอง 10 ใบ!' :
                  selectedCard.cards.card_code === 'EARLY_HOME' ? 'ส่งให้ครูอนุมัติ' : 'ใช้งานทันที!'}
               </Button>
             </div>
