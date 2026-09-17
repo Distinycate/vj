@@ -157,19 +157,40 @@ export async function POST(request: Request) {
     // Fetch progress if student
     let progress: any = null;
     if (subjectType === 'STUDENT') {
-      const { data: path } = await supabaseAdmin
-        .from('learning_paths')
-        .select('*')
-        .eq('student_id', account.id)
-        .maybeSingle();
+      const [{ data: path }, { data: pretestList, count: pretestCount }, { data: analytics }] = await Promise.all([
+        supabaseAdmin
+          .from('learning_paths')
+          .select('*')
+          .eq('student_id', account.id)
+          .maybeSingle(),
+        supabaseAdmin
+          .from('pre_tests')
+          .select('created_at', { count: 'exact' })
+          .eq('student_id', account.id)
+          .order('created_at', { ascending: false }),
+        supabaseAdmin
+          .from('analytics_summary')
+          .select('pretest_score')
+          .eq('student_id', account.id)
+          .maybeSingle(),
+      ]);
 
-      progress = path || {
-        current_stage: 1,
-        coins: 0,
-        exp: 0,
-        total_exp: 0,
-        current_rank: 1,
-        study_streak: 0,
+      const isExternal = account.user_type === 'EXTERNAL';
+      const hasPretests = (pretestCount !== null && pretestCount >= 5) || (analytics?.pretest_score !== null && analytics?.pretest_score !== undefined);
+      const pretestDate = isExternal || hasPretests
+        ? (pretestList?.[0]?.created_at || new Date().toISOString())
+        : null;
+
+      progress = {
+        ...(path || {
+          current_stage: 1,
+          coins: 0,
+          exp: 0,
+          total_exp: 0,
+          current_rank: 1,
+          study_streak: 0,
+        }),
+        pretest_date: pretestDate,
       };
     }
 

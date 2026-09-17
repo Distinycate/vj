@@ -60,12 +60,39 @@ export async function POST(request: Request) {
         else if (avgScore >= 5) { newRank = 2; newStage = 11; }
         else { newRank = 1; newStage = 1; }
 
+        // Fetch current learning path & progress to prevent decreasing stage
+        const [{ data: currentLp }, { data: passedStages }] = await Promise.all([
+          supabaseAdmin
+            .from('learning_paths')
+            .select('current_stage, current_rank, initial_rank')
+            .eq('student_id', studentId)
+            .maybeSingle(),
+          supabaseAdmin
+            .from('student_stage_progress')
+            .select('stage_number')
+            .eq('student_id', studentId)
+            .eq('completed', true),
+        ]);
+
+        const maxPassed = passedStages && passedStages.length > 0
+          ? Math.max(...passedStages.map(s => s.stage_number))
+          : 0;
+
+        // Stage must NEVER decrease
+        const preservedStage = Math.max(
+          currentLp?.current_stage || 1,
+          maxPassed > 0 ? maxPassed + 1 : 1,
+          newStage
+        );
+        const finalStage = Math.min(100, Math.max(1, preservedStage));
+        const finalRank = Math.max(currentLp?.current_rank || 1, newRank);
+
         await supabaseAdmin
           .from('learning_paths')
           .update({
-            initial_rank: newRank,
-            current_rank: newRank,
-            current_stage: newStage,
+            initial_rank: currentLp?.initial_rank ? currentLp.initial_rank : newRank,
+            current_rank: finalRank,
+            current_stage: finalStage,
             last_active_date: new Date().toISOString(),
           })
           .eq('student_id', studentId);
@@ -89,7 +116,7 @@ export async function POST(request: Request) {
         const { data: stageRecord } = await supabaseAdmin
           .from('stages')
           .select('id')
-          .eq('stage_number', newStage)
+          .eq('stage_number', finalStage)
           .limit(1);
 
         if (stageRecord && stageRecord.length > 0) {
@@ -103,6 +130,9 @@ export async function POST(request: Request) {
             is_passed: false
           }]);
         }
+
+        newStage = finalStage;
+        newRank = finalRank;
       }
 
       return NextResponse.json({
