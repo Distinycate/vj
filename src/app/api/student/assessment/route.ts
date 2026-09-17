@@ -49,16 +49,23 @@ export async function POST(request: Request) {
       let newRank = 1;
       let newStage = 1;
 
-      if (count >= 5) {
+      const isExternal = session.user.userType === 'EXTERNAL';
+
+      if (count >= 5 || isExternal) {
         completedAll = true;
         const totalScore = (allPretests || []).reduce((sum, p) => sum + Number(p.score || 0), 0);
         const avgScore = totalScore / count;
 
-        if (avgScore >= 20) { newRank = 5; newStage = 41; }
-        else if (avgScore >= 15) { newRank = 4; newStage = 31; }
-        else if (avgScore >= 10) { newRank = 3; newStage = 21; }
-        else if (avgScore >= 5) { newRank = 2; newStage = 11; }
-        else { newRank = 1; newStage = 1; }
+        if (isExternal) {
+          newRank = 1;
+          newStage = 1;
+        } else {
+          if (avgScore >= 20) { newRank = 5; newStage = 41; }
+          else if (avgScore >= 15) { newRank = 4; newStage = 31; }
+          else if (avgScore >= 10) { newRank = 3; newStage = 21; }
+          else if (avgScore >= 5) { newRank = 2; newStage = 11; }
+          else { newRank = 1; newStage = 1; }
+        }
 
         // Fetch current learning path & progress to prevent decreasing stage
         const [{ data: currentLp }, { data: passedStages }] = await Promise.all([
@@ -78,14 +85,16 @@ export async function POST(request: Request) {
           ? Math.max(...passedStages.map(s => s.stage_number))
           : 0;
 
-        // Stage must NEVER decrease
-        const preservedStage = Math.max(
-          currentLp?.current_stage || 1,
-          maxPassed > 0 ? maxPassed + 1 : 1,
-          newStage
-        );
+        // Stage calculation: For external students, strictly follow map progression (Stage 1..100)
+        const preservedStage = isExternal
+          ? (maxPassed > 0 ? maxPassed + 1 : 1)
+          : Math.max(
+              currentLp?.current_stage || 1,
+              maxPassed > 0 ? maxPassed + 1 : 1,
+              newStage
+            );
         const finalStage = Math.min(100, Math.max(1, preservedStage));
-        const finalRank = Math.max(currentLp?.current_rank || 1, newRank);
+        const finalRank = isExternal ? 1 : Math.max(currentLp?.current_rank || 1, newRank);
 
         await supabaseAdmin
           .from('learning_paths')

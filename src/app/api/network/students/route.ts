@@ -70,7 +70,13 @@ export async function GET(request: Request) {
       const latestPre = preList.length > 0 ? preList[preList.length - 1] : null;
       const latestPost = postList.length > 0 ? postList[postList.length - 1] : null;
       
-      const totalStars = (s.stage_results || []).reduce((sum: number, r: any) => sum + (r.stars || 0), 0);
+      const stageResultsList = (s.stage_results || []).filter((r: any) => r.passed || (Number(r.stars) || 0) > 0);
+      const maxCompleted = stageResultsList.length > 0
+        ? Math.max(...stageResultsList.map((r: any) => Number(r.stage_number) || 0))
+        : 0;
+      const currentStage = maxCompleted > 0 ? Math.min(100, maxCompleted + 1) : 1;
+
+      const totalStars = (s.stage_results || []).reduce((sum: number, r: any) => sum + (Number(r.stars) || 0), 0);
 
       return {
         id: s.id,
@@ -84,7 +90,7 @@ export async function GET(request: Request) {
         room_number: s.room_number,
         is_active: s.is_active,
         created_at: s.created_at,
-        current_stage: lp?.current_stage || 1,
+        current_stage: currentStage,
         total_stars: totalStars,
         pre_test_score: latestPre ? `${latestPre.score}/${latestPre.total_questions}` : '-',
         post_test_score: latestPost ? `${latestPost.score}/${latestPost.total_questions}` : '-',

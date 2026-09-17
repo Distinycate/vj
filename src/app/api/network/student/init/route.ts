@@ -96,6 +96,10 @@ export async function GET(request: Request) {
     // Calculate total stars
     const totalStars = Object.values(stageStarsMap).reduce((sum, s) => sum + s, 0);
 
+    // Calculate current active stage for Lite: strictly based on completed stages (Stage 1..100)
+    const maxCompletedStage = completedStagesSet.size > 0 ? Math.max(...Array.from(completedStagesSet)) : 0;
+    const activeLiteStage = maxCompletedStage > 0 ? Math.min(100, maxCompletedStage + 1) : 1;
+
     // Compute unlocked stages
     const unlockedStages: number[] = [];
     for (let s = 1; s <= 100; s++) {
@@ -103,7 +107,7 @@ export async function GET(request: Request) {
         isStageUnlocked({
           targetStageNumber: s,
           completedStages: completedStagesSet.size > 0 ? completedStagesSet : null,
-          legacyCurrentStage,
+          legacyCurrentStage: activeLiteStage,
         })
       ) {
         unlockedStages.push(s);
@@ -128,7 +132,7 @@ export async function GET(request: Request) {
         userType: 'EXTERNAL',
       },
       progression: {
-        currentStage: legacyCurrentStage,
+        currentStage: activeLiteStage,
         totalStars,
         stageStarsMap,
         unlockedStages,
