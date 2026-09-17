@@ -5,7 +5,7 @@ import { assertSameOrigin } from '@/lib/server/security';
 
 export async function GET(request: Request) {
   try {
-    await requireRole(['TEACHER', 'ADMIN', 'EXECUTIVE']);
+    await requireRole(['ADMIN']);
     const { searchParams } = new URL(request.url);
     const classroomId = searchParams.get('classroomId');
     const userType = searchParams.get('userType');

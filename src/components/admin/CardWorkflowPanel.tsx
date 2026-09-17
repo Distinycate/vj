@@ -5,6 +5,7 @@ import { CheckCircle, Clock, Check, XCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { announceCardAction, resolveCardAction, teacherMarkCardExecuted } from '@/utils/cardBattle';
 
+// CardWorkflowPanel queries: classrooms(class_name) via /api/admin/card-workflows
 export default function CardWorkflowPanel({ teacher }: { teacher: any; classroomId?: string }) {
   const [actionLogs, setActionLogs] = useState<any[]>([]);
   const [pendingLogs, setPendingLogs] = useState<any[]>([]);

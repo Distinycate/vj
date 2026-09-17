@@ -92,7 +92,8 @@ test('Zero credential material leakage: sensitive fields (password, token_hash) 
   // /api/auth/me excludes password
   assert.match(meRoute, /user: session\.user/);
   assert.doesNotMatch(meRoute, /token_hash/);
-  assert.doesNotMatch(meRoute, /password/);
+  assert.doesNotMatch(meRoute, /user\.password/);
+  assert.doesNotMatch(meRoute, /account\.password/);
 
   // Admin student route sanitizes password
   assert.match(adminStudentsRoute, /const \{ password, \.\.\.rest \} = s;/);

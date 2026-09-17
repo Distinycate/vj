@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
     const { data: rawStudents, error: studentsErr } = await supabaseAdmin
       .from('students')
-      .select('id, student_id, student_name, classroom_id, learning_paths(free_pull_tickets, coins)')
+      .select('id, student_id, student_name, classroom_id, learning_paths(free_pull_tickets, coins, current_stage, exp, total_exp, last_active_date), analytics_summary(pretest_score, posttest_score, success_rate, normalized_gain, learning_gain)')
       .eq('classroom_id', classroomId)
       .eq('is_active', true)
       .order('student_name');

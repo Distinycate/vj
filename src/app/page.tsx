@@ -185,10 +185,10 @@ export default function Home() {
           ...data.progress,
           pretest_date: pretestDate,
         });
-      } else if (data.role === 'CARD_TEACHER') {
+      } else if (data.role === 'CARD_TEACHER' || data.role === 'TEACHER') {
         localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(data.user));
         window.location.href = '/card-teacher/dashboard';
-      } else if (data.role === 'TEACHER' || data.role === 'ADMIN') {
+      } else if (data.role === 'ADMIN') {
         localStorage.setItem('vocab_journey_teacher', JSON.stringify(data.user));
         window.location.href = '/admin';
       } else if (data.role === 'EXECUTIVE') {

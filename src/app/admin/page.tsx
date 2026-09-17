@@ -58,7 +58,15 @@ export default function AdminPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem('vocab_journey_teacher');
-    if (saved) setTeacher(JSON.parse(saved));
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.role !== 'ADMIN') {
+        localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(parsed));
+        window.location.href = '/card-teacher/dashboard';
+        return;
+      }
+      setTeacher(parsed);
+    }
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -67,9 +75,14 @@ export default function AdminPage() {
     setIsLoading(true); setLoginError('');
     try {
       const { data, error } = await supabase.rpc('login_teacher', { p_username: username.trim(), p_password: password.trim() });
-      if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านครูไม่ถูกต้อง');
-      if (!['TEACHER', 'ADMIN'].includes(data.role)) {
-        throw new Error('บัญชีนี้ใช้ได้เฉพาะระบบการ์ด กรุณาเข้าผ่านเมนูระบบการ์ดสำหรับคุณครู');
+      if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านแอดมินไม่ถูกต้อง');
+      if (data.role !== 'ADMIN') {
+        if (['TEACHER', 'CARD_TEACHER'].includes(data.role)) {
+          localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(data));
+          window.location.href = '/card-teacher/dashboard';
+          return;
+        }
+        throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าใช้ระบบแอดมิน');
       }
       setTeacher(data);
       localStorage.setItem('vocab_journey_teacher', JSON.stringify(data));

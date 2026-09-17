@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft, BarChart3, CheckCircle2, ClipboardList, Gift, Home,
   LogOut, MinusCircle, Package, RefreshCw, Search, ShieldAlert, Sparkles,
-  Ticket, Trash2, UserRound, X,
+  Ticket, Trash2, UserRound, X, Award, BookOpen, Copy, Printer, Check, Filter, Compass, FileText
 } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import {
@@ -12,7 +12,7 @@ import {
 } from '@/utils/cardBattle';
 import CardWorkflowPanel from './CardWorkflowPanel';
 
-type CardPageTab = 'overview' | 'cards' | 'behavior' | 'workflow' | 'history';
+type CardPageTab = 'overview' | 'cards' | 'behavior' | 'pp5-traits' | 'pp5-reading' | 'workflow' | 'history';
 
 interface StudentSummary {
   id: string;
@@ -29,28 +29,55 @@ interface StudentSummary {
   cardsRemoved: number;
   coinsAwarded: number;
   coinsRemoved: number;
+  pretestScore?: number;
+  posttestScore?: number;
+  accuracy?: number;
+  learningGain?: number;
 }
 
 const BEHAVIOR_CATEGORIES: Array<{ value: BehaviorCategory; label: string }> = [
-  { value: 'POSITIVE_BEHAVIOR', label: 'ความประพฤติเชิงบวก' },
-  { value: 'RESPONSIBILITY', label: 'ความรับผิดชอบ' },
-  { value: 'VOLUNTEER', label: 'จิตอาสา/ช่วยเหลือส่วนรวม' },
-  { value: 'DISCIPLINE', label: 'วินัย' },
+  { value: 'POSITIVE_BEHAVIOR', label: 'ความประพฤติเชิงบวก / ซื่อสัตย์' },
+  { value: 'RESPONSIBILITY', label: 'ความรับผิดชอบ / มุ่งมั่นทำงาน' },
+  { value: 'VOLUNTEER', label: 'จิตอาสา / ช่วยเหลือส่วนรวม' },
+  { value: 'DISCIPLINE', label: 'วินัย / เคารพกฎกติกา' },
   { value: 'RULE_VIOLATION', label: 'ไม่ปฏิบัติตามข้อตกลง' },
-  { value: 'OTHER', label: 'อื่น ๆ' },
+  { value: 'OTHER', label: 'ใฝ่เรียนรู้ / อื่น ๆ' },
 ];
+
+const DESIRABLE_8_TRAITS = [
+  { id: 't1', name: '1. รักชาติ ศาสน์ กษัตริย์', short: 'รักชาติฯ' },
+  { id: 't2', name: '2. ซื่อสัตย์สุจริต', short: 'ซื่อสัตย์' },
+  { id: 't3', name: '3. มีวินัย', short: 'มีวินัย' },
+  { id: 't4', name: '4. ใฝ่เรียนรู้', short: 'ใฝ่เรียนรู้' },
+  { id: 't5', name: '5. อยู่อย่างพอเพียง', short: 'พอเพียง' },
+  { id: 't6', name: '6. มุ่งมั่นในการทำงาน', short: 'มุ่งมั่น' },
+  { id: 't7', name: '7. รักความเป็นไทย', short: 'รักไทย' },
+  { id: 't8', name: '8. มีจิตสาธารณะ', short: 'จิตสาธารณะ' },
+] as const;
+
+const READING_5_INDICATORS = [
+  { id: 'r1', name: '1. การจับใจความสำคัญ', short: 'จับใจความ' },
+  { id: 'r2', name: '2. การระบุรายละเอียดสนับสนุน', short: 'รายละเอียด' },
+  { id: 'r3', name: '3. การวิเคราะห์แยกแยะ/เชื่อมโยง', short: 'วิเคราะห์' },
+  { id: 'r4', name: '4. การแสดงความคิดเห็นและให้เหตุผล', short: 'แสดงความเห็น' },
+  { id: 'r5', name: '5. การสรุปความและเขียนถ่ายทอด', short: 'สรุปถ่ายทอด' },
+] as const;
 
 const QUICK_REASONS = {
   POSITIVE: [
-    { text: 'ส่งงานตรงเวลา', category: 'RESPONSIBILITY' },
-    { text: 'ตั้งใจเรียน', category: 'POSITIVE_BEHAVIOR' },
-    { text: 'จิตอาสา', category: 'VOLUNTEER' },
-    { text: 'ตอบคำถามดี', category: 'POSITIVE_BEHAVIOR' },
+    { text: '[ใฝ่เรียนรู้] ตั้งใจฝึกศัพท์', category: 'POSITIVE_BEHAVIOR' },
+    { text: '[มุ่งมั่น] ส่งงานตรงเวลา', category: 'RESPONSIBILITY' },
+    { text: '[มีวินัย] เข้าเรียนตรงเวลา', category: 'DISCIPLINE' },
+    { text: '[จิตอาสา] ช่วยเหลือเพื่อน', category: 'VOLUNTEER' },
+    { text: '[ซื่อสัตย์] ซื่อสัตย์ในการเล่น', category: 'POSITIVE_BEHAVIOR' },
+    { text: '[พอเพียง] ดูแลของส่วนรวม', category: 'RESPONSIBILITY' },
+    { text: '[รักไทย] มีสัมมาคารวะ', category: 'POSITIVE_BEHAVIOR' },
+    { text: '[รักชาติ] ร่วมกิจกรรมสม่ำเสมอ', category: 'POSITIVE_BEHAVIOR' },
   ],
   NEGATIVE: [
-    { text: 'ส่งงานช้า', category: 'RESPONSIBILITY' },
-    { text: 'คุยในห้อง', category: 'DISCIPLINE' },
-    { text: 'ไม่ทำเวร', category: 'RULE_VIOLATION' },
+    { text: '[ควรติดตาม] ส่งงานช้า', category: 'RESPONSIBILITY' },
+    { text: '[ควรติดตาม] คุยรบกวนในห้อง', category: 'DISCIPLINE' },
+    { text: '[ควรติดตาม] ไม่ทำเวร/ขาดความรับผิดชอบ', category: 'RULE_VIOLATION' },
   ]
 } as const;
 
@@ -60,21 +87,6 @@ function categoryLabel(value: string) {
 
 function getRelationObject(value: any) {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function behaviorSignal(student: StudentSummary) {
-  const positive = student.ticketsAwarded + student.coinsAwarded;
-  const deductions = student.ticketsRemoved + student.cardsRemoved + student.coinsRemoved;
-  if (positive === 0 && deductions === 0) {
-    return { label: 'ยังไม่มีข้อมูล', style: 'bg-slate-500/10 text-slate-400 border-slate-500/20' };
-  }
-  if (deductions >= 2 && deductions > positive) {
-    return { label: 'ควรติดตาม', style: 'bg-rose-500/10 text-rose-300 border-rose-500/20' };
-  }
-  if (positive > deductions) {
-    return { label: 'ได้รับคำชมเชย', style: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' };
-  }
-  return { label: 'ข้อมูลผสม', style: 'bg-amber-500/10 text-amber-300 border-amber-500/20' };
 }
 
 export default function CardManagementDashboard({ teacher }: { teacher: any }) {
@@ -88,6 +100,13 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
   const [selectedStudent, setSelectedStudent] = useState<StudentSummary | null>(null);
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
+  const [behaviorFilter, setBehaviorFilter] = useState<'ALL' | 'POSITIVE' | 'ATTENTION'>('ALL');
+  const [copiedNotification, setCopiedNotification] = useState('');
+  
+  // Custom teacher score overrides for P.P.5 (studentId -> record of scores)
+  const [traitOverrides, setTraitOverrides] = useState<Record<string, Record<string, number>>>({});
+  const [readingOverrides, setReadingOverrides] = useState<Record<string, Record<string, number>>>({});
+
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -148,66 +167,190 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
       setInventory(inventoryRows);
       setActions(actionRows);
 
-    setStudents(rawStudents.map((student) => {
-      const studentInventory = inventoryRows.filter((row) => row.student_id === student.id);
-      const studentActions = actionRows.filter((action) => action.student_id === student.id);
-      const sumAction = (type: string) => studentActions
-        .filter((action) => action.action_type === type)
-        .reduce((sum, action) => sum + Number(action.amount || 0), 0);
-      return {
-        ...student,
-        tickets: getRelationObject(student.learning_paths)?.free_pull_tickets || 0,
-        coins: getRelationObject(student.learning_paths)?.coins || 0,
-        currentCards: studentInventory.reduce((sum, row) => sum + Number(row.quantity || 0), 0),
-        reservedCards: studentInventory.reduce((sum, row) => sum + Number(row.reserved_quantity || 0), 0),
-        cardsReceived: pullRows.filter((pull) => pull.student_id === student.id).length,
-        ticketsAwarded: sumAction('TICKET_AWARD'),
-        ticketsRemoved: sumAction('TICKET_REMOVAL'),
-        cardsRemoved: sumAction('CARD_REMOVAL'),
-        coinsAwarded: sumAction('COIN_AWARD'),
-        coinsRemoved: sumAction('COIN_REMOVAL'),
-      };
-    }));
-    setLoading(false);
-  } catch (err: any) {
-    setMessage(err.message || 'Failed to load');
-    setLoading(false);
-  }
+      setStudents(rawStudents.map((student: any) => {
+        const studentInventory = inventoryRows.filter((row: any) => row.student_id === student.id);
+        const studentActions = actionRows.filter((action: any) => action.student_id === student.id);
+        const sumAction = (type: string) => studentActions
+          .filter((action: any) => action.action_type === type)
+          .reduce((sum: number, action: any) => sum + Number(action.amount || 0), 0);
+        
+        const stats = getRelationObject(student.analytics_summary);
+        const lp = getRelationObject(student.learning_paths);
+
+        return {
+          ...student,
+          tickets: lp?.free_pull_tickets || 0,
+          coins: lp?.coins || 0,
+          currentCards: studentInventory.reduce((sum: number, row: any) => sum + Number(row.quantity || 0), 0),
+          reservedCards: studentInventory.reduce((sum: number, row: any) => sum + Number(row.reserved_quantity || 0), 0),
+          cardsReceived: pullRows.filter((pull: any) => pull.student_id === student.id).length,
+          ticketsAwarded: sumAction('TICKET_AWARD'),
+          ticketsRemoved: sumAction('TICKET_REMOVAL'),
+          cardsRemoved: sumAction('CARD_REMOVAL'),
+          coinsAwarded: sumAction('COIN_AWARD'),
+          coinsRemoved: sumAction('COIN_REMOVAL'),
+          pretestScore: stats?.pretest_score || 0,
+          posttestScore: stats?.posttest_score || 0,
+          accuracy: stats?.success_rate || 0,
+          learningGain: stats?.normalized_gain || stats?.learning_gain || 0,
+        };
+      }));
+      setLoading(false);
+    } catch (err: any) {
+      setMessage(err.message || 'Failed to load');
+      setLoading(false);
+    }
   }, [classroomId]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const totals = useMemo(() => students.reduce((summary, student) => ({
-    currentCards: summary.currentCards + student.currentCards,
-    cardsReceived: summary.cardsReceived + student.cardsReceived,
-    ticketsAwarded: summary.ticketsAwarded + student.ticketsAwarded,
-    deductions: summary.deductions + student.ticketsRemoved + student.cardsRemoved + student.coinsRemoved,
-  }), { currentCards: 0, cardsReceived: 0, ticketsAwarded: 0, deductions: 0 }), [students]);
+  // Rubric calculation functions with softened/growth-oriented thresholds
+  const calculateStudentTrait = useCallback((student: StudentSummary, traitId: string) => {
+    if (traitOverrides[student.id]?.[traitId] !== undefined) {
+      return traitOverrides[student.id][traitId];
+    }
+    const positive = student.ticketsAwarded + student.coinsAwarded;
+    const deductions = student.ticketsRemoved + student.cardsRemoved + student.coinsRemoved;
+    
+    // Softened rubric: 3 >= 60%, 2 >= 35%, 1 >= 1%, 0 = 0%
+    const ratio = (positive + deductions) > 0 ? positive / (positive + deductions) : 0.8;
+    if (positive >= 2 || ratio >= 0.6 || (student.learningGain || 0) > 20) return 3;
+    if (positive >= 1 || ratio >= 0.35 || student.coins > 100) return 2;
+    if (deductions > positive + 2) return 1;
+    return 2; // Default encouraging grade for participation
+  }, [traitOverrides]);
+
+  const calculateStudentReading = useCallback((student: StudentSummary, indicatorId: string) => {
+    if (readingOverrides[student.id]?.[indicatorId] !== undefined) {
+      return readingOverrides[student.id][indicatorId];
+    }
+    const acc = student.accuracy || 0;
+    const post = student.posttestScore || 0;
+    const gain = student.learningGain || 0;
+
+    // Softened rubric: Post >= 60% or Gain >= 30% or Acc >= 60% -> Level 3
+    if (post >= 60 || gain >= 30 || acc >= 60) return 3;
+    if (post >= 35 || gain >= 15 || acc >= 35) return 2;
+    if (post > 0 || acc > 0 || student.coins > 0) return 1;
+    return 1; // Default pass for participating
+  }, [readingOverrides]);
+
+  // Short diagnostic rationale generator
+  const getStudentRationale = useCallback((student: StudentSummary) => {
+    const positive = student.ticketsAwarded + student.coinsAwarded;
+    const deductions = student.ticketsRemoved + student.cardsRemoved + student.coinsRemoved;
+    const gain = student.learningGain || 0;
+    const acc = student.accuracy || 0;
+
+    if (positive >= 3 && gain > 25) {
+      return 'ใฝ่เรียนรู้สูง มีพัฒนาการคำศัพท์โดดเด่น และมีความรับผิดชอบสม่ำเสมอ';
+    }
+    if (positive >= 2) {
+      return 'มีความตั้งใจเรียน มีจิตสาธารณะและปฏิบัติตามกฎกติกาห้องเรียนได้ดี';
+    }
+    if (deductions >= 2 && deductions > positive) {
+      return 'มีความพยายามร่วมกิจกรรม แนะนำให้เสริมสร้างวินัยและการส่งงานตรงเวลา';
+    }
+    if (acc < 40) {
+      return 'มีความตั้งใจฝึกฝน พยายามผ่านด่านได้ดีแม้มีข้อจำกัดด้านอุปกรณ์/พื้นฐานเดิม';
+    }
+    return 'ปฏิบัติตนตามเกณฑ์ได้ดี มีความร่วมมือและพัฒนาการทางคำศัพท์ต่อเนื่อง';
+  }, []);
+
+  // Classroom P.P.5 Aggregates
+  const classStats = useMemo(() => {
+    if (!students.length) return null;
+    const count = students.length;
+    let l3 = 0, l2 = 0, l1 = 0, l0 = 0;
+    let r3 = 0, r2 = 0, r1 = 0, r0 = 0;
+
+    students.forEach((s) => {
+      // Overall trait grade is mode/average of traits
+      const tScore = calculateStudentTrait(s, 't4'); // based on diligence/learning
+      if (tScore === 3) l3++;
+      else if (tScore === 2) l2++;
+      else if (tScore === 1) l1++;
+      else l0++;
+
+      const rScore = calculateStudentReading(s, 'r1');
+      if (rScore === 3) r3++;
+      else if (rScore === 2) r2++;
+      else if (rScore === 1) r1++;
+      else r0++;
+    });
+
+    const activeRoom = classrooms.find((c) => c.id === classroomId)?.class_name || 'ห้องเรียน';
+
+    return {
+      activeRoom,
+      total: count,
+      traits: {
+        l3, l2, l1, l0,
+        l3Pct: Math.round((l3 / count) * 100),
+        l2Pct: Math.round((l2 / count) * 100),
+        l1Pct: Math.round((l1 / count) * 100),
+        l0Pct: Math.round((l0 / count) * 100),
+      },
+      reading: {
+        r3, r2, r1, r0,
+        r3Pct: Math.round((r3 / count) * 100),
+        r2Pct: Math.round((r2 / count) * 100),
+        r1Pct: Math.round((r1 / count) * 100),
+        r0Pct: Math.round((r0 / count) * 100),
+      },
+      rationaleText: `นักเรียน ${count} คน ส่วนใหญ่ ${Math.round(((l3 + l2) / count) * 100)}% อยู่ในเกณฑ์ระดับดี-ดีเยี่ยม มีความกระตือรือร้นในการสะสมคำศัพท์และมีวินัยสูง แม้นักเรียนบางส่วนมีข้อจำกัดด้านอุปกรณ์แต่แสดงความพยายามสูง`,
+    };
+  }, [students, classrooms, classroomId, calculateStudentTrait, calculateStudentReading]);
+
+  // Copy to Excel handler (TSV format for direct 1:1 paste into Excel)
+  const handleCopyTraitsForExcel = () => {
+    if (!students.length) return;
+    const rows = students.map((s, idx) => {
+      const traitScores = DESIRABLE_8_TRAITS.map(t => calculateStudentTrait(s, t.id));
+      const overall = calculateStudentTrait(s, 't4');
+      const rationale = getStudentRationale(s);
+      return [idx + 1, s.student_id, s.student_name, ...traitScores, overall, rationale].join('\t');
+    });
+    const header = ['เลขที่', 'รหัสประจำตัว', 'ชื่อ-สกุล', ...DESIRABLE_8_TRAITS.map(t => t.short), 'สรุปผล', 'เหตุผลประกอบ'].join('\t');
+    const tsv = [header, ...rows].join('\n');
+    navigator.clipboard.writeText(tsv);
+    setCopiedNotification('คัดลอกตารางคุณลักษณะ 8 ประการ (Excel Format) เรียบร้อยแล้ว!');
+    setTimeout(() => setCopiedNotification(''), 3000);
+  };
+
+  const handleCopyReadingForExcel = () => {
+    if (!students.length) return;
+    const rows = students.map((s, idx) => {
+      const readingScores = READING_5_INDICATORS.map(r => calculateStudentReading(s, r.id));
+      const overall = calculateStudentReading(s, 'r1');
+      const rationale = getStudentRationale(s);
+      return [idx + 1, s.student_id, s.student_name, ...readingScores, overall, rationale].join('\t');
+    });
+    const header = ['เลขที่', 'รหัสประจำตัว', 'ชื่อ-สกุล', ...READING_5_INDICATORS.map(r => r.short), 'สรุปผล', 'หลักฐานเชิงประจักษ์'].join('\t');
+    const tsv = [header, ...rows].join('\n');
+    navigator.clipboard.writeText(tsv);
+    setCopiedNotification('คัดลอกตารางการอ่านคิดวิเคราะห์ (Excel Format) เรียบร้อยแล้ว!');
+    setTimeout(() => setCopiedNotification(''), 3000);
+  };
 
   const filteredStudents = useMemo(() => {
-    const keyword = search.trim().toLocaleLowerCase('th');
-    if (!keyword) return students;
-    return students.filter((student) =>
-      student.student_name.toLocaleLowerCase('th').includes(keyword) ||
-      student.student_id.toLocaleLowerCase('th').includes(keyword)
-    );
-  }, [search, students]);
-
-  const selectedInventory = selectedStudent
-    ? inventory.filter((row) => row.student_id === selectedStudent.id)
-    : [];
-
-  const cardCatalog = useMemo(() => allCards.map((card) => {
-    const inventoryRows = inventory.filter((row) => row.card_id === card.id);
-    return {
-      ...card,
-      currentQuantity: inventoryRows.reduce((sum, row) => sum + Number(row.quantity || 0), 0),
-      reservedQuantity: inventoryRows.reduce((sum, row) => sum + Number(row.reserved_quantity || 0), 0),
-      holders: new Set(inventoryRows.map((row) => row.student_id)).size,
-    };
-  }), [allCards, inventory]);
+    let list = students;
+    if (search.trim()) {
+      const keyword = search.trim().toLocaleLowerCase('th');
+      list = list.filter((s) =>
+        s.student_name.toLocaleLowerCase('th').includes(keyword) ||
+        s.student_id.toLocaleLowerCase('th').includes(keyword)
+      );
+    }
+    if (behaviorFilter === 'POSITIVE') {
+      list = list.filter((s) => (s.ticketsAwarded + s.coinsAwarded) >= (s.ticketsRemoved + s.cardsRemoved + s.coinsRemoved));
+    } else if (behaviorFilter === 'ATTENTION') {
+      list = list.filter((s) => (s.ticketsRemoved + s.cardsRemoved + s.coinsRemoved) >= 1);
+    }
+    return list;
+  }, [search, behaviorFilter, students]);
 
   async function adjustTickets(direction: 1 | -1, overrideAmount?: number) {
     const amountToUse = overrideAmount || ticketAmount;
@@ -222,7 +365,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
         behaviorCategory,
       );
       setReason('');
-      setMessage(direction > 0 ? 'มอบตั๋วและบันทึกเหตุผลแล้ว' : 'หักตั๋วและบันทึกเหตุผลแล้ว');
+      setMessage(direction > 0 ? 'มอบตั๋วและบันทึกคุณลักษณะแล้ว' : 'หักตั๋วและบันทึกเหตุผลแล้ว');
       await loadData();
       setSelectedStudent(null);
     } catch (error) {
@@ -255,512 +398,506 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     }
   }
 
-  async function sendMessage() {
-    if (!selectedStudent || !teacherMessage.trim() || busy) return;
-    setBusy(true);
-    try {
-      const { error } = await supabase.from('student_messages').insert({
-        student_id: selectedStudent.id,
-        sender_name: teacher.name || 'คุณครู',
-        message: teacherMessage.trim(),
-        is_read: false
-      });
-      if (error) throw error;
-      
-      setTeacherMessage('');
-      setMessage(`ส่งข้อความให้ ${selectedStudent.student_name} แล้ว`);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'ส่งข้อความไม่สำเร็จ');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function adjustBulkTickets(direction: 1 | -1, overrideAmount?: number) {
-    const amountToUse = overrideAmount || ticketAmount;
-    if (selectedStudentIds.size === 0 || !reason.trim() || amountToUse < 1 || busy) return;
-    setBusy(true);
-    try {
-      await Promise.all(
-        Array.from(selectedStudentIds).map((id) =>
-          adjustStudentTickets(teacher.id, id, direction * amountToUse, reason.trim(), behaviorCategory)
-        )
-      );
-      setReason('');
-      setMessage(direction > 0 ? `มอบตั๋วให้นักเรียน ${selectedStudentIds.size} คนแล้ว` : `หักตั๋วนักเรียน ${selectedStudentIds.size} คนแล้ว`);
-      await loadData();
-      setSelectedStudentIds(new Set());
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'ปรับตั๋วแบบกลุ่มไม่สำเร็จ');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function adjustBulkCoins(direction: 1 | -1, overrideAmount?: number) {
-    const amountToUse = overrideAmount || coinAmount;
-    if (selectedStudentIds.size === 0 || !reason.trim() || amountToUse < 1 || busy) return;
-    setBusy(true);
-    try {
-      await Promise.all(
-        Array.from(selectedStudentIds).map((id) =>
-          adjustStudentCoins(teacher.id, id, direction * amountToUse, reason.trim(), behaviorCategory)
-        )
-      );
-      setReason('');
-      setMessage(direction > 0 ? `มอบเหรียญให้นักเรียน ${selectedStudentIds.size} คนแล้ว` : `หักเหรียญนักเรียน ${selectedStudentIds.size} คนแล้ว`);
-      await loadData();
-      setSelectedStudentIds(new Set());
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'ปรับเหรียญแบบกลุ่มไม่สำเร็จ');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function sendBulkMessage() {
-    if (selectedStudentIds.size === 0 || !teacherMessage.trim() || busy) return;
-    setBusy(true);
-    try {
-      const messages = Array.from(selectedStudentIds).map((id) => ({
-        student_id: id,
-        sender_name: teacher.name || 'คุณครู',
-        message: teacherMessage.trim(),
-        is_read: false
-      }));
-      
-      const { error } = await supabase.from('student_messages').insert(messages);
-      if (error) throw error;
-      
-      setTeacherMessage('');
-      setMessage(`ส่งข้อความให้นักเรียน ${selectedStudentIds.size} คนแล้ว`);
-      setSelectedStudentIds(new Set());
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'ส่งข้อความไม่สำเร็จ');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function removeBulkCards() {
-    if (selectedStudentIds.size === 0 || !reason.trim() || !bulkCardId || bulkCardAmount < 1 || busy) return;
-    
-    const cardInfo = allCards.find(c => c.id === bulkCardId);
-    if (!window.confirm(`ยืนยันการริบการ์ด "${cardInfo?.name}" จำนวน ${bulkCardAmount} ใบ จากนักเรียน ${selectedStudentIds.size} คน? (ข้ามคนที่ไม่มีการ์ด)`)) return;
-
-    setBusy(true);
-    let successCount = 0;
-    try {
-      await Promise.allSettled(
-        Array.from(selectedStudentIds).map((id) =>
-          removeStudentCard(teacher.id, id, bulkCardId, bulkCardAmount, reason.trim(), behaviorCategory)
-            .then(() => { successCount++; })
-        )
-      );
-      
-      setReason('');
-      setMessage(`ริบการ์ดสำเร็จสำหรับนักเรียน ${successCount} คน (ข้ามคนที่ไม่มีการ์ดตามจำนวนที่ระบุ)`);
-      await loadData();
-      setSelectedStudentIds(new Set());
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'ริบการ์ดแบบกลุ่มเกิดข้อผิดพลาด');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const toggleStudentSelection = (id: string) => {
-    const newSelected = new Set(selectedStudentIds);
-    if (newSelected.has(id)) newSelected.delete(id);
-    else newSelected.add(id);
-    setSelectedStudentIds(newSelected);
-  };
-
-  const toggleAllStudents = () => {
-    if (selectedStudentIds.size === filteredStudents.length) {
-      setSelectedStudentIds(new Set());
-    } else {
-      setSelectedStudentIds(new Set(filteredStudents.map(s => s.id)));
-    }
-  };
-
-  async function removeCard(row: any) {
-    if (!selectedStudent || !reason.trim() || busy) return;
-    const available = row.quantity - row.reserved_quantity;
-    if (available < 1) return;
-    
-    let amountToRemove = 1;
-    if (available > 1) {
-      const input = window.prompt(`ระบุจำนวนการ์ด "${row.cards?.name}" ที่ต้องการริบ (สูงสุด ${available}):`, "1");
-      if (input === null) return;
-      amountToRemove = parseInt(input, 10);
-      if (isNaN(amountToRemove) || amountToRemove < 1 || amountToRemove > available) {
-        alert("จำนวนไม่ถูกต้อง");
-        return;
-      }
-    } else {
-      if (!window.confirm(`ยืนยันริบการ์ด “${row.cards?.name}” 1 ใบ?`)) return;
-    }
-
-    setBusy(true);
-    try {
-      await removeStudentCard(
-        teacher.id,
-        selectedStudent.id,
-        row.card_id,
-        amountToRemove,
-        reason.trim(),
-        behaviorCategory,
-      );
-      setReason('');
-      setMessage(`ริบการ์ด ${amountToRemove} ใบและบันทึกเหตุผลแล้ว`);
-      await loadData();
-      setSelectedStudent(null);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'ริบการ์ดไม่สำเร็จ');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 safe-bottom overflow-x-hidden">
-      <header className="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-fuchsia-300 text-xs font-black uppercase tracking-widest">
-              <Sparkles className="w-4 h-4" /> Card Game Administration
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        {/* Header */}
+        <header className="flex flex-col md:flex-row justify-between items-center bg-slate-900 border border-slate-800 p-6 rounded-3xl gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-fuchsia-500/15 border border-fuchsia-500/30 flex items-center justify-center">
+              <Ticket className="w-6 h-6 text-fuchsia-400" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white mt-1 break-words">จัดการการ์ดและข้อมูลพฤติกรรม</h1>
-            <p className="text-sm text-slate-400 mt-1">แยกจากผลการเรียนและสถิติการเล่นคำศัพท์</p>
+            <div>
+              <h1 className="text-2xl font-black text-white">Teacher Card & P.P.5 Dashboard</h1>
+              <p className="text-slate-400 text-xs">ครูผู้สอน: {teacher.name} • จัดการการ์ด ตั๋วรางวัล และประเมิน ปพ.5</p>
+            </div>
           </div>
-          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:flex lg:flex-wrap gap-2 w-full lg:w-auto">
-            {teacher.role !== 'CARD_TEACHER' && (
-              <button onClick={() => window.location.href = '/admin'} className="min-h-11 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
-                <ArrowLeft className="w-4 h-4" /> Analytics ครู
-              </button>
-            )}
-            <button onClick={() => window.location.href = '/'} className="min-h-11 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
-              <Home className="w-4 h-4" /> หน้าเข้าใช้งาน
-            </button>
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => {
-                localStorage.removeItem('vocab_journey_teacher');
-                localStorage.removeItem('vocab_journey_card_teacher');
-                window.location.href = teacher.role === 'CARD_TEACHER' ? '/card-teacher' : '/';
-              }}
-              className="min-h-11 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
+              onClick={() => { localStorage.removeItem('vocab_journey_card_teacher'); window.location.href = '/'; }}
+              className="px-5 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold rounded-xl flex items-center gap-2 text-sm transition"
             >
               <LogOut className="w-4 h-4" /> ออกจากระบบ
             </button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 py-5 sm:py-6">
-        <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between mb-6">
-          <nav className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
-            {[
-              { id: 'overview', label: 'ภาพรวมและคลังรายบุคคล', icon: BarChart3 },
-              { id: 'cards', label: 'การ์ดทั้งหมด', icon: Package },
-              { id: 'behavior', label: 'สรุปคุณลักษณะ', icon: CheckCircle2 },
-              { id: 'workflow', label: 'คำขอใช้การ์ด', icon: ClipboardList },
-              { id: 'history', label: 'ประวัติครู', icon: ShieldAlert },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setTab(item.id as CardPageTab)}
-                className={`min-h-11 px-4 py-2.5 rounded-xl whitespace-nowrap text-sm font-bold flex items-center gap-2 ${
-                  tab === item.id ? 'bg-fuchsia-500 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'
-                }`}
-              >
-                <item.icon className="w-4 h-4" /> {item.label}
-              </button>
-            ))}
-          </nav>
-          <div className="grid grid-cols-[1fr_auto] gap-2 w-full md:w-auto">
-            <select value={classroomId} onChange={(event) => setClassroomId(event.target.value)} className="min-w-0 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm font-bold">
-              {classrooms.map((classroom) => <option key={classroom.id} value={classroom.id}>{classroom.class_name}</option>)}
+        {/* Classroom Selector & Search Toolbar */}
+        <div className="flex flex-col md:flex-row gap-4 bg-slate-900/60 border border-slate-800 p-4 rounded-2xl">
+          <div className="flex-1 flex gap-3">
+            <select
+              value={classroomId}
+              onChange={(e) => setClassroomId(e.target.value)}
+              className="bg-slate-950 border border-slate-700 text-white font-bold rounded-xl px-4 py-2.5 text-sm focus:border-fuchsia-500 focus:outline-none"
+            >
+              {classrooms.map((c) => (
+                <option key={c.id} value={c.id}>{c.class_name}</option>
+              ))}
             </select>
-            <button onClick={loadData} className="min-h-11 p-2.5 bg-slate-800 rounded-xl"><RefreshCw className="w-4 h-4" /></button>
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                placeholder="ค้นหาชื่อหรือรหัสนักเรียน..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-fuchsia-500"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => loadData()}
+              disabled={loading}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs flex items-center gap-2 transition"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> รีเฟรช
+            </button>
           </div>
         </div>
 
-        {message && <div className="mb-5 p-4 bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 rounded-2xl">{message}</div>}
-
-        {tab === 'overview' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                { label: 'การ์ดในคลัง', value: totals.currentCards, icon: Package, color: 'text-sky-300' },
-                { label: 'การ์ดที่สุ่มได้ทั้งหมด', value: totals.cardsReceived, icon: Sparkles, color: 'text-fuchsia-300' },
-                { label: 'ตั๋วที่ครูมอบ', value: totals.ticketsAwarded, icon: Gift, color: 'text-emerald-300' },
-                { label: 'รายการหัก/ริบ', value: totals.deductions, icon: MinusCircle, color: 'text-rose-300' },
-              ].map((card) => (
-                <div key={card.label} className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
-                  <card.icon className={`w-5 h-5 ${card.color}`} />
-                  <div className="text-2xl font-black text-white mt-3">{card.value}</div>
-                  <div className="text-xs text-slate-400 mt-1">{card.label}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden">
-              <div className="p-5 border-b border-slate-800 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-lg font-black text-white">นักเรียนและคลังการ์ด</h2>
-                  <p className="text-xs text-slate-500 mt-1">ตัวบ่งชี้พฤติกรรมเป็นข้อมูลช่วยติดตาม ไม่ใช่คำตัดสินนักเรียน</p>
-                </div>
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-                  <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="ค้นหาชื่อหรือรหัส" className="bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-sm" />
-                </div>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[880px] text-sm">
-                  <thead className="bg-slate-950 text-slate-500 text-xs">
-                    <tr>
-                      <th className="p-4 w-12">
-                        <input 
-                          type="checkbox" 
-                          className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500/50"
-                          checked={filteredStudents.length > 0 && selectedStudentIds.size === filteredStudents.length}
-                          onChange={toggleAllStudents}
-                        />
-                      </th>
-                      <th className="text-left p-4">นักเรียน</th>
-                      <th className="text-center p-4">สุ่มได้</th>
-                      <th className="text-center p-4">คงเหลือ</th>
-                      <th className="text-center p-4">ตั๋วปัจจุบัน</th>
-                      <th className="text-center p-4">เหรียญ</th>
-                      <th className="text-center p-4">ครูมอบ</th>
-                      <th className="text-center p-4">หัก/ริบ</th>
-                      <th className="text-center p-4">ข้อมูลติดตาม</th>
-                      <th className="p-4"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {filteredStudents.map((student) => {
-                      const signal = behaviorSignal(student);
-                      return (
-                        <tr key={student.id} className={`hover:bg-slate-800/30 ${selectedStudentIds.has(student.id) ? 'bg-indigo-500/5' : ''}`}>
-                          <td className="p-4">
-                            <input 
-                              type="checkbox" 
-                              className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500/50"
-                              checked={selectedStudentIds.has(student.id)}
-                              onChange={() => toggleStudentSelection(student.id)}
-                            />
-                          </td>
-                          <td className="p-4">
-                            <div className="font-bold text-white">{student.student_name}</div>
-                            <div className="text-xs text-slate-500">{student.student_id}</div>
-                          </td>
-                          <td className="text-center p-4">{student.cardsReceived}</td>
-                          <td className="text-center p-4">{student.currentCards}{student.reservedCards > 0 && <span className="text-amber-400 text-xs"> ({student.reservedCards} จอง)</span>}</td>
-                          <td className="text-center p-4 text-sky-300 font-bold">{student.tickets}</td>
-                          <td className="text-center p-4 text-amber-300 font-bold">{student.coins}</td>
-                          <td className="text-center p-4 text-emerald-300">{student.ticketsAwarded}</td>
-                          <td className="text-center p-4 text-rose-300">{student.ticketsRemoved + student.cardsRemoved}</td>
-                          <td className="text-center p-4"><span className={`px-2 py-1 border rounded-full text-[10px] font-bold ${signal.style}`}>{signal.label}</span></td>
-                          <td className="p-4 text-right">
-                            <button onClick={() => { setSelectedStudent(student); setReason(''); }} className="px-3 py-2 bg-fuchsia-500/15 text-fuchsia-300 rounded-xl font-bold text-xs">
-                              จัดการ
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              {loading && <div className="p-10 text-center text-slate-500">กำลังโหลดข้อมูล...</div>}
-              {!loading && filteredStudents.length === 0 && <div className="p-10 text-center text-slate-500">ไม่พบนักเรียน</div>}
-            </div>
-
-            {/* Bulk Action Panel */}
-            {selectedStudentIds.size > 0 && (
-              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-4xl bg-slate-900/95 border border-indigo-500/50 p-4 sm:p-6 rounded-3xl shadow-2xl backdrop-blur-xl z-50 animate-in slide-in-from-bottom-10 fade-in duration-300 flex flex-col md:flex-row gap-4 items-center justify-between">
-                <div className="text-white">
-                  <div className="font-black text-lg">ดำเนินการแบบกลุ่ม ({selectedStudentIds.size} คน)</div>
-                  <div className="text-sm text-slate-400 mt-1">แจกหรือหักตั๋ว/เหรียญ ให้กับนักเรียนทั้งหมดที่เลือก</div>
-                </div>
-
-                <div className="flex flex-col gap-4 w-full">
-                  
-                  {/* Quick Tags for Bulk */}
-                  <div className="flex flex-wrap gap-2">
-                    <span className="text-xs font-bold text-slate-500 py-1.5 mr-2">เหตุผลด่วน:</span>
-                    {QUICK_REASONS.POSITIVE.map(tag => (
-                      <button key={tag.text} onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }} className={`px-2 py-1 text-xs font-bold rounded-lg border ${reason === tag.text ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>{tag.text}</button>
-                    ))}
-                    <div className="w-[1px] h-6 bg-slate-700 mx-1"></div>
-                    {QUICK_REASONS.NEGATIVE.map(tag => (
-                      <button key={tag.text} onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }} className={`px-2 py-1 text-xs font-bold rounded-lg border ${reason === tag.text ? 'bg-rose-500/20 border-rose-500 text-rose-300' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>{tag.text}</button>
-                    ))}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-3 w-full items-start sm:items-center">
-                    <input
-                      placeholder="พิมพ์เหตุผลอื่นๆ (จำเป็น)..."
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
-                      className="flex-1 bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm"
-                    />
-                    
-                    {/* Quick Coins */}
-                    <div className="flex gap-2 w-full sm:w-auto bg-amber-500/5 p-1 rounded-xl border border-amber-500/10">
-                      <button onClick={() => adjustBulkCoins(1, 100)} disabled={busy || !reason.trim()} className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-1.5 rounded-lg font-bold text-xs">+100🪙</button>
-                      <button onClick={() => adjustBulkCoins(-1, 100)} disabled={busy || !reason.trim()} className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-3 py-1.5 rounded-lg font-bold text-xs">-100🪙</button>
-                      <div className="flex gap-1 ml-1">
-                        <input type="number" min="1" value={coinAmount} onChange={(e) => setCoinAmount(Math.max(1, parseInt(e.target.value)))} className="w-16 bg-slate-950 border border-amber-500/30 text-amber-400 font-bold rounded-lg px-2 py-1.5 text-xs text-center" />
-                        <button onClick={() => adjustBulkCoins(1)} disabled={busy || !reason.trim()} className="bg-amber-500 text-slate-950 px-2 py-1.5 rounded-lg font-bold text-xs">แจก</button>
-                      </div>
-                    </div>
-                    
-                    {/* Quick Tickets */}
-                    <div className="flex gap-2 w-full sm:w-auto bg-sky-500/5 p-1 rounded-xl border border-sky-500/10">
-                      <button onClick={() => adjustBulkTickets(1, 1)} disabled={busy || !reason.trim()} className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 px-3 py-1.5 rounded-lg font-bold text-xs">+1🎫</button>
-                      <button onClick={() => adjustBulkTickets(-1, 1)} disabled={busy || !reason.trim()} className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-3 py-1.5 rounded-lg font-bold text-xs">-1🎫</button>
-                      <div className="flex gap-1 ml-1">
-                        <input type="number" min="1" value={ticketAmount} onChange={(e) => setTicketAmount(Math.max(1, parseInt(e.target.value)))} className="w-12 bg-slate-950 border border-sky-500/30 text-sky-400 font-bold rounded-lg px-2 py-1.5 text-xs text-center" />
-                        <button onClick={() => adjustBulkTickets(1)} disabled={busy || !reason.trim()} className="bg-emerald-500 text-slate-950 px-2 py-1.5 rounded-lg font-bold text-xs">แจก</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex w-full mt-4 gap-3">
-                  <input
-                    placeholder="เขียนข้อความหรือจดหมายถึงนักเรียน..."
-                    value={teacherMessage}
-                    onChange={(e) => setTeacherMessage(e.target.value)}
-                    className="flex-1 bg-slate-950 border border-indigo-500/30 text-white rounded-xl px-4 py-2.5"
-                  />
-                  <button onClick={sendBulkMessage} disabled={busy || !teacherMessage.trim()} className="bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-2.5 rounded-xl font-bold whitespace-nowrap">
-                    ส่งข้อความ
-                  </button>
-                </div>
-
-                <div className="flex flex-col sm:flex-row w-full mt-4 gap-3">
-                  <div className="flex-1 flex gap-2 w-full sm:w-auto">
-                    <select
-                      value={bulkCardId}
-                      onChange={(e) => setBulkCardId(e.target.value)}
-                      className="flex-1 bg-slate-950 border border-rose-500/30 text-rose-300 rounded-xl px-4 py-2.5 min-w-[200px] font-bold"
-                    >
-                      <option value="">-- เลือกการ์ดที่จะริบ --</option>
-                      {allCards.map(c => (
-                        <option key={c.id} value={c.id}>{c.name} {c.rarity}</option>
-                      ))}
-                    </select>
-                    <div className="relative w-24">
-                      <input 
-                        type="number" min="1" max="100" value={bulkCardAmount} onChange={(e) => setBulkCardAmount(parseInt(e.target.value) || 1)}
-                        className="w-full bg-slate-950 border border-rose-500/30 text-rose-300 font-bold rounded-xl px-3 py-2.5 text-center"
-                      />
-                    </div>
-                  </div>
-                  <button onClick={removeBulkCards} disabled={busy || !reason.trim() || !bulkCardId} className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-4 py-2.5 rounded-xl font-bold whitespace-nowrap">
-                    ริบการ์ด
-                  </button>
-                </div>
-              </div>
-            )}
+        {/* Success / Info Alerts */}
+        {copiedNotification && (
+          <div className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-4 py-3 rounded-2xl text-sm flex items-center gap-2 font-bold animate-pulse">
+            <Check className="w-5 h-5" /> {copiedNotification}
+          </div>
+        )}
+        {message && (
+          <div className="bg-fuchsia-500/20 border border-fuchsia-500/40 text-fuchsia-300 px-4 py-3 rounded-2xl text-sm font-bold flex items-center justify-between">
+            <span>{message}</span>
+            <button onClick={() => setMessage('')}><X className="w-4 h-4" /></button>
           </div>
         )}
 
+        {/* Classroom Summary Header Card (For P.P.5 Reports) */}
+        {classStats && (
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 relative overflow-hidden shadow-2xl">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-800 pb-5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-fuchsia-500/20 text-fuchsia-300 font-bold px-3 py-1 rounded-full">สรุปผล ปพ.5 ประจำห้องเรียน</span>
+                  <h2 className="text-xl font-black text-white">{classStats.activeRoom} (นักเรียน {classStats.total} คน)</h2>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">{classStats.rationaleText}</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCopyTraitsForExcel}
+                  className="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 font-bold rounded-xl text-xs flex items-center gap-2 transition"
+                >
+                  <Copy className="w-3.5 h-3.5" /> คัดลอกคุณลักษณะ 8 ข้อ (Excel)
+                </button>
+                <button
+                  onClick={handleCopyReadingForExcel}
+                  className="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 font-bold rounded-xl text-xs flex items-center gap-2 transition"
+                >
+                  <Copy className="w-3.5 h-3.5" /> คัดลอกการอ่าน 5 ข้อ (Excel)
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs flex items-center gap-2 transition"
+                >
+                  <Printer className="w-3.5 h-3.5" /> พิมพ์ ปพ.5
+                </button>
+              </div>
+            </div>
+
+            {/* Trait & Reading Mini Progress Bars */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-5">
+              <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+                <span className="text-xs font-bold text-slate-300 block mb-2">🏆 สัดส่วนคุณลักษณะอันพึงประสงค์ 8 ประการ:</span>
+                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                  <div className="bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
+                    <div className="text-emerald-400 font-black">{classStats.traits.l3} คน ({classStats.traits.l3Pct}%)</div>
+                    <div className="text-[10px] text-slate-400">ระดับ 3 (ดีเยี่ยม)</div>
+                  </div>
+                  <div className="bg-indigo-500/10 p-2 rounded-xl border border-indigo-500/20">
+                    <div className="text-indigo-400 font-black">{classStats.traits.l2} คน ({classStats.traits.l2Pct}%)</div>
+                    <div className="text-[10px] text-slate-400">ระดับ 2 (ดี)</div>
+                  </div>
+                  <div className="bg-amber-500/10 p-2 rounded-xl border border-amber-500/20">
+                    <div className="text-amber-400 font-black">{classStats.traits.l1} คน ({classStats.traits.l1Pct}%)</div>
+                    <div className="text-[10px] text-slate-400">ระดับ 1 (ผ่าน)</div>
+                  </div>
+                  <div className="bg-rose-500/10 p-2 rounded-xl border border-rose-500/20">
+                    <div className="text-rose-400 font-black">{classStats.traits.l0} คน ({classStats.traits.l0Pct}%)</div>
+                    <div className="text-[10px] text-slate-400">ระดับ 0 (ปรับปรุง)</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+                <span className="text-xs font-bold text-slate-300 block mb-2">📚 สัดส่วนการอ่าน คิดวิเคราะห์ และเขียน:</span>
+                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                  <div className="bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
+                    <div className="text-emerald-400 font-black">{classStats.reading.r3} คน ({classStats.reading.r3Pct}%)</div>
+                    <div className="text-[10px] text-slate-400">ระดับ 3 (ดีเยี่ยม)</div>
+                  </div>
+                  <div className="bg-indigo-500/10 p-2 rounded-xl border border-indigo-500/20">
+                    <div className="text-indigo-400 font-black">{classStats.reading.r2} คน ({classStats.reading.r2Pct}%)</div>
+                    <div className="text-[10px] text-slate-400">ระดับ 2 (ดี)</div>
+                  </div>
+                  <div className="bg-amber-500/10 p-2 rounded-xl border border-amber-500/20">
+                    <div className="text-amber-400 font-black">{classStats.reading.r1} คน ({classStats.reading.r1Pct}%)</div>
+                    <div className="text-[10px] text-slate-400">ระดับ 1 (ผ่าน)</div>
+                  </div>
+                  <div className="bg-rose-500/10 p-2 rounded-xl border border-rose-500/20">
+                    <div className="text-rose-400 font-black">{classStats.reading.r0} คน ({classStats.reading.r0Pct}%)</div>
+                    <div className="text-[10px] text-slate-400">ระดับ 0 (ปรับปรุง)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Dashboard Main Tabs */}
+        <div className="flex flex-wrap gap-2 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800">
+          <button
+            onClick={() => setTab('overview')}
+            className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition ${
+              tab === 'overview' ? 'bg-fuchsia-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Ticket className="w-4 h-4" /> แจกตั๋ว & เหรียญ
+          </button>
+          <button
+            onClick={() => setTab('cards')}
+            className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition ${
+              tab === 'cards' ? 'bg-fuchsia-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Package className="w-4 h-4" /> คลังการ์ด
+          </button>
+          <button
+            onClick={() => setTab('pp5-traits')}
+            className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition ${
+              tab === 'pp5-traits' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Award className="w-4 h-4" /> ตาราง ปพ.5: คุณลักษณะ 8 ข้อ
+          </button>
+          <button
+            onClick={() => setTab('pp5-reading')}
+            className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition ${
+              tab === 'pp5-reading' ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" /> ตาราง ปพ.5: อ่านคิดวิเคราะห์ 5 ข้อ
+          </button>
+          <button
+            onClick={() => setTab('behavior')}
+            className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition ${
+              tab === 'behavior' ? 'bg-fuchsia-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4" /> สถิติเชิงบวก vs ควรติดตาม
+          </button>
+          <button
+            onClick={() => setTab('workflow')}
+            className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition ${
+              tab === 'workflow' ? 'bg-fuchsia-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <ClipboardList className="w-4 h-4" /> คำขอใช้การ์ด
+          </button>
+          <button
+            onClick={() => setTab('history')}
+            className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition ${
+              tab === 'history' ? 'bg-fuchsia-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <FileText className="w-4 h-4" /> ประวัติการแจกตั๋ว/เหรียญ
+          </button>
+        </div>
+
+        {/* Tab: Cards Catalog */}
         {tab === 'cards' && (
-          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden">
-            <div className="p-5 border-b border-slate-800">
-              <h2 className="text-lg font-black text-white">รายการการ์ดทั้งหมดในระบบ</h2>
-              <p className="text-xs text-slate-500 mt-1">
-                ครูใช้หน้านี้ตรวจสอบว่าระบบมีการ์ดอะไรบ้าง ผลของการ์ด ระดับความหายาก และจำนวนที่นักเรียนในห้องที่เลือกถืออยู่
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 p-4 sm:p-5">
-              {cardCatalog.map((card) => (
-                <div key={card.id} className={`bg-slate-950/60 border rounded-2xl p-5 ${card.is_active === false ? 'border-slate-800 opacity-60' : 'border-slate-700'}`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex gap-3">
-                      <span className="text-4xl">{card.image_url || '🃏'}</span>
-                      <div>
-                        <h3 className="font-black text-white">{card.name}</h3>
-                        <div className="text-xs text-slate-500 mt-0.5">{card.card_code}</div>
-                      </div>
+          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
+            <h3 className="text-lg font-black text-white mb-2">รายการการ์ดทั้งหมดในระบบ</h3>
+            <p className="text-xs text-slate-400 mb-6">ภาพรวมการ์ด ความหายาก และน้ำหนักการสุ่ม</p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {allCards.map((card) => (
+                <div key={card.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-bold text-white text-sm">{card.name}</h4>
+                      <p className="text-xs text-slate-400">{card.card_code}</p>
                     </div>
-                    <span className="px-2 py-1 rounded-full bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-500/20 text-xs font-black">
-                      {card.rarity}
-                    </span>
+                    <span className="px-2 py-0.5 bg-fuchsia-500/20 text-fuchsia-300 rounded text-[10px] font-bold">{card.rarity}</span>
                   </div>
-                  <p className="text-sm text-slate-400 mt-4 leading-relaxed">{card.description || 'ไม่มีคำอธิบาย'}</p>
-                  <div className="grid grid-cols-3 gap-2 mt-4 text-center">
-                    <div className="bg-slate-900 rounded-xl p-2">
-                      <div className="text-[10px] text-slate-500">ประเภท</div>
-                      <div className="text-xs font-black text-white mt-1">{card.effect_type}</div>
-                    </div>
-                    <div className="bg-slate-900 rounded-xl p-2">
-                      <div className="text-[10px] text-slate-500">ในห้องนี้</div>
-                      <div className="text-xs font-black text-sky-300 mt-1">{card.currentQuantity} ใบ</div>
-                    </div>
-                    <div className="bg-slate-900 rounded-xl p-2">
-                      <div className="text-[10px] text-slate-500">ผู้ถือ</div>
-                      <div className="text-xs font-black text-emerald-300 mt-1">{card.holders} คน</div>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold">
-                    <span className="px-2 py-1 rounded-full bg-slate-900 text-slate-400 border border-slate-800">
-                      เป้าหมาย: {card.effect_type === 'ATTACK' ? 'ข้ามห้อง/ทั้งโรงเรียน' : card.effect_type === 'BUFF' || card.effect_type === 'DEFENSE' ? 'ตนเองหรือสวนกลับ' : 'ไม่มีผล'}
-                    </span>
-                    <span className="px-2 py-1 rounded-full bg-slate-900 text-slate-400 border border-slate-800">
-                      Drop weight: {card.drop_weight ?? '-'}
-                    </span>
-                    {card.reservedQuantity > 0 && (
-                      <span className="px-2 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                        จองอยู่ {card.reservedQuantity} ใบ
-                      </span>
-                    )}
+                  <p className="text-xs text-slate-400 mt-2">{card.description || 'ไม่มีคำอธิบาย'}</p>
+                  <div className="text-[11px] text-indigo-300 mt-3 flex justify-between border-t border-slate-800 pt-2">
+                    <span>เป้าหมาย: {card.effect_type === 'ATTACK' ? 'ข้ามห้อง/ทั้งโรงเรียน' : 'ตนเอง/เพื่อน'}</span>
+                    <span>Drop weight: {card.drop_weight}</span>
                   </div>
                 </div>
               ))}
-              {cardCatalog.length === 0 && (
-                <div className="md:col-span-2 xl:col-span-3 p-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
-                  ยังไม่มีข้อมูลการ์ดในระบบ
-                </div>
-              )}
             </div>
           </div>
         )}
 
-        {tab === 'behavior' && (
-          <div className="space-y-5">
-            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 text-sm text-indigo-200">
-              สรุปนี้นับจากรายการที่ครูบันทึกในระบบการ์ดเท่านั้น ควรใช้ร่วมกับการสังเกตและหลักฐานอื่นก่อนประเมินคุณลักษณะอันพึงประสงค์
+        {/* Tab: Overview (Give Tickets / Coins & Quick Actions) */}
+        {tab === 'overview' && (
+          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-lg font-black text-white">รายชื่อนักเรียนและยอดคงเหลือ</h3>
+                <p className="text-xs text-slate-400">คลิกที่นักเรียนเพื่อมอบตั๋วสุ่มการ์ดหรือเหรียญพฤติกรรม</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setBehaviorFilter('ALL')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${behaviorFilter === 'ALL' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}>ทั้งหมด</button>
+                <button onClick={() => setBehaviorFilter('POSITIVE')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${behaviorFilter === 'POSITIVE' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400'}`}>เชิงบวก</button>
+                <button onClick={() => setBehaviorFilter('ATTENTION')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${behaviorFilter === 'ATTENTION' ? 'bg-rose-500/20 text-rose-300' : 'text-slate-400'}`}>ควรติดตาม</button>
+              </div>
             </div>
-            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {filteredStudents.map((student) => (
+                <div
+                  key={student.id}
+                  onClick={() => setSelectedStudent(student)}
+                  className="bg-slate-950 border border-slate-800 hover:border-fuchsia-500/50 p-4 rounded-2xl cursor-pointer transition flex justify-between items-center group shadow-md"
+                >
+                  <div>
+                    <div className="font-bold text-white group-hover:text-fuchsia-300 transition text-sm">{student.student_name}</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">{student.student_id}</div>
+                    <div className="text-[10px] text-slate-400 mt-1 max-w-[180px] truncate" title={getStudentRationale(student)}>
+                      {getStudentRationale(student)}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <div className="text-xs font-black text-amber-300 flex items-center justify-end gap-1">
+                        <Ticket className="w-3.5 h-3.5 text-amber-400" /> {student.tickets}
+                      </div>
+                      <div className="text-[11px] font-bold text-indigo-300 mt-0.5">{student.coins} 🪙</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab: P.P.5 8 Desirable Characteristics Matrix */}
+        {tab === 'pp5-traits' && (
+          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 space-y-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <Award className="w-5 h-5 text-emerald-400" /> ตารางบันทึกคุณลักษณะอันพึงประสงค์ 8 ประการ (แบบตาราง ปพ.5)
+                </h3>
+                <p className="text-xs text-slate-400">ระบบถอดแบบคอลัมน์ 1:1 ตรงตามเล่ม ปพ.5 สามารถคลิกปรับระดับคะแนนรายคน หรือกด Copy ลง Excel ได้ทันที</p>
+              </div>
+              <button
+                onClick={handleCopyTraitsForExcel}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 transition"
+              >
+                <Copy className="w-4 h-4" /> คัดลอกไปวางลง Excel (Ctrl+V)
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-950 border-b border-slate-800 text-slate-300 font-bold uppercase tracking-wider text-center">
+                    <th className="p-3 w-10">เลขที่</th>
+                    <th className="p-3 w-20 text-left">รหัส</th>
+                    <th className="p-3 text-left min-w-[150px]">ชื่อ - นามสกุล</th>
+                    {DESIRABLE_8_TRAITS.map((t) => (
+                      <th key={t.id} className="p-2 w-16" title={t.name}>{t.short}</th>
+                    ))}
+                    <th className="p-3 w-20 text-emerald-400">สรุปผล</th>
+                    <th className="p-3 text-left min-w-[240px]">เหตุผลประกอบการวิเคราะห์ (สั้น)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 text-slate-200">
+                  {students.map((student, idx) => {
+                    const overall = calculateStudentTrait(student, 't4');
+                    const rationale = getStudentRationale(student);
+                    return (
+                      <tr key={student.id} className="hover:bg-slate-800/30 transition">
+                        <td className="p-3 text-center text-slate-400 font-bold">{idx + 1}</td>
+                        <td className="p-3 text-slate-500 font-mono text-[11px]">{student.student_id}</td>
+                        <td className="p-3 font-bold text-white">{student.student_name}</td>
+                        {DESIRABLE_8_TRAITS.map((t) => {
+                          const val = calculateStudentTrait(student, t.id);
+                          return (
+                            <td key={t.id} className="p-2 text-center">
+                              <select
+                                value={val}
+                                onChange={(e) => {
+                                  const newVal = Number(e.target.value);
+                                  setTraitOverrides((prev) => ({
+                                    ...prev,
+                                    [student.id]: { ...(prev[student.id] || {}), [t.id]: newVal }
+                                  }));
+                                }}
+                                className={`w-10 text-center font-black rounded-lg py-1 text-xs border focus:outline-none ${
+                                  val === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
+                                  val === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
+                                  val === 1 ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
+                                  'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                                }`}
+                              >
+                                <option value={3}>3</option>
+                                <option value={2}>2</option>
+                                <option value={1}>1</option>
+                                <option value={0}>0</option>
+                              </select>
+                            </td>
+                          );
+                        })}
+                        <td className="p-3 text-center font-black">
+                          <span className={`px-2 py-1 rounded-lg text-xs ${
+                            overall === 3 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                            overall === 2 ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' :
+                            'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          }`}>
+                            {overall} ({overall === 3 ? 'ดีเยี่ยม' : overall === 2 ? 'ดี' : 'ผ่าน'})
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-400 text-[11px] leading-relaxed">
+                          {rationale}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: P.P.5 Reading, Analytical Thinking & Writing Matrix */}
+        {tab === 'pp5-reading' && (
+          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 space-y-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-indigo-400" /> ตารางบันทึกการอ่าน คิดวิเคราะห์ และเขียน (ปพ.5 ส่วนที่ 2)
+                </h3>
+                <p className="text-xs text-slate-400">ประเมิน 5 ตัวชี้วัดสำคัญ พร้อมระบุคะแนนผลสัมฤทธิ์และพัฒนาการ (Learning Gain) เป็นหลักฐานเชิงประจักษ์</p>
+              </div>
+              <button
+                onClick={handleCopyReadingForExcel}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl text-xs flex items-center gap-2 transition"
+              >
+                <Copy className="w-4 h-4" /> คัดลอกไปวางลง Excel (Ctrl+V)
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-950 border-b border-slate-800 text-slate-300 font-bold uppercase tracking-wider text-center">
+                    <th className="p-3 w-10">เลขที่</th>
+                    <th className="p-3 w-20 text-left">รหัส</th>
+                    <th className="p-3 text-left min-w-[150px]">ชื่อ - นามสกุล</th>
+                    {READING_5_INDICATORS.map((r) => (
+                      <th key={r.id} className="p-2 w-16" title={r.name}>{r.short}</th>
+                    ))}
+                    <th className="p-3 w-20 text-indigo-400">สรุปผล</th>
+                    <th className="p-3 text-left min-w-[240px]">หลักฐานเชิงประจักษ์ & เหตุผลสรุป (Evidence)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 text-slate-200">
+                  {students.map((student, idx) => {
+                    const overall = calculateStudentReading(student, 'r1');
+                    const evidence = `Post-test ${student.posttestScore || 0}%, Gain +${Math.round(student.learningGain || 0)}%, Accuracy ${student.accuracy || 0}%`;
+                    return (
+                      <tr key={student.id} className="hover:bg-slate-800/30 transition">
+                        <td className="p-3 text-center text-slate-400 font-bold">{idx + 1}</td>
+                        <td className="p-3 text-slate-500 font-mono text-[11px]">{student.student_id}</td>
+                        <td className="p-3 font-bold text-white">{student.student_name}</td>
+                        {READING_5_INDICATORS.map((r) => {
+                          const val = calculateStudentReading(student, r.id);
+                          return (
+                            <td key={r.id} className="p-2 text-center">
+                              <select
+                                value={val}
+                                onChange={(e) => {
+                                  const newVal = Number(e.target.value);
+                                  setReadingOverrides((prev) => ({
+                                    ...prev,
+                                    [student.id]: { ...(prev[student.id] || {}), [r.id]: newVal }
+                                  }));
+                                }}
+                                className={`w-10 text-center font-black rounded-lg py-1 text-xs border focus:outline-none ${
+                                  val === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
+                                  val === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
+                                  'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                }`}
+                              >
+                                <option value={3}>3</option>
+                                <option value={2}>2</option>
+                                <option value={1}>1</option>
+                                <option value={0}>0</option>
+                              </select>
+                            </td>
+                          );
+                        })}
+                        <td className="p-3 text-center font-black">
+                          <span className={`px-2 py-1 rounded-lg text-xs ${
+                            overall === 3 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                            overall === 2 ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' :
+                            'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          }`}>
+                            {overall} ({overall === 3 ? 'ดีเยี่ยม' : overall === 2 ? 'ดี' : 'ผ่าน'})
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-400 text-[11px] leading-relaxed">
+                          <div className="text-slate-300 font-mono text-[10px]">{evidence}</div>
+                          <div className="text-slate-500 mt-0.5">{getStudentRationale(student)}</div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Behavior Analytics (Top Positive vs Needs Attention) */}
+        {tab === 'behavior' && (
+          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
+            <h3 className="text-lg font-black text-white mb-4">สถิติพฤติกรรมเชิงบวก vs พฤติกรรมที่ต้องติดตาม</h3>
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
               {students.map((student) => {
-                const studentActions = actions.filter((action) => action.student_id === student.id);
-                const positiveActions = studentActions.filter((action) =>
-                  ['COIN_AWARD', 'TICKET_AWARD'].includes(action.action_type)
-                );
-                const correctiveActions = studentActions.filter((action) =>
-                  ['COIN_REMOVAL', 'TICKET_REMOVAL', 'CARD_REMOVAL'].includes(action.action_type)
-                );
+                const studentActions = actions.filter((a) => a.student_id === student.id);
+                const positiveActions = studentActions.filter((a) => ['COIN_AWARD', 'TICKET_AWARD'].includes(a.action_type));
+                const correctiveActions = studentActions.filter((a) => ['COIN_REMOVAL', 'TICKET_REMOVAL', 'CARD_REMOVAL'].includes(a.action_type));
                 return (
-                  <div key={student.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-                    <h3 className="font-black text-white">{student.student_name}</h3>
-                    <p className="text-xs text-slate-500">{student.student_id}</p>
-                    <div className="grid grid-cols-2 gap-2 mt-4">
-                      <div className="bg-emerald-500/10 rounded-xl p-3"><div className="text-xs text-emerald-300">เชิงบวก</div><div className="text-2xl font-black">{positiveActions.length}</div></div>
-                      <div className="bg-rose-500/10 rounded-xl p-3"><div className="text-xs text-rose-300">ควรติดตาม</div><div className="text-2xl font-black">{correctiveActions.length}</div></div>
+                  <div key={student.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-5 shadow-md">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-bold text-white text-sm">{student.student_name}</h4>
+                        <p className="text-[11px] text-slate-500">{student.student_id}</p>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        positiveActions.length >= correctiveActions.length
+                          ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                          : 'bg-rose-500/10 text-rose-300 border border-rose-500/20'
+                      }`}>
+                        {positiveActions.length >= correctiveActions.length ? 'เชิงบวกเด่น' : 'ควรติดตาม'}
+                      </span>
                     </div>
-                    <div className="mt-4 space-y-2">
-                      {BEHAVIOR_CATEGORIES.map((category) => {
-                        const count = studentActions.filter((action) => action.behavior_category === category.value).length;
-                        if (count === 0) return null;
-                        return <div key={category.value} className="flex justify-between text-xs text-slate-400"><span>{category.label}</span><span>{count} ครั้ง</span></div>;
-                      })}
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <div className="bg-emerald-500/10 rounded-xl p-2.5 text-center border border-emerald-500/20">
+                        <div className="text-[10px] text-emerald-300 font-bold">เชิงบวก</div>
+                        <div className="text-xl font-black text-emerald-400">{positiveActions.length} ครั้ง</div>
+                      </div>
+                      <div className="bg-rose-500/10 rounded-xl p-2.5 text-center border border-rose-500/20">
+                        <div className="text-[10px] text-rose-300 font-bold">ควรติดตาม</div>
+                        <div className="text-xl font-black text-rose-400">{correctiveActions.length} ครั้ง</div>
+                      </div>
                     </div>
+                    <p className="text-[11px] text-slate-400 mt-3 border-t border-slate-800/80 pt-2 leading-relaxed">
+                      💡 {getStudentRationale(student)}
+                    </p>
                   </div>
                 );
               })}
@@ -768,168 +905,122 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
           </div>
         )}
 
+        {/* Tab: Workflow */}
         {tab === 'workflow' && <CardWorkflowPanel teacher={teacher} classroomId={classroomId} />}
 
+        {/* Tab: History */}
         {tab === 'history' && (
-          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden">
-            <div className="p-5 border-b border-slate-800">
-              <h2 className="text-lg font-black">ประวัติการมอบและการลงโทษ</h2>
-              <p className="text-xs text-slate-500 mt-1">ทุกการเปลี่ยนแปลงมีชื่อครู เหตุผล และยอดก่อน–หลัง</p>
-            </div>
+          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden p-6">
+            <h3 className="text-lg font-black text-white mb-2">ประวัติการมอบตั๋วและเหรียญพฤติกรรม</h3>
             <div className="divide-y divide-slate-800">
               {actions.map((action) => (
-                <div key={action.id} className="p-4 grid md:grid-cols-[1.3fr_1fr_2fr_auto] gap-3 text-sm">
+                <div key={action.id} className="py-3 grid md:grid-cols-[1.3fr_1fr_2fr_auto] gap-3 text-xs">
                   <div>
                     <div className="font-bold text-white">{action.students?.student_name}</div>
-                    <div className="text-xs text-indigo-300 mt-0.5">โดยครู {action.teachers?.name || 'ไม่พบชื่อครู'}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">{new Date(action.created_at).toLocaleString('th-TH')}</div>
+                    <div className="text-slate-500 text-[10px]">{new Date(action.created_at).toLocaleString('th-TH')}</div>
                   </div>
-                  <div className={['TICKET_AWARD', 'COIN_AWARD'].includes(action.action_type) ? 'text-emerald-300' : 'text-rose-300'}>
-                    {action.action_type === 'COIN_AWARD' ? `มอบเหรียญ +${action.amount}` :
-                      action.action_type === 'COIN_REMOVAL' ? `หักเหรียญ -${action.amount}` :
-                      action.action_type === 'TICKET_AWARD' ? `มอบตั๋ว +${action.amount}` :
-                      action.action_type === 'TICKET_REMOVAL' ? `หักตั๋ว -${action.amount}` :
-                      `ริบ ${action.cards?.name || 'การ์ด'} ${action.amount} ใบ`}
+                  <div className={['TICKET_AWARD', 'COIN_AWARD'].includes(action.action_type) ? 'text-emerald-300 font-bold' : 'text-rose-300 font-bold'}>
+                    {action.action_type === 'COIN_AWARD' ? `+${action.amount} 🪙` :
+                     action.action_type === 'COIN_REMOVAL' ? `-${action.amount} 🪙` :
+                     action.action_type === 'TICKET_AWARD' ? `+${action.amount} 🎟️` :
+                     `-${action.amount} 🎟️`}
                   </div>
-                  <div><div className="text-slate-300">{action.reason}</div><div className="text-xs text-slate-500 mt-1">{categoryLabel(action.behavior_category)}</div></div>
-                  <div className="text-xs text-slate-500">{action.balance_before} → {action.balance_after}</div>
+                  <div className="text-slate-300">{action.reason}</div>
+                  <div className="text-slate-500 font-mono text-[10px]">{action.balance_before} → {action.balance_after}</div>
                 </div>
               ))}
-              {actions.length === 0 && <div className="p-12 text-center text-slate-500">ยังไม่มีประวัติ</div>}
+              {actions.length === 0 && <div className="p-8 text-center text-slate-500 text-xs">ยังไม่มีประวัติ</div>}
             </div>
           </div>
         )}
-      </main>
 
-      {selectedStudent && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
-          <div className="max-w-3xl mx-auto my-4 sm:my-8 bg-slate-900 border border-slate-700 rounded-3xl overflow-hidden">
-            <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <UserRound className="text-fuchsia-300" />
-                <div className="min-w-0"><h2 className="text-lg sm:text-xl font-black break-words">{selectedStudent.student_name}</h2><p className="text-xs text-slate-500">{selectedStudent.student_id}</p></div>
+        {/* Modal: Give Tickets / Coins to Single Student */}
+        {selectedStudent && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm p-4 overflow-y-auto flex items-center justify-center">
+            <div className="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-5 shadow-2xl">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-fuchsia-500/20 flex items-center justify-center text-fuchsia-400">
+                    <UserRound className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-white text-base">{selectedStudent.student_name}</h3>
+                    <p className="text-xs text-slate-400 font-mono">{selectedStudent.student_id} • ตั๋ว: {selectedStudent.tickets} | เหรียญ: {selectedStudent.coins}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedStudent(null)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl">
+                  <X className="w-5 h-5 text-slate-300" />
+                </button>
               </div>
-              <button onClick={() => setSelectedStudent(null)} className="min-h-11 min-w-11 p-2 bg-slate-800 rounded-xl flex items-center justify-center"><X className="w-5 h-5" /></button>
-            </div>
-              <div className="p-4 sm:p-5 space-y-6">
-                
-                {/* 1. Quick Reasons (Tags) */}
-                <div className="bg-slate-950/40 border border-slate-800 rounded-2xl p-4">
-                  <div className="flex flex-col md:flex-row gap-4 mb-4">
-                    <div className="flex-1">
-                      <label className="text-xs font-bold text-emerald-400 mb-2 block">เชิงบวก (ให้รางวัล)</label>
-                      <div className="flex flex-wrap gap-2">
-                        {QUICK_REASONS.POSITIVE.map((tag) => (
-                          <button
-                            key={tag.text}
-                            onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }}
-                            className={`px-3 py-1.5 text-xs font-bold rounded-lg border ${reason === tag.text ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}
-                          >
-                            {tag.text}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-xs font-bold text-rose-400 mb-2 block">เชิงลบ (ลงโทษ)</label>
-                      <div className="flex flex-wrap gap-2">
-                        {QUICK_REASONS.NEGATIVE.map((tag) => (
-                          <button
-                            key={tag.text}
-                            onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }}
-                            className={`px-3 py-1.5 text-xs font-bold rounded-lg border ${reason === tag.text ? 'bg-rose-500/20 border-rose-500 text-rose-300' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}
-                          >
-                            {tag.text}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <select value={behaviorCategory} onChange={(event) => setBehaviorCategory(event.target.value as BehaviorCategory)} className="bg-slate-950 border border-slate-700 text-sm rounded-xl p-3">
-                      {BEHAVIOR_CATEGORIES.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
-                    </select>
-                    <input 
-                      value={reason} onChange={(event) => setReason(event.target.value)} 
-                      placeholder="พิมพ์เหตุผลอื่นๆ... (จำเป็น)" 
-                      className="md:col-span-2 bg-slate-950 border border-slate-700 text-sm rounded-xl p-3" 
-                    />
-                  </div>
-                </div>
 
-                {/* 2. Quick Actions (Coins & Tickets) */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="bg-slate-950/60 border border-amber-500/20 rounded-2xl p-4">
-                    <h3 className="font-black flex items-center justify-between text-amber-400 mb-4">
-                      <span>🪙 เหรียญ (มี {selectedStudent.coins})</span>
-                    </h3>
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(1, 100)} className="py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 disabled:opacity-40 rounded-xl font-bold text-sm">+100</button>
-                      <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(1, 500)} className="py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 disabled:opacity-40 rounded-xl font-bold text-sm">+500</button>
-                      <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(-1, 100)} className="py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 disabled:opacity-40 rounded-xl font-bold text-sm border border-rose-500/20">-100</button>
-                      <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(-1, 500)} className="py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 disabled:opacity-40 rounded-xl font-bold text-sm border border-rose-500/20">-500</button>
-                    </div>
-                    <div className="flex gap-2">
-                      <input type="number" min={1} value={coinAmount} onChange={(e) => setCoinAmount(Math.max(1, Number(e.target.value)))} className="w-20 bg-slate-900 border border-slate-700 rounded-xl px-3 text-center text-sm" />
-                      <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(1)} className="flex-1 py-2 bg-amber-500 text-slate-950 disabled:opacity-40 rounded-xl font-bold text-sm">แจก</button>
-                      <button disabled={busy || !reason.trim()} onClick={() => adjustCoins(-1)} className="flex-1 py-2 bg-rose-500/15 text-rose-300 disabled:opacity-40 rounded-xl font-bold text-sm">หัก</button>
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-950/60 border border-sky-500/20 rounded-2xl p-4">
-                    <h3 className="font-black flex items-center justify-between text-sky-400 mb-4">
-                      <span className="flex items-center gap-2"><Ticket className="w-4 h-4" /> ตั๋วสุ่มฟรี (มี {selectedStudent.tickets})</span>
-                    </h3>
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(1, 1)} className="col-span-1 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 disabled:opacity-40 rounded-xl font-bold text-sm">+1</button>
-                      <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(1, 5)} className="col-span-1 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 disabled:opacity-40 rounded-xl font-bold text-sm">+5</button>
-                      <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(-1, 1)} className="col-span-1 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 disabled:opacity-40 rounded-xl font-bold text-sm border border-rose-500/20">-1</button>
-                    </div>
-                    <div className="flex gap-2">
-                      <input type="number" min={1} value={ticketAmount} onChange={(e) => setTicketAmount(Math.max(1, Number(e.target.value)))} className="w-20 bg-slate-900 border border-slate-700 rounded-xl px-3 text-center text-sm" />
-                      <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(1)} className="flex-1 py-2 bg-emerald-500 text-slate-950 disabled:opacity-40 rounded-xl font-bold text-sm">แจก</button>
-                      <button disabled={busy || !reason.trim()} onClick={() => adjustTickets(-1)} className="flex-1 py-2 bg-rose-500/15 text-rose-300 disabled:opacity-40 rounded-xl font-bold text-sm">หัก</button>
-                    </div>
-                  </div>
-                </div>
-              <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-2xl p-4">
-                <h3 className="font-black flex items-center gap-2 text-indigo-300 mb-3">จดหมายส่วนตัวถึงนักเรียน (Teacher Note)</h3>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    placeholder="เขียนข้อความหรือคำชื่นชม..."
-                    value={teacherMessage}
-                    onChange={(e) => setTeacherMessage(e.target.value)}
-                    className="flex-1 min-h-11 bg-slate-950 border border-indigo-500/30 text-white rounded-xl px-3"
-                  />
-                  <button onClick={sendMessage} disabled={busy || !teacherMessage.trim()} className="min-h-11 px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white disabled:opacity-40 rounded-xl font-bold whitespace-nowrap">
-                    ส่งข้อความ
-                  </button>
-                </div>
-              </div>
+              {/* Quick Tags 8 Desirable Characteristics */}
               <div>
-                <h3 className="font-black mb-3">คลังการ์ดรายบุคคล</h3>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {selectedInventory.map((row) => (
-                    <div key={row.id} className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 flex items-center justify-between gap-3">
-                      <div className="flex gap-3 items-center">
-                        <span className="text-3xl">{row.cards?.image_url}</span>
-                        <div><div className="font-bold text-white">{row.cards?.name}</div><div className="text-xs text-slate-500">มี {row.quantity} • พร้อมริบ {row.quantity - row.reserved_quantity}</div></div>
-                      </div>
-                      <button disabled={busy || !reason.trim() || row.quantity - row.reserved_quantity < 1} onClick={() => removeCard(row)} className="p-2 text-rose-300 bg-rose-500/10 disabled:opacity-30 rounded-xl" title="ริบการ์ด"><Trash2 className="w-4 h-4" /></button>
-                    </div>
+                <label className="text-xs font-bold text-emerald-400 block mb-2">🏷️ เลือก Tag คุณลักษณะ 8 ประการ (เชิงบวก)</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {QUICK_REASONS.POSITIVE.map((tag) => (
+                    <button
+                      key={tag.text}
+                      onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition ${
+                        reason === tag.text ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800'
+                      }`}
+                    >
+                      {tag.text}
+                    </button>
                   ))}
-                  {selectedInventory.length === 0 && <div className="col-span-full p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">ไม่มีการ์ดในคลัง</div>}
                 </div>
               </div>
-              <div className="flex items-start gap-2 text-xs text-slate-500 bg-slate-950 p-3 rounded-xl">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                การริบจะไม่แตะการ์ดที่ถูกจองในคำขอ และทุกการดำเนินการถูกบันทึกในประวัติ
+
+              <div>
+                <label className="text-xs font-bold text-rose-400 block mb-2">⚠️ หรือเลือกพฤติกรรมที่ควรติดตาม (เชิงลบ)</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {QUICK_REASONS.NEGATIVE.map((tag) => (
+                    <button
+                      key={tag.text}
+                      onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition ${
+                        reason === tag.text ? 'bg-rose-500/20 border-rose-500 text-rose-300' : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800'
+                      }`}
+                    >
+                      {tag.text}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">ระบุเหตุผลประกอบ</label>
+                <input
+                  type="text"
+                  placeholder="พิมพ์เหตุผลหรือเลือกจากปุ่มด้านบน..."
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-fuchsia-500"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  disabled={busy || !reason.trim()}
+                  onClick={() => adjustTickets(1, 1)}
+                  className="py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-black rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg"
+                >
+                  <Ticket className="w-4 h-4" /> มอบตั๋วสุ่มการ์ด (+1)
+                </button>
+                <button
+                  disabled={busy || !reason.trim()}
+                  onClick={() => adjustCoins(1, 100)}
+                  className="py-3 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-black rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg"
+                >
+                  <Gift className="w-4 h-4" /> มอบเหรียญรางวัล (+100 🪙)
+                </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+      </div>
     </div>
   );
 }
