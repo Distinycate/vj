@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Coins, Gift, Shield, Sparkles, Sword, Ticket, X } from 'lucide-react';
+import { Coins, Gift, History, RefreshCw, Shield, Sparkles, Sword, Ticket, X } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import { useDemoStore } from '@/store/useDemoStore';
@@ -43,6 +43,10 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [schoolmates, setSchoolmates] = useState<any[]>([]);
   const [incoming, setIncoming] = useState<any[]>([]);
+  const [cardLogs, setCardLogs] = useState<any[]>([]);
+  const [activeDefenseCount, setActiveDefenseCount] = useState(0);
+  const [activeReflectCount, setActiveReflectCount] = useState(0);
+  const [activeTab, setActiveTab] = useState<'inventory' | 'logs'>('inventory');
   const [selectedCard, setSelectedCard] = useState<InventoryRow | null>(null);
   const [selectedTarget, setSelectedTarget] = useState('');
   const [selectedTarget2, setSelectedTarget2] = useState('');
@@ -136,6 +140,9 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       }
       if (data.schoolmates) setSchoolmates(data.schoolmates);
       if (data.incoming) setIncoming(data.incoming);
+      if (data.logs) setCardLogs(data.logs);
+      if (data.activeDefenseCount !== undefined) setActiveDefenseCount(Number(data.activeDefenseCount));
+      if (data.activeReflectCount !== undefined) setActiveReflectCount(Number(data.activeReflectCount));
       if (data.learningPath) setProgress(data.learningPath);
       setLoading(false);
     } catch (err: any) {
@@ -295,22 +302,24 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
 
       if (isRandomThief) {
         const data = await executeRandomThief(student.id, selectedCard.cards.id);
-        setMessage(`สำเร็จ! คุณขโมย "${data.stolen_card_name}" มาได้แล้ว`);
+        setMessage(`🎯 สำเร็จ! คุณขโมย "${data.stolen_card_name}" มาได้แล้ว`);
       } else if (isMasterThief) {
         const data = await executeMasterThief(student.id, selectedTarget, selectedCard.cards.id, selectedTargetCardId);
-        setMessage(`สำเร็จ! คุณขโมย "${data.stolen_card_name}" มาได้แล้ว`);
+        setMessage(`🎯 สำเร็จ! คุณขโมย "${data.stolen_card_name}" มาได้แล้ว`);
       } else if (isBomb) {
         const data = await executeBombCard(student.id, selectedTarget, selectedCard.cards.id);
-        setMessage(`สำเร็จ! ระเบิดการ์ดเป้าหมายทิ้ง ${data.destroyed_count} ใบ!`);
+        setMessage(`💣 สำเร็จ! ระเบิดการ์ดเป้าหมายทิ้ง ${data.destroyed_count} ใบ!`);
       } else if (isNinja) {
         await executeNinjaCard(student.id, selectedTarget, selectedCard.cards.id, selectedTargetCardId, selectedTargetCard2Id);
-        setMessage('สำเร็จ! ลอบทำลายการ์ดเป้าหมายทิ้ง 2 ใบ!');
+        setMessage('🥷 สำเร็จ! ลอบทำลายการ์ดเป้าหมายทิ้ง 2 ใบ!');
       } else {
-        await createCardAction(student.id, selectedCard.cards.id, needsTarget ? selectedTarget : null, metadata);
+        const actionResult = await createCardAction(student.id, selectedCard.cards.id, needsTarget ? selectedTarget : null, metadata);
         if (selectedCard.cards.card_code === 'EARLY_HOME') {
-          setMessage('ส่งคำขอแล้ว รอครูอนุมัติ');
+          setMessage('📨 ส่งคำขอแล้ว รอครูอนุมัติ');
+        } else if (actionResult?.final_result_text) {
+          setMessage(`✨ ${actionResult.final_result_text}`);
         } else if (['DEFENSE', 'REFLECT', 'ANGEL'].includes(selectedCard.cards.card_code) || ['DEFENSE', 'REFLECT'].includes(selectedCard.cards.effect_type)) {
-          setMessage('กางโล่ตั้งรับล่วงหน้าสำเร็จ!');
+          setMessage('🛡️ กางโล่ตั้งรับล่วงหน้าสำเร็จ!');
         } else {
           setMessage('ใช้งานการ์ดสำเร็จ!');
         }
@@ -361,12 +370,18 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
             <h2 className="text-2xl font-black text-white flex items-center gap-2">
               <Sparkles className="text-fuchsia-400" /> ศูนย์การ์ด Vocab Battle
             </h2>
-            <div className="flex gap-3 mt-3 text-sm">
-              <span className="px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-300">
-                🪙 {progress?.coins || 0}
+            <div className="flex flex-wrap gap-2.5 mt-3 text-sm">
+              <span className="px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-300 font-bold flex items-center gap-1.5">
+                <Coins className="w-4 h-4 text-amber-400" /> {progress?.coins || 0} เหรียญ
               </span>
-              <span className="px-3 py-1.5 rounded-full bg-sky-500/10 text-sky-300">
-                🎟️ {progress?.free_pull_tickets || 0}
+              <span className="px-3 py-1.5 rounded-full bg-sky-500/10 text-sky-300 font-bold flex items-center gap-1.5">
+                <Ticket className="w-4 h-4 text-sky-400" /> {progress?.free_pull_tickets || 0} ตั๋ว
+              </span>
+              <span className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-bold flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-emerald-400" /> โล่ป้องกัน: {activeDefenseCount}
+              </span>
+              <span className="px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 font-bold flex items-center gap-1.5">
+                <RefreshCw className="w-4 h-4 text-violet-400" /> โล่สะท้อน: {activeReflectCount}
               </span>
             </div>
           </div>
@@ -375,10 +390,39 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
           </Button>
         </div>
 
+        {/* Tab Navigation */}
+        <div className="px-6 pt-4 flex gap-2 border-b border-slate-800/80 bg-slate-950/20">
+          <button
+            onClick={() => setActiveTab('inventory')}
+            className={`px-4 py-2.5 rounded-t-xl font-bold text-sm transition-all border-b-2 flex items-center gap-2 ${
+              activeTab === 'inventory'
+                ? 'border-fuchsia-500 text-fuchsia-300 bg-fuchsia-500/10'
+                : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40'
+            }`}
+          >
+            <Gift className="w-4 h-4" /> คลังและการสุ่มการ์ด
+          </button>
+          <button
+            onClick={() => setActiveTab('logs')}
+            className={`px-4 py-2.5 rounded-t-xl font-bold text-sm transition-all border-b-2 flex items-center gap-2 ${
+              activeTab === 'logs'
+                ? 'border-fuchsia-500 text-fuchsia-300 bg-fuchsia-500/10'
+                : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40'
+            }`}
+          >
+            <History className="w-4 h-4" /> ประวัติและผลการใช้การ์ด
+            {cardLogs.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-fuchsia-500/20 text-xs text-fuchsia-300 font-bold">
+                {cardLogs.length}
+              </span>
+            )}
+          </button>
+        </div>
+
         <div className="p-6 space-y-7">
           {message && (
-            <div className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 p-3 rounded-xl text-sm">
-              {message}
+            <div className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 p-3 rounded-xl text-sm font-medium flex items-center gap-2">
+              <span>🔔</span> {message}
             </div>
           )}
 
@@ -388,108 +432,198 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
             </div>
           )}
 
-          {!loading && <section className="grid md:grid-cols-[1fr_1.4fr] gap-5">
-            <div className="glass-card bg-gradient-to-br from-fuchsia-500/15 to-indigo-500/10 border-fuchsia-500/20 p-5 text-center hover-lift">
-              <Gift className="w-12 h-12 text-fuchsia-400 mx-auto mb-3" />
-              <h3 className="text-xl font-black text-white">สุ่มการ์ด</h3>
-              <p className="text-sm text-slate-400 mt-2">
-                ใช้ตั๋วฟรีก่อนเสมอ หากไม่มีตั๋วจึงใช้ {GACHA_COIN_COST} เหรียญ
-              </p>
-              <p className="text-xs text-fuchsia-300 mt-2">
-                Pity {(progress?.paid_gacha_pulls || 0) % 10}/10 — ทุกการสุ่มด้วยเหรียญครั้งที่ 10 จะไม่ออกการ์ดไม่มีอะไรเลย
-              </p>
-              <Button
-                disabled={busy || ((progress?.free_pull_tickets || 0) < 1 && (progress?.coins || 0) < GACHA_COIN_COST)}
-                onClick={handlePull}
-                className="w-full mt-5 bg-fuchsia-500 hover:bg-fuchsia-400 text-white"
-              >
-                {(progress?.free_pull_tickets || 0) > 0
-                  ? <span className="flex justify-center gap-2"><Ticket /> ใช้ตั๋วสุ่มฟรี</span>
-                  : <span className="flex justify-center gap-2"><Coins /> สุ่ม {GACHA_COIN_COST} เหรียญ</span>}
-              </Button>
-            </div>
-
-            <div className={`glass-card p-5 flex items-center justify-center min-h-48 transition-all duration-300 border-none ${latestPull && ['SSR', 'SR'].includes(latestPull.rarity) ? 'animate-shake shadow-[0_0_50px_rgba(236,72,153,0.3)]' : ''}`}>
-              <style dangerouslySetInnerHTML={{__html: `
-                @keyframes gacha-shake {
-                  0%, 100% { transform: scale(1) rotate(0deg); }
-                  25% { transform: scale(1.05) rotate(-2deg); }
-                  50% { transform: scale(1.05) rotate(2deg); }
-                  75% { transform: scale(1.05) rotate(-2deg); }
-                }
-                .animate-shake { animation: gacha-shake 0.5s ease-in-out; }
-              `}} />
-              {latestPull ? (
-                <motion.div 
-                  initial={{ scale: 0, rotate: 180, opacity: 0 }}
-                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                  transition={{ type: 'spring', damping: 12, stiffness: 100 }}
-                  className={`w-full text-center glass-card p-5 ${rarityStyle[latestPull.rarity]} ${['SSR', 'SR'].includes(latestPull.rarity) ? 'relative overflow-hidden' : ''}`}
-                >
-                  {['SSR', 'SR'].includes(latestPull.rarity) && (
-                    <motion.div 
-                      initial={{ left: '-100%' }}
-                      animate={{ left: '200%' }}
-                      transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
-                      className="absolute top-0 bottom-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg]"
-                    />
-                  )}
-                  <div className="text-6xl">{latestPull.image_url}</div>
-                  <div className="font-black text-2xl mt-2">{latestPull.name}</div>
-                  <div className="text-xs font-bold mt-1">RARITY {latestPull.rarity}</div>
-                  {latestPullWasPity && (
-                    <div className="inline-block mt-2 px-2 py-1 bg-fuchsia-500/15 text-fuchsia-300 rounded-full text-xs font-black">
-                      PITY GUARANTEED
-                    </div>
-                  )}
-                  <p className="text-sm text-slate-400 mt-2">{latestPull.description}</p>
-                </motion.div>
-              ) : (
-                <span className="text-slate-500">การ์ดที่สุ่มได้จะแสดงที่นี่</span>
-              )}
-            </div>
-          </section>}
-
-          {!loading && <section>
-            <h3 className="text-lg font-black text-white mb-3">คลังการ์ดของฉัน</h3>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {inventory.map((row) => {
-                const available = row.quantity - row.reserved_quantity;
-                const canStart = row.cards.effect_type !== 'DUD';
-                return (
-                  <button
-                    key={row.id}
-                    disabled={!canStart || available < 1}
-                    onClick={() => setSelectedCard(row)}
-                    className={`text-left p-4 glass-card border disabled:opacity-50 hover-lift ${rarityStyle[row.cards.rarity]}`}
+          {!loading && activeTab === 'inventory' && (
+            <>
+              <section className="grid md:grid-cols-[1fr_1.4fr] gap-5">
+                <div className="glass-card bg-gradient-to-br from-fuchsia-500/15 to-indigo-500/10 border-fuchsia-500/20 p-5 text-center hover-lift">
+                  <Gift className="w-12 h-12 text-fuchsia-400 mx-auto mb-3" />
+                  <h3 className="text-xl font-black text-white">สุ่มการ์ด</h3>
+                  <p className="text-sm text-slate-400 mt-2">
+                    ใช้ตั๋วฟรีก่อนเสมอ หากไม่มีตั๋วจึงใช้ {GACHA_COIN_COST} เหรียญ
+                  </p>
+                  <p className="text-xs text-fuchsia-300 mt-2">
+                    Pity {(progress?.paid_gacha_pulls || 0) % 10}/10 — ทุกการสุ่มด้วยเหรียญครั้งที่ 10 จะไม่ออกการ์ดไม่มีอะไรเลย
+                  </p>
+                  <Button
+                    disabled={busy || ((progress?.free_pull_tickets || 0) < 1 && (progress?.coins || 0) < GACHA_COIN_COST)}
+                    onClick={handlePull}
+                    className="w-full mt-5 bg-fuchsia-500 hover:bg-fuchsia-400 text-white"
                   >
-                    <div className="flex justify-between">
-                      <span className="text-3xl">{row.cards.image_url}</span>
-                      <span className="text-xs font-black">{row.cards.rarity}</span>
+                    {(progress?.free_pull_tickets || 0) > 0
+                      ? <span className="flex justify-center gap-2"><Ticket /> ใช้ตั๋วสุ่มฟรี</span>
+                      : <span className="flex justify-center gap-2"><Coins /> สุ่ม {GACHA_COIN_COST} เหรียญ</span>}
+                  </Button>
+                </div>
+
+                <div className={`glass-card p-5 flex items-center justify-center min-h-48 transition-all duration-300 border-none ${latestPull && ['SSR', 'SR'].includes(latestPull.rarity) ? 'animate-shake shadow-[0_0_50px_rgba(236,72,153,0.3)]' : ''}`}>
+                  <style dangerouslySetInnerHTML={{__html: `
+                    @keyframes gacha-shake {
+                      0%, 100% { transform: scale(1) rotate(0deg); }
+                      25% { transform: scale(1.05) rotate(-2deg); }
+                      50% { transform: scale(1.05) rotate(2deg); }
+                      75% { transform: scale(1.05) rotate(-2deg); }
+                    }
+                    .animate-shake { animation: gacha-shake 0.5s ease-in-out; }
+                  `}} />
+                  {latestPull ? (
+                    <motion.div 
+                      initial={{ scale: 0, rotate: 180, opacity: 0 }}
+                      animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                      transition={{ type: 'spring', damping: 12, stiffness: 100 }}
+                      className={`w-full text-center glass-card p-5 ${rarityStyle[latestPull.rarity]} ${['SSR', 'SR'].includes(latestPull.rarity) ? 'relative overflow-hidden' : ''}`}
+                    >
+                      {['SSR', 'SR'].includes(latestPull.rarity) && (
+                        <motion.div 
+                          initial={{ left: '-100%' }}
+                          animate={{ left: '200%' }}
+                          transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
+                          className="absolute top-0 bottom-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg]"
+                        />
+                      )}
+                      <div className="text-6xl">{latestPull.image_url}</div>
+                      <div className="font-black text-2xl mt-2">{latestPull.name}</div>
+                      <div className="text-xs font-bold mt-1">RARITY {latestPull.rarity}</div>
+                      {latestPullWasPity && (
+                        <div className="inline-block mt-2 px-2 py-1 bg-fuchsia-500/15 text-fuchsia-300 rounded-full text-xs font-black">
+                          PITY GUARANTEED
+                        </div>
+                      )}
+                      <p className="text-sm text-slate-400 mt-2">{latestPull.description}</p>
+                    </motion.div>
+                  ) : (
+                    <span className="text-slate-500">การ์ดที่สุ่มได้จะแสดงที่นี่</span>
+                  )}
+                </div>
+              </section>
+
+              <section>
+                <h3 className="text-lg font-black text-white mb-3 flex items-center justify-between">
+                  <span>คลังการ์ดของฉัน</span>
+                  <span className="text-xs text-slate-400 font-normal">มีทั้งหมด {inventory.reduce((acc, r) => acc + r.quantity, 0)} ใบ</span>
+                </h3>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {inventory.map((row) => {
+                    const available = row.quantity - row.reserved_quantity;
+                    const canStart = row.cards.effect_type !== 'DUD';
+                    return (
+                      <button
+                        key={row.id}
+                        disabled={!canStart || available < 1}
+                        onClick={() => setSelectedCard(row)}
+                        className={`text-left p-4 glass-card border disabled:opacity-50 hover-lift ${rarityStyle[row.cards.rarity]}`}
+                      >
+                        <div className="flex justify-between">
+                          <span className="text-3xl">{row.cards.image_url}</span>
+                          <span className="text-xs font-black">{row.cards.rarity}</span>
+                        </div>
+                        <div className="font-bold text-white mt-2">{row.cards.name}</div>
+                        <div className="text-xs text-slate-400 mt-1">
+                          พร้อมใช้ {available}/{row.quantity} ใบ
+                        </div>
+                        {!canStart && row.cards.effect_type !== 'DUD' && <div className="text-xs mt-2">ใช้ได้เมื่อถูกโจมตี</div>}
+                        {row.cards.effect_type === 'DUD' && row.cards.card_code !== 'DEMON_TEACHER' && <div className="text-xs mt-2 text-slate-500">ไม่มีผลใดๆ ไม่สามารถใช้งานได้</div>}
+                        {row.cards.card_code === 'DEMON_TEACHER' && <div className="text-xs mt-2 text-slate-500">ทำงานอัตโนมัติไปแล้วตอนสุ่ม</div>}
+                        {row.cards.effect_type === 'DEFENSE' && (
+                          <div className="text-xs mt-2 text-emerald-400 font-semibold">🛡️ คลิกเพื่อกางโล่ป้องกันการโจมตีอัตโนมัติ</div>
+                        )}
+                        {row.cards.effect_type === 'REFLECT' && (
+                          <div className="text-xs mt-2 text-violet-400 font-semibold">🔄 คลิกเพื่อกางโล่สะท้อนการโจมตีอัตโนมัติ</div>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {inventory.length === 0 && (
+                    <div className="col-span-full text-center text-slate-500 p-8 glass-card border-dashed border-slate-800">
+                      ยังไม่มีการ์ด ลองสุ่มใบแรกได้เลย
                     </div>
-                    <div className="font-bold text-white mt-2">{row.cards.name}</div>
-                    <div className="text-xs text-slate-400 mt-1">
-                      พร้อมใช้ {available}/{row.quantity} ใบ
-                    </div>
-                    {!canStart && row.cards.effect_type !== 'DUD' && <div className="text-xs mt-2">ใช้ได้เมื่อถูกโจมตี</div>}
-                    {row.cards.effect_type === 'DUD' && row.cards.card_code !== 'DEMON_TEACHER' && <div className="text-xs mt-2 text-slate-500">ไม่มีผลใดๆ ไม่สามารถใช้งานได้</div>}
-                    {row.cards.card_code === 'DEMON_TEACHER' && <div className="text-xs mt-2 text-slate-500">ทำงานอัตโนมัติไปแล้วตอนสุ่ม</div>}
-                    {row.cards.effect_type === 'DEFENSE' && (
-                      <div className="text-xs mt-2">ใช้กางโล่ป้องกันการโจมตีอัตโนมัติ 1 ครั้ง</div>
-                    )}
-                    {row.cards.effect_type === 'REFLECT' && (
-                      <div className="text-xs mt-2">ใช้กางโล่สะท้อนการโจมตีอัตโนมัติ 1 ครั้ง</div>
-                    )}
-                  </button>
-                );
-              })}
-              {inventory.length === 0 && (
-                <div className="col-span-full text-center text-slate-500 p-8 glass-card border-dashed border-slate-800">
-                  ยังไม่มีการ์ด ลองสุ่มใบแรกได้เลย
+                  )}
+                </div>
+              </section>
+            </>
+          )}
+
+          {!loading && activeTab === 'logs' && (
+            <section className="space-y-3">
+              <h3 className="text-lg font-black text-white mb-3">บันทึกและประวัติการใช้การ์ด</h3>
+              {cardLogs.length === 0 ? (
+                <div className="text-center text-slate-500 p-12 glass-card border-dashed border-slate-800">
+                  ยังไม่มีประวัติการใช้การ์ดในระบบ
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                  {cardLogs.map((log) => {
+                    const isAttacker = log.attacker_id === student?.id;
+                    const isTarget = log.target_id === student?.id;
+                    const isSelfBuff = isAttacker && !log.target_id;
+                    const card = log.played_card;
+
+                    let statusBadgeClass = 'bg-slate-500/10 text-slate-300 border-slate-500/20';
+                    if (log.final_result_text?.includes('ป้องกัน') || log.status === 'REJECTED') {
+                      statusBadgeClass = 'bg-sky-500/10 text-sky-300 border-sky-500/20';
+                    } else if (log.final_result_text?.includes('สะท้อน')) {
+                      statusBadgeClass = 'bg-amber-500/10 text-amber-300 border-amber-500/20';
+                    } else if (log.final_result_text?.includes('สำเร็จ') || log.status === 'RESOLVED') {
+                      statusBadgeClass = 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20';
+                    } else if (log.status === 'PENDING') {
+                      statusBadgeClass = 'bg-orange-500/10 text-orange-300 border-orange-500/20';
+                    }
+
+                    return (
+                      <div
+                        key={log.id}
+                        className={`p-4 rounded-2xl glass-card border transition-all ${
+                          isSelfBuff
+                            ? 'border-violet-500/20 bg-violet-950/10'
+                            : isAttacker
+                            ? 'border-emerald-500/20 bg-emerald-950/10'
+                            : 'border-rose-500/20 bg-rose-950/10'
+                        }`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-3">
+                            <span className="text-3xl p-2 rounded-xl bg-slate-900/60 border border-slate-800">
+                              {card?.image_url || '🃏'}
+                            </span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                                  isSelfBuff
+                                    ? 'bg-violet-500/20 text-violet-300'
+                                    : isAttacker
+                                    ? 'bg-emerald-500/20 text-emerald-300'
+                                    : 'bg-rose-500/20 text-rose-300'
+                                }`}>
+                                  {isSelfBuff ? '🛡️ กางโล่ตัวเรา' : isAttacker ? '🗡️ คุณใช้ใส่เพื่อน' : '🚨 เพื่อนใช้ใส่คุณ'}
+                                </span>
+                                <span className="font-bold text-white text-base">{card?.name || 'การ์ด'}</span>
+                              </div>
+                              <div className="text-xs text-slate-400 mt-1">
+                                {isSelfBuff ? (
+                                  <span>ตั้งรับอัตโนมัติ</span>
+                                ) : isAttacker ? (
+                                  <span>เป้าหมาย: <strong className="text-slate-200">{log.target?.student_name || 'ไม่ระบุ'}</strong></span>
+                                ) : (
+                                  <span>จาก: <strong className="text-rose-300">{log.attacker?.student_name || 'ไม่ระบุ'}</strong></span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-start sm:items-end gap-1 mt-2 sm:mt-0">
+                            <span className={`text-xs px-3 py-1 rounded-full font-bold border ${statusBadgeClass}`}>
+                              {log.final_result_text || (log.status === 'PENDING' ? '⏳ รอครูอนุมัติ' : '✅ เสร็จสิ้น')}
+                            </span>
+                            <span className="text-[11px] text-slate-500">
+                              {log.created_at ? new Date(log.created_at).toLocaleString('th-TH') : ''}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-            </div>
-          </section>}
+            </section>
+          )}
         </div>
       </motion.div>
 

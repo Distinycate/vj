@@ -31,8 +31,9 @@ export async function GET(request: Request) {
     const [
       { data: inventory },
       { data: schoolmates },
-      { data: incoming },
+      { data: logs },
       { data: learningPath },
+      { data: studentData },
     ] = await Promise.all([
       supabaseAdmin
         .from('card_inventory')
@@ -47,22 +48,35 @@ export async function GET(request: Request) {
         .order('student_name'),
       supabaseAdmin
         .from('card_logs')
-        .select('*, attacker:attacker_id(student_name), played_card:played_card_id(*), counter_card:counter_card_id(*)')
-        .eq('target_id', studentId)
-        .order('created_at', { ascending: false }),
+        .select('*, attacker:attacker_id(student_name), target:target_id(student_name), played_card:played_card_id(*), counter_card:counter_card_id(*)')
+        .or(`target_id.eq.${studentId},attacker_id.eq.${studentId}`)
+        .order('created_at', { ascending: false })
+        .limit(30),
       supabaseAdmin
         .from('learning_paths')
         .select('*')
         .eq('student_id', studentId)
         .maybeSingle(),
+      supabaseAdmin
+        .from('students')
+        .select('id, student_name, active_defense_count, active_reflect_count')
+        .eq('id', studentId)
+        .maybeSingle(),
     ]);
+
+    const incoming = (logs || []).filter(l => l.target_id === studentId);
+    const outgoing = (logs || []).filter(l => l.attacker_id === studentId);
 
     return NextResponse.json({
       success: true,
       inventory: inventory || [],
       schoolmates: schoolmates || [],
-      incoming: incoming || [],
+      incoming,
+      outgoing,
+      logs: logs || [],
       learningPath: learningPath || null,
+      activeDefenseCount: Number(studentData?.active_defense_count || 0),
+      activeReflectCount: Number(studentData?.active_reflect_count || 0),
     });
   } catch (error: any) {
     if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
