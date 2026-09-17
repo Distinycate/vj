@@ -138,11 +138,13 @@ export async function POST(request: Request) {
     // Hash password using standard bcrypt
     const passwordHash = await bcrypt.hash(password, 10);
     const generatedStudentId = `EXT-${Math.floor(100000 + Math.random() * 900000)}`;
+    const studentUuid = crypto.randomUUID();
 
     // Insert student (FORCING user_type = 'EXTERNAL')
     const { data: newStudent, error: insertError } = await supabaseAdmin
       .from('students')
       .insert({
+        id: studentUuid,
         student_id: generatedStudentId,
         username: cleanUsername,
         password: passwordHash,

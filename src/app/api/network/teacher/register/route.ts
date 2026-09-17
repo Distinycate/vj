@@ -51,11 +51,13 @@ export async function POST(request: Request) {
 
     // Hash password using standard bcrypt
     const passwordHash = await bcrypt.hash(password, 10);
+    const teacherId = crypto.randomUUID();
 
     // Insert new Network Teacher (role strictly forced to 'TEACHER', teacher_type forced to 'NETWORK')
     const { data: newTeacher, error: insertError } = await supabaseAdmin
       .from('teachers')
       .insert({
+        id: teacherId,
         username: cleanUsername,
         password: passwordHash,
         name: name.trim(),
