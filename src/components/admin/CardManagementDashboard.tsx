@@ -99,6 +99,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
   const [actions, setActions] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<StudentSummary | null>(null);
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [behaviorFilter, setBehaviorFilter] = useState<'ALL' | 'POSITIVE' | 'ATTENTION'>('ALL');
   const [copiedNotification, setCopiedNotification] = useState('');
@@ -365,7 +366,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
         behaviorCategory,
       );
       setReason('');
-      setMessage(direction > 0 ? 'มอบตั๋วและบันทึกคุณลักษณะแล้ว' : 'หักตั๋วและบันทึกเหตุผลแล้ว');
+      setMessage(direction > 0 ? `มอบตั๋ว +${amountToUse} ใบ สำเร็จ` : `หักตั๋ว -${amountToUse} ใบ สำเร็จ`);
       await loadData();
       setSelectedStudent(null);
     } catch (error) {
@@ -388,7 +389,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
         behaviorCategory,
       );
       setReason('');
-      setMessage(direction > 0 ? 'มอบเหรียญและบันทึกคุณลักษณะแล้ว' : 'หักเหรียญและบันทึกเหตุผลแล้ว');
+      setMessage(direction > 0 ? `มอบเหรียญ +${amountToUse} 🪙 สำเร็จ` : `หักเหรียญ -${amountToUse} 🪙 สำเร็จ`);
       await loadData();
       setSelectedStudent(null);
     } catch (error) {
@@ -397,6 +398,80 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
       setBusy(false);
     }
   }
+
+  async function adjustBulkTickets(direction: 1 | -1) {
+    if (selectedStudentIds.size === 0 || !reason.trim() || ticketAmount < 1 || busy) return;
+    setBusy(true);
+    try {
+      const studentIdList = Array.from(selectedStudentIds);
+      await Promise.all(
+        studentIdList.map((sId) =>
+          adjustStudentTickets(
+            teacher.id,
+            sId,
+            direction * ticketAmount,
+            reason.trim(),
+            behaviorCategory,
+          )
+        )
+      );
+      setReason('');
+      setMessage(direction > 0 ? `มอบตั๋ว +${ticketAmount} ใบ ให้นักเรียน ${studentIdList.length} คน เรียบร้อยแล้ว` : `หักตั๋ว -${ticketAmount} ใบ จากนักเรียน ${studentIdList.length} คน เรียบร้อยแล้ว`);
+      setSelectedStudentIds(new Set());
+      setIsBulkModalOpen(false);
+      await loadData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'ดำเนินการไม่สำเร็จ');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function adjustBulkCoins(direction: 1 | -1) {
+    if (selectedStudentIds.size === 0 || !reason.trim() || coinAmount < 1 || busy) return;
+    setBusy(true);
+    try {
+      const studentIdList = Array.from(selectedStudentIds);
+      await Promise.all(
+        studentIdList.map((sId) =>
+          adjustStudentCoins(
+            teacher.id,
+            sId,
+            direction * coinAmount,
+            reason.trim(),
+            behaviorCategory,
+          )
+        )
+      );
+      setReason('');
+      setMessage(direction > 0 ? `มอบเหรียญ +${coinAmount} 🪙 ให้นักเรียน ${studentIdList.length} คน เรียบร้อยแล้ว` : `หักเหรียญ -${coinAmount} 🪙 จากนักเรียน ${studentIdList.length} คน เรียบร้อยแล้ว`);
+      setSelectedStudentIds(new Set());
+      setIsBulkModalOpen(false);
+      await loadData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'ดำเนินการไม่สำเร็จ');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const toggleSelectStudent = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedStudentIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllFilteredStudents = () => {
+    if (selectedStudentIds.size === filteredStudents.length && filteredStudents.length > 0) {
+      setSelectedStudentIds(new Set());
+    } else {
+      setSelectedStudentIds(new Set(filteredStudents.map((s) => s.id)));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8">
@@ -640,43 +715,105 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
 
         {/* Tab: Overview (Give Tickets / Coins & Quick Actions) */}
         {tab === 'overview' && (
-          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
-            <div className="flex justify-between items-center mb-6">
+          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-4">
               <div>
                 <h3 className="text-lg font-black text-white">รายชื่อนักเรียนและยอดคงเหลือ</h3>
-                <p className="text-xs text-slate-400">คลิกที่นักเรียนเพื่อมอบตั๋วสุ่มการ์ดหรือเหรียญพฤติกรรม</p>
+                <p className="text-xs text-slate-400">คลิกที่นักเรียนเพื่อมอบ/หักตั๋วหรือเหรียญ หรือติ๊กเลือกหลายคนเพื่อจัดการพร้อมกัน</p>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => setBehaviorFilter('ALL')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${behaviorFilter === 'ALL' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}>ทั้งหมด</button>
-                <button onClick={() => setBehaviorFilter('POSITIVE')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${behaviorFilter === 'POSITIVE' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400'}`}>เชิงบวก</button>
-                <button onClick={() => setBehaviorFilter('ATTENTION')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${behaviorFilter === 'ATTENTION' ? 'bg-rose-500/20 text-rose-300' : 'text-slate-400'}`}>ควรติดตาม</button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={selectAllFilteredStudents}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-fuchsia-400" />
+                  {selectedStudentIds.size === filteredStudents.length && filteredStudents.length > 0 ? 'ยกเลิกเลือกทั้งหมด' : 'เลือกทุกคนในห้อง'}
+                </button>
+                <div className="flex gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                  <button onClick={() => setBehaviorFilter('ALL')} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${behaviorFilter === 'ALL' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'}`}>ทั้งหมด</button>
+                  <button onClick={() => setBehaviorFilter('POSITIVE')} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${behaviorFilter === 'POSITIVE' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-white'}`}>เชิงบวก</button>
+                  <button onClick={() => setBehaviorFilter('ATTENTION')} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${behaviorFilter === 'ATTENTION' ? 'bg-rose-500/20 text-rose-300' : 'text-slate-400 hover:text-white'}`}>ควรติดตาม</button>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {filteredStudents.map((student) => (
-                <div
-                  key={student.id}
-                  onClick={() => setSelectedStudent(student)}
-                  className="bg-slate-950 border border-slate-800 hover:border-fuchsia-500/50 p-4 rounded-2xl cursor-pointer transition flex justify-between items-center group shadow-md"
-                >
-                  <div>
-                    <div className="font-bold text-white group-hover:text-fuchsia-300 transition text-sm">{student.student_name}</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">{student.student_id}</div>
-                    <div className="text-[10px] text-slate-400 mt-1 max-w-[180px] truncate" title={getStudentRationale(student)}>
-                      {getStudentRationale(student)}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      <div className="text-xs font-black text-amber-300 flex items-center justify-end gap-1">
-                        <Ticket className="w-3.5 h-3.5 text-amber-400" /> {student.tickets}
-                      </div>
-                      <div className="text-[11px] font-bold text-indigo-300 mt-0.5">{student.coins} 🪙</div>
-                    </div>
-                  </div>
+            {/* Bulk Selection Sticky Action Bar */}
+            {selectedStudentIds.size > 0 && (
+              <div className="bg-gradient-to-r from-fuchsia-950/80 via-slate-900 to-indigo-950/80 border border-fuchsia-500/50 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-3 shadow-xl animate-in fade-in duration-200">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-8 h-8 rounded-xl bg-fuchsia-500/20 border border-fuchsia-500/40 flex items-center justify-center text-fuchsia-300 font-black text-sm">
+                    {selectedStudentIds.size}
+                  </span>
+                  <span className="text-sm font-bold text-white">
+                    เลือกนักเรียนอยู่ {selectedStudentIds.size} คน
+                  </span>
                 </div>
-              ))}
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => setIsBulkModalOpen(true)}
+                    className="flex-1 sm:flex-none px-4 py-2 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-fuchsia-950/50 transition"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-300" />
+                    ⚡ มอบ / หัก ตั๋ว & เหรียญ ({selectedStudentIds.size} คน)
+                  </button>
+                  <button
+                    onClick={() => setSelectedStudentIds(new Set())}
+                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition"
+                  >
+                    ล้างการเลือก
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {filteredStudents.map((student) => {
+                const isSelected = selectedStudentIds.has(student.id);
+                return (
+                  <div
+                    key={student.id}
+                    onClick={() => setSelectedStudent(student)}
+                    className={`bg-slate-950 border p-4 rounded-2xl cursor-pointer transition flex justify-between items-center group shadow-md relative ${
+                      isSelected
+                        ? 'border-fuchsia-500 ring-1 ring-fuchsia-500/50 bg-fuchsia-950/20'
+                        : 'border-slate-800 hover:border-fuchsia-500/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={(e) => toggleSelectStudent(student.id, e)}
+                        className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${
+                          isSelected
+                            ? 'bg-fuchsia-500 border-fuchsia-400 text-white shadow-sm'
+                            : 'border-slate-700 bg-slate-900/80 hover:border-slate-500 text-transparent'
+                        }`}
+                        title="เลือกนักเรียนคนนี้เพื่อแจก/หักหลายคน"
+                      >
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      </button>
+                      <div>
+                        <div className="font-bold text-white group-hover:text-fuchsia-300 transition text-sm flex items-center gap-1.5">
+                          {student.student_name}
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-0.5 font-mono">{student.student_id}</div>
+                        <div className="text-[10px] text-slate-400 mt-1 max-w-[170px] truncate" title={getStudentRationale(student)}>
+                          {getStudentRationale(student)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <div className="text-xs font-black text-amber-300 flex items-center justify-end gap-1">
+                          <Ticket className="w-3.5 h-3.5 text-amber-400" /> {student.tickets}
+                        </div>
+                        <div className="text-[11px] font-bold text-indigo-300 mt-0.5">{student.coins} 🪙</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -953,35 +1090,38 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
           </div>
         )}
 
-        {/* Modal: Give Tickets / Coins to Single Student */}
+        {/* Modal: Give / Deduct Tickets or Coins for Single Student */}
         {selectedStudent && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm p-4 overflow-y-auto flex items-center justify-center">
             <div className="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-5 shadow-2xl">
               <div className="flex justify-between items-center border-b border-slate-800 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-fuchsia-500/20 flex items-center justify-center text-fuchsia-400">
-                    <UserRound className="w-5 h-5" />
+                  <div className="w-11 h-11 rounded-2xl bg-fuchsia-500/20 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400">
+                    <UserRound className="w-6 h-6" />
                   </div>
                   <div>
                     <h3 className="font-black text-white text-base">{selectedStudent.student_name}</h3>
-                    <p className="text-xs text-slate-400 font-mono">{selectedStudent.student_id} • ตั๋ว: {selectedStudent.tickets} | เหรียญ: {selectedStudent.coins}</p>
+                    <p className="text-xs text-slate-400 font-mono">
+                      {selectedStudent.student_id} • 🎟️ ตั๋วคงเหลือ: <span className="text-amber-400 font-bold">{selectedStudent.tickets}</span> ใบ | 🪙 เหรียญ: <span className="text-indigo-300 font-bold">{selectedStudent.coins}</span>
+                    </p>
                   </div>
                 </div>
-                <button onClick={() => setSelectedStudent(null)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl">
+                <button onClick={() => setSelectedStudent(null)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition">
                   <X className="w-5 h-5 text-slate-300" />
                 </button>
               </div>
 
-              {/* Quick Tags 8 Desirable Characteristics */}
+              {/* Quick Tags 8 Desirable Characteristics (Positive) */}
               <div>
-                <label className="text-xs font-bold text-emerald-400 block mb-2">🏷️ เลือก Tag คุณลักษณะ 8 ประการ (เชิงบวก)</label>
+                <label className="text-xs font-bold text-emerald-400 block mb-2">🏷️ เลือกคุณลักษณะ 8 ประการ (เชิงบวก)</label>
                 <div className="flex flex-wrap gap-1.5">
                   {QUICK_REASONS.POSITIVE.map((tag) => (
                     <button
                       key={tag.text}
+                      type="button"
                       onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }}
                       className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition ${
-                        reason === tag.text ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800'
+                        reason === tag.text ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-sm' : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'
                       }`}
                     >
                       {tag.text}
@@ -990,15 +1130,17 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                 </div>
               </div>
 
+              {/* Quick Tags (Negative) */}
               <div>
                 <label className="text-xs font-bold text-rose-400 block mb-2">⚠️ หรือเลือกพฤติกรรมที่ควรติดตาม (เชิงลบ)</label>
                 <div className="flex flex-wrap gap-1.5">
                   {QUICK_REASONS.NEGATIVE.map((tag) => (
                     <button
                       key={tag.text}
+                      type="button"
                       onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }}
                       className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition ${
-                        reason === tag.text ? 'bg-rose-500/20 border-rose-500 text-rose-300' : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800'
+                        reason === tag.text ? 'bg-rose-500/20 border-rose-500 text-rose-300 shadow-sm' : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'
                       }`}
                     >
                       {tag.text}
@@ -1007,34 +1149,319 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                 </div>
               </div>
 
+              {/* Reason Input */}
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">ระบุเหตุผลประกอบ</label>
+                <label className="text-xs font-bold text-slate-300 block mb-1">
+                  ระบุเหตุผลประกอบ <span className="text-rose-400">*</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="พิมพ์เหตุผลหรือเลือกจากปุ่มด้านบน..."
+                  placeholder="พิมพ์เหตุผลหรือกดเลือกจาก Tag ด้านบน..."
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-fuchsia-500"
                 />
               </div>
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <button
-                  disabled={busy || !reason.trim()}
-                  onClick={() => adjustTickets(1, 1)}
-                  className="py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-black rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg"
-                >
-                  <Ticket className="w-4 h-4" /> มอบตั๋วสุ่มการ์ด (+1)
-                </button>
-                <button
-                  disabled={busy || !reason.trim()}
-                  onClick={() => adjustCoins(1, 100)}
-                  className="py-3 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-black rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg"
-                >
-                  <Gift className="w-4 h-4" /> มอบเหรียญรางวัล (+100 🪙)
+              {/* Section 1: Ticket Controls (มอบตั๋ว / หักตั๋ว) */}
+              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-amber-300 flex items-center gap-1.5">
+                    <Ticket className="w-4 h-4 text-amber-400" /> จัดการตั๋วสุ่มการ์ด (Tickets)
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400 font-bold">จำนวน:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={999}
+                      value={ticketAmount}
+                      onChange={(e) => setTicketAmount(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-20 px-3 py-1.5 bg-slate-900 border border-amber-500/40 rounded-xl text-center font-black text-amber-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    />
+                    <span className="text-xs text-slate-400 font-bold">ใบ</span>
+                  </div>
+                </div>
+
+                {/* Ticket Preset Buttons */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-slate-500 font-semibold mr-1">กดเลือกด่วน:</span>
+                  {[1, 2, 3, 5, 10, 20].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setTicketAmount(num)}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
+                        ticketAmount === num ? 'bg-amber-500 text-slate-950 shadow-sm' : 'bg-slate-900 border border-slate-800 text-amber-400/80 hover:bg-slate-800'
+                      }`}
+                    >
+                      {num} ใบ
+                    </button>
+                  ))}
+                </div>
+
+                {/* Ticket Action Buttons */}
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <button
+                    disabled={busy || !reason.trim()}
+                    onClick={() => adjustTickets(1)}
+                    className="py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg transition"
+                  >
+                    <Ticket className="w-4 h-4" /> + มอบตั๋ว ({ticketAmount} ใบ)
+                  </button>
+                  <button
+                    disabled={busy || !reason.trim()}
+                    onClick={() => adjustTickets(-1)}
+                    className="py-2.5 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 disabled:opacity-40 text-rose-300 font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg transition"
+                  >
+                    <MinusCircle className="w-4 h-4 text-rose-400" /> - หักตั๋ว ({ticketAmount} ใบ)
+                  </button>
+                </div>
+              </div>
+
+              {/* Section 2: Coin Controls (มอบเหรียญ / หักเหรียญ) */}
+              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-indigo-300 flex items-center gap-1.5">
+                    <Gift className="w-4 h-4 text-indigo-400" /> จัดการเหรียญรางวัล (Coins)
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400 font-bold">จำนวน:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      step={50}
+                      max={99999}
+                      value={coinAmount}
+                      onChange={(e) => setCoinAmount(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-24 px-3 py-1.5 bg-slate-900 border border-indigo-500/40 rounded-xl text-center font-black text-indigo-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                    <span className="text-xs text-slate-400 font-bold">🪙</span>
+                  </div>
+                </div>
+
+                {/* Coin Preset Buttons */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-slate-500 font-semibold mr-1">กดเลือกด่วน:</span>
+                  {[50, 100, 200, 500, 1000].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setCoinAmount(num)}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
+                        coinAmount === num ? 'bg-indigo-500 text-white shadow-sm' : 'bg-slate-900 border border-slate-800 text-indigo-300/80 hover:bg-slate-800'
+                      }`}
+                    >
+                      {num} 🪙
+                    </button>
+                  ))}
+                </div>
+
+                {/* Coin Action Buttons */}
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <button
+                    disabled={busy || !reason.trim()}
+                    onClick={() => adjustCoins(1)}
+                    className="py-2.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg transition"
+                  >
+                    <Gift className="w-4 h-4" /> + มอบเหรียญ ({coinAmount} 🪙)
+                  </button>
+                  <button
+                    disabled={busy || !reason.trim()}
+                    onClick={() => adjustCoins(-1)}
+                    className="py-2.5 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 disabled:opacity-40 text-rose-300 font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg transition"
+                  >
+                    <MinusCircle className="w-4 h-4 text-rose-400" /> - หักเหรียญ ({coinAmount} 🪙)
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Bulk Manage Tickets / Coins for Multiple Selected Students */}
+        {isBulkModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm p-4 overflow-y-auto flex items-center justify-center">
+            <div className="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-5 shadow-2xl">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-fuchsia-500/20 to-indigo-500/20 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-white text-base">จัดการตั๋ว & เหรียญกลุ่ม ({selectedStudentIds.size} คน)</h3>
+                    <p className="text-xs text-slate-400">
+                      ดำเนินการพร้อมกันให้นักเรียนที่เลือกทั้งหมดในครั้งเดียว
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => setIsBulkModalOpen(false)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition">
+                  <X className="w-5 h-5 text-slate-300" />
                 </button>
               </div>
+
+              {/* Quick Tags 8 Desirable Characteristics (Positive) */}
+              <div>
+                <label className="text-xs font-bold text-emerald-400 block mb-2">🏷️ เลือกคุณลักษณะ 8 ประการ (เชิงบวก)</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {QUICK_REASONS.POSITIVE.map((tag) => (
+                    <button
+                      key={tag.text}
+                      type="button"
+                      onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition ${
+                        reason === tag.text ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-sm' : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {tag.text}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Tags (Negative) */}
+              <div>
+                <label className="text-xs font-bold text-rose-400 block mb-2">⚠️ หรือเลือกพฤติกรรมที่ควรติดตาม (เชิงลบ)</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {QUICK_REASONS.NEGATIVE.map((tag) => (
+                    <button
+                      key={tag.text}
+                      type="button"
+                      onClick={() => { setReason(tag.text); setBehaviorCategory(tag.category as BehaviorCategory); }}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition ${
+                        reason === tag.text ? 'bg-rose-500/20 border-rose-500 text-rose-300 shadow-sm' : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {tag.text}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Reason Input */}
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">
+                  ระบุเหตุผลประกอบ <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="พิมพ์เหตุผลประกอบการมอบ/หักสำหรับกลุ่มนักเรียนนี้..."
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-fuchsia-500"
+                />
+              </div>
+
+              {/* Bulk Section 1: Ticket Controls */}
+              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-amber-300 flex items-center gap-1.5">
+                    <Ticket className="w-4 h-4 text-amber-400" /> ตั๋วสุ่มการ์ดต่อคน
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400 font-bold">จำนวน:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={999}
+                      value={ticketAmount}
+                      onChange={(e) => setTicketAmount(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-20 px-3 py-1.5 bg-slate-900 border border-amber-500/40 rounded-xl text-center font-black text-amber-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    />
+                    <span className="text-xs text-slate-400 font-bold">ใบ</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-slate-500 font-semibold mr-1">กดเลือกด่วน:</span>
+                  {[1, 2, 3, 5, 10, 20].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setTicketAmount(num)}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
+                        ticketAmount === num ? 'bg-amber-500 text-slate-950 shadow-sm' : 'bg-slate-900 border border-slate-800 text-amber-400/80 hover:bg-slate-800'
+                      }`}
+                    >
+                      {num} ใบ
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <button
+                    disabled={busy || !reason.trim()}
+                    onClick={() => adjustBulkTickets(1)}
+                    className="py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg transition"
+                  >
+                    <Ticket className="w-4 h-4" /> + มอบตั๋ว ({ticketAmount} ใบ/คน)
+                  </button>
+                  <button
+                    disabled={busy || !reason.trim()}
+                    onClick={() => adjustBulkTickets(-1)}
+                    className="py-2.5 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 disabled:opacity-40 text-rose-300 font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg transition"
+                  >
+                    <MinusCircle className="w-4 h-4 text-rose-400" /> - หักตั๋ว ({ticketAmount} ใบ/คน)
+                  </button>
+                </div>
+              </div>
+
+              {/* Bulk Section 2: Coin Controls */}
+              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-indigo-300 flex items-center gap-1.5">
+                    <Gift className="w-4 h-4 text-indigo-400" /> เหรียญรางวัลต่อคน
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400 font-bold">จำนวน:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      step={50}
+                      max={99999}
+                      value={coinAmount}
+                      onChange={(e) => setCoinAmount(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-24 px-3 py-1.5 bg-slate-900 border border-indigo-500/40 rounded-xl text-center font-black text-indigo-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                    <span className="text-xs text-slate-400 font-bold">🪙</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-slate-500 font-semibold mr-1">กดเลือกด่วน:</span>
+                  {[50, 100, 200, 500, 1000].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setCoinAmount(num)}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
+                        coinAmount === num ? 'bg-indigo-500 text-white shadow-sm' : 'bg-slate-900 border border-slate-800 text-indigo-300/80 hover:bg-slate-800'
+                      }`}
+                    >
+                      {num} 🪙
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <button
+                    disabled={busy || !reason.trim()}
+                    onClick={() => adjustBulkCoins(1)}
+                    className="py-2.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg transition"
+                  >
+                    <Gift className="w-4 h-4" /> + มอบเหรียญ ({coinAmount} 🪙/คน)
+                  </button>
+                  <button
+                    disabled={busy || !reason.trim()}
+                    onClick={() => adjustBulkCoins(-1)}
+                    className="py-2.5 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 disabled:opacity-40 text-rose-300 font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg transition"
+                  >
+                    <MinusCircle className="w-4 h-4 text-rose-400" /> - หักเหรียญ ({coinAmount} 🪙/คน)
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
         )}
