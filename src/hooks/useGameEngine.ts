@@ -257,7 +257,8 @@ export function useGameEngine(): UseGameEngineReturn {
   }, [gameState, currentIndex, words]);
 
   function setupQuestion(word: any) {
-    setQType(word.qType || 'MEANING_MC');
+    const isLite = student?.user_type === 'EXTERNAL' || student?.userType === 'EXTERNAL';
+    setQType(isLite ? 'MEANING_MC' : (word.qType || 'MEANING_MC'));
     setChoices(word.choices || []);
     setShowHint(false);
 
@@ -370,15 +371,20 @@ export function useGameEngine(): UseGameEngineReturn {
       setTimeout(() => setShakeScreen(false), 500);
     }
 
+    const isLite = student?.user_type === 'EXTERNAL' || student?.userType === 'EXTERNAL';
+    const transitionDelay = isLite ? 700 : 1800;
+
     setTimeout(() => {
       const nextLives = lives - (isCorrect ? 0 : 1);
       if (nextLives > 0 && currentIndex + 1 < words.length) {
         setCurrentIndex(c => c + 1);
       } else {
-        setGameState('reflection');
+        if (!isLite) {
+          setGameState('reflection');
+        }
         handleProcessResults(finalScore, finalWrongWords, finalResponseTimes);
       }
-    }, 2000);
+    }, transitionDelay);
   }
 
   const applyPowerup = async (itemCode: string) => {

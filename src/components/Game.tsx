@@ -445,17 +445,26 @@ export default function Game() {
           >
             {qType === 'MEANING_MC' && (
               <div className="glass-card p-6 sm:p-8 shadow-xl w-full break-words border-none">
-                <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">แปลศัพท์สเปกตรัม</span>
-                <h2 
-                  className="text-4xl sm:text-5xl font-black text-white mb-2 notranslate break-all pointer-events-none select-none" 
-                  translate="no"
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  {currentWord.word.split('').map((char: string, i: number) => (
-                    <span key={i}>{char}&#8203;</span>
-                  ))}
-                </h2>
-                <p className="text-slate-400 text-base sm:text-lg">แปลว่าอะไรในภาษาไทย?</p>
+                <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">แปลศัพท์ภาษาอังกฤษ</span>
+                <div className="flex flex-wrap items-center justify-center gap-3 mb-2">
+                  <h2 
+                    className="text-3xl sm:text-5xl font-black text-white notranslate break-all select-none" 
+                    translate="no"
+                    onContextMenu={(e) => e.preventDefault()}
+                  >
+                    {currentWord.word}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => playWordAudio(currentWord.word)}
+                    title="คลิกเพื่อฟังเสียงคำศัพท์ภาษาอังกฤษ"
+                    className="p-2.5 sm:p-3 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-2xl border border-emerald-500/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 shadow-lg shadow-emerald-500/10 cursor-pointer"
+                  >
+                    <Volume2 className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
+                    <span className="text-xs font-bold">ฟังเสียง</span>
+                  </button>
+                </div>
+                <p className="text-slate-400 text-sm sm:text-base">แปลว่าอะไรในภาษาไทย?</p>
               </div>
             )}
 
@@ -463,7 +472,7 @@ export default function Game() {
               <div className="glass-card p-6 sm:p-8 shadow-xl w-full break-words border-none">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">ความหมายภาษาไทย</span>
                 <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-2 break-words">{currentWord.prompt}</h2>
-                <p className="text-slate-400 text-base sm:text-lg">ตรงกับคำศัพท์ภาษาอังกฤษคำใด?</p>
+                <p className="text-slate-400 text-sm sm:text-base">ตรงกับคำศัพท์ภาษาอังกฤษคำใด?</p>
               </div>
             )}
 

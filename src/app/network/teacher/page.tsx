@@ -290,14 +290,21 @@ export default function NetworkTeacherAuthPage() {
             </form>
           )}
 
-          <div className="pt-4 border-t border-slate-800/80 text-center">
+          <div className="pt-4 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => router.push('/network')}
-              className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-300 transition-colors"
+              className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white border border-slate-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>กลับสู่หน้าเข้าสู่ระบบนักเรียนเครือข่าย</span>
+              <span>หน้านักเรียนเครือข่าย</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="py-2.5 px-3 rounded-xl bg-slate-800/40 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+            >
+              <span>หน้าระบบโรงเรียนหลัก &rarr;</span>
             </button>
           </div>
         </div>

@@ -293,7 +293,7 @@ export default function NetworkTeacherDashboard() {
     }
   };
 
-  // Batch Create Students
+  // Batch Create Students (Ultra-fast single request)
   const handleBatchCreateStudents = async (e: React.FormEvent) => {
     e.preventDefault();
     const names = batchNamesText
@@ -307,13 +307,11 @@ export default function NetworkTeacherDashboard() {
     }
 
     setIsSubmitting(true);
-    const createdList: NewlyCreatedCred[] = [];
-    const errorsList: string[] = [];
-
     const currentClass = classrooms.find((c) => c.id === selectedClassroomId);
 
     let startIdx = 1;
     const existingUsernames = new Set(students.map((s) => s.username.toLowerCase()));
+    const batchPayload: Array<{ studentName: string; username: string }> = [];
 
     for (const name of names) {
       let usernameCandidate = `${batchPrefix}${String(startIdx).padStart(2, '0')}`.toLowerCase();
@@ -324,51 +322,50 @@ export default function NetworkTeacherDashboard() {
       existingUsernames.add(usernameCandidate);
       startIdx++;
 
-      const password = batchDefaultPassword || '1234';
+      batchPayload.push({
+        studentName: name,
+        username: usernameCandidate,
+      });
+    }
 
-      try {
-        const res = await fetch('/api/network/students', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            studentName: name,
-            username: usernameCandidate,
-            password: password,
-            classroomId: selectedClassroomId,
-            schoolName: teacher?.schoolName,
-            gradeLevel: currentClass?.grade_level,
-            roomNumber: currentClass?.room_number,
-          }),
-        });
+    const password = batchDefaultPassword || '1234';
 
-        const json = await res.json();
-        if (res.ok) {
-          createdList.push({
-            studentName: name,
-            username: usernameCandidate,
-            password: password,
-          });
-        } else {
-          errorsList.push(`${name}: ${json.error}`);
-        }
-      } catch {
-        errorsList.push(`${name}: network error`);
+    try {
+      const res = await fetch('/api/network/students/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          classroomId: selectedClassroomId,
+          students: batchPayload,
+          defaultPassword: password,
+          schoolName: teacher?.schoolName,
+          gradeLevel: currentClass?.grade_level,
+          roomNumber: currentClass?.room_number,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || 'สร้างบัญชีไม่สำเร็จ');
       }
-    }
 
-    setIsSubmitting(false);
-    setShowBatchModal(false);
-    setBatchNamesText('');
+      setShowBatchModal(false);
+      setBatchNamesText('');
 
-    if (createdList.length > 0) {
-      setNewlyCreatedCreds(createdList);
-      setShowCredsSummaryModal(true);
-      showToast(`สร้างบัญชีสำเร็จ ${createdList.length} คน`);
-      await fetchStudents(selectedClassroomId);
-    }
+      if (json.creds && json.creds.length > 0) {
+        setNewlyCreatedCreds(json.creds);
+        setShowCredsSummaryModal(true);
+        showToast(`สร้างบัญชีสำเร็จ ${json.creds.length} คน`);
+        await fetchStudents(selectedClassroomId);
+      }
 
-    if (errorsList.length > 0) {
-      alert(`มี ${errorsList.length} รายการที่ไม่สามารถสร้างได้:\n` + errorsList.join('\n'));
+      if (json.skipped && json.skipped.length > 0) {
+        alert(`มีบางรายการถูกข้าม:\n` + json.skipped.join('\n'));
+      }
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการสร้างบัญชี');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

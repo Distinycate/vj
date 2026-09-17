@@ -432,14 +432,45 @@ export default function Home() {
         animate={{ opacity: 1, scale: 1 }}
         className="order-1 xl:order-2 glass-card p-5 sm:p-8 w-full max-w-md xl:max-h-[95vh] xl:overflow-y-auto xl:sticky xl:top-4 justify-self-center mobile-scroll-panel"
       >
-        <div className="text-center mb-6">
-          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 mb-2">
+        <div className="text-center mb-5">
+          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 mb-1.5">
             Vocab Journey
           </h1>
-          <p className="text-slate-400 font-medium">ระบบประเมินและฝึกทักษะคำศัพท์อัจฉริยะ</p>
-          <p className="mt-2 text-xs font-bold text-emerald-300 xl:hidden">
-            เข้าสู่ระบบหรือสมัครสมาชิกได้จากกล่องนี้
+          <p className="text-slate-400 text-sm font-medium">ระบบประเมินและฝึกทักษะคำศัพท์อัจฉริยะ</p>
+        </div>
+
+        {/* Clear Portal Switcher & System Explanation Banner */}
+        <div className="bg-slate-950/90 border border-emerald-500/20 rounded-2xl p-3.5 mb-5 space-y-2.5 shadow-lg">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black text-emerald-400 flex items-center gap-1.5">
+              🏫 ระบบโรงเรียนหลัก (บ้านโคกยาง)
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 text-[10px] font-bold border border-emerald-500/20">
+              Full Mode
+            </span>
+          </div>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            สำหรับนักเรียน ครู และผู้บริหารโรงเรียนบ้านโคกยาง เข้าสู่ระบบหรือลงทะเบียนผ่านกล่องนี้
           </p>
+          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
+            <span className="text-xs text-indigo-300 font-bold">เป็นโรงเรียนเครือข่าย?</span>
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => router.push('/network')}
+                className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-md shadow-indigo-600/20"
+              >
+                นักเรียน Lite &rarr;
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/network/teacher')}
+                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700"
+              >
+                ครูเครือข่าย &rarr;
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="flex bg-slate-950/80 border border-slate-800 rounded-2xl p-1 mb-6">

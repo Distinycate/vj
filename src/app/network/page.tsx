@@ -112,6 +112,16 @@ export default function NetworkStudentLoginPage() {
             </div>
           )}
 
+          {/* Direct explanation inside login card */}
+          <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-3.5 text-xs text-slate-300 space-y-1">
+            <p className="font-bold text-indigo-300 flex items-center gap-1.5">
+              <span>🔑 คำแนะนำการเข้าสู่ระบบ:</span>
+            </p>
+            <p className="text-slate-400 leading-relaxed text-[11px]">
+              นักเรียนไม่ต้องสมัครสมาชิกเอง ให้กรอก <strong>Username</strong> (เช่น <code className="text-indigo-300">st01</code>) และ <strong>Password</strong> ที่คุณครูประจำชั้นแจกให้
+            </p>
+          </div>
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
@@ -151,7 +161,7 @@ export default function NetworkStudentLoginPage() {
               ) : (
                 <>
                   <LogIn className="w-4 h-4" />
-                  <span>เข้าสู่ระบบนักเรียน</span>
+                  <span>เข้าสู่ระบบนักเรียน (VJ Lite)</span>
                 </>
               )}
             </button>
@@ -177,7 +187,7 @@ export default function NetworkStudentLoginPage() {
               <div className="mt-3 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-xs text-slate-300 space-y-2.5">
                 <div className="font-bold text-white flex items-center gap-1.5 text-indigo-300">
                   <BookOpen className="w-3.5 h-3.5" />
-                  <span>ขั้นตอนการเรียน 6 ขั้นตอนง่ายๆ:</span>
+                  <span>ขั้นตอนการเรียนรู้:</span>
                 </div>
                 <ol className="space-y-2 text-slate-300 list-none pl-0">
                   <li className="flex items-start gap-2">
@@ -190,7 +200,7 @@ export default function NetworkStudentLoginPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">3</span>
-                    <span>ฝึกคำศัพท์ตามลำดับด่าน โดยเริ่มจากด่านที่ 1</span>
+                    <span>ฝึกคำศัพท์ตามลำดับด่าน โดยเริ่มจากด่านที่ 1 (กดปุ่ม 🔊 เพื่อฟังเสียงอ่านได้)</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">4</span>
@@ -209,27 +219,23 @@ export default function NetworkStudentLoginPage() {
             )}
           </div>
 
-          <div className="pt-2 text-center space-y-2">
+          <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => router.push('/network/teacher')}
-              className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 font-bold transition-colors"
+              className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white border border-slate-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
             >
-              <School className="w-3.5 h-3.5" />
+              <School className="w-3.5 h-3.5 text-indigo-400" />
               <span>เข้าสู่ระบบหรือสมัครใช้งานสำหรับคุณครู &rarr;</span>
             </button>
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="py-2.5 px-3 rounded-xl bg-slate-800/40 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+            >
+              <span>หน้าระบบหลัก &rarr;</span>
+            </button>
           </div>
-        </div>
-
-        {/* Footer info */}
-        <div className="text-center pt-2">
-          <button
-            type="button"
-            onClick={() => router.push('/')}
-            className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
-          >
-            &larr; กลับสู่หน้าหลัก Vocab Journey
-          </button>
         </div>
       </div>
     </div>
