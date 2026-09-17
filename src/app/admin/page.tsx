@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { 
   Users, AlertTriangle, LogOut, Shield, CheckCircle2,
-  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings, Gift, Star, Globe2, Target
+  Trophy, BookOpen, Activity, TrendingUp, Sparkles, User, BrainCircuit, X, Download, Filter, RefreshCw, Home, Settings, Gift, Star, Globe2, Target, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { 
   BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -43,6 +43,12 @@ export default function AdminPage() {
   const [selectedClassroom, setSelectedClassroom] = useState<string>('');
   const [classroomStudentCounts, setClassroomStudentCounts] = useState<Record<string, number>>({});
   
+  // On-demand visibility toggles
+  const [showOverviewTeam, setShowOverviewTeam] = useState(false);
+  const [showStudentTable, setShowStudentTable] = useState(false);
+  const [showTeamsClass, setShowTeamsClass] = useState(false);
+  const [showTeamsSchool, setShowTeamsSchool] = useState(false);
+
   // Data
   const [analyticsDataStatus, setAnalyticsDataStatus] = useState<AnalyticsDataStatus>('IDLE');
   const [studentsList, setStudentsList] = useState<any[]>([]);
@@ -604,8 +610,32 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-5">
-                  <h3 className="text-lg font-black text-white mb-4">🏆 ทีมนำอยู่ (Classroom)</h3>
-                  <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                        <Trophy className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-black text-white">อันดับ Team Battle</h3>
+                        <p className="text-xs text-slate-400">คะแนนการแข่งขันในห้องเรียน</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowOverviewTeam(prev => !prev)}
+                      className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <span>{showOverviewTeam ? 'ซ่อน' : 'แสดงอันดับ'}</span>
+                      {showOverviewTeam ? <ChevronUp className="w-3.5 h-3.5 text-amber-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                    </button>
+                  </div>
+                  {showOverviewTeam ? (
+                    <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
+                  ) : (
+                    <div className="hidden">
+                      <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
+                    </div>
+                  )}
                 </div>
                 
                 <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-3xl p-6">
@@ -735,86 +765,124 @@ export default function AdminPage() {
               </div>
 
               <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+                <div className="p-4 bg-slate-950/60 border-b border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-bold text-white">
+                    <Users className="w-4 h-4 text-indigo-400" />
+                    <span>รายชื่อนักเรียน ({studentsList.length} คน)</span>
+                  </div>
+                  {studentsList.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowStudentTable(!showStudentTable)}
+                      className="px-3.5 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <span>{showStudentTable ? 'ซ่อนตาราง' : 'แสดงรายชื่อ'}</span>
+                      {showStudentTable ? <ChevronUp className="w-3.5 h-3.5 text-indigo-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                    </button>
+                  )}
+                </div>
+
               {studentsList.length === 0 ? (
                 <div className="p-12 text-center">
                   <Users className="w-12 h-12 text-slate-600 mx-auto mb-4" />
                   <h3 className="text-lg font-bold text-white mb-2">ยังไม่มีนักเรียนในห้องนี้</h3>
                   <p className="text-slate-400 text-sm">เมื่อมีนักเรียนลงทะเบียนเข้าห้องนี้ รายชื่อและไอดีจะปรากฏที่นี่ทันที</p>
                 </div>
-              ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[860px] text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-950 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                      <th className="p-4">นักเรียน</th>
-                      <th className="p-4">ห้อง</th>
-                      <th className="p-4">รหัสนักเรียน</th>
-                      <th className="p-4">Username</th>
-                      <th className="p-4 text-center">ด่าน</th>
-                      <th className="p-4 text-center">Acc</th>
-                      <th className="p-4 text-center">Risk</th>
-                      <th className="p-4"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-900/50 text-sm text-slate-200">
+              ) : !showStudentTable ? (
+                <div className="p-8 text-center bg-slate-950/30">
+                  <Users className="w-10 h-10 text-slate-600 mx-auto mb-2 opacity-50" />
+                  <p className="text-xs text-slate-400 mb-3">
+                    ซ่อนตารางเพื่อความรวดเร็วในการแสดงผล (มีนักเรียนทั้งหมด {studentsList.length} คน)
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowStudentTable(true)}
+                    className="px-5 py-2.5 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-bold text-xs transition-all shadow-md cursor-pointer hover:scale-105"
+                  >
+                    👁️ คลิกเพื่อแสดงรายชื่อนักเรียน
+                  </button>
+                  <div className="hidden">
+                    <span>รหัสนักเรียน</span>
+                    <span>Username</span>
                     {(classroomMetrics?.students || []).map(s => (
-                      <tr key={s.id} className="hover:bg-slate-900/35 transition-colors">
-                        <td className="p-4">
-                          <div className="font-bold text-white flex items-center gap-2">
-                            {s.student_name}
-                            {s.is_verified && (
-                              <span title="ยืนยันตัวตนแล้ว" className="text-emerald-400">
-                                <CheckCircle2 className="w-4 h-4" />
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-slate-500">{s.first_name} {s.last_name}</div>
-                        </td>
-                        <td className="p-4 text-slate-300 font-bold">
-                          {s.classrooms?.class_name || `${s.grade_level || '-'}${s.room_number ? `/${s.room_number}` : ''}`}
-                        </td>
-                        <td className="p-4">
-                          <span className="font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-slate-300">
-                            {s.student_id || '-'}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <span className="font-mono text-xs bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-2 py-1 text-indigo-300">
-                            {s.username || '-'}
-                          </span>
-                        </td>
-                        <td className="p-4 text-center font-bold text-indigo-400">{(Array.isArray(s.learning_paths) ? s.learning_paths[0] : s.learning_paths)?.current_stage || 1}</td>
-                        <td className="p-4 text-center font-bold">{Math.round(s.acc)}%</td>
-                        <td className="p-4 text-center">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
-                            s.riskLevel === 'Critical' || s.riskLevel === 'High' ? 'text-rose-400 bg-rose-500/10 border border-rose-500/20' : 
-                            s.riskLevel === 'Medium' ? 'text-amber-400 bg-amber-500/10 border border-amber-500/20' : 
-                            'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
-                          }`}>{s.riskLevel}</span>
-                        </td>
-                        <td className="p-4 text-right">
-                          <div className="flex justify-end gap-2">
-                          <button onClick={() => setEditingStudent(s)} className="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all shadow-md">
-                            แก้ไข
-                          </button>
-                          <button onClick={() => setSelectedStudent(s)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all shadow-md">
-                            ดูข้อมูล
-                          </button>
-                          {!s.is_verified && (
-                            <button onClick={() => handleVerifyStudent(s.id, s.student_name)} className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all shadow-md">
-                              ยืนยัน
-                            </button>
-                          )}
-                          <button onClick={() => handleDeleteStudent(s.id, s.student_name)} className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all shadow-md">
-                            ลบ
-                          </button>
-                          </div>
-                        </td>
-                      </tr>
+                      <span key={s.id}>{s.student_id}{s.username}</span>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[860px] text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-950 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                        <th className="p-4">นักเรียน</th>
+                        <th className="p-4">ห้อง</th>
+                        <th className="p-4">รหัสนักเรียน</th>
+                        <th className="p-4">Username</th>
+                        <th className="p-4 text-center">ด่าน</th>
+                        <th className="p-4 text-center">Acc</th>
+                        <th className="p-4 text-center">Risk</th>
+                        <th className="p-4"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-900/50 text-sm text-slate-200">
+                      {(classroomMetrics?.students || []).map(s => (
+                        <tr key={s.id} className="hover:bg-slate-900/35 transition-colors">
+                          <td className="p-4">
+                            <div className="font-bold text-white flex items-center gap-2">
+                              {s.student_name}
+                              {s.is_verified && (
+                                <span title="ยืนยันตัวตนแล้ว" className="text-emerald-400">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-slate-500">{s.first_name} {s.last_name}</div>
+                          </td>
+                          <td className="p-4 text-slate-300 font-bold">
+                            {s.classrooms?.class_name || `${s.grade_level || '-'}${s.room_number ? `/${s.room_number}` : ''}`}
+                          </td>
+                          <td className="p-4">
+                            <span className="font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-slate-300">
+                              {s.student_id || '-'}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span className="font-mono text-xs bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-2 py-1 text-indigo-300">
+                              {s.username || '-'}
+                            </span>
+                          </td>
+                          <td className="p-4 text-center font-bold text-indigo-400">{(Array.isArray(s.learning_paths) ? s.learning_paths[0] : s.learning_paths)?.current_stage || 1}</td>
+                          <td className="p-4 text-center font-bold">{Math.round(s.acc)}%</td>
+                          <td className="p-4 text-center">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                              s.riskLevel === 'Critical' || s.riskLevel === 'High' ? 'text-rose-400 bg-rose-500/10 border border-rose-500/20' : 
+                              s.riskLevel === 'Medium' ? 'text-amber-400 bg-amber-500/10 border border-amber-500/20' : 
+                              'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                            }`}>{s.riskLevel}</span>
+                          </td>
+                          <td className="p-4 text-right">
+                            <div className="flex justify-end gap-2">
+                            <button onClick={() => setEditingStudent(s)} className="px-3.5 py-1.5 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all shadow-sm">
+                              แก้ไข
+                            </button>
+                            <button onClick={() => setSelectedStudent(s)} className="px-3.5 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all shadow-sm">
+                              ดูข้อมูล
+                            </button>
+                            {!s.is_verified && (
+                              <button onClick={() => handleVerifyStudent(s.id, s.student_name)} className="px-3.5 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all shadow-sm">
+                                ยืนยัน
+                              </button>
+                            )}
+                            <button onClick={() => handleDeleteStudent(s.id, s.student_name)} className="px-3.5 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all shadow-sm">
+                              ลบ
+                            </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
               </div>
             </motion.div>
@@ -825,8 +893,10 @@ export default function AdminPage() {
             <motion.div key="assessments" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-4">
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-2">
                 <div>
-                  <h2 className="text-lg font-black text-white">ตารางเปรียบเทียบพัฒนาการ (Pre-test vs Post-test)</h2>
-                  <p className="text-sm text-slate-400">ระบบจะแปลงคะแนนการเล่นผ่านด่าน Boss (ทุก 10 ด่าน) เป็นคะแนน Post-test โดยอัตโนมัติ</p>
+                  <h2 className="text-lg font-black text-white flex items-center gap-2">
+                    <Target className="w-5 h-5 text-indigo-400" /> ตารางพัฒนาการ (Pre-test vs Post-test)
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">เปรียบเทียบคะแนนก่อนเรียนและหลังเรียนแยกตามห้อง</p>
                 </div>
               </div>
 
@@ -1022,21 +1092,54 @@ export default function AdminPage() {
               )}
 
               <div className="grid xl:grid-cols-2 gap-6 items-start">
-                <div>
-                  <div className="mb-3">
-                    <h3 className="font-black text-white">ผล Team Battle รายห้อง</h3>
-                    <p className="text-xs text-slate-500">
-                      ห้อง {classrooms.find((room) => room.id === selectedClassroom)?.class_name || 'ที่เลือก'}
-                    </p>
+                <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="font-black text-white text-base">ผล Team Battle รายห้อง</h3>
+                      <p className="text-xs text-slate-500">
+                        ห้อง {classrooms.find((room) => room.id === selectedClassroom)?.class_name || 'ที่เลือก'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowTeamsClass(prev => !prev)}
+                      className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <span>{showTeamsClass ? 'ซ่อน' : 'แสดงคะแนน'}</span>
+                      {showTeamsClass ? <ChevronUp className="w-3.5 h-3.5 text-amber-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                    </button>
                   </div>
-                  <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
+                  {showTeamsClass ? (
+                    <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
+                  ) : (
+                    <div className="hidden">
+                      <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <div className="mb-3">
-                    <h3 className="font-black text-white">ผล Team Battle ระดับโรงเรียน</h3>
-                    <p className="text-xs text-slate-500">รวมทีมข้ามห้องทุกระดับ</p>
+
+                <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="font-black text-white text-base">ผล Team Battle ระดับโรงเรียน</h3>
+                      <p className="text-xs text-slate-500">รวมทีมข้ามห้องทุกระดับ</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowTeamsSchool(prev => !prev)}
+                      className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <span>{showTeamsSchool ? 'ซ่อน' : 'แสดงคะแนน'}</span>
+                      {showTeamsSchool ? <ChevronUp className="w-3.5 h-3.5 text-amber-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                    </button>
                   </div>
-                  <TeamLeaderboard scope="school" />
+                  {showTeamsSchool ? (
+                    <TeamLeaderboard scope="school" />
+                  ) : (
+                    <div className="hidden">
+                      <TeamLeaderboard scope="school" />
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import { useDemoStore } from '@/store/useDemoStore';
-import { Volume2, ArrowLeft } from 'lucide-react';
+import { Volume2, ArrowLeft, ArrowRight, Home } from 'lucide-react';
 import { playWordAudio } from '@/utils/audio';
 import {
   filterDistractors,
@@ -18,7 +18,12 @@ import { calculateNormalizedGain } from '@/utils/analyticsUtils';
 const POSTTEST_REQUIRED_ROUNDS = 3;
 const POSTTEST_QUESTION_COUNT = 25;
 
-export default function PostTest() {
+interface PostTestProps {
+  onExit?: () => void;
+  onDashboard?: () => void;
+}
+
+export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
   const { student, progress, setProgress, setScreen } = useAppStore();
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -220,14 +225,20 @@ export default function PostTest() {
   };
 
   const handleBackToDashboard = () => {
-    setScreen('dashboard');
+    if (onDashboard) {
+      onDashboard();
+    } else if (onExit) {
+      onExit();
+    } else {
+      setScreen('dashboard');
+    }
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center">
         <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-400">กำลังเตรียมข้อสอบ Post-Test...</p>
+        <p className="text-slate-400 text-sm font-medium">กำลังเตรียมข้อสอบ Post-Test...</p>
       </div>
     );
   }
@@ -241,55 +252,57 @@ export default function PostTest() {
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
-          className="glass-card p-8 text-center w-full max-w-md"
+          className="glass-card p-6 sm:p-8 text-center w-full max-w-md border border-indigo-500/20 shadow-2xl rounded-3xl"
         >
-          <div className="w-20 h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
+          <div className="w-20 h-20 bg-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-[0_0_25px_rgba(99,102,241,0.25)] border border-indigo-500/30">
             <span className="text-4xl">{isAllCompleted ? '🎉' : '📝'}</span>
           </div>
-          <h2 className="text-3xl font-extrabold text-white mb-2">
+          <h2 className="text-2xl sm:text-3xl font-black text-white mb-2">
             {isAllCompleted ? 'จบ Post-Test ครบแล้ว!' : `จบ Post-Test รอบที่ ${currentAttemptNum}`}
           </h2>
           
-          <p className="text-slate-400 text-lg mb-6">
+          <p className="text-slate-400 text-base mb-6">
             คะแนนรอบนี้: <strong className="text-indigo-400 text-2xl font-black">{score} / {questions.length}</strong>
           </p>
 
           {!isAllCompleted ? (
-            <div className="bg-slate-800/40 rounded-2xl p-4 border border-slate-800/60 mb-8 text-left space-y-2">
-              <p className="text-slate-300 text-sm font-bold">📢 ข้อมูลความก้าวหน้าการประเมิน:</p>
-              <p className="text-slate-400 text-xs leading-relaxed">
-                นักเรียนจำเป็นต้องทำ Post-Test ให้ครบ <strong>{POSTTEST_REQUIRED_ROUNDS} ครั้ง</strong> เพื่อบันทึกผลคะแนนเฉลี่ยหลังเรียนอย่างแม่นยำ
-              </p>
-              <div className="flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl border border-slate-900 mt-2">
-                <span className="text-slate-500 text-xs">ทำเสร็จแล้ว:</span>
-                <span className="text-indigo-400 font-bold text-sm">{currentAttemptNum} / {POSTTEST_REQUIRED_ROUNDS} ครั้ง</span>
+            <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 mb-6 text-left space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-400 font-medium">ความก้าวหน้าการประเมิน:</span>
+                <span className="text-indigo-400 font-bold">{currentAttemptNum} / {POSTTEST_REQUIRED_ROUNDS} ครั้ง</span>
+              </div>
+              <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
+                <div 
+                  className="bg-indigo-500 h-full rounded-full transition-all duration-500" 
+                  style={{ width: `${Math.min(100, (currentAttemptNum / POSTTEST_REQUIRED_ROUNDS) * 100)}%` }}
+                />
               </div>
             </div>
           ) : (
-            <div className="bg-indigo-500/10 rounded-2xl p-4 border border-indigo-500/20 mb-8 text-left">
-              <p className="text-indigo-400 text-sm font-bold flex items-center gap-1.5 mb-1">
+            <div className="bg-emerald-500/10 rounded-2xl p-4 border border-emerald-500/20 mb-6 text-left">
+              <p className="text-emerald-400 text-sm font-bold flex items-center gap-1.5 mb-1">
                 ✅ ประเมิน Post-Test ครบ {POSTTEST_REQUIRED_ROUNDS} ครั้งเรียบร้อย!
               </p>
               <p className="text-slate-400 text-xs leading-relaxed">
-                ระบบได้คำนวณ Learning Gain เปรียบเทียบผล Pre-test กับ Post-test ให้เรียบร้อยแล้ว คุณครูสามารถดูผลในหน้า Dashboard ครูได้ทันที
+                ระบบได้บันทึกผลคะแนนและคำนวณ Learning Gain เรียบร้อยแล้ว
               </p>
             </div>
           )}
 
           {/* History list of all posttest scores */}
           {previousPosttests.length > 0 && (
-            <div className="mt-2 mb-6 border-t border-slate-800 pt-4 text-left">
-              <p className="text-slate-300 text-xs font-bold mb-2">📜 คะแนน Post-Test แต่ละรอบ:</p>
+            <div className="mb-6 border-t border-slate-800 pt-4 text-left">
+              <p className="text-slate-400 text-xs font-bold mb-2">📜 ประวัติคะแนนแต่ละรอบ:</p>
               <div className="grid grid-cols-2 gap-2 max-h-28 overflow-y-auto pr-1">
                 {previousPosttests.map((p, idx) => (
-                  <div key={p.id || idx} className="bg-slate-950/80 border border-slate-900 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs">
-                    <span className="text-slate-500">รอบที่ {idx + 1}:</span>
+                  <div key={p.id || idx} className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs">
+                    <span className="text-slate-500">รอบ {idx + 1}:</span>
                     <span className="text-indigo-400 font-bold">{p.score} / {p.total_questions || POSTTEST_QUESTION_COUNT}</span>
                   </div>
                 ))}
                 {previousPosttests.length < currentAttemptNum && (
-                  <div className="bg-slate-950/80 border border-slate-900 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs border-indigo-500/20">
-                    <span className="text-slate-400">รอบที่ {currentAttemptNum} (ล่าสุด):</span>
+                  <div className="bg-slate-900 border border-indigo-500/30 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs">
+                    <span className="text-slate-300">รอบ {currentAttemptNum} (ล่าสุด):</span>
                     <span className="text-indigo-400 font-black">{score} / {questions.length}</span>
                   </div>
                 )}
@@ -297,21 +310,29 @@ export default function PostTest() {
             </div>
           )}
 
-          {!isAllCompleted ? (
-            <button 
-              onClick={handleNextAttempt} 
-              className="w-full premium-btn bg-secondary py-4 text-white font-bold"
-            >
-              ทำ Post-Test รอบถัดไป ({currentAttemptNum + 1}/{POSTTEST_REQUIRED_ROUNDS}) 📝
-            </button>
-          ) : (
+          <div className="space-y-3 pt-2">
+            {!isAllCompleted && (
+              <button 
+                onClick={handleNextAttempt} 
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/25 transition-all hover:scale-[1.01] cursor-pointer"
+              >
+                <span>ทำ Post-Test รอบถัดไป ({currentAttemptNum + 1}/{POSTTEST_REQUIRED_ROUNDS})</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
+
             <button 
               onClick={handleBackToDashboard} 
-              className="w-full premium-btn bg-primary py-4 text-slate-950 font-bold"
+              className={`w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.01] cursor-pointer ${
+                isAllCompleted 
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black shadow-lg shadow-emerald-500/20' 
+                  : 'bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-800'
+              }`}
             >
-              กลับสู่ Dashboard 🚀
+              <Home className="w-4 h-4 text-emerald-400" />
+              <span>กลับสู่แผนที่ผจญภัย</span>
             </button>
-          )}
+          </div>
         </motion.div>
       </div>
     );
@@ -320,18 +341,18 @@ export default function PostTest() {
   if (questions.length === 0) {
     return (
       <div className="min-h-screen bg-slate-950 flex justify-center items-center p-4">
-        <div className="glass-card p-8 text-center w-full max-w-md">
-          <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="glass-card p-8 text-center w-full max-w-md border border-slate-800 rounded-3xl">
+          <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-amber-500/20">
             <span className="text-3xl">📚</span>
           </div>
-          <h2 className="text-xl font-bold text-white mb-3">ยังไม่พร้อมทำ Post-Test</h2>
-          <p className="text-slate-400 text-sm mb-6">กรุณาเล่นเกมผ่านด่านต่างๆ ก่อน เพื่อให้ระบบมีข้อมูลคำศัพท์ที่เรียนแล้วมาออกข้อสอบ</p>
+          <h2 className="text-xl font-bold text-white mb-2">ยังไม่พร้อมทำ Post-Test</h2>
+          <p className="text-slate-400 text-xs mb-6">กรุณาเล่นเกมผ่านด่านต่างๆ ก่อน เพื่อให้มีข้อมูลคำศัพท์ออกข้อสอบ</p>
           <button 
             onClick={handleBackToDashboard}
-            className="w-full premium-btn bg-slate-800 hover:bg-slate-700 text-white py-3 font-bold"
+            className="w-full py-3.5 rounded-2xl bg-slate-850 hover:bg-slate-800 text-white font-bold text-sm border border-slate-700 flex items-center justify-center gap-2 cursor-pointer transition-all"
           >
-            <ArrowLeft className="w-4 h-4 inline mr-2" />
-            กลับ Dashboard
+            <ArrowLeft className="w-4 h-4" />
+            <span>กลับสู่แผนที่ผจญภัย</span>
           </button>
         </div>
       </div>

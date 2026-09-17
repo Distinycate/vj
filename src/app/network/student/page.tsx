@@ -218,8 +218,8 @@ export default function NetworkStudentDashboardPage() {
 
   // Sync screen changes: if store screen transitions back to dashboard while in game or study view, return to map
   useEffect(() => {
-    if ((activeView === 'game' || activeView === 'study') && currentScreen === 'dashboard') {
-      handleFinishGame();
+    if ((activeView === 'game' || activeView === 'study' || activeView === 'posttest') && currentScreen === 'dashboard') {
+      handleFinishAssessment();
     }
   }, [currentScreen, activeView]);
 
@@ -318,7 +318,7 @@ export default function NetworkStudentDashboardPage() {
         </header>
 
         <main className="flex-1 flex flex-col items-center justify-center p-4">
-          <PostTest />
+          <PostTest onExit={handleFinishAssessment} onDashboard={handleFinishAssessment} />
         </main>
       </div>
     );
