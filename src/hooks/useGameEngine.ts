@@ -55,7 +55,7 @@ export type UseGameEngineReturn = {
 };
 
 export function useGameEngine(): UseGameEngineReturn {
-  const { setScreen, progress, student, setProgress, missionLevel, selectedStageNumber, setSelectedStageNumber, isBossMode, setBossMode } = useAppStore();
+  const { setScreen, progress, student, setProgress, missionLevel, selectedStageNumber, setSelectedStageNumber, isBossMode, setBossMode, isReviewMode, setReviewMode } = useAppStore();
   const [words, setWords] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -128,7 +128,7 @@ export function useGameEngine(): UseGameEngineReturn {
   );
 
   useEffect(() => {
-    if (!student) return;
+    if (!student || (!progress && !selectedStageNumber)) return;
 
     async function initStage() {
       const stageNum = selectedStageNumber || progress?.current_stage || 1;
@@ -194,6 +194,29 @@ export function useGameEngine(): UseGameEngineReturn {
         setTimeLeft(20);
       }
 
+      // Weakness Boss / Spaced Repetition Review session:
+      // Review sessions MUST NOT call /api/game/start with campaign stageNumber or advance current_stage!
+      if (isReviewMode) {
+        setStageAttemptId(null);
+        let reviewQuestions: any[] = [];
+        if (student?.id) {
+          reviewQuestions = await generateWeaknessBossQuestions(student.id, 10);
+        }
+        if (reviewQuestions && reviewQuestions.length > 0) {
+          setWords(reviewQuestions);
+          setLoading(false);
+          return;
+        } else {
+          // If no review words left, generate 10 questions from current stage as friendly practice
+          const fallbackReview = await generateStageQuestions(student?.id || '', stageNum, missionLevel);
+          if (fallbackReview && fallbackReview.length > 0) {
+            setWords(fallbackReview.slice(0, 10));
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
       // Attempt to initiate server-authoritative stage attempt
       try {
         const startRes = await fetch('/api/game/start', {
@@ -220,7 +243,7 @@ export function useGameEngine(): UseGameEngineReturn {
 
       let generatedQuestions: any[] = [];
       if (isBossMode) {
-        generatedQuestions = await generateWeaknessBossQuestions(student.id, 20);
+        generatedQuestions = await generateWeaknessBossQuestions(student.id, 10);
       } else {
         generatedQuestions = await generateStageQuestions(student.id, stageNum, missionLevel);
       }
@@ -264,34 +287,17 @@ export function useGameEngine(): UseGameEngineReturn {
 
   function setupQuestion(word: any) {
     const isLite = student?.user_type === 'EXTERNAL' || student?.userType === 'EXTERNAL';
-
-    // 1. Detect choice language: Thai vs English
-    const firstChoiceText = String(word.choices?.[0]?.text || '');
-    const choicesAreThai = /[ก-๙]/.test(firstChoiceText);
-
-    // 2. Resolve question type based on choice language and contract
-    let resolvedQType = word.qType || word.question_type || 'MEANING_MC';
-    if (typeof resolvedQType === 'string') resolvedQType = resolvedQType.toUpperCase();
-
-    if (choicesAreThai) {
-      // Choices are Thai meaning -> Prompt MUST be English word (with audio)
-      resolvedQType = 'MEANING_MC';
-    } else if (word.choices && word.choices.length > 0) {
-      // Choices are English words -> Prompt MUST be Thai meaning (NO audio)
-      resolvedQType = 'WORD_MC';
-    }
-
+    
     if (isLite) {
-      // Lite is strictly Multiple Choice (MEANING_MC or WORD_MC)
-      setQType(resolvedQType === 'WORD_MC' ? 'WORD_MC' : 'MEANING_MC');
+      setQType(word.qType === 'WORD_MC' ? 'WORD_MC' : 'MEANING_MC');
     } else {
-      setQType(word.qType || resolvedQType || 'MEANING_MC');
+      setQType(word.qType || word.question_type || 'MEANING_MC');
     }
 
     setChoices(word.choices || []);
     setShowHint(false);
 
-    if (resolvedQType === 'LISTENING_MC' || word.question_type === 'listening_mc') {
+    if (word.question_type === 'listening_mc' || word.qType === 'LISTENING_MC') {
       setTimeout(() => playWordAudio(word.word), 300);
     }
 
@@ -345,22 +351,24 @@ export function useGameEngine(): UseGameEngineReturn {
 
     if (qType === 'FILL_BLANK' || typeof answer === 'string') {
       const normInput = normalizeAnswer(answer as string);
-      const normCorrect = normalizeAnswer(wordObj.correct_answer);
-      const normWord = normalizeAnswer(wordObj.word);
-      const normBlank = normalizeAnswer(wordObj.blank_answer);
+      if (!normInput) {
+        isCorrect = false;
+      } else {
+        const normCorrect = normalizeAnswer(wordObj.correct_answer);
+        const normWord = normalizeAnswer(wordObj.word);
+        const normBlank = normalizeAnswer(wordObj.blank_answer);
 
-      const acceptable = [
-        ...parseAcceptableAnswers(wordObj.correct_answer),
-        ...parseAcceptableAnswers(wordObj.word),
-        ...parseAcceptableAnswers(wordObj.blank_answer),
-      ].filter(Boolean);
+        const acceptable = [
+          ...parseAcceptableAnswers(wordObj.correct_answer),
+          ...parseAcceptableAnswers(wordObj.word),
+          ...parseAcceptableAnswers(wordObj.blank_answer),
+        ].filter(Boolean);
 
-      isCorrect = Boolean(normInput) && (
-        acceptable.includes(normInput) ||
-        normInput === normCorrect ||
-        normInput === normWord ||
-        (Boolean(normBlank) && normInput === normBlank)
-      );
+        isCorrect = acceptable.includes(normInput) ||
+          (Boolean(normCorrect) && normInput === normCorrect) ||
+          (Boolean(normWord) && normInput === normWord) ||
+          (Boolean(normBlank) && normInput === normBlank);
+      }
     } else if (typeof answer === 'object' && answer !== null) {
       const selectedText = normalizeAnswer(answer.text);
       const correctText = normalizeAnswer(wordObj.correct_answer);
@@ -492,6 +500,67 @@ export function useGameEngine(): UseGameEngineReturn {
       }
     }
 
+    // Handle Review Mode (Weakness Boss) completion:
+    if (isReviewMode) {
+      const passed = accuracyVal >= 60;
+      const reviewCoins = passed ? 10 : 2;
+      const reviewExp = passed ? 20 : 5;
+
+      // Update user review words mastery
+      if (student?.id) {
+        try {
+          const correctWordIds = words
+            .filter(w => !finalWrongWords.includes(w.id || w.word_id))
+            .map(w => w.id || w.word_id)
+            .filter(Boolean);
+          
+          if (correctWordIds.length > 0) {
+            await supabase
+              .from('user_review_words')
+              .update({ 
+                mastery_level: 4, 
+                next_review_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() 
+              })
+              .eq('user_id', student.id)
+              .in('word_id', correctWordIds);
+          }
+        } catch (err) {
+          console.warn('Failed to update review words mastery:', err);
+        }
+      }
+
+      setPassReport({
+        earnedCoins: reviewCoins,
+        earnedExp: reviewExp,
+        passed,
+        score: finalScore,
+        accuracy: accuracyVal,
+        totalQuestions: words.length,
+        newCoins: (progress?.coins || 0) + reviewCoins,
+        newTotalExp: (progress?.total_exp || 0) + reviewExp,
+        currentStage: progress?.current_stage, // CRITICAL: NEVER advance campaign stage on review!
+        stars: accuracyVal >= 90 ? 3 : accuracyVal >= 80 ? 2 : accuracyVal >= 60 ? 1 : 0,
+        primaryReason: 'PRACTICE_REPLAY',
+        bonusFlags: [],
+        bossDefeated: passed,
+        bossDamage: Math.min(100, Math.round((finalScore / (words.length || 1)) * 100)),
+        bossRemainingHp: Math.max(0, 100 - Math.round((finalScore / (words.length || 1)) * 100)),
+        campaignCompleted: false,
+      });
+
+      if (progress) {
+        setProgress({
+          ...progress,
+          coins: (progress.coins || 0) + reviewCoins,
+          total_exp: (progress.total_exp || 0) + reviewExp,
+          // current_stage is strictly preserved!
+        });
+      }
+
+      setGameState('results');
+      return;
+    }
+
     if (stageAttemptId) {
       try {
         const compRes = await fetch('/api/game/complete', {
@@ -531,7 +600,9 @@ export function useGameEngine(): UseGameEngineReturn {
                 ...progress,
                 coins: compData.newCoins !== undefined ? compData.newCoins : progress.coins,
                 total_exp: compData.newTotalExp !== undefined ? compData.newTotalExp : progress.total_exp,
-                current_stage: compData.currentStage !== undefined ? compData.currentStage : progress.current_stage,
+                current_stage: (compData.passed && compData.currentStage !== undefined)
+                  ? Math.max(progress.current_stage, compData.currentStage)
+                  : progress.current_stage,
                 campaign_completed_at: compData.campaignCompleted ? new Date().toISOString() : progress.campaign_completed_at,
               });
             }
@@ -563,6 +634,7 @@ export function useGameEngine(): UseGameEngineReturn {
   const handleFinishGame = () => {
     setSelectedStageNumber(null);
     setBossMode(false);
+    setReviewMode(false);
     setScreen('dashboard');
   };
 

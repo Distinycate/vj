@@ -34,6 +34,7 @@ export async function GET(request: Request) {
       { data: logs },
       { data: learningPath },
       { data: studentData },
+      { data: notifications },
     ] = await Promise.all([
       supabaseAdmin
         .from('card_inventory')
@@ -62,6 +63,13 @@ export async function GET(request: Request) {
         .select('id, student_name, active_defense_count, active_reflect_count')
         .eq('id', studentId)
         .maybeSingle(),
+      supabaseAdmin
+        .from('card_notifications')
+        .select('*')
+        .eq('student_id', studentId)
+        .eq('is_read', false)
+        .order('created_at', { ascending: false })
+        .limit(20),
     ]);
 
     const incoming = (logs || []).filter(l => l.target_id === studentId);
@@ -74,6 +82,7 @@ export async function GET(request: Request) {
       incoming,
       outgoing,
       logs: logs || [],
+      notifications: notifications || [],
       learningPath: learningPath || null,
       activeDefenseCount: Number(studentData?.active_defense_count || 0),
       activeReflectCount: Number(studentData?.active_reflect_count || 0),
@@ -321,6 +330,16 @@ export async function POST(request: Request) {
           teacher_executed: true,
         });
 
+        if (destroyed > 0 && targetId) {
+          await supabaseAdmin.from('card_notifications').insert({
+            student_id: targetId,
+            notification_type: 'CARD_DESTROYED',
+            title: '💣 คลังการ์ดของคุณถูกระเบิด!',
+            message: `คุณถูกเพื่อนใช้การ์ดระเบิด ทำลายการ์ดในคลังไป ${destroyed} ใบ`,
+            data: { destroyedCount: destroyed, attackerId: studentId },
+          });
+        }
+
         return NextResponse.json({
           success: true,
           message: `💣 บึ้ม! ระเบิดการ์ดของ ${targetData.student_name} ทิ้งไป ${destroyed} ใบ!`,
@@ -417,6 +436,16 @@ export async function POST(request: Request) {
           final_result_text: `นินจาลอบทำลายการ์ดเป้าหมายทิ้งสำเร็จ (${destroyedCount} ใบ)`,
           teacher_executed: true,
         });
+
+        if (destroyedCount > 0 && targetId) {
+          await supabaseAdmin.from('card_notifications').insert({
+            student_id: targetId,
+            notification_type: 'CARD_DESTROYED',
+            title: '🥷 นินจาลอบทำลายการ์ดของคุณ!',
+            message: `การ์ดในคลังของคุณถูกนินจาลอบทำลายไป ${destroyedCount} ใบ`,
+            data: { destroyedCount, attackerId: studentId },
+          });
+        }
 
         return NextResponse.json({
           success: true,
@@ -717,6 +746,32 @@ export async function POST(request: Request) {
         success: true,
         message: `ใช้งานการ์ด "${card.name}" แล้ว (ไม่มีผลใดๆ)`,
       });
+    }
+
+    if (action === 'trigger_decay') {
+      // Card decay is permanently disabled to protect student cards
+      return NextResponse.json({
+        success: true,
+        decayedCount: 0,
+        reason: 'ระบบปิดการสลายตัวของการ์ด (Card Decay Disabled)',
+      });
+    }
+
+    if (action === 'dismiss_notification') {
+      const { notificationId } = body;
+      if (notificationId) {
+        await supabaseAdmin
+          .from('card_notifications')
+          .update({ is_read: true })
+          .eq('id', notificationId)
+          .eq('student_id', studentId);
+      } else {
+        await supabaseAdmin
+          .from('card_notifications')
+          .update({ is_read: true })
+          .eq('student_id', studentId);
+      }
+      return NextResponse.json({ success: true });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

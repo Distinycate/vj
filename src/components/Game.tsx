@@ -479,13 +479,7 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
               <div className="glass-card p-6 sm:p-8 shadow-xl w-full break-words border-none">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-3">ความหมายภาษาไทย</span>
                 <h2 className="text-2xl sm:text-4xl font-black text-emerald-400 mb-2 break-words">
-                  {(currentWord.meaning_th && /[ก-๙]/.test(currentWord.meaning_th))
-                    ? currentWord.meaning_th
-                    : (currentWord.meaning && /[ก-๙]/.test(currentWord.meaning))
-                      ? currentWord.meaning
-                      : (currentWord.prompt && /[ก-๙]/.test(currentWord.prompt))
-                        ? currentWord.prompt
-                        : (currentWord.prompt || currentWord.meaning_th || currentWord.meaning)}
+                  {currentWord.prompt || currentWord.meaning_th || currentWord.meaning}
                 </h2>
                 <p className="text-slate-400 text-sm sm:text-base">ตรงกับคำศัพท์ภาษาอังกฤษคำใด?</p>
               </div>
@@ -521,7 +515,11 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
                 )}
                 
                 <form 
-                  onSubmit={(e) => { e.preventDefault(); submitAnswer(fillAnswer); }}
+                  onSubmit={(e) => { 
+                    e.preventDefault(); 
+                    if (!fillAnswer.trim()) return;
+                    submitAnswer(fillAnswer.trim()); 
+                  }}
                   className="w-full max-w-sm mx-auto"
                 >
                   <input 
@@ -534,7 +532,11 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
                     className="w-full text-center px-4 py-4 glass-input text-xl font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-white placeholder-slate-650 mb-3"
                   />
                   {!isAnswered && (
-                    <button type="submit" className="w-full py-3.5 premium-btn bg-primary hover:bg-emerald-400 text-slate-950 font-bold shadow-md">
+                    <button 
+                      type="submit" 
+                      disabled={!fillAnswer.trim()}
+                      className="w-full py-3.5 premium-btn bg-primary hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-primary text-slate-950 font-bold shadow-md transition-all"
+                    >
                       ยืนยันคำตอบ ➡️
                     </button>
                   )}
@@ -615,10 +617,10 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
         {/* Feedback block for spelling input mode */}
         {isAnswered && (qType === 'FILL_BLANK' || typeof selectedAnswer === 'string') && (
           <div data-demo-guide="feedback-result" className="text-center mt-6">
-            {typeof selectedAnswer === 'string' && (
-              normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.correct_answer) ||
-              normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.word) ||
-              normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.blank_answer) ||
+            {typeof selectedAnswer === 'string' && Boolean(normalizeAnswer(selectedAnswer)) && (
+              (Boolean(currentWord.correct_answer) && normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.correct_answer)) ||
+              (Boolean(currentWord.word) && normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.word)) ||
+              (Boolean(currentWord.blank_answer) && normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.blank_answer)) ||
               parseAcceptableAnswers(currentWord.correct_answer).includes(normalizeAnswer(selectedAnswer)) ||
               parseAcceptableAnswers(currentWord.word).includes(normalizeAnswer(selectedAnswer))
             ) ? (

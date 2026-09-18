@@ -139,7 +139,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         alreadyCompleted: true,
-        passed: (attempt.accuracy || 0) >= 60,
+        passed: (attempt.accuracy || 0) >= 60 && (attempt.score || 0) > 0,
         score: attempt.score,
         accuracy: attempt.accuracy,
         stars: attempt.stars ?? 0,
@@ -214,9 +214,9 @@ export async function POST(request: Request) {
 
       const isCorrect = Boolean(normSub) && (
         acceptable.includes(normSub) ||
-        normSub === normCorrect ||
-        normSub === normWord ||
-        normSub === normMeaning ||
+        (Boolean(normCorrect) && normSub === normCorrect) ||
+        (Boolean(normWord) && normSub === normWord) ||
+        (Boolean(normMeaning) && normSub === normMeaning) ||
         (Boolean(normBlank) && normSub === normBlank) ||
         isChoiceCorrect
       );
@@ -254,9 +254,12 @@ export async function POST(request: Request) {
 
     if (!v3Err) {
       // ── V3 success path ────────────────────────────────────────────────────
+      const correctCount = wordAttempts.filter(w => w.is_correct).length;
+      const isActuallyPassed = Boolean(v3Data.passed) && correctCount > 0 && (v3Data.accuracy || 0) >= 60;
+
       return NextResponse.json({
         success: true,
-        passed: v3Data.passed,
+        passed: isActuallyPassed,
         score: v3Data.score,
         accuracy: v3Data.accuracy,
         stars: v3Data.earned_stars ?? 0,
@@ -299,7 +302,7 @@ export async function POST(request: Request) {
     const correctCount = wordAttempts.filter(w => w.is_correct).length;
     const totalQuestions = originalQuestions.length || 1;
     const accuracy = Math.round((correctCount / totalQuestions) * 100);
-    const passed = accuracy >= 60;
+    const passed = accuracy >= 60 && correctCount > 0;
     const avgResponseTime =
       responseTimeList.length > 0
         ? Math.round(responseTimeList.reduce((a, b) => a + b, 0) / responseTimeList.length)

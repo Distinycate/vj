@@ -43,11 +43,8 @@ export default function AdminPage() {
   const [selectedClassroom, setSelectedClassroom] = useState<string>('');
   const [classroomStudentCounts, setClassroomStudentCounts] = useState<Record<string, number>>({});
   
-  // On-demand visibility toggles
-  const [showOverviewTeam, setShowOverviewTeam] = useState(false);
-  const [showStudentTable, setShowStudentTable] = useState(false);
-  const [showTeamsClass, setShowTeamsClass] = useState(false);
-  const [showTeamsSchool, setShowTeamsSchool] = useState(false);
+  // Student table visibility
+  const [showStudentTable, setShowStudentTable] = useState(true);
 
   // Data
   const [analyticsDataStatus, setAnalyticsDataStatus] = useState<AnalyticsDataStatus>('IDLE');
@@ -537,9 +534,9 @@ export default function AdminPage() {
         <AnimatePresence mode="wait">
           
           {/* TAB: SCHOOL OVERVIEW */}
-          {activeTab === 'school-overview' && classroomMetrics && (
+          {activeTab === 'school-overview' && (
             <motion.div key="school-overview" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
-              <SchoolLevelDashboard studentsList={classroomMetrics.students} wrongWords={wrongWords} />
+              <SchoolLevelDashboard studentsList={classroomMetrics?.students || []} wrongWords={wrongWords} />
             </motion.div>
           )}
 
@@ -610,32 +607,16 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                        <Trophy className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-black text-white">อันดับ Team Battle</h3>
-                        <p className="text-xs text-slate-400">คะแนนการแข่งขันในห้องเรียน</p>
-                      </div>
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                      <Trophy className="w-4 h-4" />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowOverviewTeam(prev => !prev)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <span>{showOverviewTeam ? 'ซ่อน' : 'แสดงอันดับ'}</span>
-                      {showOverviewTeam ? <ChevronUp className="w-3.5 h-3.5 text-amber-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-                    </button>
+                    <div>
+                      <h3 className="text-base font-black text-white">อันดับ Team Battle</h3>
+                      <p className="text-xs text-slate-400">คะแนนการแข่งขันในห้องเรียน</p>
+                    </div>
                   </div>
-                  {showOverviewTeam ? (
-                    <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
-                  ) : (
-                    <div className="hidden">
-                      <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
-                    </div>
-                  )}
+                  <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
                 </div>
                 
                 <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-3xl p-6">
@@ -1093,53 +1074,21 @@ export default function AdminPage() {
 
               <div className="grid xl:grid-cols-2 gap-6 items-start">
                 <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h3 className="font-black text-white text-base">ผล Team Battle รายห้อง</h3>
-                      <p className="text-xs text-slate-500">
-                        ห้อง {classrooms.find((room) => room.id === selectedClassroom)?.class_name || 'ที่เลือก'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowTeamsClass(prev => !prev)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <span>{showTeamsClass ? 'ซ่อน' : 'แสดงคะแนน'}</span>
-                      {showTeamsClass ? <ChevronUp className="w-3.5 h-3.5 text-amber-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-                    </button>
+                  <div className="mb-4">
+                    <h3 className="font-black text-white text-base">ผล Team Battle รายห้อง</h3>
+                    <p className="text-xs text-slate-500">
+                      ห้อง {classrooms.find((room) => room.id === selectedClassroom)?.class_name || 'ที่เลือก'}
+                    </p>
                   </div>
-                  {showTeamsClass ? (
-                    <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
-                  ) : (
-                    <div className="hidden">
-                      <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
-                    </div>
-                  )}
+                  <TeamLeaderboard scope="class" classroomId={selectedClassroom} />
                 </div>
 
                 <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h3 className="font-black text-white text-base">ผล Team Battle ระดับโรงเรียน</h3>
-                      <p className="text-xs text-slate-500">รวมทีมข้ามห้องทุกระดับ</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowTeamsSchool(prev => !prev)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <span>{showTeamsSchool ? 'ซ่อน' : 'แสดงคะแนน'}</span>
-                      {showTeamsSchool ? <ChevronUp className="w-3.5 h-3.5 text-amber-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-                    </button>
+                  <div className="mb-4">
+                    <h3 className="font-black text-white text-base">ผล Team Battle ระดับโรงเรียน</h3>
+                    <p className="text-xs text-slate-500">รวมทีมข้ามห้องทุกระดับ</p>
                   </div>
-                  {showTeamsSchool ? (
-                    <TeamLeaderboard scope="school" />
-                  ) : (
-                    <div className="hidden">
-                      <TeamLeaderboard scope="school" />
-                    </div>
-                  )}
+                  <TeamLeaderboard scope="school" />
                 </div>
               </div>
             </motion.div>

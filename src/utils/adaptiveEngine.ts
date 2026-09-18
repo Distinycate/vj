@@ -65,8 +65,8 @@ export async function generateStageQuestions(studentId: string, stageNumber: num
       questionTypes = ['meaning_mc', 'word_mc']; // Force multiple choice only
     }
 
-    const isBoss = stageNumber % 10 === 0;
-    const targetCount = isSkullOrExternal ? 10 : (isBoss ? Math.round(questionCount * 1.5) : questionCount);
+    const isBoss = stageNumber % 10 === 0 || stageNumber % 10 === 5;
+    const targetCount = 10;
 
     // 2. Resolve Word Pool based on stage (Normal vs. Boss Stage)
     let wordsQuery = supabase.from('vocabulary').select('*').eq('is_active', true);

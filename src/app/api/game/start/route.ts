@@ -172,8 +172,50 @@ export async function POST(request: Request) {
     }
 
     const candidateMap = new Map<string, any>();
-    for (const w of [...stageWords, ...reviewWordDetails]) {
-      if (!candidateMap.has(w.id)) {
+
+    if (isExternalStudent) {
+      for (const w of stageWords) {
+        candidateMap.set(w.id, w);
+      }
+
+      // Ensure at least 10 candidates for External student stages (Lite)
+      if (candidateMap.size < 10) {
+        const worldStart = Math.floor((stageNumber - 1) / 10) * 10 + 1;
+        const worldEnd = worldStart + 9;
+        const { data: extraWords } = await supabaseAdmin
+          .from('vocabulary')
+          .select('*')
+          .eq('is_active', true)
+          .gte('stage_number', worldStart)
+          .lte('stage_number', worldEnd)
+          .limit(20);
+        if (extraWords) {
+          for (const w of extraWords) {
+            if (!candidateMap.has(w.id)) {
+              candidateMap.set(w.id, w);
+              if (candidateMap.size >= 10) break;
+            }
+          }
+        }
+        if (candidateMap.size < 10) {
+          const { data: fallbackExtra } = await supabaseAdmin
+            .from('vocabulary')
+            .select('*')
+            .eq('is_active', true)
+            .limit(15);
+          if (fallbackExtra) {
+            for (const w of fallbackExtra) {
+              if (!candidateMap.has(w.id)) {
+                candidateMap.set(w.id, w);
+                if (candidateMap.size >= 10) break;
+              }
+            }
+          }
+        }
+      }
+    } else {
+      // VJ Full Internal Mode: Standard stage candidates MUST strictly belong to this stage
+      for (const w of stageWords) {
         const review = reviewMap.get(w.id);
         candidateMap.set(w.id, {
           ...w,
@@ -188,46 +230,9 @@ export async function POST(request: Request) {
       }
     }
 
-    // Ensure at least 10 candidates for External student stages
-    if (isExternalStudent && candidateMap.size < 10) {
-      const worldStart = Math.floor((stageNumber - 1) / 10) * 10 + 1;
-      const worldEnd = worldStart + 9;
-      const { data: extraWords } = await supabaseAdmin
-        .from('vocabulary')
-        .select('*')
-        .eq('is_active', true)
-        .gte('stage_number', worldStart)
-        .lte('stage_number', worldEnd)
-        .limit(20);
-      if (extraWords) {
-        for (const w of extraWords) {
-          if (!candidateMap.has(w.id)) {
-            candidateMap.set(w.id, w);
-            if (candidateMap.size >= 10) break;
-          }
-        }
-      }
-      // Fallback if the world range has fewer than 10 words
-      if (candidateMap.size < 10) {
-        const { data: fallbackExtra } = await supabaseAdmin
-          .from('vocabulary')
-          .select('*')
-          .eq('is_active', true)
-          .limit(15);
-        if (fallbackExtra) {
-          for (const w of fallbackExtra) {
-            if (!candidateMap.has(w.id)) {
-              candidateMap.set(w.id, w);
-              if (candidateMap.size >= 10) break;
-            }
-          }
-        }
-      }
-    }
-
     const allCandidates = Array.from(candidateMap.values());
 
-    // ── Distractor pool (Fetch from local chunk for speed in Lite mode) ───────
+    // ── Distractor pool ──────────────────────────────────────────────────────
     let distractorPool = allCandidates;
     if (isExternalStudent) {
       if (distractorPool.length < 15) {
@@ -255,22 +260,26 @@ export async function POST(request: Request) {
 
     // ── Question selection ───────────────────────────────────────────────────
     // Boss stages: bossEngine.ts 50/30/20 scoped pool (10 questions)
-    // Standard stages: 10 questions for External Lite, 6 for Internal
+    // Standard stages: 10 questions for External Lite, standard 6 questions for VJ Full
     let shuffledTargets: any[];
 
     if (isBossMode) {
       const plan = selectBossQuestionPool(stageNumber, allCandidates, new Date());
       shuffledTargets = plan.selectedWords;
-    } else {
-      const targetCount = isExternalStudent ? 10 : Math.min(allCandidates.length, 6);
+    } else if (isExternalStudent) {
+      const targetCount = 10;
       const { selectedWords } = selectAdaptiveQuestionPool(allCandidates, {
         totalQuestions: Math.min(allCandidates.length, targetCount),
         stageNumber,
       });
       shuffledTargets = selectedWords;
-      if (isExternalStudent && shuffledTargets.length < 10 && allCandidates.length >= 10) {
+      if (shuffledTargets.length < 10 && allCandidates.length >= 10) {
         shuffledTargets = allCandidates.slice(0, 10);
       }
+    } else {
+      // VJ Full Standard Stage: exactly 10 questions from this stage's vocabulary
+      const targetCount = Math.min(stageWords.length, 10);
+      shuffledTargets = [...stageWords].sort(() => Math.random() - 0.5).slice(0, targetCount);
     }
 
     // ── Build question objects ───────────────────────────────────────────────

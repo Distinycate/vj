@@ -60,6 +60,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [now, setNow] = useState(Date.now());
 
   const loadData = useCallback(async () => {
@@ -141,6 +142,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       if (data.schoolmates) setSchoolmates(data.schoolmates);
       if (data.incoming) setIncoming(data.incoming);
       if (data.logs) setCardLogs(data.logs);
+      if (data.notifications) setNotifications(data.notifications);
       if (data.activeDefenseCount !== undefined) setActiveDefenseCount(Number(data.activeDefenseCount));
       if (data.activeReflectCount !== undefined) setActiveReflectCount(Number(data.activeReflectCount));
       if (data.learningPath) setProgress(data.learningPath);
@@ -353,6 +355,23 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
     }
   }
 
+  async function handleDismissNotification(notifId?: string) {
+    try {
+      await fetch('/api/student/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'dismiss_notification', notificationId: notifId }),
+      });
+      if (notifId) {
+        setNotifications(prev => prev.filter(n => n.id !== notifId));
+      } else {
+        setNotifications([]);
+      }
+    } catch (e) {
+      console.error('Failed to dismiss notification:', e);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm overflow-y-auto p-4">
       <motion.div
@@ -418,6 +437,62 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
           {message && (
             <div className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 p-3 rounded-xl text-sm font-medium flex items-center gap-2">
               <span>🔔</span> {message}
+            </div>
+          )}
+
+          {/* Card Loss / Theft / Alerts Feed */}
+          {notifications.length > 0 && (
+            <div className="space-y-2.5 bg-slate-900/70 border border-slate-800 p-4 rounded-2xl">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+                <span className="flex items-center gap-1.5 text-amber-300">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                  การแจ้งเตือนความเคลื่อนไหวของการ์ด ({notifications.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleDismissNotification()}
+                  className="text-slate-400 hover:text-white underline cursor-pointer transition-colors"
+                >
+                  รับทราบทั้งหมด
+                </button>
+              </div>
+              <div className="space-y-2 max-h-44 overflow-y-auto pr-1 custom-scrollbar">
+                {notifications.map((notif: any) => {
+                  const isSuccess = notif.notification_type?.includes('SUCCESS') || notif.notification_type?.includes('GIFT');
+                  const isTheftVictim = notif.notification_type?.includes('VICTIM');
+                  const isDestroy = notif.notification_type?.includes('DESTROY');
+                  
+                  return (
+                    <div
+                      key={notif.id}
+                      className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-sm ${
+                        isSuccess 
+                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200' 
+                          : isTheftVictim || isDestroy
+                            ? 'bg-rose-500/10 border-rose-500/30 text-rose-200'
+                            : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl">
+                          {isSuccess ? '✨' : isDestroy ? '💣' : isTheftVictim ? '🚨' : '🔔'}
+                        </span>
+                        <div>
+                          <strong className="block text-white text-xs font-black">{notif.title}</strong>
+                          <p className="text-xs text-slate-300 mt-0.5">{notif.message}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDismissNotification(notif.id)}
+                        className="px-2.5 py-1 rounded-lg bg-slate-900/80 hover:bg-slate-800 text-[11px] text-slate-400 hover:text-white shrink-0 cursor-pointer border border-slate-700"
+                      >
+                        รับทราบ
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 

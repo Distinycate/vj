@@ -99,6 +99,7 @@ export default function Dashboard() {
   const tabLoadTimestamps = useRef<Record<string, number>>({});
   const TAB_CACHE_TTL_MS = 60 * 1000;
 
+
   // 1. Core Initial Dashboard Load (Critical Profile + Progression + Due Review Words + Card Decay)
   const loadDashboardData = useCallback(async () => {
     if (!student) return;
@@ -221,16 +222,7 @@ export default function Dashboard() {
     }
     
     if (pathData) {
-      if (!student.is_demo_account && !useDemoStore.getState().isDemoMode) {
-        try {
-          const { data: decayedCount } = await supabase.rpc('trigger_card_decay', { p_student_id: student.id });
-          if (decayedCount && decayedCount > 0) {
-            alert(`😱 คุณหายไปนานเกิน 3 วัน! บทลงโทษ: การ์ดในคลังของคุณถูกทำลายไป ${decayedCount} ใบ!`);
-          }
-        } catch (e) {
-          console.error("Decay Error:", e);
-        }
-      }
+
       if (!pathData.avatar_seed) pathData.avatar_seed = student.id;
       setProgress(pathData);
       const level = Math.floor((pathData.total_exp || pathData.exp || 0) / 100) + 1;
@@ -347,9 +339,15 @@ export default function Dashboard() {
 
       if (teamsData) {
         const tList = teamsData.map((d: any) => d.teams).filter(Boolean);
-        setMyTeams(tList);
+        const seenTeamIds = new Set<string>();
+        const uniqueTeams = tList.filter((team: any) => {
+          if (!team || seenTeamIds.has(team.id)) return false;
+          seenTeamIds.add(team.id);
+          return true;
+        });
+        setMyTeams(uniqueTeams);
 
-        const scoreEntries = await Promise.all(tList.map(async (team: any) => [
+        const scoreEntries = await Promise.all(uniqueTeams.map(async (team: any) => [
           team.id,
           await calculateTeamScore(team.id),
         ] as const));
@@ -690,16 +688,19 @@ export default function Dashboard() {
 
         {/* Tab Links */}
         <div className="flex flex-col min-[420px]:flex-row min-[420px]:justify-between min-[420px]:items-end gap-2 mb-2">
-          <div className="text-slate-400 text-sm font-bold">เมนูหลัก</div>
-          <button onClick={handleManualRefresh} className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-full transition-all">
+          <div className="text-slate-400 text-sm font-bold flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>เมนูการเดินทาง</span>
+          </div>
+          <button onClick={handleManualRefresh} className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm">
             <RefreshCw className="w-3 h-3" /> รีเฟรชข้อมูล
           </button>
         </div>
-        <div className="grid grid-cols-3 min-[420px]:grid-cols-4 md:grid-cols-8 glass-card rounded-2xl p-2 mb-8 gap-1">
+        <div className="grid grid-cols-3 min-[420px]:grid-cols-4 md:grid-cols-8 glass-card rounded-2xl p-1.5 mb-8 gap-1.5 border border-slate-800/80 bg-slate-950/50 backdrop-blur-xl shadow-xl">
           <button 
             onClick={() => setActiveTab('roadmap')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
-              activeTab === 'roadmap' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              activeTab === 'roadmap' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
             }`}
           >
             <Compass className="w-5 h-5 shrink-0" />
@@ -707,8 +708,8 @@ export default function Dashboard() {
           </button>
           <button 
             onClick={() => setActiveTab('review')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
-              activeTab === 'review' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              activeTab === 'review' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
             }`}
           >
             <Bookmark className="w-5 h-5 shrink-0" />
@@ -716,8 +717,8 @@ export default function Dashboard() {
           </button>
           <button 
             onClick={() => setActiveTab('collection')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
-              activeTab === 'collection' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              activeTab === 'collection' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
             }`}
           >
             <BookMarked className="w-5 h-5 shrink-0" />
@@ -725,8 +726,8 @@ export default function Dashboard() {
           </button>
           <button 
             onClick={() => setActiveTab('quests')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all relative ${
-              activeTab === 'quests' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all relative cursor-pointer ${
+              activeTab === 'quests' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
             }`}
           >
             <CheckSquare className="w-5 h-5 shrink-0" />
@@ -740,8 +741,8 @@ export default function Dashboard() {
           </button>
           <button 
             onClick={() => setActiveTab('stats')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
-              activeTab === 'stats' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              activeTab === 'stats' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
             }`}
           >
             <Trophy className="w-5 h-5 shrink-0" />
@@ -750,8 +751,8 @@ export default function Dashboard() {
           {!isExternalUser && (
             <button 
               onClick={() => setActiveTab('teams')} 
-              className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
-                activeTab === 'teams' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+              className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'teams' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
               }`}
             >
               <Users className="w-5 h-5 shrink-0" />
@@ -760,8 +761,8 @@ export default function Dashboard() {
           )}
           <button 
             onClick={() => { setActiveTab('inbox'); markMessagesAsRead(); }} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all relative ${
-              activeTab === 'inbox' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all relative cursor-pointer ${
+              activeTab === 'inbox' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
             }`}
           >
             <Mail className="w-5 h-5 shrink-0" />
@@ -774,8 +775,8 @@ export default function Dashboard() {
           </button>
           <button 
             onClick={() => setActiveTab('profile')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
-              activeTab === 'profile' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              activeTab === 'profile' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
             }`}
           >
             <User className="w-5 h-5 shrink-0" />
@@ -823,8 +824,10 @@ export default function Dashboard() {
                   </div>
                   <button 
                     onClick={() => {
-                      // Navigate to game with Boss Mode active
+                      // Navigate to game with Boss Mode & Review Mode active
                       useAppStore.getState().setBossMode(true);
+                      useAppStore.getState().setReviewMode(true);
+                      useAppStore.getState().setSelectedStageNumber(null);
                       setScreen('game');
                     }}
                     className="w-full sm:w-auto px-6 py-3 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-black shadow-lg shadow-rose-500/30 transition-all hover:scale-105 whitespace-nowrap shrink-0"
@@ -988,7 +991,7 @@ export default function Dashboard() {
                   <span className="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 font-bold uppercase tracking-widest">ความก้าวหน้าปัจจุบัน</span>
                   <h3 className="text-2xl font-black text-white mt-3">ด่านผจญภัยที่ {currentStage} / 100</h3>
                   <p className="text-slate-400 text-sm mt-1">
-                    ธีมปัจจุบัน: <strong className="text-white">{currentWorld.title}</strong> • การตั้งค่า: {rankConfig.questionCount} ข้อ • เวลา {rankConfig.timeLimit} วินาที
+                    ธีมปัจจุบัน: <strong className="text-white">{currentWorld.title}</strong> • การตั้งค่า: 10 ข้อ • เวลา {rankConfig.timeLimit} วินาที
                   </p>
                 </div>
                 
@@ -1002,7 +1005,7 @@ export default function Dashboard() {
                   <button 
                     onClick={() => {
                       setMissionLevel(1);
-                      setSelectedStageNumber(null);
+                      setSelectedStageNumber(currentStage);
                       setScreen('game');
                     }}
                     className="w-full sm:w-auto px-8 py-4 font-black rounded-2xl flex items-center justify-center gap-2 transition-all text-sm bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 hover:scale-[1.02]"
@@ -1165,39 +1168,62 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-6 text-left"
             >
-              <div className="glass-card p-6 sm:p-8 rounded-3xl">
-                <h3 className="text-xl font-black text-white flex items-center gap-2 mb-6">
-                  <Trophy className="w-6 h-6 text-amber-400" /> ตารางเพื่อนร่วมผจญภัยในชั้นเรียน (Leaderboard)
-                </h3>
+              <div className="glass-card p-5 sm:p-7 rounded-3xl border border-slate-800/80 bg-slate-900/60 backdrop-blur-xl shadow-2xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                  <div>
+                    <h3 className="text-xl font-black text-white flex items-center gap-2">
+                      <Trophy className="w-6 h-6 text-amber-400" /> ตารางเพื่อนร่วมผจญภัยในชั้นเรียน (Leaderboard)
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">แข่งขันเก็บเลเวลและเหรียญทองร่วมกับเพื่อนในห้อง</p>
+                  </div>
+                  {leaderboard.length > 0 && (
+                    <span className="self-start sm:self-auto text-xs font-bold text-slate-400 bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-xl">
+                      ผู้เล่นทั้งหมด {leaderboard.length} คน
+                    </span>
+                  )}
+                </div>
                 
-                <div className="bg-slate-950/40 rounded-2xl overflow-hidden border border-slate-900 shadow-inner">
+                <div className="bg-slate-950/60 rounded-2xl overflow-hidden border border-slate-800/80 shadow-inner">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="border-b border-slate-850 bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider font-extrabold">
-                          <th className="p-4 text-center">อันดับ</th>
+                        <tr className="border-b border-slate-800 bg-slate-900/80 text-slate-400 text-xs uppercase tracking-wider font-extrabold">
+                          <th className="p-4 text-center w-16">อันดับ</th>
                           <th className="p-4">นักผจญภัย</th>
                           <th className="p-4 text-center">ระดับ</th>
                           <th className="p-4 text-center">เหรียญสะสม</th>
                           <th className="p-4 text-center">ด่านล่าสุด</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-900 text-sm">
+                      <tbody className="divide-y divide-slate-800/60 text-sm">
                         {leaderboard.map((user, idx) => {
                           const rankIcons = ['🥇', '🥈', '🥉'];
                           const isTop3 = idx < 3;
                           
+                          let podiumClass = 'hover:bg-slate-900/40';
+                          if (user.isSelf) {
+                            podiumClass = 'bg-emerald-500/15 hover:bg-emerald-500/20 font-black text-emerald-300 border-l-4 border-emerald-400 shadow-md';
+                          } else if (idx === 0) {
+                            podiumClass = 'bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent text-amber-200 hover:bg-amber-500/15 border-l-4 border-amber-400';
+                          } else if (idx === 1) {
+                            podiumClass = 'bg-gradient-to-r from-slate-400/10 via-slate-400/5 to-transparent text-slate-200 hover:bg-slate-400/15 border-l-4 border-slate-400';
+                          } else if (idx === 2) {
+                            podiumClass = 'bg-gradient-to-r from-amber-700/10 via-amber-700/5 to-transparent text-amber-300 hover:bg-amber-700/15 border-l-4 border-amber-600';
+                          }
+
                           return (
                             <tr 
                               key={user.id} 
-                              className={`transition-colors ${
-                                user.isSelf 
-                                  ? 'bg-emerald-500/10 hover:bg-emerald-500/15 font-extrabold text-emerald-400 border-l-4 border-emerald-500' 
-                                  : 'hover:bg-slate-900/20'
-                              }`}
+                              className={`transition-all ${podiumClass}`}
                             >
                               <td className="p-4 text-center text-lg font-black">
-                                {isTop3 ? rankIcons[idx] : idx + 1}
+                                {isTop3 ? (
+                                  <span className="inline-block transform hover:scale-125 transition-transform select-none">
+                                    {rankIcons[idx]}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-500 font-mono text-xs">{idx + 1}</span>
+                                )}
                               </td>
                               <td className="p-4">
                                 <div className="flex items-center gap-3">
@@ -1205,9 +1231,9 @@ export default function Dashboard() {
                                     seed={user.avatar_seed} 
                                     style={user.avatar_style} 
                                     size="sm" 
-                                    className="shrink-0"
+                                    className="shrink-0 ring-1 ring-slate-700 rounded-full"
                                   />
-                                  <span className="truncate">{user.name}</span>
+                                  <span className="truncate font-bold">{user.name}</span>
                                   {user.rareCardStatus && (
                                     <span
                                       title={user.rareCardStatus.label}
@@ -1223,7 +1249,7 @@ export default function Dashboard() {
                                     </span>
                                   )}
                                   {user.isSelf && (
-                                    <span className="text-[10px] bg-emerald-500 text-slate-950 font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                                    <span className="text-[10px] bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-black px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm">
                                       คุณ
                                     </span>
                                   )}
@@ -1232,8 +1258,8 @@ export default function Dashboard() {
                               <td className="p-4 text-center font-bold text-indigo-400">
                                 Lvl {Math.floor((user.exp || 0) / 100) + 1}
                               </td>
-                              <td className="p-4 text-center font-semibold">
-                                🪙 {user.coins}
+                              <td className="p-4 text-center font-semibold text-amber-300">
+                                🪙 {user.coins.toLocaleString()}
                               </td>
                               <td className="p-4 text-center text-slate-400">
                                 ด่าน {user.stage}
@@ -1463,6 +1489,8 @@ export default function Dashboard() {
       <StudentVerificationModal />
       {showShop && !isExternalUser && <ShopModal onClose={() => setShowShop(false)} />}
       {showCardCenter && !isExternalUser && <CardCenterModal onClose={() => setShowCardCenter(false)} />}
+
+
     </div>
   );
 }

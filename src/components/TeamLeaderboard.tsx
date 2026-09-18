@@ -12,7 +12,18 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
 
   useEffect(() => {
     async function loadLeaderboard() {
-      const cacheKey = `vj_leaderboard_cache_${scope}_${classroomId || 'all'}`;
+      if (scope === 'class' && !classroomId) {
+        setTeams([]);
+        setLoading(false);
+        return;
+      }
+
+      // Clear any legacy polluted cache key
+      try {
+        localStorage.removeItem('vj_leaderboard_cache_class_all');
+      } catch {}
+
+      const cacheKey = `vj_leaderboard_cache_${scope}_${classroomId || 'school'}`;
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
         try {
@@ -43,7 +54,7 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
         
         if (season) setActiveSeasonName(season.season_name);
         let query = supabase.from('teams').select('*').eq('team_type', scope).eq('is_active', true);
-        if (scope === 'class' && classroomId) {
+        if (scope === 'class') {
           query = query.eq('classroom_id', classroomId);
         }
         
@@ -51,7 +62,15 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
         if (teamsError) throw teamsError;
           
         if (dbTeams) {
-          const scoredTeams = await Promise.all(dbTeams.map(async (team) => {
+          // Deduplicate by team.id and team_name to guarantee no duplicated cards/icons
+          const seenTeamIds = new Set<string>();
+          const uniqueDbTeams = dbTeams.filter((team: any) => {
+            if (!team || seenTeamIds.has(team.id)) return false;
+            seenTeamIds.add(team.id);
+            return true;
+          });
+
+          const scoredTeams = await Promise.all(uniqueDbTeams.map(async (team) => {
             const scoreData = await calculateTeamScore(team.id, season?.id || null);
             return {
               ...team,
@@ -77,6 +96,14 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
     }
     loadLeaderboard();
   }, [scope, classroomId]);
+
+  if (scope === 'class' && !classroomId) {
+    return (
+      <div className="text-center py-8 text-slate-400 glass-card rounded-3xl border border-slate-800/80">
+        <p className="text-sm">กรุณาเลือกห้องเรียนเพื่อดูตารางคะแนนทีมประจำห้อง</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return <div className="text-center py-10 text-slate-400">กำลังโหลดข้อมูล Team Leaderboard...</div>;
