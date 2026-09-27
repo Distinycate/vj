@@ -17,6 +17,7 @@ import { Users, Target, Zap, BrainCircuit } from 'lucide-react';
 import StudentHero from '@/components/StudentHero';
 import StudentTeamCard from '@/components/StudentTeamCard';
 import TeamLeaderboard from '@/components/TeamLeaderboard';
+import CoopGoals from '@/components/CoopGoals';
 
 const StudentVerificationModal = dynamic(() => import('@/components/StudentVerificationModal'));
 const ShopModal = dynamic(() => import('@/components/ShopModal'));
@@ -1309,14 +1310,11 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Team Goals */}
-                <div className="bg-gradient-to-r from-fuchsia-500/10 to-purple-500/10 border border-fuchsia-500/20 p-5 rounded-2xl mb-6">
-                  <h4 className="text-fuchsia-400 font-bold mb-3 flex items-center gap-2">🎯 เป้าหมายทีมวันนี้</h4>
-                  <ul className="space-y-2 text-sm text-slate-300">
-                    <li className="flex items-center gap-2">✅ ช่วยกันผ่านด่านรวม 20 ด่าน</li>
-                    <li className="flex items-center gap-2">✅ ให้สมาชิกกลับมาเล่น (Active) เกิน 70% เพื่อรับโบนัส x1.25!</li>
-                  </ul>
-                  <p className="text-xs text-slate-400 mt-4 italic">"ถ้าสมาชิกช่วยกันเล่นหลายคน ทีมจะได้โบนัสคะแนนเพิ่มพิเศษ อย่าปล่อยให้เพื่อนแบกคนเดียวนะ!"</p>
+                {/* Weekly Class & School Co-op Goals */}
+                <div className="mb-6">
+                  <CoopGoals onRewardClaimed={(newCoins, newExp) => {
+                    setProgress(p => p ? { ...p, coins: newCoins, total_exp: newExp } : p);
+                  }} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -2,6 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
 import { playWordAudio } from '@/utils/audio';
+import {
+  playCorrectSound,
+  playWrongSound,
+  playComboSound,
+  playBossHitSound,
+  playBossAttackSound,
+  playBossVictorySound,
+} from '@/utils/soundEffects';
 import { useDemoStore } from '@/store/useDemoStore';
 import { generateStageQuestions, getAdaptiveDifficulty, generateWeaknessBossQuestions } from '@/utils/adaptiveEngine';
 import { normalizeAnswer, parseAcceptableAnswers, QuizChoice } from '@/lib/quizUtils';
@@ -26,6 +34,7 @@ export type UseGameEngineReturn = {
   timeLeft: number;
   isAnswered: boolean;
   selectedAnswer: QuizChoice | string | null;
+  lastAnswerCorrect: boolean | null;
   comboCount: number;
   maxCombo: number;
   wrongWords: string[];
@@ -74,6 +83,7 @@ export function useGameEngine(): UseGameEngineReturn {
   const [timeLeft, setTimeLeft] = useState(15);
   const [isAnswered, setIsAnswered] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<QuizChoice | string | null>(null);
+  const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
   const [questionStartTime, setQuestionStartTime] = useState<number>(0);
   const [responseTimes, setResponseTimes] = useState<number[]>([]);
   
@@ -305,6 +315,7 @@ export function useGameEngine(): UseGameEngineReturn {
     setTimeLeft(difficultyConfig.timeLimit || 15);
     setIsAnswered(false);
     setSelectedAnswer(null);
+    setLastAnswerCorrect(null);
     answerLockRef.current = false;
     setQuestionStartTime(Date.now());
   }
@@ -391,6 +402,8 @@ export function useGameEngine(): UseGameEngineReturn {
     const finalScore = score + (isCorrect ? 1 : 0);
     const finalWrongWords = isCorrect ? wrongWords : [...wrongWords, wordObj.word_id || wordObj.id];
 
+    setLastAnswerCorrect(isCorrect);
+
     if (isCorrect) {
       setScore(s => s + 1);
       const newCombo = comboCount + 1;
@@ -399,6 +412,15 @@ export function useGameEngine(): UseGameEngineReturn {
       
       setShowScorePopup(true);
       setTimeout(() => setShowScorePopup(false), 1000);
+
+      // Trigger Sound & Haptics
+      if (isBossMode) {
+        playBossHitSound();
+      } else if (newCombo >= 3) {
+        playComboSound(newCombo);
+      } else {
+        playCorrectSound();
+      }
     } else {
       setLives(l => l - 1);
       setComboCount(0);
@@ -406,6 +428,13 @@ export function useGameEngine(): UseGameEngineReturn {
       
       setShakeScreen(true);
       setTimeout(() => setShakeScreen(false), 500);
+
+      // Trigger Sound & Haptics
+      if (isBossMode) {
+        playBossAttackSound();
+      } else {
+        playWrongSound();
+      }
     }
 
     const isLite = student?.user_type === 'EXTERNAL' || student?.userType === 'EXTERNAL';
@@ -595,6 +624,10 @@ export function useGameEngine(): UseGameEngineReturn {
               campaignCompleted: compData.campaignCompleted ?? false,
             });
 
+            if (compData.bossDefeated) {
+              playBossVictorySound();
+            }
+
             if (progress) {
               setProgress({
                 ...progress,
@@ -641,7 +674,7 @@ export function useGameEngine(): UseGameEngineReturn {
   return {
     student, progress, isBossMode,
     words, currentIndex, loading, loadError, gameState,
-    score, showScorePopup, shakeScreen, lives, timeLeft, isAnswered, selectedAnswer,
+    score, showScorePopup, shakeScreen, lives, timeLeft, isAnswered, selectedAnswer, lastAnswerCorrect,
     comboCount, maxCombo, wrongWords, assistedWords, usedHintsCount,
     difficultyConfig, qType, choices, fillAnswer, setFillAnswer, showHint,
     inventory, usedItemsThisStage,

@@ -2,10 +2,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  X, CheckCircle, XCircle, Trophy, Timer, Volume2, 
+  X, CheckCircle, XCircle, Trophy, Timer, Volume2, VolumeX,
   Heart, Sparkles, AlertTriangle, Star, Flame
 } from 'lucide-react';
 import { playWordAudio } from '@/utils/audio';
+import { isSoundEnabled, toggleSound } from '@/utils/soundEffects';
 import { normalizeAnswer, parseAcceptableAnswers, QuizChoice } from '@/lib/quizUtils';
 import { useGameEngine } from '@/hooks/useGameEngine';
 import BossHpBar from '@/components/BossHpBar';
@@ -13,10 +14,21 @@ import BossHpBar from '@/components/BossHpBar';
 type GameStep = 'play' | 'reflection' | 'results';
 
 export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
+  const [soundActive, setSoundActive] = useState(true);
+
+  useEffect(() => {
+    setSoundActive(isSoundEnabled());
+  }, []);
+
+  const handleToggleSound = () => {
+    const next = toggleSound();
+    setSoundActive(next);
+  };
+
   const {
     student, progress, isBossMode,
     words, currentIndex, loading, loadError, gameState,
-    score, showScorePopup, shakeScreen, lives, timeLeft, isAnswered, selectedAnswer,
+    score, showScorePopup, shakeScreen, lives, timeLeft, isAnswered, selectedAnswer, lastAnswerCorrect,
     comboCount, maxCombo, wrongWords, assistedWords, usedHintsCount,
     difficultyConfig, qType, choices, fillAnswer, setFillAnswer, showHint,
     inventory, usedItemsThisStage,
@@ -386,6 +398,15 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
           <span className={`text-lg font-bold font-mono ${timeLeft <= 5 ? "text-rose-500" : "text-slate-100"}`}>{timeLeft}s</span>
         </div>
 
+        <button
+          type="button"
+          onClick={handleToggleSound}
+          title={soundActive ? "ปิดเสียงเอฟเฟกต์" : "เปิดเสียงเอฟเฟกต์"}
+          className="p-2.5 rounded-full glass-card hover:bg-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer"
+        >
+          {soundActive ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-slate-500" />}
+        </button>
+
         <button 
           onClick={handleFinishGame} 
           className="px-3.5 py-2 premium-btn bg-slate-900 hover:bg-slate-850 text-white flex items-center gap-1.5 text-xs font-bold"
@@ -401,6 +422,8 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
           correctCount={score}
           totalQuestions={words.length}
           currentQuestionIndex={currentIndex}
+          isAnswered={isAnswered}
+          lastAnswerCorrect={lastAnswerCorrect}
         />
       )}
 
