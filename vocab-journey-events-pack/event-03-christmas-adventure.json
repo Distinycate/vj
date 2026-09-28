@@ -1,0 +1,2239 @@
+{
+  "eventId": "event-03-christmas-adventure",
+  "title": "Christmas Adventure",
+  "titleTh": "ภารกิจคริสต์มาส",
+  "theme": "christmas",
+  "version": "1.0",
+  "status": "draft",
+  "rules": {
+    "stageCount": 15,
+    "questionsPerStage": 10,
+    "passScore": 7,
+    "questionType": "multiple_choice",
+    "shuffleQuestions": false,
+    "shuffleChoices": false,
+    "fixedQuestionBank": true
+  },
+  "stages": [
+    {
+      "stage": 1,
+      "title": "Christmas Basics",
+      "vocabulary": [
+        {
+          "word": "Christmas",
+          "meaningTh": "คริสต์มาส"
+        },
+        {
+          "word": "holiday",
+          "meaningTh": "วันหยุด"
+        },
+        {
+          "word": "December",
+          "meaningTh": "เดือนธันวาคม"
+        },
+        {
+          "word": "celebrate",
+          "meaningTh": "เฉลิมฉลอง"
+        },
+        {
+          "word": "party",
+          "meaningTh": "งานเลี้ยง"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S01-Q01",
+          "prompt": "“Christmas” หมายถึงข้อใด?",
+          "choices": [
+            "วันหยุด",
+            "เดือนธันวาคม",
+            "เฉลิมฉลอง",
+            "คริสต์มาส"
+          ],
+          "correctIndex": 3,
+          "answer": "คริสต์มาส"
+        },
+        {
+          "id": "E03-S01-Q02",
+          "prompt": "ข้อใดหมายถึง “คริสต์มาส”?",
+          "choices": [
+            "holiday",
+            "December",
+            "Christmas",
+            "celebrate"
+          ],
+          "correctIndex": 2,
+          "answer": "Christmas"
+        },
+        {
+          "id": "E03-S01-Q03",
+          "prompt": "“holiday” หมายถึงข้อใด?",
+          "choices": [
+            "คริสต์มาส",
+            "เดือนธันวาคม",
+            "วันหยุด",
+            "เฉลิมฉลอง"
+          ],
+          "correctIndex": 2,
+          "answer": "วันหยุด"
+        },
+        {
+          "id": "E03-S01-Q04",
+          "prompt": "ข้อใดหมายถึง “วันหยุด”?",
+          "choices": [
+            "Christmas",
+            "December",
+            "holiday",
+            "celebrate"
+          ],
+          "correctIndex": 2,
+          "answer": "holiday"
+        },
+        {
+          "id": "E03-S01-Q05",
+          "prompt": "“December” หมายถึงข้อใด?",
+          "choices": [
+            "คริสต์มาส",
+            "เดือนธันวาคม",
+            "วันหยุด",
+            "เฉลิมฉลอง"
+          ],
+          "correctIndex": 1,
+          "answer": "เดือนธันวาคม"
+        },
+        {
+          "id": "E03-S01-Q06",
+          "prompt": "ข้อใดหมายถึง “เดือนธันวาคม”?",
+          "choices": [
+            "Christmas",
+            "holiday",
+            "celebrate",
+            "December"
+          ],
+          "correctIndex": 3,
+          "answer": "December"
+        },
+        {
+          "id": "E03-S01-Q07",
+          "prompt": "“celebrate” หมายถึงข้อใด?",
+          "choices": [
+            "คริสต์มาส",
+            "เฉลิมฉลอง",
+            "วันหยุด",
+            "เดือนธันวาคม"
+          ],
+          "correctIndex": 1,
+          "answer": "เฉลิมฉลอง"
+        },
+        {
+          "id": "E03-S01-Q08",
+          "prompt": "ข้อใดหมายถึง “เฉลิมฉลอง”?",
+          "choices": [
+            "Christmas",
+            "holiday",
+            "December",
+            "celebrate"
+          ],
+          "correctIndex": 3,
+          "answer": "celebrate"
+        },
+        {
+          "id": "E03-S01-Q09",
+          "prompt": "“party” หมายถึงข้อใด?",
+          "choices": [
+            "คริสต์มาส",
+            "วันหยุด",
+            "งานเลี้ยง",
+            "เดือนธันวาคม"
+          ],
+          "correctIndex": 2,
+          "answer": "งานเลี้ยง"
+        },
+        {
+          "id": "E03-S01-Q10",
+          "prompt": "ข้อใดหมายถึง “งานเลี้ยง”?",
+          "choices": [
+            "party",
+            "Christmas",
+            "holiday",
+            "December"
+          ],
+          "correctIndex": 0,
+          "answer": "party"
+        }
+      ]
+    },
+    {
+      "stage": 2,
+      "title": "Santa Claus",
+      "vocabulary": [
+        {
+          "word": "Santa",
+          "meaningTh": "ซานตาคลอส"
+        },
+        {
+          "word": "sleigh",
+          "meaningTh": "เลื่อนหิมะ"
+        },
+        {
+          "word": "reindeer",
+          "meaningTh": "กวางเรนเดียร์"
+        },
+        {
+          "word": "beard",
+          "meaningTh": "เครา"
+        },
+        {
+          "word": "chimney",
+          "meaningTh": "ปล่องไฟ"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S02-Q01",
+          "prompt": "“Santa” หมายถึงข้อใด?",
+          "choices": [
+            "เลื่อนหิมะ",
+            "ซานตาคลอส",
+            "กวางเรนเดียร์",
+            "เครา"
+          ],
+          "correctIndex": 1,
+          "answer": "ซานตาคลอส"
+        },
+        {
+          "id": "E03-S02-Q02",
+          "prompt": "ข้อใดหมายถึง “ซานตาคลอส”?",
+          "choices": [
+            "sleigh",
+            "reindeer",
+            "beard",
+            "Santa"
+          ],
+          "correctIndex": 3,
+          "answer": "Santa"
+        },
+        {
+          "id": "E03-S02-Q03",
+          "prompt": "“sleigh” หมายถึงข้อใด?",
+          "choices": [
+            "ซานตาคลอส",
+            "กวางเรนเดียร์",
+            "เลื่อนหิมะ",
+            "เครา"
+          ],
+          "correctIndex": 2,
+          "answer": "เลื่อนหิมะ"
+        },
+        {
+          "id": "E03-S02-Q04",
+          "prompt": "ข้อใดหมายถึง “เลื่อนหิมะ”?",
+          "choices": [
+            "sleigh",
+            "Santa",
+            "reindeer",
+            "beard"
+          ],
+          "correctIndex": 0,
+          "answer": "sleigh"
+        },
+        {
+          "id": "E03-S02-Q05",
+          "prompt": "“reindeer” หมายถึงข้อใด?",
+          "choices": [
+            "ซานตาคลอส",
+            "เลื่อนหิมะ",
+            "เครา",
+            "กวางเรนเดียร์"
+          ],
+          "correctIndex": 3,
+          "answer": "กวางเรนเดียร์"
+        },
+        {
+          "id": "E03-S02-Q06",
+          "prompt": "ข้อใดหมายถึง “กวางเรนเดียร์”?",
+          "choices": [
+            "Santa",
+            "sleigh",
+            "reindeer",
+            "beard"
+          ],
+          "correctIndex": 2,
+          "answer": "reindeer"
+        },
+        {
+          "id": "E03-S02-Q07",
+          "prompt": "“beard” หมายถึงข้อใด?",
+          "choices": [
+            "ซานตาคลอส",
+            "เครา",
+            "เลื่อนหิมะ",
+            "กวางเรนเดียร์"
+          ],
+          "correctIndex": 1,
+          "answer": "เครา"
+        },
+        {
+          "id": "E03-S02-Q08",
+          "prompt": "ข้อใดหมายถึง “เครา”?",
+          "choices": [
+            "Santa",
+            "sleigh",
+            "beard",
+            "reindeer"
+          ],
+          "correctIndex": 2,
+          "answer": "beard"
+        },
+        {
+          "id": "E03-S02-Q09",
+          "prompt": "“chimney” หมายถึงข้อใด?",
+          "choices": [
+            "ซานตาคลอส",
+            "เลื่อนหิมะ",
+            "กวางเรนเดียร์",
+            "ปล่องไฟ"
+          ],
+          "correctIndex": 3,
+          "answer": "ปล่องไฟ"
+        },
+        {
+          "id": "E03-S02-Q10",
+          "prompt": "ข้อใดหมายถึง “ปล่องไฟ”?",
+          "choices": [
+            "Santa",
+            "chimney",
+            "sleigh",
+            "reindeer"
+          ],
+          "correctIndex": 1,
+          "answer": "chimney"
+        }
+      ]
+    },
+    {
+      "stage": 3,
+      "title": "Christmas Tree",
+      "vocabulary": [
+        {
+          "word": "tree",
+          "meaningTh": "ต้นไม้"
+        },
+        {
+          "word": "ornament",
+          "meaningTh": "ของประดับ"
+        },
+        {
+          "word": "star",
+          "meaningTh": "ดาว"
+        },
+        {
+          "word": "light",
+          "meaningTh": "ไฟประดับ"
+        },
+        {
+          "word": "decorate",
+          "meaningTh": "ตกแต่ง"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S03-Q01",
+          "prompt": "“tree” หมายถึงข้อใด?",
+          "choices": [
+            "ของประดับ",
+            "ต้นไม้",
+            "ดาว",
+            "ไฟประดับ"
+          ],
+          "correctIndex": 1,
+          "answer": "ต้นไม้"
+        },
+        {
+          "id": "E03-S03-Q02",
+          "prompt": "ข้อใดหมายถึง “ต้นไม้”?",
+          "choices": [
+            "tree",
+            "ornament",
+            "star",
+            "light"
+          ],
+          "correctIndex": 0,
+          "answer": "tree"
+        },
+        {
+          "id": "E03-S03-Q03",
+          "prompt": "“ornament” หมายถึงข้อใด?",
+          "choices": [
+            "ต้นไม้",
+            "ดาว",
+            "ไฟประดับ",
+            "ของประดับ"
+          ],
+          "correctIndex": 3,
+          "answer": "ของประดับ"
+        },
+        {
+          "id": "E03-S03-Q04",
+          "prompt": "ข้อใดหมายถึง “ของประดับ”?",
+          "choices": [
+            "ornament",
+            "tree",
+            "star",
+            "light"
+          ],
+          "correctIndex": 0,
+          "answer": "ornament"
+        },
+        {
+          "id": "E03-S03-Q05",
+          "prompt": "“star” หมายถึงข้อใด?",
+          "choices": [
+            "ต้นไม้",
+            "ดาว",
+            "ของประดับ",
+            "ไฟประดับ"
+          ],
+          "correctIndex": 1,
+          "answer": "ดาว"
+        },
+        {
+          "id": "E03-S03-Q06",
+          "prompt": "ข้อใดหมายถึง “ดาว”?",
+          "choices": [
+            "tree",
+            "ornament",
+            "star",
+            "light"
+          ],
+          "correctIndex": 2,
+          "answer": "star"
+        },
+        {
+          "id": "E03-S03-Q07",
+          "prompt": "“light” หมายถึงข้อใด?",
+          "choices": [
+            "ไฟประดับ",
+            "ต้นไม้",
+            "ของประดับ",
+            "ดาว"
+          ],
+          "correctIndex": 0,
+          "answer": "ไฟประดับ"
+        },
+        {
+          "id": "E03-S03-Q08",
+          "prompt": "ข้อใดหมายถึง “ไฟประดับ”?",
+          "choices": [
+            "light",
+            "tree",
+            "ornament",
+            "star"
+          ],
+          "correctIndex": 0,
+          "answer": "light"
+        },
+        {
+          "id": "E03-S03-Q09",
+          "prompt": "“decorate” หมายถึงข้อใด?",
+          "choices": [
+            "ต้นไม้",
+            "ของประดับ",
+            "ดาว",
+            "ตกแต่ง"
+          ],
+          "correctIndex": 3,
+          "answer": "ตกแต่ง"
+        },
+        {
+          "id": "E03-S03-Q10",
+          "prompt": "ข้อใดหมายถึง “ตกแต่ง”?",
+          "choices": [
+            "tree",
+            "ornament",
+            "star",
+            "decorate"
+          ],
+          "correctIndex": 3,
+          "answer": "decorate"
+        }
+      ]
+    },
+    {
+      "stage": 4,
+      "title": "Gifts",
+      "vocabulary": [
+        {
+          "word": "gift",
+          "meaningTh": "ของขวัญ"
+        },
+        {
+          "word": "present",
+          "meaningTh": "ของขวัญ"
+        },
+        {
+          "word": "box",
+          "meaningTh": "กล่อง"
+        },
+        {
+          "word": "ribbon",
+          "meaningTh": "ริบบิ้น"
+        },
+        {
+          "word": "wrap",
+          "meaningTh": "ห่อ"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S04-Q01",
+          "prompt": "“gift” หมายถึงข้อใด?",
+          "choices": [
+            "กล่อง",
+            "ของขวัญ",
+            "ริบบิ้น",
+            "ห่อ"
+          ],
+          "correctIndex": 1,
+          "answer": "ของขวัญ"
+        },
+        {
+          "id": "E03-S04-Q02",
+          "prompt": "ข้อใดหมายถึง “ของขวัญ”?",
+          "choices": [
+            "present",
+            "box",
+            "gift",
+            "ribbon"
+          ],
+          "correctIndex": 2,
+          "answer": "gift"
+        },
+        {
+          "id": "E03-S04-Q03",
+          "prompt": "“present” หมายถึงข้อใด?",
+          "choices": [
+            "กล่อง",
+            "ของขวัญ",
+            "ริบบิ้น",
+            "ห่อ"
+          ],
+          "correctIndex": 1,
+          "answer": "ของขวัญ"
+        },
+        {
+          "id": "E03-S04-Q04",
+          "prompt": "ข้อใดหมายถึง “ของขวัญ”?",
+          "choices": [
+            "gift",
+            "present",
+            "box",
+            "ribbon"
+          ],
+          "correctIndex": 1,
+          "answer": "present"
+        },
+        {
+          "id": "E03-S04-Q05",
+          "prompt": "“box” หมายถึงข้อใด?",
+          "choices": [
+            "ของขวัญ",
+            "ริบบิ้น",
+            "กล่อง",
+            "ห่อ"
+          ],
+          "correctIndex": 2,
+          "answer": "กล่อง"
+        },
+        {
+          "id": "E03-S04-Q06",
+          "prompt": "ข้อใดหมายถึง “กล่อง”?",
+          "choices": [
+            "gift",
+            "box",
+            "present",
+            "ribbon"
+          ],
+          "correctIndex": 1,
+          "answer": "box"
+        },
+        {
+          "id": "E03-S04-Q07",
+          "prompt": "“ribbon” หมายถึงข้อใด?",
+          "choices": [
+            "ของขวัญ",
+            "ริบบิ้น",
+            "กล่อง",
+            "ห่อ"
+          ],
+          "correctIndex": 1,
+          "answer": "ริบบิ้น"
+        },
+        {
+          "id": "E03-S04-Q08",
+          "prompt": "ข้อใดหมายถึง “ริบบิ้น”?",
+          "choices": [
+            "ribbon",
+            "gift",
+            "present",
+            "box"
+          ],
+          "correctIndex": 0,
+          "answer": "ribbon"
+        },
+        {
+          "id": "E03-S04-Q09",
+          "prompt": "“wrap” หมายถึงข้อใด?",
+          "choices": [
+            "ห่อ",
+            "ของขวัญ",
+            "กล่อง",
+            "ริบบิ้น"
+          ],
+          "correctIndex": 0,
+          "answer": "ห่อ"
+        },
+        {
+          "id": "E03-S04-Q10",
+          "prompt": "ข้อใดหมายถึง “ห่อ”?",
+          "choices": [
+            "gift",
+            "present",
+            "wrap",
+            "box"
+          ],
+          "correctIndex": 2,
+          "answer": "wrap"
+        }
+      ]
+    },
+    {
+      "stage": 5,
+      "title": "Christmas Food",
+      "vocabulary": [
+        {
+          "word": "cake",
+          "meaningTh": "เค้ก"
+        },
+        {
+          "word": "cookie",
+          "meaningTh": "คุกกี้"
+        },
+        {
+          "word": "candy",
+          "meaningTh": "ลูกอม"
+        },
+        {
+          "word": "chocolate",
+          "meaningTh": "ช็อกโกแลต"
+        },
+        {
+          "word": "dinner",
+          "meaningTh": "อาหารเย็น"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S05-Q01",
+          "prompt": "“cake” หมายถึงข้อใด?",
+          "choices": [
+            "คุกกี้",
+            "ลูกอม",
+            "เค้ก",
+            "ช็อกโกแลต"
+          ],
+          "correctIndex": 2,
+          "answer": "เค้ก"
+        },
+        {
+          "id": "E03-S05-Q02",
+          "prompt": "ข้อใดหมายถึง “เค้ก”?",
+          "choices": [
+            "cake",
+            "cookie",
+            "candy",
+            "chocolate"
+          ],
+          "correctIndex": 0,
+          "answer": "cake"
+        },
+        {
+          "id": "E03-S05-Q03",
+          "prompt": "“cookie” หมายถึงข้อใด?",
+          "choices": [
+            "คุกกี้",
+            "เค้ก",
+            "ลูกอม",
+            "ช็อกโกแลต"
+          ],
+          "correctIndex": 0,
+          "answer": "คุกกี้"
+        },
+        {
+          "id": "E03-S05-Q04",
+          "prompt": "ข้อใดหมายถึง “คุกกี้”?",
+          "choices": [
+            "cake",
+            "candy",
+            "cookie",
+            "chocolate"
+          ],
+          "correctIndex": 2,
+          "answer": "cookie"
+        },
+        {
+          "id": "E03-S05-Q05",
+          "prompt": "“candy” หมายถึงข้อใด?",
+          "choices": [
+            "เค้ก",
+            "ลูกอม",
+            "คุกกี้",
+            "ช็อกโกแลต"
+          ],
+          "correctIndex": 1,
+          "answer": "ลูกอม"
+        },
+        {
+          "id": "E03-S05-Q06",
+          "prompt": "ข้อใดหมายถึง “ลูกอม”?",
+          "choices": [
+            "cake",
+            "cookie",
+            "chocolate",
+            "candy"
+          ],
+          "correctIndex": 3,
+          "answer": "candy"
+        },
+        {
+          "id": "E03-S05-Q07",
+          "prompt": "“chocolate” หมายถึงข้อใด?",
+          "choices": [
+            "เค้ก",
+            "ช็อกโกแลต",
+            "คุกกี้",
+            "ลูกอม"
+          ],
+          "correctIndex": 1,
+          "answer": "ช็อกโกแลต"
+        },
+        {
+          "id": "E03-S05-Q08",
+          "prompt": "ข้อใดหมายถึง “ช็อกโกแลต”?",
+          "choices": [
+            "cake",
+            "cookie",
+            "chocolate",
+            "candy"
+          ],
+          "correctIndex": 2,
+          "answer": "chocolate"
+        },
+        {
+          "id": "E03-S05-Q09",
+          "prompt": "“dinner” หมายถึงข้อใด?",
+          "choices": [
+            "เค้ก",
+            "อาหารเย็น",
+            "คุกกี้",
+            "ลูกอม"
+          ],
+          "correctIndex": 1,
+          "answer": "อาหารเย็น"
+        },
+        {
+          "id": "E03-S05-Q10",
+          "prompt": "ข้อใดหมายถึง “อาหารเย็น”?",
+          "choices": [
+            "dinner",
+            "cake",
+            "cookie",
+            "candy"
+          ],
+          "correctIndex": 0,
+          "answer": "dinner"
+        }
+      ]
+    },
+    {
+      "stage": 6,
+      "title": "Winter",
+      "vocabulary": [
+        {
+          "word": "snow",
+          "meaningTh": "หิมะ"
+        },
+        {
+          "word": "cold",
+          "meaningTh": "หนาว"
+        },
+        {
+          "word": "winter",
+          "meaningTh": "ฤดูหนาว"
+        },
+        {
+          "word": "coat",
+          "meaningTh": "เสื้อโค้ต"
+        },
+        {
+          "word": "scarf",
+          "meaningTh": "ผ้าพันคอ"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S06-Q01",
+          "prompt": "“snow” หมายถึงข้อใด?",
+          "choices": [
+            "หิมะ",
+            "หนาว",
+            "ฤดูหนาว",
+            "เสื้อโค้ต"
+          ],
+          "correctIndex": 0,
+          "answer": "หิมะ"
+        },
+        {
+          "id": "E03-S06-Q02",
+          "prompt": "ข้อใดหมายถึง “หิมะ”?",
+          "choices": [
+            "cold",
+            "winter",
+            "coat",
+            "snow"
+          ],
+          "correctIndex": 3,
+          "answer": "snow"
+        },
+        {
+          "id": "E03-S06-Q03",
+          "prompt": "“cold” หมายถึงข้อใด?",
+          "choices": [
+            "หิมะ",
+            "หนาว",
+            "ฤดูหนาว",
+            "เสื้อโค้ต"
+          ],
+          "correctIndex": 1,
+          "answer": "หนาว"
+        },
+        {
+          "id": "E03-S06-Q04",
+          "prompt": "ข้อใดหมายถึง “หนาว”?",
+          "choices": [
+            "snow",
+            "winter",
+            "cold",
+            "coat"
+          ],
+          "correctIndex": 2,
+          "answer": "cold"
+        },
+        {
+          "id": "E03-S06-Q05",
+          "prompt": "“winter” หมายถึงข้อใด?",
+          "choices": [
+            "หิมะ",
+            "หนาว",
+            "ฤดูหนาว",
+            "เสื้อโค้ต"
+          ],
+          "correctIndex": 2,
+          "answer": "ฤดูหนาว"
+        },
+        {
+          "id": "E03-S06-Q06",
+          "prompt": "ข้อใดหมายถึง “ฤดูหนาว”?",
+          "choices": [
+            "snow",
+            "winter",
+            "cold",
+            "coat"
+          ],
+          "correctIndex": 1,
+          "answer": "winter"
+        },
+        {
+          "id": "E03-S06-Q07",
+          "prompt": "“coat” หมายถึงข้อใด?",
+          "choices": [
+            "หิมะ",
+            "หนาว",
+            "ฤดูหนาว",
+            "เสื้อโค้ต"
+          ],
+          "correctIndex": 3,
+          "answer": "เสื้อโค้ต"
+        },
+        {
+          "id": "E03-S06-Q08",
+          "prompt": "ข้อใดหมายถึง “เสื้อโค้ต”?",
+          "choices": [
+            "snow",
+            "cold",
+            "winter",
+            "coat"
+          ],
+          "correctIndex": 3,
+          "answer": "coat"
+        },
+        {
+          "id": "E03-S06-Q09",
+          "prompt": "“scarf” หมายถึงข้อใด?",
+          "choices": [
+            "ผ้าพันคอ",
+            "หิมะ",
+            "หนาว",
+            "ฤดูหนาว"
+          ],
+          "correctIndex": 0,
+          "answer": "ผ้าพันคอ"
+        },
+        {
+          "id": "E03-S06-Q10",
+          "prompt": "ข้อใดหมายถึง “ผ้าพันคอ”?",
+          "choices": [
+            "snow",
+            "cold",
+            "winter",
+            "scarf"
+          ],
+          "correctIndex": 3,
+          "answer": "scarf"
+        }
+      ]
+    },
+    {
+      "stage": 7,
+      "title": "Christmas Characters",
+      "vocabulary": [
+        {
+          "word": "elf",
+          "meaningTh": "เอลฟ์"
+        },
+        {
+          "word": "snowman",
+          "meaningTh": "ตุ๊กตาหิมะ"
+        },
+        {
+          "word": "angel",
+          "meaningTh": "นางฟ้า/เทวดา"
+        },
+        {
+          "word": "reindeer",
+          "meaningTh": "กวางเรนเดียร์"
+        },
+        {
+          "word": "Santa",
+          "meaningTh": "ซานตาคลอส"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S07-Q01",
+          "prompt": "“elf” หมายถึงข้อใด?",
+          "choices": [
+            "ตุ๊กตาหิมะ",
+            "เอลฟ์",
+            "นางฟ้า/เทวดา",
+            "กวางเรนเดียร์"
+          ],
+          "correctIndex": 1,
+          "answer": "เอลฟ์"
+        },
+        {
+          "id": "E03-S07-Q02",
+          "prompt": "ข้อใดหมายถึง “เอลฟ์”?",
+          "choices": [
+            "snowman",
+            "angel",
+            "reindeer",
+            "elf"
+          ],
+          "correctIndex": 3,
+          "answer": "elf"
+        },
+        {
+          "id": "E03-S07-Q03",
+          "prompt": "“snowman” หมายถึงข้อใด?",
+          "choices": [
+            "เอลฟ์",
+            "นางฟ้า/เทวดา",
+            "กวางเรนเดียร์",
+            "ตุ๊กตาหิมะ"
+          ],
+          "correctIndex": 3,
+          "answer": "ตุ๊กตาหิมะ"
+        },
+        {
+          "id": "E03-S07-Q04",
+          "prompt": "ข้อใดหมายถึง “ตุ๊กตาหิมะ”?",
+          "choices": [
+            "elf",
+            "angel",
+            "reindeer",
+            "snowman"
+          ],
+          "correctIndex": 3,
+          "answer": "snowman"
+        },
+        {
+          "id": "E03-S07-Q05",
+          "prompt": "“angel” หมายถึงข้อใด?",
+          "choices": [
+            "เอลฟ์",
+            "ตุ๊กตาหิมะ",
+            "กวางเรนเดียร์",
+            "นางฟ้า/เทวดา"
+          ],
+          "correctIndex": 3,
+          "answer": "นางฟ้า/เทวดา"
+        },
+        {
+          "id": "E03-S07-Q06",
+          "prompt": "ข้อใดหมายถึง “นางฟ้า/เทวดา”?",
+          "choices": [
+            "elf",
+            "snowman",
+            "reindeer",
+            "angel"
+          ],
+          "correctIndex": 3,
+          "answer": "angel"
+        },
+        {
+          "id": "E03-S07-Q07",
+          "prompt": "“reindeer” หมายถึงข้อใด?",
+          "choices": [
+            "เอลฟ์",
+            "ตุ๊กตาหิมะ",
+            "นางฟ้า/เทวดา",
+            "กวางเรนเดียร์"
+          ],
+          "correctIndex": 3,
+          "answer": "กวางเรนเดียร์"
+        },
+        {
+          "id": "E03-S07-Q08",
+          "prompt": "ข้อใดหมายถึง “กวางเรนเดียร์”?",
+          "choices": [
+            "elf",
+            "snowman",
+            "reindeer",
+            "angel"
+          ],
+          "correctIndex": 2,
+          "answer": "reindeer"
+        },
+        {
+          "id": "E03-S07-Q09",
+          "prompt": "“Santa” หมายถึงข้อใด?",
+          "choices": [
+            "เอลฟ์",
+            "ซานตาคลอส",
+            "ตุ๊กตาหิมะ",
+            "นางฟ้า/เทวดา"
+          ],
+          "correctIndex": 1,
+          "answer": "ซานตาคลอส"
+        },
+        {
+          "id": "E03-S07-Q10",
+          "prompt": "ข้อใดหมายถึง “ซานตาคลอส”?",
+          "choices": [
+            "elf",
+            "snowman",
+            "angel",
+            "Santa"
+          ],
+          "correctIndex": 3,
+          "answer": "Santa"
+        }
+      ]
+    },
+    {
+      "stage": 8,
+      "title": "Decorations",
+      "vocabulary": [
+        {
+          "word": "bell",
+          "meaningTh": "กระดิ่ง"
+        },
+        {
+          "word": "candle",
+          "meaningTh": "เทียน"
+        },
+        {
+          "word": "wreath",
+          "meaningTh": "พวงหรีดคริสต์มาส"
+        },
+        {
+          "word": "stocking",
+          "meaningTh": "ถุงเท้าคริสต์มาส"
+        },
+        {
+          "word": "ornament",
+          "meaningTh": "ของประดับ"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S08-Q01",
+          "prompt": "“bell” หมายถึงข้อใด?",
+          "choices": [
+            "เทียน",
+            "พวงหรีดคริสต์มาส",
+            "ถุงเท้าคริสต์มาส",
+            "กระดิ่ง"
+          ],
+          "correctIndex": 3,
+          "answer": "กระดิ่ง"
+        },
+        {
+          "id": "E03-S08-Q02",
+          "prompt": "ข้อใดหมายถึง “กระดิ่ง”?",
+          "choices": [
+            "candle",
+            "wreath",
+            "stocking",
+            "bell"
+          ],
+          "correctIndex": 3,
+          "answer": "bell"
+        },
+        {
+          "id": "E03-S08-Q03",
+          "prompt": "“candle” หมายถึงข้อใด?",
+          "choices": [
+            "กระดิ่ง",
+            "พวงหรีดคริสต์มาส",
+            "ถุงเท้าคริสต์มาส",
+            "เทียน"
+          ],
+          "correctIndex": 3,
+          "answer": "เทียน"
+        },
+        {
+          "id": "E03-S08-Q04",
+          "prompt": "ข้อใดหมายถึง “เทียน”?",
+          "choices": [
+            "bell",
+            "wreath",
+            "stocking",
+            "candle"
+          ],
+          "correctIndex": 3,
+          "answer": "candle"
+        },
+        {
+          "id": "E03-S08-Q05",
+          "prompt": "“wreath” หมายถึงข้อใด?",
+          "choices": [
+            "กระดิ่ง",
+            "เทียน",
+            "พวงหรีดคริสต์มาส",
+            "ถุงเท้าคริสต์มาส"
+          ],
+          "correctIndex": 2,
+          "answer": "พวงหรีดคริสต์มาส"
+        },
+        {
+          "id": "E03-S08-Q06",
+          "prompt": "ข้อใดหมายถึง “พวงหรีดคริสต์มาส”?",
+          "choices": [
+            "bell",
+            "candle",
+            "stocking",
+            "wreath"
+          ],
+          "correctIndex": 3,
+          "answer": "wreath"
+        },
+        {
+          "id": "E03-S08-Q07",
+          "prompt": "“stocking” หมายถึงข้อใด?",
+          "choices": [
+            "กระดิ่ง",
+            "เทียน",
+            "ถุงเท้าคริสต์มาส",
+            "พวงหรีดคริสต์มาส"
+          ],
+          "correctIndex": 2,
+          "answer": "ถุงเท้าคริสต์มาส"
+        },
+        {
+          "id": "E03-S08-Q08",
+          "prompt": "ข้อใดหมายถึง “ถุงเท้าคริสต์มาส”?",
+          "choices": [
+            "bell",
+            "candle",
+            "stocking",
+            "wreath"
+          ],
+          "correctIndex": 2,
+          "answer": "stocking"
+        },
+        {
+          "id": "E03-S08-Q09",
+          "prompt": "“ornament” หมายถึงข้อใด?",
+          "choices": [
+            "กระดิ่ง",
+            "เทียน",
+            "พวงหรีดคริสต์มาส",
+            "ของประดับ"
+          ],
+          "correctIndex": 3,
+          "answer": "ของประดับ"
+        },
+        {
+          "id": "E03-S08-Q10",
+          "prompt": "ข้อใดหมายถึง “ของประดับ”?",
+          "choices": [
+            "ornament",
+            "bell",
+            "candle",
+            "wreath"
+          ],
+          "correctIndex": 0,
+          "answer": "ornament"
+        }
+      ]
+    },
+    {
+      "stage": 9,
+      "title": "Christmas Actions",
+      "vocabulary": [
+        {
+          "word": "give",
+          "meaningTh": "ให้"
+        },
+        {
+          "word": "receive",
+          "meaningTh": "ได้รับ"
+        },
+        {
+          "word": "open",
+          "meaningTh": "เปิด"
+        },
+        {
+          "word": "decorate",
+          "meaningTh": "ตกแต่ง"
+        },
+        {
+          "word": "sing",
+          "meaningTh": "ร้องเพลง"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S09-Q01",
+          "prompt": "“give” หมายถึงข้อใด?",
+          "choices": [
+            "ได้รับ",
+            "เปิด",
+            "ตกแต่ง",
+            "ให้"
+          ],
+          "correctIndex": 3,
+          "answer": "ให้"
+        },
+        {
+          "id": "E03-S09-Q02",
+          "prompt": "ข้อใดหมายถึง “ให้”?",
+          "choices": [
+            "receive",
+            "open",
+            "decorate",
+            "give"
+          ],
+          "correctIndex": 3,
+          "answer": "give"
+        },
+        {
+          "id": "E03-S09-Q03",
+          "prompt": "“receive” หมายถึงข้อใด?",
+          "choices": [
+            "ให้",
+            "เปิด",
+            "ตกแต่ง",
+            "ได้รับ"
+          ],
+          "correctIndex": 3,
+          "answer": "ได้รับ"
+        },
+        {
+          "id": "E03-S09-Q04",
+          "prompt": "ข้อใดหมายถึง “ได้รับ”?",
+          "choices": [
+            "give",
+            "open",
+            "decorate",
+            "receive"
+          ],
+          "correctIndex": 3,
+          "answer": "receive"
+        },
+        {
+          "id": "E03-S09-Q05",
+          "prompt": "“open” หมายถึงข้อใด?",
+          "choices": [
+            "ให้",
+            "ได้รับ",
+            "ตกแต่ง",
+            "เปิด"
+          ],
+          "correctIndex": 3,
+          "answer": "เปิด"
+        },
+        {
+          "id": "E03-S09-Q06",
+          "prompt": "ข้อใดหมายถึง “เปิด”?",
+          "choices": [
+            "give",
+            "receive",
+            "open",
+            "decorate"
+          ],
+          "correctIndex": 2,
+          "answer": "open"
+        },
+        {
+          "id": "E03-S09-Q07",
+          "prompt": "“decorate” หมายถึงข้อใด?",
+          "choices": [
+            "ให้",
+            "ได้รับ",
+            "เปิด",
+            "ตกแต่ง"
+          ],
+          "correctIndex": 3,
+          "answer": "ตกแต่ง"
+        },
+        {
+          "id": "E03-S09-Q08",
+          "prompt": "ข้อใดหมายถึง “ตกแต่ง”?",
+          "choices": [
+            "give",
+            "receive",
+            "open",
+            "decorate"
+          ],
+          "correctIndex": 3,
+          "answer": "decorate"
+        },
+        {
+          "id": "E03-S09-Q09",
+          "prompt": "“sing” หมายถึงข้อใด?",
+          "choices": [
+            "ให้",
+            "ได้รับ",
+            "ร้องเพลง",
+            "เปิด"
+          ],
+          "correctIndex": 2,
+          "answer": "ร้องเพลง"
+        },
+        {
+          "id": "E03-S09-Q10",
+          "prompt": "ข้อใดหมายถึง “ร้องเพลง”?",
+          "choices": [
+            "give",
+            "sing",
+            "receive",
+            "open"
+          ],
+          "correctIndex": 1,
+          "answer": "sing"
+        }
+      ]
+    },
+    {
+      "stage": 10,
+      "title": "Christmas Songs",
+      "vocabulary": [
+        {
+          "word": "song",
+          "meaningTh": "เพลง"
+        },
+        {
+          "word": "music",
+          "meaningTh": "ดนตรี"
+        },
+        {
+          "word": "sing",
+          "meaningTh": "ร้องเพลง"
+        },
+        {
+          "word": "dance",
+          "meaningTh": "เต้น"
+        },
+        {
+          "word": "carol",
+          "meaningTh": "เพลงคริสต์มาส"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S10-Q01",
+          "prompt": "“song” หมายถึงข้อใด?",
+          "choices": [
+            "ดนตรี",
+            "ร้องเพลง",
+            "เพลง",
+            "เต้น"
+          ],
+          "correctIndex": 2,
+          "answer": "เพลง"
+        },
+        {
+          "id": "E03-S10-Q02",
+          "prompt": "ข้อใดหมายถึง “เพลง”?",
+          "choices": [
+            "music",
+            "sing",
+            "dance",
+            "song"
+          ],
+          "correctIndex": 3,
+          "answer": "song"
+        },
+        {
+          "id": "E03-S10-Q03",
+          "prompt": "“music” หมายถึงข้อใด?",
+          "choices": [
+            "เพลง",
+            "ร้องเพลง",
+            "ดนตรี",
+            "เต้น"
+          ],
+          "correctIndex": 2,
+          "answer": "ดนตรี"
+        },
+        {
+          "id": "E03-S10-Q04",
+          "prompt": "ข้อใดหมายถึง “ดนตรี”?",
+          "choices": [
+            "song",
+            "music",
+            "sing",
+            "dance"
+          ],
+          "correctIndex": 1,
+          "answer": "music"
+        },
+        {
+          "id": "E03-S10-Q05",
+          "prompt": "“sing” หมายถึงข้อใด?",
+          "choices": [
+            "เพลง",
+            "ดนตรี",
+            "ร้องเพลง",
+            "เต้น"
+          ],
+          "correctIndex": 2,
+          "answer": "ร้องเพลง"
+        },
+        {
+          "id": "E03-S10-Q06",
+          "prompt": "ข้อใดหมายถึง “ร้องเพลง”?",
+          "choices": [
+            "song",
+            "sing",
+            "music",
+            "dance"
+          ],
+          "correctIndex": 1,
+          "answer": "sing"
+        },
+        {
+          "id": "E03-S10-Q07",
+          "prompt": "“dance” หมายถึงข้อใด?",
+          "choices": [
+            "เพลง",
+            "ดนตรี",
+            "ร้องเพลง",
+            "เต้น"
+          ],
+          "correctIndex": 3,
+          "answer": "เต้น"
+        },
+        {
+          "id": "E03-S10-Q08",
+          "prompt": "ข้อใดหมายถึง “เต้น”?",
+          "choices": [
+            "song",
+            "music",
+            "sing",
+            "dance"
+          ],
+          "correctIndex": 3,
+          "answer": "dance"
+        },
+        {
+          "id": "E03-S10-Q09",
+          "prompt": "“carol” หมายถึงข้อใด?",
+          "choices": [
+            "เพลง",
+            "เพลงคริสต์มาส",
+            "ดนตรี",
+            "ร้องเพลง"
+          ],
+          "correctIndex": 1,
+          "answer": "เพลงคริสต์มาส"
+        },
+        {
+          "id": "E03-S10-Q10",
+          "prompt": "ข้อใดหมายถึง “เพลงคริสต์มาส”?",
+          "choices": [
+            "song",
+            "carol",
+            "music",
+            "sing"
+          ],
+          "correctIndex": 1,
+          "answer": "carol"
+        }
+      ]
+    },
+    {
+      "stage": 11,
+      "title": "Family & Friends",
+      "vocabulary": [
+        {
+          "word": "family",
+          "meaningTh": "ครอบครัว"
+        },
+        {
+          "word": "friend",
+          "meaningTh": "เพื่อน"
+        },
+        {
+          "word": "together",
+          "meaningTh": "ด้วยกัน"
+        },
+        {
+          "word": "visit",
+          "meaningTh": "เยี่ยม"
+        },
+        {
+          "word": "share",
+          "meaningTh": "แบ่งปัน"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S11-Q01",
+          "prompt": "“family” หมายถึงข้อใด?",
+          "choices": [
+            "เพื่อน",
+            "ครอบครัว",
+            "ด้วยกัน",
+            "เยี่ยม"
+          ],
+          "correctIndex": 1,
+          "answer": "ครอบครัว"
+        },
+        {
+          "id": "E03-S11-Q02",
+          "prompt": "ข้อใดหมายถึง “ครอบครัว”?",
+          "choices": [
+            "friend",
+            "together",
+            "family",
+            "visit"
+          ],
+          "correctIndex": 2,
+          "answer": "family"
+        },
+        {
+          "id": "E03-S11-Q03",
+          "prompt": "“friend” หมายถึงข้อใด?",
+          "choices": [
+            "ครอบครัว",
+            "ด้วยกัน",
+            "เยี่ยม",
+            "เพื่อน"
+          ],
+          "correctIndex": 3,
+          "answer": "เพื่อน"
+        },
+        {
+          "id": "E03-S11-Q04",
+          "prompt": "ข้อใดหมายถึง “เพื่อน”?",
+          "choices": [
+            "friend",
+            "family",
+            "together",
+            "visit"
+          ],
+          "correctIndex": 0,
+          "answer": "friend"
+        },
+        {
+          "id": "E03-S11-Q05",
+          "prompt": "“together” หมายถึงข้อใด?",
+          "choices": [
+            "ครอบครัว",
+            "ด้วยกัน",
+            "เพื่อน",
+            "เยี่ยม"
+          ],
+          "correctIndex": 1,
+          "answer": "ด้วยกัน"
+        },
+        {
+          "id": "E03-S11-Q06",
+          "prompt": "ข้อใดหมายถึง “ด้วยกัน”?",
+          "choices": [
+            "family",
+            "friend",
+            "together",
+            "visit"
+          ],
+          "correctIndex": 2,
+          "answer": "together"
+        },
+        {
+          "id": "E03-S11-Q07",
+          "prompt": "“visit” หมายถึงข้อใด?",
+          "choices": [
+            "ครอบครัว",
+            "เพื่อน",
+            "เยี่ยม",
+            "ด้วยกัน"
+          ],
+          "correctIndex": 2,
+          "answer": "เยี่ยม"
+        },
+        {
+          "id": "E03-S11-Q08",
+          "prompt": "ข้อใดหมายถึง “เยี่ยม”?",
+          "choices": [
+            "family",
+            "friend",
+            "together",
+            "visit"
+          ],
+          "correctIndex": 3,
+          "answer": "visit"
+        },
+        {
+          "id": "E03-S11-Q09",
+          "prompt": "“share” หมายถึงข้อใด?",
+          "choices": [
+            "ครอบครัว",
+            "เพื่อน",
+            "ด้วยกัน",
+            "แบ่งปัน"
+          ],
+          "correctIndex": 3,
+          "answer": "แบ่งปัน"
+        },
+        {
+          "id": "E03-S11-Q10",
+          "prompt": "ข้อใดหมายถึง “แบ่งปัน”?",
+          "choices": [
+            "family",
+            "friend",
+            "together",
+            "share"
+          ],
+          "correctIndex": 3,
+          "answer": "share"
+        }
+      ]
+    },
+    {
+      "stage": 12,
+      "title": "Christmas Greetings",
+      "vocabulary": [
+        {
+          "word": "wish",
+          "meaningTh": "อวยพร/ปรารถนา"
+        },
+        {
+          "word": "joy",
+          "meaningTh": "ความสุข"
+        },
+        {
+          "word": "peace",
+          "meaningTh": "สันติสุข"
+        },
+        {
+          "word": "Merry Christmas",
+          "meaningTh": "สุขสันต์วันคริสต์มาส"
+        },
+        {
+          "word": "Happy New Year",
+          "meaningTh": "สวัสดีปีใหม่"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S12-Q01",
+          "prompt": "“wish” หมายถึงข้อใด?",
+          "choices": [
+            "ความสุข",
+            "สันติสุข",
+            "อวยพร/ปรารถนา",
+            "สุขสันต์วันคริสต์มาส"
+          ],
+          "correctIndex": 2,
+          "answer": "อวยพร/ปรารถนา"
+        },
+        {
+          "id": "E03-S12-Q02",
+          "prompt": "ข้อใดหมายถึง “อวยพร/ปรารถนา”?",
+          "choices": [
+            "joy",
+            "peace",
+            "Merry Christmas",
+            "wish"
+          ],
+          "correctIndex": 3,
+          "answer": "wish"
+        },
+        {
+          "id": "E03-S12-Q03",
+          "prompt": "“joy” หมายถึงข้อใด?",
+          "choices": [
+            "อวยพร/ปรารถนา",
+            "สันติสุข",
+            "ความสุข",
+            "สุขสันต์วันคริสต์มาส"
+          ],
+          "correctIndex": 2,
+          "answer": "ความสุข"
+        },
+        {
+          "id": "E03-S12-Q04",
+          "prompt": "ข้อใดหมายถึง “ความสุข”?",
+          "choices": [
+            "wish",
+            "peace",
+            "joy",
+            "Merry Christmas"
+          ],
+          "correctIndex": 2,
+          "answer": "joy"
+        },
+        {
+          "id": "E03-S12-Q05",
+          "prompt": "“peace” หมายถึงข้อใด?",
+          "choices": [
+            "อวยพร/ปรารถนา",
+            "สันติสุข",
+            "ความสุข",
+            "สุขสันต์วันคริสต์มาส"
+          ],
+          "correctIndex": 1,
+          "answer": "สันติสุข"
+        },
+        {
+          "id": "E03-S12-Q06",
+          "prompt": "ข้อใดหมายถึง “สันติสุข”?",
+          "choices": [
+            "wish",
+            "joy",
+            "peace",
+            "Merry Christmas"
+          ],
+          "correctIndex": 2,
+          "answer": "peace"
+        },
+        {
+          "id": "E03-S12-Q07",
+          "prompt": "“Merry Christmas” หมายถึงข้อใด?",
+          "choices": [
+            "อวยพร/ปรารถนา",
+            "สุขสันต์วันคริสต์มาส",
+            "ความสุข",
+            "สันติสุข"
+          ],
+          "correctIndex": 1,
+          "answer": "สุขสันต์วันคริสต์มาส"
+        },
+        {
+          "id": "E03-S12-Q08",
+          "prompt": "ข้อใดหมายถึง “สุขสันต์วันคริสต์มาส”?",
+          "choices": [
+            "wish",
+            "Merry Christmas",
+            "joy",
+            "peace"
+          ],
+          "correctIndex": 1,
+          "answer": "Merry Christmas"
+        },
+        {
+          "id": "E03-S12-Q09",
+          "prompt": "“Happy New Year” หมายถึงข้อใด?",
+          "choices": [
+            "สวัสดีปีใหม่",
+            "อวยพร/ปรารถนา",
+            "ความสุข",
+            "สันติสุข"
+          ],
+          "correctIndex": 0,
+          "answer": "สวัสดีปีใหม่"
+        },
+        {
+          "id": "E03-S12-Q10",
+          "prompt": "ข้อใดหมายถึง “สวัสดีปีใหม่”?",
+          "choices": [
+            "wish",
+            "Happy New Year",
+            "joy",
+            "peace"
+          ],
+          "correctIndex": 1,
+          "answer": "Happy New Year"
+        }
+      ]
+    },
+    {
+      "stage": 13,
+      "title": "Christmas Places",
+      "vocabulary": [
+        {
+          "word": "home",
+          "meaningTh": "บ้าน"
+        },
+        {
+          "word": "church",
+          "meaningTh": "โบสถ์"
+        },
+        {
+          "word": "market",
+          "meaningTh": "ตลาด"
+        },
+        {
+          "word": "school",
+          "meaningTh": "โรงเรียน"
+        },
+        {
+          "word": "street",
+          "meaningTh": "ถนน"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S13-Q01",
+          "prompt": "“home” หมายถึงข้อใด?",
+          "choices": [
+            "โบสถ์",
+            "ตลาด",
+            "บ้าน",
+            "โรงเรียน"
+          ],
+          "correctIndex": 2,
+          "answer": "บ้าน"
+        },
+        {
+          "id": "E03-S13-Q02",
+          "prompt": "ข้อใดหมายถึง “บ้าน”?",
+          "choices": [
+            "church",
+            "home",
+            "market",
+            "school"
+          ],
+          "correctIndex": 1,
+          "answer": "home"
+        },
+        {
+          "id": "E03-S13-Q03",
+          "prompt": "“church” หมายถึงข้อใด?",
+          "choices": [
+            "โบสถ์",
+            "บ้าน",
+            "ตลาด",
+            "โรงเรียน"
+          ],
+          "correctIndex": 0,
+          "answer": "โบสถ์"
+        },
+        {
+          "id": "E03-S13-Q04",
+          "prompt": "ข้อใดหมายถึง “โบสถ์”?",
+          "choices": [
+            "home",
+            "church",
+            "market",
+            "school"
+          ],
+          "correctIndex": 1,
+          "answer": "church"
+        },
+        {
+          "id": "E03-S13-Q05",
+          "prompt": "“market” หมายถึงข้อใด?",
+          "choices": [
+            "ตลาด",
+            "บ้าน",
+            "โบสถ์",
+            "โรงเรียน"
+          ],
+          "correctIndex": 0,
+          "answer": "ตลาด"
+        },
+        {
+          "id": "E03-S13-Q06",
+          "prompt": "ข้อใดหมายถึง “ตลาด”?",
+          "choices": [
+            "market",
+            "home",
+            "church",
+            "school"
+          ],
+          "correctIndex": 0,
+          "answer": "market"
+        },
+        {
+          "id": "E03-S13-Q07",
+          "prompt": "“school” หมายถึงข้อใด?",
+          "choices": [
+            "บ้าน",
+            "โบสถ์",
+            "ตลาด",
+            "โรงเรียน"
+          ],
+          "correctIndex": 3,
+          "answer": "โรงเรียน"
+        },
+        {
+          "id": "E03-S13-Q08",
+          "prompt": "ข้อใดหมายถึง “โรงเรียน”?",
+          "choices": [
+            "school",
+            "home",
+            "church",
+            "market"
+          ],
+          "correctIndex": 0,
+          "answer": "school"
+        },
+        {
+          "id": "E03-S13-Q09",
+          "prompt": "“street” หมายถึงข้อใด?",
+          "choices": [
+            "ถนน",
+            "บ้าน",
+            "โบสถ์",
+            "ตลาด"
+          ],
+          "correctIndex": 0,
+          "answer": "ถนน"
+        },
+        {
+          "id": "E03-S13-Q10",
+          "prompt": "ข้อใดหมายถึง “ถนน”?",
+          "choices": [
+            "home",
+            "church",
+            "market",
+            "street"
+          ],
+          "correctIndex": 3,
+          "answer": "street"
+        }
+      ]
+    },
+    {
+      "stage": 14,
+      "title": "Christmas Time",
+      "vocabulary": [
+        {
+          "word": "eve",
+          "meaningTh": "วันก่อนเทศกาล"
+        },
+        {
+          "word": "morning",
+          "meaningTh": "ตอนเช้า"
+        },
+        {
+          "word": "night",
+          "meaningTh": "กลางคืน"
+        },
+        {
+          "word": "December",
+          "meaningTh": "เดือนธันวาคม"
+        },
+        {
+          "word": "season",
+          "meaningTh": "ฤดูกาล"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S14-Q01",
+          "prompt": "“eve” หมายถึงข้อใด?",
+          "choices": [
+            "ตอนเช้า",
+            "กลางคืน",
+            "เดือนธันวาคม",
+            "วันก่อนเทศกาล"
+          ],
+          "correctIndex": 3,
+          "answer": "วันก่อนเทศกาล"
+        },
+        {
+          "id": "E03-S14-Q02",
+          "prompt": "ข้อใดหมายถึง “วันก่อนเทศกาล”?",
+          "choices": [
+            "eve",
+            "morning",
+            "night",
+            "December"
+          ],
+          "correctIndex": 0,
+          "answer": "eve"
+        },
+        {
+          "id": "E03-S14-Q03",
+          "prompt": "“morning” หมายถึงข้อใด?",
+          "choices": [
+            "ตอนเช้า",
+            "วันก่อนเทศกาล",
+            "กลางคืน",
+            "เดือนธันวาคม"
+          ],
+          "correctIndex": 0,
+          "answer": "ตอนเช้า"
+        },
+        {
+          "id": "E03-S14-Q04",
+          "prompt": "ข้อใดหมายถึง “ตอนเช้า”?",
+          "choices": [
+            "eve",
+            "night",
+            "morning",
+            "December"
+          ],
+          "correctIndex": 2,
+          "answer": "morning"
+        },
+        {
+          "id": "E03-S14-Q05",
+          "prompt": "“night” หมายถึงข้อใด?",
+          "choices": [
+            "วันก่อนเทศกาล",
+            "ตอนเช้า",
+            "เดือนธันวาคม",
+            "กลางคืน"
+          ],
+          "correctIndex": 3,
+          "answer": "กลางคืน"
+        },
+        {
+          "id": "E03-S14-Q06",
+          "prompt": "ข้อใดหมายถึง “กลางคืน”?",
+          "choices": [
+            "eve",
+            "morning",
+            "night",
+            "December"
+          ],
+          "correctIndex": 2,
+          "answer": "night"
+        },
+        {
+          "id": "E03-S14-Q07",
+          "prompt": "“December” หมายถึงข้อใด?",
+          "choices": [
+            "วันก่อนเทศกาล",
+            "เดือนธันวาคม",
+            "ตอนเช้า",
+            "กลางคืน"
+          ],
+          "correctIndex": 1,
+          "answer": "เดือนธันวาคม"
+        },
+        {
+          "id": "E03-S14-Q08",
+          "prompt": "ข้อใดหมายถึง “เดือนธันวาคม”?",
+          "choices": [
+            "eve",
+            "morning",
+            "night",
+            "December"
+          ],
+          "correctIndex": 3,
+          "answer": "December"
+        },
+        {
+          "id": "E03-S14-Q09",
+          "prompt": "“season” หมายถึงข้อใด?",
+          "choices": [
+            "วันก่อนเทศกาล",
+            "ฤดูกาล",
+            "ตอนเช้า",
+            "กลางคืน"
+          ],
+          "correctIndex": 1,
+          "answer": "ฤดูกาล"
+        },
+        {
+          "id": "E03-S14-Q10",
+          "prompt": "ข้อใดหมายถึง “ฤดูกาล”?",
+          "choices": [
+            "eve",
+            "season",
+            "morning",
+            "night"
+          ],
+          "correctIndex": 1,
+          "answer": "season"
+        }
+      ]
+    },
+    {
+      "stage": 15,
+      "title": "Final Challenge",
+      "vocabulary": [
+        {
+          "word": "Santa",
+          "meaningTh": "ซานตาคลอส"
+        },
+        {
+          "word": "reindeer",
+          "meaningTh": "กวางเรนเดียร์"
+        },
+        {
+          "word": "gift",
+          "meaningTh": "ของขวัญ"
+        },
+        {
+          "word": "snowman",
+          "meaningTh": "ตุ๊กตาหิมะ"
+        },
+        {
+          "word": "Merry Christmas",
+          "meaningTh": "สุขสันต์วันคริสต์มาส"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E03-S15-Q01",
+          "prompt": "“Santa” หมายถึงข้อใด?",
+          "choices": [
+            "กวางเรนเดียร์",
+            "ซานตาคลอส",
+            "ของขวัญ",
+            "ตุ๊กตาหิมะ"
+          ],
+          "correctIndex": 1,
+          "answer": "ซานตาคลอส"
+        },
+        {
+          "id": "E03-S15-Q02",
+          "prompt": "ข้อใดหมายถึง “ซานตาคลอส”?",
+          "choices": [
+            "reindeer",
+            "gift",
+            "snowman",
+            "Santa"
+          ],
+          "correctIndex": 3,
+          "answer": "Santa"
+        },
+        {
+          "id": "E03-S15-Q03",
+          "prompt": "“reindeer” หมายถึงข้อใด?",
+          "choices": [
+            "ซานตาคลอส",
+            "ของขวัญ",
+            "ตุ๊กตาหิมะ",
+            "กวางเรนเดียร์"
+          ],
+          "correctIndex": 3,
+          "answer": "กวางเรนเดียร์"
+        },
+        {
+          "id": "E03-S15-Q04",
+          "prompt": "ข้อใดหมายถึง “กวางเรนเดียร์”?",
+          "choices": [
+            "Santa",
+            "gift",
+            "reindeer",
+            "snowman"
+          ],
+          "correctIndex": 2,
+          "answer": "reindeer"
+        },
+        {
+          "id": "E03-S15-Q05",
+          "prompt": "“gift” หมายถึงข้อใด?",
+          "choices": [
+            "ซานตาคลอส",
+            "ของขวัญ",
+            "กวางเรนเดียร์",
+            "ตุ๊กตาหิมะ"
+          ],
+          "correctIndex": 1,
+          "answer": "ของขวัญ"
+        },
+        {
+          "id": "E03-S15-Q06",
+          "prompt": "ข้อใดหมายถึง “ของขวัญ”?",
+          "choices": [
+            "Santa",
+            "reindeer",
+            "gift",
+            "snowman"
+          ],
+          "correctIndex": 2,
+          "answer": "gift"
+        },
+        {
+          "id": "E03-S15-Q07",
+          "prompt": "“snowman” หมายถึงข้อใด?",
+          "choices": [
+            "ซานตาคลอส",
+            "กวางเรนเดียร์",
+            "ของขวัญ",
+            "ตุ๊กตาหิมะ"
+          ],
+          "correctIndex": 3,
+          "answer": "ตุ๊กตาหิมะ"
+        },
+        {
+          "id": "E03-S15-Q08",
+          "prompt": "ข้อใดหมายถึง “ตุ๊กตาหิมะ”?",
+          "choices": [
+            "Santa",
+            "reindeer",
+            "gift",
+            "snowman"
+          ],
+          "correctIndex": 3,
+          "answer": "snowman"
+        },
+        {
+          "id": "E03-S15-Q09",
+          "prompt": "“Merry Christmas” หมายถึงข้อใด?",
+          "choices": [
+            "ซานตาคลอส",
+            "สุขสันต์วันคริสต์มาส",
+            "กวางเรนเดียร์",
+            "ของขวัญ"
+          ],
+          "correctIndex": 1,
+          "answer": "สุขสันต์วันคริสต์มาส"
+        },
+        {
+          "id": "E03-S15-Q10",
+          "prompt": "ข้อใดหมายถึง “สุขสันต์วันคริสต์มาส”?",
+          "choices": [
+            "Santa",
+            "Merry Christmas",
+            "reindeer",
+            "gift"
+          ],
+          "correctIndex": 1,
+          "answer": "Merry Christmas"
+        }
+      ]
+    }
+  ]
+}

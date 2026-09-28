@@ -216,6 +216,12 @@ export default function NetworkStudentDashboardPage() {
     await loadInitData();
   };
 
+  // Return from Pre-test / Post-test
+  const handleFinishAssessment = async () => {
+    await loadInitData();
+    setActiveView('map');
+  };
+
   // Sync screen changes: if store screen transitions back to dashboard while in game or study view, return to map
   useEffect(() => {
     if ((activeView === 'game' || activeView === 'study' || activeView === 'posttest') && currentScreen === 'dashboard') {
@@ -226,12 +232,6 @@ export default function NetworkStudentDashboardPage() {
   // Handle Post-test click
   const handleOpenPostTest = () => {
     setActiveView('posttest');
-  };
-
-  // Return from Pre-test / Post-test
-  const handleFinishAssessment = async () => {
-    await loadInitData();
-    setActiveView('map');
   };
 
   // Logout

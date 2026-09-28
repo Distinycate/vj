@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import AvatarDisplay from './AvatarDisplay';
 import { Store, LogOut, Sparkles, Info, Trophy, Flame, Volume2, VolumeX } from 'lucide-react';
 import { isSoundEnabled, toggleSound } from '@/utils/soundEffects';
@@ -178,6 +179,12 @@ export default function StudentHero({ student, progress, stats, rankConfig, setS
           <div data-demo-guide="card-system" className={`${isExternalUser ? 'grid grid-cols-1' : 'grid grid-cols-[1fr_1fr_auto]'} md:flex gap-2 w-full md:w-auto`}>
             {!isExternalUser && (
               <>
+                <Link
+                  href="/events"
+                  className="min-h-11 flex-1 md:flex-none px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 border border-amber-500/30 flex items-center justify-center gap-2 font-bold text-sm shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
+                >
+                  <Trophy className="w-4 h-4 text-amber-400" /> กิจกรรม
+                </Link>
                 <button 
                   onClick={() => setShowCardCenter(true)} 
                   className="min-h-11 flex-1 md:flex-none px-4 py-2 rounded-xl bg-gradient-to-r from-fuchsia-600/20 to-purple-600/20 hover:from-fuchsia-600/30 hover:to-purple-600/30 text-fuchsia-300 border border-fuchsia-500/30 flex items-center justify-center gap-2 font-bold text-sm shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"

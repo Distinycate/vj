@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -693,9 +694,19 @@ export default function Dashboard() {
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span>เมนูการเดินทาง</span>
           </div>
-          <button onClick={handleManualRefresh} className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm">
-            <RefreshCw className="w-3 h-3" /> รีเฟรชข้อมูล
-          </button>
+          <div className="flex items-center gap-2">
+            {!isExternalUser && (
+              <Link 
+                href="/events" 
+                className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm font-bold"
+              >
+                ⭐ กิจกรรมซ่อมเสริม / Events
+              </Link>
+            )}
+            <button onClick={handleManualRefresh} className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm">
+              <RefreshCw className="w-3 h-3" /> รีเฟรชข้อมูล
+            </button>
+          </div>
         </div>
         <div className="grid grid-cols-3 min-[420px]:grid-cols-4 md:grid-cols-8 glass-card rounded-2xl p-1.5 mb-8 gap-1.5 border border-slate-800/80 bg-slate-950/50 backdrop-blur-xl shadow-xl">
           <button 

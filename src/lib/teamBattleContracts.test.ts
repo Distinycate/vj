@@ -36,3 +36,11 @@ test('team season migration only writes statuses allowed by the database constra
   assert.match(migration, /'CLOSED'/);
   assert.match(migration, /'REWARDED'/);
 });
+
+test('game completion endpoint invokes team battle scoring for internal students', () => {
+  const gameCompleteRoute = readFileSync(new URL('../app/api/game/complete/route.ts', import.meta.url), 'utf8');
+  assert.match(gameCompleteRoute, /record_team_score_event/);
+  assert.match(gameCompleteRoute, /recordTeamScoreForCompletion/);
+  assert.match(gameCompleteRoute, /isActuallyPassed && !isExternalStudent/);
+});
+

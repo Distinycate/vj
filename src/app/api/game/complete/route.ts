@@ -71,6 +71,57 @@ function isV3FunctionAbsent(error: any): boolean {
   return is42883 && mentionsV3;
 }
 
+/**
+ * Record Team Battle score events when an internal student passes a stage.
+ * Non-fatal so that issues with team season or scoring never block game progression.
+ */
+async function recordTeamScoreForCompletion(
+  studentId: string,
+  stageNumber: number,
+  accuracy: number,
+  attemptId: string
+) {
+  try {
+    const isBoss = stageNumber % 10 === 0;
+    const baseEventType = isBoss ? 'boss_completed' : 'stage_completed';
+    const basePoints = isBoss ? 30 : 10;
+
+    await supabaseAdmin.rpc('record_team_score_event', {
+      p_student_id: studentId,
+      p_event_type: baseEventType,
+      p_points: basePoints,
+      p_metadata: { stageNumber, accuracy, attemptId },
+    });
+
+    let bonusEventType: string | null = null;
+    let bonusPoints = 0;
+    if (accuracy >= 100) {
+      bonusEventType = 'perfect_bonus';
+      bonusPoints = 25;
+    } else if (accuracy >= 90) {
+      bonusEventType = 'accuracy_bonus';
+      bonusPoints = 15;
+    } else if (accuracy >= 80) {
+      bonusEventType = 'accuracy_bonus';
+      bonusPoints = 10;
+    } else if (accuracy >= 70) {
+      bonusEventType = 'accuracy_bonus';
+      bonusPoints = 5;
+    }
+
+    if (bonusEventType && bonusPoints > 0) {
+      await supabaseAdmin.rpc('record_team_score_event', {
+        p_student_id: studentId,
+        p_event_type: bonusEventType,
+        p_points: bonusPoints,
+        p_metadata: { stageNumber, accuracy, attemptId },
+      });
+    }
+  } catch (teamErr) {
+    console.error('[TeamScore] Failed to record team score event:', teamErr);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
@@ -257,6 +308,15 @@ export async function POST(request: Request) {
       const correctCount = wordAttempts.filter(w => w.is_correct).length;
       const isActuallyPassed = Boolean(v3Data.passed) && correctCount > 0 && (v3Data.accuracy || 0) >= 60;
 
+      if (isActuallyPassed && !isExternalStudent) {
+        await recordTeamScoreForCompletion(
+          session.subjectId,
+          attempt.stage_number,
+          v3Data.accuracy || 0,
+          attempt.id
+        );
+      }
+
       return NextResponse.json({
         success: true,
         passed: isActuallyPassed,
@@ -333,6 +393,15 @@ export async function POST(request: Request) {
     if (v2Err) {
       console.error('complete_stage_with_mastery_v2 fallback error:', v2Err);
       return NextResponse.json({ error: 'Failed to record stage completion' }, { status: 500 });
+    }
+
+    if (passed && !isExternalStudent) {
+      await recordTeamScoreForCompletion(
+        session.subjectId,
+        attempt.stage_number,
+        accuracy,
+        attempt.id
+      );
     }
 
     return NextResponse.json({

@@ -1,0 +1,2389 @@
+{
+  "eventId": "event-01-verb-master-challenge",
+  "title": "Verb Master Challenge",
+  "titleTh": "ปราสาทแห่งกาลเวลา",
+  "theme": "verb_forms",
+  "version": "1.0",
+  "status": "draft",
+  "rules": {
+    "stageCount": 15,
+    "questionsPerStage": 10,
+    "passScore": 7,
+    "questionType": "multiple_choice",
+    "shuffleQuestions": false,
+    "shuffleChoices": false,
+    "fixedQuestionBank": true
+  },
+  "stages": [
+    {
+      "stage": 1,
+      "title": "พื้นฐานกริยา 1",
+      "vocabulary": [
+        {
+          "base": "be",
+          "past": "was/were",
+          "pastParticiple": "been",
+          "meaningTh": "เป็น/อยู่/คือ"
+        },
+        {
+          "base": "have",
+          "past": "had",
+          "pastParticiple": "had",
+          "meaningTh": "มี"
+        },
+        {
+          "base": "do",
+          "past": "did",
+          "pastParticiple": "done",
+          "meaningTh": "ทำ"
+        },
+        {
+          "base": "go",
+          "past": "went",
+          "pastParticiple": "gone",
+          "meaningTh": "ไป"
+        },
+        {
+          "base": "come",
+          "past": "came",
+          "pastParticiple": "come",
+          "meaningTh": "มา"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S01-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “be” คือข้อใด?",
+          "choices": [
+            "had",
+            "was/were",
+            "did",
+            "went"
+          ],
+          "correctIndex": 1,
+          "answer": "was/were"
+        },
+        {
+          "id": "E01-S01-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “be” คือข้อใด?",
+          "choices": [
+            "had",
+            "done",
+            "been",
+            "gone"
+          ],
+          "correctIndex": 2,
+          "answer": "been"
+        },
+        {
+          "id": "E01-S01-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “have” คือข้อใด?",
+          "choices": [
+            "was/were",
+            "had",
+            "did",
+            "went"
+          ],
+          "correctIndex": 1,
+          "answer": "had"
+        },
+        {
+          "id": "E01-S01-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “have” คือข้อใด?",
+          "choices": [
+            "been",
+            "had",
+            "done",
+            "gone"
+          ],
+          "correctIndex": 1,
+          "answer": "had"
+        },
+        {
+          "id": "E01-S01-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “do” คือข้อใด?",
+          "choices": [
+            "was/were",
+            "did",
+            "had",
+            "went"
+          ],
+          "correctIndex": 1,
+          "answer": "did"
+        },
+        {
+          "id": "E01-S01-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “do” คือข้อใด?",
+          "choices": [
+            "been",
+            "had",
+            "done",
+            "gone"
+          ],
+          "correctIndex": 2,
+          "answer": "done"
+        },
+        {
+          "id": "E01-S01-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “go” คือข้อใด?",
+          "choices": [
+            "was/were",
+            "had",
+            "went",
+            "did"
+          ],
+          "correctIndex": 2,
+          "answer": "went"
+        },
+        {
+          "id": "E01-S01-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “go” คือข้อใด?",
+          "choices": [
+            "been",
+            "gone",
+            "had",
+            "done"
+          ],
+          "correctIndex": 1,
+          "answer": "gone"
+        },
+        {
+          "id": "E01-S01-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “come” คือข้อใด?",
+          "choices": [
+            "was/were",
+            "had",
+            "came",
+            "did"
+          ],
+          "correctIndex": 2,
+          "answer": "came"
+        },
+        {
+          "id": "E01-S01-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “come” คือข้อใด?",
+          "choices": [
+            "come",
+            "been",
+            "had",
+            "done"
+          ],
+          "correctIndex": 0,
+          "answer": "come"
+        }
+      ]
+    },
+    {
+      "stage": 2,
+      "title": "การกินและการสื่อสาร",
+      "vocabulary": [
+        {
+          "base": "eat",
+          "past": "ate",
+          "pastParticiple": "eaten",
+          "meaningTh": "กิน"
+        },
+        {
+          "base": "drink",
+          "past": "drank",
+          "pastParticiple": "drunk",
+          "meaningTh": "ดื่ม"
+        },
+        {
+          "base": "see",
+          "past": "saw",
+          "pastParticiple": "seen",
+          "meaningTh": "เห็น"
+        },
+        {
+          "base": "hear",
+          "past": "heard",
+          "pastParticiple": "heard",
+          "meaningTh": "ได้ยิน"
+        },
+        {
+          "base": "speak",
+          "past": "spoke",
+          "pastParticiple": "spoken",
+          "meaningTh": "พูด"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S02-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “eat” คือข้อใด?",
+          "choices": [
+            "drank",
+            "saw",
+            "ate",
+            "heard"
+          ],
+          "correctIndex": 2,
+          "answer": "ate"
+        },
+        {
+          "id": "E01-S02-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “eat” คือข้อใด?",
+          "choices": [
+            "drunk",
+            "eaten",
+            "seen",
+            "heard"
+          ],
+          "correctIndex": 1,
+          "answer": "eaten"
+        },
+        {
+          "id": "E01-S02-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “drink” คือข้อใด?",
+          "choices": [
+            "drank",
+            "ate",
+            "saw",
+            "heard"
+          ],
+          "correctIndex": 0,
+          "answer": "drank"
+        },
+        {
+          "id": "E01-S02-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “drink” คือข้อใด?",
+          "choices": [
+            "drunk",
+            "eaten",
+            "seen",
+            "heard"
+          ],
+          "correctIndex": 0,
+          "answer": "drunk"
+        },
+        {
+          "id": "E01-S02-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “see” คือข้อใด?",
+          "choices": [
+            "ate",
+            "drank",
+            "heard",
+            "saw"
+          ],
+          "correctIndex": 3,
+          "answer": "saw"
+        },
+        {
+          "id": "E01-S02-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “see” คือข้อใด?",
+          "choices": [
+            "eaten",
+            "drunk",
+            "heard",
+            "seen"
+          ],
+          "correctIndex": 3,
+          "answer": "seen"
+        },
+        {
+          "id": "E01-S02-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “hear” คือข้อใด?",
+          "choices": [
+            "heard",
+            "ate",
+            "drank",
+            "saw"
+          ],
+          "correctIndex": 0,
+          "answer": "heard"
+        },
+        {
+          "id": "E01-S02-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “hear” คือข้อใด?",
+          "choices": [
+            "heard",
+            "eaten",
+            "drunk",
+            "seen"
+          ],
+          "correctIndex": 0,
+          "answer": "heard"
+        },
+        {
+          "id": "E01-S02-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “speak” คือข้อใด?",
+          "choices": [
+            "ate",
+            "drank",
+            "spoke",
+            "saw"
+          ],
+          "correctIndex": 2,
+          "answer": "spoke"
+        },
+        {
+          "id": "E01-S02-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “speak” คือข้อใด?",
+          "choices": [
+            "spoken",
+            "eaten",
+            "drunk",
+            "seen"
+          ],
+          "correctIndex": 0,
+          "answer": "spoken"
+        }
+      ]
+    },
+    {
+      "stage": 3,
+      "title": "การให้และการซื้อ",
+      "vocabulary": [
+        {
+          "base": "get",
+          "past": "got",
+          "pastParticiple": "got",
+          "meaningTh": "ได้รับ/ได้"
+        },
+        {
+          "base": "give",
+          "past": "gave",
+          "pastParticiple": "given",
+          "meaningTh": "ให้"
+        },
+        {
+          "base": "take",
+          "past": "took",
+          "pastParticiple": "taken",
+          "meaningTh": "เอา/นำ"
+        },
+        {
+          "base": "make",
+          "past": "made",
+          "pastParticiple": "made",
+          "meaningTh": "ทำ/สร้าง"
+        },
+        {
+          "base": "buy",
+          "past": "bought",
+          "pastParticiple": "bought",
+          "meaningTh": "ซื้อ"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S03-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “get” คือข้อใด?",
+          "choices": [
+            "gave",
+            "took",
+            "got",
+            "made"
+          ],
+          "correctIndex": 2,
+          "answer": "got"
+        },
+        {
+          "id": "E01-S03-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “get” คือข้อใด?",
+          "choices": [
+            "given",
+            "taken",
+            "got",
+            "made"
+          ],
+          "correctIndex": 2,
+          "answer": "got"
+        },
+        {
+          "id": "E01-S03-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “give” คือข้อใด?",
+          "choices": [
+            "got",
+            "took",
+            "made",
+            "gave"
+          ],
+          "correctIndex": 3,
+          "answer": "gave"
+        },
+        {
+          "id": "E01-S03-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “give” คือข้อใด?",
+          "choices": [
+            "got",
+            "given",
+            "taken",
+            "made"
+          ],
+          "correctIndex": 1,
+          "answer": "given"
+        },
+        {
+          "id": "E01-S03-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “take” คือข้อใด?",
+          "choices": [
+            "got",
+            "took",
+            "gave",
+            "made"
+          ],
+          "correctIndex": 1,
+          "answer": "took"
+        },
+        {
+          "id": "E01-S03-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “take” คือข้อใด?",
+          "choices": [
+            "got",
+            "given",
+            "made",
+            "taken"
+          ],
+          "correctIndex": 3,
+          "answer": "taken"
+        },
+        {
+          "id": "E01-S03-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “make” คือข้อใด?",
+          "choices": [
+            "got",
+            "gave",
+            "took",
+            "made"
+          ],
+          "correctIndex": 3,
+          "answer": "made"
+        },
+        {
+          "id": "E01-S03-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “make” คือข้อใด?",
+          "choices": [
+            "got",
+            "given",
+            "taken",
+            "made"
+          ],
+          "correctIndex": 3,
+          "answer": "made"
+        },
+        {
+          "id": "E01-S03-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “buy” คือข้อใด?",
+          "choices": [
+            "got",
+            "bought",
+            "gave",
+            "took"
+          ],
+          "correctIndex": 1,
+          "answer": "bought"
+        },
+        {
+          "id": "E01-S03-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “buy” คือข้อใด?",
+          "choices": [
+            "got",
+            "bought",
+            "given",
+            "taken"
+          ],
+          "correctIndex": 1,
+          "answer": "bought"
+        }
+      ]
+    },
+    {
+      "stage": 4,
+      "title": "การอ่านและการบอก",
+      "vocabulary": [
+        {
+          "base": "read",
+          "past": "read",
+          "pastParticiple": "read",
+          "meaningTh": "อ่าน"
+        },
+        {
+          "base": "write",
+          "past": "wrote",
+          "pastParticiple": "written",
+          "meaningTh": "เขียน"
+        },
+        {
+          "base": "say",
+          "past": "said",
+          "pastParticiple": "said",
+          "meaningTh": "พูด/กล่าว"
+        },
+        {
+          "base": "tell",
+          "past": "told",
+          "pastParticiple": "told",
+          "meaningTh": "บอก"
+        },
+        {
+          "base": "ask",
+          "past": "asked",
+          "pastParticiple": "asked",
+          "meaningTh": "ถาม"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S04-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “read” คือข้อใด?",
+          "choices": [
+            "read",
+            "wrote",
+            "said",
+            "told"
+          ],
+          "correctIndex": 0,
+          "answer": "read"
+        },
+        {
+          "id": "E01-S04-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “read” คือข้อใด?",
+          "choices": [
+            "read",
+            "written",
+            "said",
+            "told"
+          ],
+          "correctIndex": 0,
+          "answer": "read"
+        },
+        {
+          "id": "E01-S04-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “write” คือข้อใด?",
+          "choices": [
+            "read",
+            "wrote",
+            "said",
+            "told"
+          ],
+          "correctIndex": 1,
+          "answer": "wrote"
+        },
+        {
+          "id": "E01-S04-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “write” คือข้อใด?",
+          "choices": [
+            "read",
+            "written",
+            "said",
+            "told"
+          ],
+          "correctIndex": 1,
+          "answer": "written"
+        },
+        {
+          "id": "E01-S04-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “say” คือข้อใด?",
+          "choices": [
+            "read",
+            "said",
+            "wrote",
+            "told"
+          ],
+          "correctIndex": 1,
+          "answer": "said"
+        },
+        {
+          "id": "E01-S04-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “say” คือข้อใด?",
+          "choices": [
+            "read",
+            "said",
+            "written",
+            "told"
+          ],
+          "correctIndex": 1,
+          "answer": "said"
+        },
+        {
+          "id": "E01-S04-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “tell” คือข้อใด?",
+          "choices": [
+            "read",
+            "wrote",
+            "said",
+            "told"
+          ],
+          "correctIndex": 3,
+          "answer": "told"
+        },
+        {
+          "id": "E01-S04-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “tell” คือข้อใด?",
+          "choices": [
+            "read",
+            "written",
+            "said",
+            "told"
+          ],
+          "correctIndex": 3,
+          "answer": "told"
+        },
+        {
+          "id": "E01-S04-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “ask” คือข้อใด?",
+          "choices": [
+            "asked",
+            "read",
+            "wrote",
+            "said"
+          ],
+          "correctIndex": 0,
+          "answer": "asked"
+        },
+        {
+          "id": "E01-S04-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “ask” คือข้อใด?",
+          "choices": [
+            "asked",
+            "read",
+            "written",
+            "said"
+          ],
+          "correctIndex": 0,
+          "answer": "asked"
+        }
+      ]
+    },
+    {
+      "stage": 5,
+      "title": "การคิดและการเรียนรู้",
+      "vocabulary": [
+        {
+          "base": "know",
+          "past": "knew",
+          "pastParticiple": "known",
+          "meaningTh": "รู้"
+        },
+        {
+          "base": "think",
+          "past": "thought",
+          "pastParticiple": "thought",
+          "meaningTh": "คิด"
+        },
+        {
+          "base": "understand",
+          "past": "understood",
+          "pastParticiple": "understood",
+          "meaningTh": "เข้าใจ"
+        },
+        {
+          "base": "learn",
+          "past": "learned",
+          "pastParticiple": "learned",
+          "meaningTh": "เรียนรู้"
+        },
+        {
+          "base": "remember",
+          "past": "remembered",
+          "pastParticiple": "remembered",
+          "meaningTh": "จำ"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S05-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “know” คือข้อใด?",
+          "choices": [
+            "thought",
+            "knew",
+            "understood",
+            "learned"
+          ],
+          "correctIndex": 1,
+          "answer": "knew"
+        },
+        {
+          "id": "E01-S05-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “know” คือข้อใด?",
+          "choices": [
+            "thought",
+            "known",
+            "understood",
+            "learned"
+          ],
+          "correctIndex": 1,
+          "answer": "known"
+        },
+        {
+          "id": "E01-S05-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “think” คือข้อใด?",
+          "choices": [
+            "knew",
+            "understood",
+            "learned",
+            "thought"
+          ],
+          "correctIndex": 3,
+          "answer": "thought"
+        },
+        {
+          "id": "E01-S05-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “think” คือข้อใด?",
+          "choices": [
+            "known",
+            "understood",
+            "learned",
+            "thought"
+          ],
+          "correctIndex": 3,
+          "answer": "thought"
+        },
+        {
+          "id": "E01-S05-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “understand” คือข้อใด?",
+          "choices": [
+            "knew",
+            "thought",
+            "learned",
+            "understood"
+          ],
+          "correctIndex": 3,
+          "answer": "understood"
+        },
+        {
+          "id": "E01-S05-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “understand” คือข้อใด?",
+          "choices": [
+            "known",
+            "thought",
+            "learned",
+            "understood"
+          ],
+          "correctIndex": 3,
+          "answer": "understood"
+        },
+        {
+          "id": "E01-S05-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “learn” คือข้อใด?",
+          "choices": [
+            "knew",
+            "thought",
+            "understood",
+            "learned"
+          ],
+          "correctIndex": 3,
+          "answer": "learned"
+        },
+        {
+          "id": "E01-S05-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “learn” คือข้อใด?",
+          "choices": [
+            "known",
+            "thought",
+            "understood",
+            "learned"
+          ],
+          "correctIndex": 3,
+          "answer": "learned"
+        },
+        {
+          "id": "E01-S05-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “remember” คือข้อใด?",
+          "choices": [
+            "remembered",
+            "knew",
+            "thought",
+            "understood"
+          ],
+          "correctIndex": 0,
+          "answer": "remembered"
+        },
+        {
+          "id": "E01-S05-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “remember” คือข้อใด?",
+          "choices": [
+            "remembered",
+            "known",
+            "thought",
+            "understood"
+          ],
+          "correctIndex": 0,
+          "answer": "remembered"
+        }
+      ]
+    },
+    {
+      "stage": 6,
+      "title": "การเคลื่อนไหวพื้นฐาน",
+      "vocabulary": [
+        {
+          "base": "run",
+          "past": "ran",
+          "pastParticiple": "run",
+          "meaningTh": "วิ่ง"
+        },
+        {
+          "base": "walk",
+          "past": "walked",
+          "pastParticiple": "walked",
+          "meaningTh": "เดิน"
+        },
+        {
+          "base": "sit",
+          "past": "sat",
+          "pastParticiple": "sat",
+          "meaningTh": "นั่ง"
+        },
+        {
+          "base": "stand",
+          "past": "stood",
+          "pastParticiple": "stood",
+          "meaningTh": "ยืน"
+        },
+        {
+          "base": "sleep",
+          "past": "slept",
+          "pastParticiple": "slept",
+          "meaningTh": "นอน"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S06-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “run” คือข้อใด?",
+          "choices": [
+            "walked",
+            "ran",
+            "sat",
+            "stood"
+          ],
+          "correctIndex": 1,
+          "answer": "ran"
+        },
+        {
+          "id": "E01-S06-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “run” คือข้อใด?",
+          "choices": [
+            "walked",
+            "run",
+            "sat",
+            "stood"
+          ],
+          "correctIndex": 1,
+          "answer": "run"
+        },
+        {
+          "id": "E01-S06-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “walk” คือข้อใด?",
+          "choices": [
+            "walked",
+            "ran",
+            "sat",
+            "stood"
+          ],
+          "correctIndex": 0,
+          "answer": "walked"
+        },
+        {
+          "id": "E01-S06-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “walk” คือข้อใด?",
+          "choices": [
+            "walked",
+            "run",
+            "sat",
+            "stood"
+          ],
+          "correctIndex": 0,
+          "answer": "walked"
+        },
+        {
+          "id": "E01-S06-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “sit” คือข้อใด?",
+          "choices": [
+            "sat",
+            "ran",
+            "walked",
+            "stood"
+          ],
+          "correctIndex": 0,
+          "answer": "sat"
+        },
+        {
+          "id": "E01-S06-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “sit” คือข้อใด?",
+          "choices": [
+            "sat",
+            "run",
+            "walked",
+            "stood"
+          ],
+          "correctIndex": 0,
+          "answer": "sat"
+        },
+        {
+          "id": "E01-S06-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “stand” คือข้อใด?",
+          "choices": [
+            "ran",
+            "stood",
+            "walked",
+            "sat"
+          ],
+          "correctIndex": 1,
+          "answer": "stood"
+        },
+        {
+          "id": "E01-S06-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “stand” คือข้อใด?",
+          "choices": [
+            "run",
+            "stood",
+            "walked",
+            "sat"
+          ],
+          "correctIndex": 1,
+          "answer": "stood"
+        },
+        {
+          "id": "E01-S06-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “sleep” คือข้อใด?",
+          "choices": [
+            "slept",
+            "ran",
+            "walked",
+            "sat"
+          ],
+          "correctIndex": 0,
+          "answer": "slept"
+        },
+        {
+          "id": "E01-S06-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “sleep” คือข้อใด?",
+          "choices": [
+            "slept",
+            "run",
+            "walked",
+            "sat"
+          ],
+          "correctIndex": 0,
+          "answer": "slept"
+        }
+      ]
+    },
+    {
+      "stage": 7,
+      "title": "กิจวัตรประจำวัน",
+      "vocabulary": [
+        {
+          "base": "wake",
+          "past": "woke",
+          "pastParticiple": "woken",
+          "meaningTh": "ตื่น"
+        },
+        {
+          "base": "wear",
+          "past": "wore",
+          "pastParticiple": "worn",
+          "meaningTh": "สวมใส่"
+        },
+        {
+          "base": "put",
+          "past": "put",
+          "pastParticiple": "put",
+          "meaningTh": "วาง/ใส่"
+        },
+        {
+          "base": "keep",
+          "past": "kept",
+          "pastParticiple": "kept",
+          "meaningTh": "เก็บ/รักษา"
+        },
+        {
+          "base": "hold",
+          "past": "held",
+          "pastParticiple": "held",
+          "meaningTh": "ถือ"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S07-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “wake” คือข้อใด?",
+          "choices": [
+            "wore",
+            "put",
+            "woke",
+            "kept"
+          ],
+          "correctIndex": 2,
+          "answer": "woke"
+        },
+        {
+          "id": "E01-S07-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “wake” คือข้อใด?",
+          "choices": [
+            "woken",
+            "worn",
+            "put",
+            "kept"
+          ],
+          "correctIndex": 0,
+          "answer": "woken"
+        },
+        {
+          "id": "E01-S07-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “wear” คือข้อใด?",
+          "choices": [
+            "woke",
+            "wore",
+            "put",
+            "kept"
+          ],
+          "correctIndex": 1,
+          "answer": "wore"
+        },
+        {
+          "id": "E01-S07-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “wear” คือข้อใด?",
+          "choices": [
+            "woken",
+            "put",
+            "worn",
+            "kept"
+          ],
+          "correctIndex": 2,
+          "answer": "worn"
+        },
+        {
+          "id": "E01-S07-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “put” คือข้อใด?",
+          "choices": [
+            "woke",
+            "put",
+            "wore",
+            "kept"
+          ],
+          "correctIndex": 1,
+          "answer": "put"
+        },
+        {
+          "id": "E01-S07-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “put” คือข้อใด?",
+          "choices": [
+            "woken",
+            "put",
+            "worn",
+            "kept"
+          ],
+          "correctIndex": 1,
+          "answer": "put"
+        },
+        {
+          "id": "E01-S07-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “keep” คือข้อใด?",
+          "choices": [
+            "kept",
+            "woke",
+            "wore",
+            "put"
+          ],
+          "correctIndex": 0,
+          "answer": "kept"
+        },
+        {
+          "id": "E01-S07-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “keep” คือข้อใด?",
+          "choices": [
+            "kept",
+            "woken",
+            "worn",
+            "put"
+          ],
+          "correctIndex": 0,
+          "answer": "kept"
+        },
+        {
+          "id": "E01-S07-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “hold” คือข้อใด?",
+          "choices": [
+            "woke",
+            "held",
+            "wore",
+            "put"
+          ],
+          "correctIndex": 1,
+          "answer": "held"
+        },
+        {
+          "id": "E01-S07-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “hold” คือข้อใด?",
+          "choices": [
+            "woken",
+            "held",
+            "worn",
+            "put"
+          ],
+          "correctIndex": 1,
+          "answer": "held"
+        }
+      ]
+    },
+    {
+      "stage": 8,
+      "title": "เริ่มและหยุด",
+      "vocabulary": [
+        {
+          "base": "open",
+          "past": "opened",
+          "pastParticiple": "opened",
+          "meaningTh": "เปิด"
+        },
+        {
+          "base": "close",
+          "past": "closed",
+          "pastParticiple": "closed",
+          "meaningTh": "ปิด"
+        },
+        {
+          "base": "start",
+          "past": "started",
+          "pastParticiple": "started",
+          "meaningTh": "เริ่ม"
+        },
+        {
+          "base": "finish",
+          "past": "finished",
+          "pastParticiple": "finished",
+          "meaningTh": "เสร็จสิ้น"
+        },
+        {
+          "base": "stop",
+          "past": "stopped",
+          "pastParticiple": "stopped",
+          "meaningTh": "หยุด"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S08-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “open” คือข้อใด?",
+          "choices": [
+            "closed",
+            "started",
+            "finished",
+            "opened"
+          ],
+          "correctIndex": 3,
+          "answer": "opened"
+        },
+        {
+          "id": "E01-S08-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “open” คือข้อใด?",
+          "choices": [
+            "closed",
+            "started",
+            "finished",
+            "opened"
+          ],
+          "correctIndex": 3,
+          "answer": "opened"
+        },
+        {
+          "id": "E01-S08-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “close” คือข้อใด?",
+          "choices": [
+            "opened",
+            "started",
+            "closed",
+            "finished"
+          ],
+          "correctIndex": 2,
+          "answer": "closed"
+        },
+        {
+          "id": "E01-S08-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “close” คือข้อใด?",
+          "choices": [
+            "opened",
+            "started",
+            "closed",
+            "finished"
+          ],
+          "correctIndex": 2,
+          "answer": "closed"
+        },
+        {
+          "id": "E01-S08-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “start” คือข้อใด?",
+          "choices": [
+            "opened",
+            "closed",
+            "finished",
+            "started"
+          ],
+          "correctIndex": 3,
+          "answer": "started"
+        },
+        {
+          "id": "E01-S08-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “start” คือข้อใด?",
+          "choices": [
+            "opened",
+            "closed",
+            "finished",
+            "started"
+          ],
+          "correctIndex": 3,
+          "answer": "started"
+        },
+        {
+          "id": "E01-S08-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “finish” คือข้อใด?",
+          "choices": [
+            "opened",
+            "closed",
+            "finished",
+            "started"
+          ],
+          "correctIndex": 2,
+          "answer": "finished"
+        },
+        {
+          "id": "E01-S08-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “finish” คือข้อใด?",
+          "choices": [
+            "opened",
+            "closed",
+            "finished",
+            "started"
+          ],
+          "correctIndex": 2,
+          "answer": "finished"
+        },
+        {
+          "id": "E01-S08-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “stop” คือข้อใด?",
+          "choices": [
+            "opened",
+            "closed",
+            "started",
+            "stopped"
+          ],
+          "correctIndex": 3,
+          "answer": "stopped"
+        },
+        {
+          "id": "E01-S08-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “stop” คือข้อใด?",
+          "choices": [
+            "opened",
+            "closed",
+            "started",
+            "stopped"
+          ],
+          "correctIndex": 3,
+          "answer": "stopped"
+        }
+      ]
+    },
+    {
+      "stage": 9,
+      "title": "โรงเรียนและการทำงาน",
+      "vocabulary": [
+        {
+          "base": "live",
+          "past": "lived",
+          "pastParticiple": "lived",
+          "meaningTh": "อาศัยอยู่"
+        },
+        {
+          "base": "work",
+          "past": "worked",
+          "pastParticiple": "worked",
+          "meaningTh": "ทำงาน"
+        },
+        {
+          "base": "study",
+          "past": "studied",
+          "pastParticiple": "studied",
+          "meaningTh": "เรียน"
+        },
+        {
+          "base": "teach",
+          "past": "taught",
+          "pastParticiple": "taught",
+          "meaningTh": "สอน"
+        },
+        {
+          "base": "help",
+          "past": "helped",
+          "pastParticiple": "helped",
+          "meaningTh": "ช่วย"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S09-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “live” คือข้อใด?",
+          "choices": [
+            "lived",
+            "worked",
+            "studied",
+            "taught"
+          ],
+          "correctIndex": 0,
+          "answer": "lived"
+        },
+        {
+          "id": "E01-S09-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “live” คือข้อใด?",
+          "choices": [
+            "lived",
+            "worked",
+            "studied",
+            "taught"
+          ],
+          "correctIndex": 0,
+          "answer": "lived"
+        },
+        {
+          "id": "E01-S09-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “work” คือข้อใด?",
+          "choices": [
+            "worked",
+            "lived",
+            "studied",
+            "taught"
+          ],
+          "correctIndex": 0,
+          "answer": "worked"
+        },
+        {
+          "id": "E01-S09-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “work” คือข้อใด?",
+          "choices": [
+            "worked",
+            "lived",
+            "studied",
+            "taught"
+          ],
+          "correctIndex": 0,
+          "answer": "worked"
+        },
+        {
+          "id": "E01-S09-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “study” คือข้อใด?",
+          "choices": [
+            "lived",
+            "worked",
+            "studied",
+            "taught"
+          ],
+          "correctIndex": 2,
+          "answer": "studied"
+        },
+        {
+          "id": "E01-S09-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “study” คือข้อใด?",
+          "choices": [
+            "lived",
+            "worked",
+            "studied",
+            "taught"
+          ],
+          "correctIndex": 2,
+          "answer": "studied"
+        },
+        {
+          "id": "E01-S09-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “teach” คือข้อใด?",
+          "choices": [
+            "lived",
+            "taught",
+            "worked",
+            "studied"
+          ],
+          "correctIndex": 1,
+          "answer": "taught"
+        },
+        {
+          "id": "E01-S09-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “teach” คือข้อใด?",
+          "choices": [
+            "lived",
+            "taught",
+            "worked",
+            "studied"
+          ],
+          "correctIndex": 1,
+          "answer": "taught"
+        },
+        {
+          "id": "E01-S09-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “help” คือข้อใด?",
+          "choices": [
+            "lived",
+            "worked",
+            "helped",
+            "studied"
+          ],
+          "correctIndex": 2,
+          "answer": "helped"
+        },
+        {
+          "id": "E01-S09-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “help” คือข้อใด?",
+          "choices": [
+            "lived",
+            "worked",
+            "helped",
+            "studied"
+          ],
+          "correctIndex": 2,
+          "answer": "helped"
+        }
+      ]
+    },
+    {
+      "stage": 10,
+      "title": "งานอดิเรกและความชอบ",
+      "vocabulary": [
+        {
+          "base": "play",
+          "past": "played",
+          "pastParticiple": "played",
+          "meaningTh": "เล่น"
+        },
+        {
+          "base": "watch",
+          "past": "watched",
+          "pastParticiple": "watched",
+          "meaningTh": "ดู"
+        },
+        {
+          "base": "listen",
+          "past": "listened",
+          "pastParticiple": "listened",
+          "meaningTh": "ฟัง"
+        },
+        {
+          "base": "look",
+          "past": "looked",
+          "pastParticiple": "looked",
+          "meaningTh": "มอง"
+        },
+        {
+          "base": "like",
+          "past": "liked",
+          "pastParticiple": "liked",
+          "meaningTh": "ชอบ"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S10-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “play” คือข้อใด?",
+          "choices": [
+            "watched",
+            "listened",
+            "looked",
+            "played"
+          ],
+          "correctIndex": 3,
+          "answer": "played"
+        },
+        {
+          "id": "E01-S10-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “play” คือข้อใด?",
+          "choices": [
+            "watched",
+            "listened",
+            "looked",
+            "played"
+          ],
+          "correctIndex": 3,
+          "answer": "played"
+        },
+        {
+          "id": "E01-S10-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “watch” คือข้อใด?",
+          "choices": [
+            "watched",
+            "played",
+            "listened",
+            "looked"
+          ],
+          "correctIndex": 0,
+          "answer": "watched"
+        },
+        {
+          "id": "E01-S10-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “watch” คือข้อใด?",
+          "choices": [
+            "watched",
+            "played",
+            "listened",
+            "looked"
+          ],
+          "correctIndex": 0,
+          "answer": "watched"
+        },
+        {
+          "id": "E01-S10-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “listen” คือข้อใด?",
+          "choices": [
+            "listened",
+            "played",
+            "watched",
+            "looked"
+          ],
+          "correctIndex": 0,
+          "answer": "listened"
+        },
+        {
+          "id": "E01-S10-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “listen” คือข้อใด?",
+          "choices": [
+            "listened",
+            "played",
+            "watched",
+            "looked"
+          ],
+          "correctIndex": 0,
+          "answer": "listened"
+        },
+        {
+          "id": "E01-S10-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “look” คือข้อใด?",
+          "choices": [
+            "played",
+            "watched",
+            "looked",
+            "listened"
+          ],
+          "correctIndex": 2,
+          "answer": "looked"
+        },
+        {
+          "id": "E01-S10-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “look” คือข้อใด?",
+          "choices": [
+            "played",
+            "watched",
+            "looked",
+            "listened"
+          ],
+          "correctIndex": 2,
+          "answer": "looked"
+        },
+        {
+          "id": "E01-S10-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “like” คือข้อใด?",
+          "choices": [
+            "played",
+            "liked",
+            "watched",
+            "listened"
+          ],
+          "correctIndex": 1,
+          "answer": "liked"
+        },
+        {
+          "id": "E01-S10-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “like” คือข้อใด?",
+          "choices": [
+            "played",
+            "liked",
+            "watched",
+            "listened"
+          ],
+          "correctIndex": 1,
+          "answer": "liked"
+        }
+      ]
+    },
+    {
+      "stage": 11,
+      "title": "ค้นหาและพบเจอ",
+      "vocabulary": [
+        {
+          "base": "find",
+          "past": "found",
+          "pastParticiple": "found",
+          "meaningTh": "พบ/หาเจอ"
+        },
+        {
+          "base": "lose",
+          "past": "lost",
+          "pastParticiple": "lost",
+          "meaningTh": "ทำหาย/แพ้"
+        },
+        {
+          "base": "bring",
+          "past": "brought",
+          "pastParticiple": "brought",
+          "meaningTh": "นำมา"
+        },
+        {
+          "base": "send",
+          "past": "sent",
+          "pastParticiple": "sent",
+          "meaningTh": "ส่ง"
+        },
+        {
+          "base": "meet",
+          "past": "met",
+          "pastParticiple": "met",
+          "meaningTh": "พบ"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S11-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “find” คือข้อใด?",
+          "choices": [
+            "found",
+            "lost",
+            "brought",
+            "sent"
+          ],
+          "correctIndex": 0,
+          "answer": "found"
+        },
+        {
+          "id": "E01-S11-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “find” คือข้อใด?",
+          "choices": [
+            "found",
+            "lost",
+            "brought",
+            "sent"
+          ],
+          "correctIndex": 0,
+          "answer": "found"
+        },
+        {
+          "id": "E01-S11-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “lose” คือข้อใด?",
+          "choices": [
+            "found",
+            "brought",
+            "lost",
+            "sent"
+          ],
+          "correctIndex": 2,
+          "answer": "lost"
+        },
+        {
+          "id": "E01-S11-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “lose” คือข้อใด?",
+          "choices": [
+            "found",
+            "brought",
+            "lost",
+            "sent"
+          ],
+          "correctIndex": 2,
+          "answer": "lost"
+        },
+        {
+          "id": "E01-S11-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “bring” คือข้อใด?",
+          "choices": [
+            "found",
+            "lost",
+            "sent",
+            "brought"
+          ],
+          "correctIndex": 3,
+          "answer": "brought"
+        },
+        {
+          "id": "E01-S11-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “bring” คือข้อใด?",
+          "choices": [
+            "found",
+            "lost",
+            "sent",
+            "brought"
+          ],
+          "correctIndex": 3,
+          "answer": "brought"
+        },
+        {
+          "id": "E01-S11-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “send” คือข้อใด?",
+          "choices": [
+            "found",
+            "lost",
+            "sent",
+            "brought"
+          ],
+          "correctIndex": 2,
+          "answer": "sent"
+        },
+        {
+          "id": "E01-S11-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “send” คือข้อใด?",
+          "choices": [
+            "found",
+            "lost",
+            "sent",
+            "brought"
+          ],
+          "correctIndex": 2,
+          "answer": "sent"
+        },
+        {
+          "id": "E01-S11-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “meet” คือข้อใด?",
+          "choices": [
+            "found",
+            "lost",
+            "met",
+            "brought"
+          ],
+          "correctIndex": 2,
+          "answer": "met"
+        },
+        {
+          "id": "E01-S11-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “meet” คือข้อใด?",
+          "choices": [
+            "found",
+            "lost",
+            "met",
+            "brought"
+          ],
+          "correctIndex": 2,
+          "answer": "met"
+        }
+      ]
+    },
+    {
+      "stage": 12,
+      "title": "การเดินทาง",
+      "vocabulary": [
+        {
+          "base": "leave",
+          "past": "left",
+          "pastParticiple": "left",
+          "meaningTh": "ออกไป/จากไป"
+        },
+        {
+          "base": "arrive",
+          "past": "arrived",
+          "pastParticiple": "arrived",
+          "meaningTh": "มาถึง"
+        },
+        {
+          "base": "travel",
+          "past": "traveled",
+          "pastParticiple": "traveled",
+          "meaningTh": "เดินทาง"
+        },
+        {
+          "base": "choose",
+          "past": "chose",
+          "pastParticiple": "chosen",
+          "meaningTh": "เลือก"
+        },
+        {
+          "base": "drive",
+          "past": "drove",
+          "pastParticiple": "driven",
+          "meaningTh": "ขับรถ"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S12-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “leave” คือข้อใด?",
+          "choices": [
+            "arrived",
+            "traveled",
+            "chose",
+            "left"
+          ],
+          "correctIndex": 3,
+          "answer": "left"
+        },
+        {
+          "id": "E01-S12-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “leave” คือข้อใด?",
+          "choices": [
+            "arrived",
+            "traveled",
+            "chosen",
+            "left"
+          ],
+          "correctIndex": 3,
+          "answer": "left"
+        },
+        {
+          "id": "E01-S12-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “arrive” คือข้อใด?",
+          "choices": [
+            "left",
+            "arrived",
+            "traveled",
+            "chose"
+          ],
+          "correctIndex": 1,
+          "answer": "arrived"
+        },
+        {
+          "id": "E01-S12-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “arrive” คือข้อใด?",
+          "choices": [
+            "left",
+            "arrived",
+            "traveled",
+            "chosen"
+          ],
+          "correctIndex": 1,
+          "answer": "arrived"
+        },
+        {
+          "id": "E01-S12-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “travel” คือข้อใด?",
+          "choices": [
+            "left",
+            "arrived",
+            "chose",
+            "traveled"
+          ],
+          "correctIndex": 3,
+          "answer": "traveled"
+        },
+        {
+          "id": "E01-S12-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “travel” คือข้อใด?",
+          "choices": [
+            "left",
+            "arrived",
+            "chosen",
+            "traveled"
+          ],
+          "correctIndex": 3,
+          "answer": "traveled"
+        },
+        {
+          "id": "E01-S12-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “choose” คือข้อใด?",
+          "choices": [
+            "left",
+            "arrived",
+            "chose",
+            "traveled"
+          ],
+          "correctIndex": 2,
+          "answer": "chose"
+        },
+        {
+          "id": "E01-S12-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “choose” คือข้อใด?",
+          "choices": [
+            "chosen",
+            "left",
+            "arrived",
+            "traveled"
+          ],
+          "correctIndex": 0,
+          "answer": "chosen"
+        },
+        {
+          "id": "E01-S12-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “drive” คือข้อใด?",
+          "choices": [
+            "drove",
+            "left",
+            "arrived",
+            "traveled"
+          ],
+          "correctIndex": 0,
+          "answer": "drove"
+        },
+        {
+          "id": "E01-S12-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “drive” คือข้อใด?",
+          "choices": [
+            "driven",
+            "left",
+            "arrived",
+            "traveled"
+          ],
+          "correctIndex": 0,
+          "answer": "driven"
+        }
+      ]
+    },
+    {
+      "stage": 13,
+      "title": "การสร้างและการเปลี่ยนแปลง",
+      "vocabulary": [
+        {
+          "base": "break",
+          "past": "broke",
+          "pastParticiple": "broken",
+          "meaningTh": "แตก/ทำแตก"
+        },
+        {
+          "base": "cut",
+          "past": "cut",
+          "pastParticiple": "cut",
+          "meaningTh": "ตัด"
+        },
+        {
+          "base": "build",
+          "past": "built",
+          "pastParticiple": "built",
+          "meaningTh": "สร้าง"
+        },
+        {
+          "base": "draw",
+          "past": "drew",
+          "pastParticiple": "drawn",
+          "meaningTh": "วาด"
+        },
+        {
+          "base": "grow",
+          "past": "grew",
+          "pastParticiple": "grown",
+          "meaningTh": "เติบโต"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S13-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “break” คือข้อใด?",
+          "choices": [
+            "cut",
+            "built",
+            "drew",
+            "broke"
+          ],
+          "correctIndex": 3,
+          "answer": "broke"
+        },
+        {
+          "id": "E01-S13-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “break” คือข้อใด?",
+          "choices": [
+            "cut",
+            "broken",
+            "built",
+            "drawn"
+          ],
+          "correctIndex": 1,
+          "answer": "broken"
+        },
+        {
+          "id": "E01-S13-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “cut” คือข้อใด?",
+          "choices": [
+            "cut",
+            "broke",
+            "built",
+            "drew"
+          ],
+          "correctIndex": 0,
+          "answer": "cut"
+        },
+        {
+          "id": "E01-S13-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “cut” คือข้อใด?",
+          "choices": [
+            "cut",
+            "broken",
+            "built",
+            "drawn"
+          ],
+          "correctIndex": 0,
+          "answer": "cut"
+        },
+        {
+          "id": "E01-S13-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “build” คือข้อใด?",
+          "choices": [
+            "built",
+            "broke",
+            "cut",
+            "drew"
+          ],
+          "correctIndex": 0,
+          "answer": "built"
+        },
+        {
+          "id": "E01-S13-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “build” คือข้อใด?",
+          "choices": [
+            "built",
+            "broken",
+            "cut",
+            "drawn"
+          ],
+          "correctIndex": 0,
+          "answer": "built"
+        },
+        {
+          "id": "E01-S13-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “draw” คือข้อใด?",
+          "choices": [
+            "broke",
+            "cut",
+            "drew",
+            "built"
+          ],
+          "correctIndex": 2,
+          "answer": "drew"
+        },
+        {
+          "id": "E01-S13-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “draw” คือข้อใด?",
+          "choices": [
+            "drawn",
+            "broken",
+            "cut",
+            "built"
+          ],
+          "correctIndex": 0,
+          "answer": "drawn"
+        },
+        {
+          "id": "E01-S13-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “grow” คือข้อใด?",
+          "choices": [
+            "broke",
+            "grew",
+            "cut",
+            "built"
+          ],
+          "correctIndex": 1,
+          "answer": "grew"
+        },
+        {
+          "id": "E01-S13-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “grow” คือข้อใด?",
+          "choices": [
+            "broken",
+            "grown",
+            "cut",
+            "built"
+          ],
+          "correctIndex": 1,
+          "answer": "grown"
+        }
+      ]
+    },
+    {
+      "stage": 14,
+      "title": "การเริ่มและความรู้สึก",
+      "vocabulary": [
+        {
+          "base": "begin",
+          "past": "began",
+          "pastParticiple": "begun",
+          "meaningTh": "เริ่มต้น"
+        },
+        {
+          "base": "become",
+          "past": "became",
+          "pastParticiple": "become",
+          "meaningTh": "กลายเป็น"
+        },
+        {
+          "base": "feel",
+          "past": "felt",
+          "pastParticiple": "felt",
+          "meaningTh": "รู้สึก"
+        },
+        {
+          "base": "fall",
+          "past": "fell",
+          "pastParticiple": "fallen",
+          "meaningTh": "ตก/ล้ม"
+        },
+        {
+          "base": "win",
+          "past": "won",
+          "pastParticiple": "won",
+          "meaningTh": "ชนะ"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S14-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “begin” คือข้อใด?",
+          "choices": [
+            "became",
+            "began",
+            "felt",
+            "fell"
+          ],
+          "correctIndex": 1,
+          "answer": "began"
+        },
+        {
+          "id": "E01-S14-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “begin” คือข้อใด?",
+          "choices": [
+            "become",
+            "begun",
+            "felt",
+            "fallen"
+          ],
+          "correctIndex": 1,
+          "answer": "begun"
+        },
+        {
+          "id": "E01-S14-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “become” คือข้อใด?",
+          "choices": [
+            "began",
+            "became",
+            "felt",
+            "fell"
+          ],
+          "correctIndex": 1,
+          "answer": "became"
+        },
+        {
+          "id": "E01-S14-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “become” คือข้อใด?",
+          "choices": [
+            "begun",
+            "felt",
+            "fallen",
+            "become"
+          ],
+          "correctIndex": 3,
+          "answer": "become"
+        },
+        {
+          "id": "E01-S14-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “feel” คือข้อใด?",
+          "choices": [
+            "began",
+            "became",
+            "fell",
+            "felt"
+          ],
+          "correctIndex": 3,
+          "answer": "felt"
+        },
+        {
+          "id": "E01-S14-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “feel” คือข้อใด?",
+          "choices": [
+            "begun",
+            "become",
+            "fallen",
+            "felt"
+          ],
+          "correctIndex": 3,
+          "answer": "felt"
+        },
+        {
+          "id": "E01-S14-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “fall” คือข้อใด?",
+          "choices": [
+            "began",
+            "became",
+            "felt",
+            "fell"
+          ],
+          "correctIndex": 3,
+          "answer": "fell"
+        },
+        {
+          "id": "E01-S14-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “fall” คือข้อใด?",
+          "choices": [
+            "begun",
+            "become",
+            "fallen",
+            "felt"
+          ],
+          "correctIndex": 2,
+          "answer": "fallen"
+        },
+        {
+          "id": "E01-S14-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “win” คือข้อใด?",
+          "choices": [
+            "won",
+            "began",
+            "became",
+            "felt"
+          ],
+          "correctIndex": 0,
+          "answer": "won"
+        },
+        {
+          "id": "E01-S14-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “win” คือข้อใด?",
+          "choices": [
+            "won",
+            "begun",
+            "become",
+            "felt"
+          ],
+          "correctIndex": 0,
+          "answer": "won"
+        }
+      ]
+    },
+    {
+      "stage": 15,
+      "title": "Final Challenge",
+      "vocabulary": [
+        {
+          "base": "pay",
+          "past": "paid",
+          "pastParticiple": "paid",
+          "meaningTh": "จ่าย"
+        },
+        {
+          "base": "spend",
+          "past": "spent",
+          "pastParticiple": "spent",
+          "meaningTh": "ใช้/ใช้จ่าย"
+        },
+        {
+          "base": "sell",
+          "past": "sold",
+          "pastParticiple": "sold",
+          "meaningTh": "ขาย"
+        },
+        {
+          "base": "catch",
+          "past": "caught",
+          "pastParticiple": "caught",
+          "meaningTh": "จับ"
+        },
+        {
+          "base": "forget",
+          "past": "forgot",
+          "pastParticiple": "forgotten",
+          "meaningTh": "ลืม"
+        }
+      ],
+      "questions": [
+        {
+          "id": "E01-S15-Q01",
+          "prompt": "กริยาช่องที่ 2 ของ “pay” คือข้อใด?",
+          "choices": [
+            "spent",
+            "sold",
+            "paid",
+            "caught"
+          ],
+          "correctIndex": 2,
+          "answer": "paid"
+        },
+        {
+          "id": "E01-S15-Q02",
+          "prompt": "กริยาช่องที่ 3 ของ “pay” คือข้อใด?",
+          "choices": [
+            "spent",
+            "sold",
+            "paid",
+            "caught"
+          ],
+          "correctIndex": 2,
+          "answer": "paid"
+        },
+        {
+          "id": "E01-S15-Q03",
+          "prompt": "กริยาช่องที่ 2 ของ “spend” คือข้อใด?",
+          "choices": [
+            "paid",
+            "sold",
+            "spent",
+            "caught"
+          ],
+          "correctIndex": 2,
+          "answer": "spent"
+        },
+        {
+          "id": "E01-S15-Q04",
+          "prompt": "กริยาช่องที่ 3 ของ “spend” คือข้อใด?",
+          "choices": [
+            "paid",
+            "sold",
+            "spent",
+            "caught"
+          ],
+          "correctIndex": 2,
+          "answer": "spent"
+        },
+        {
+          "id": "E01-S15-Q05",
+          "prompt": "กริยาช่องที่ 2 ของ “sell” คือข้อใด?",
+          "choices": [
+            "paid",
+            "spent",
+            "sold",
+            "caught"
+          ],
+          "correctIndex": 2,
+          "answer": "sold"
+        },
+        {
+          "id": "E01-S15-Q06",
+          "prompt": "กริยาช่องที่ 3 ของ “sell” คือข้อใด?",
+          "choices": [
+            "paid",
+            "spent",
+            "sold",
+            "caught"
+          ],
+          "correctIndex": 2,
+          "answer": "sold"
+        },
+        {
+          "id": "E01-S15-Q07",
+          "prompt": "กริยาช่องที่ 2 ของ “catch” คือข้อใด?",
+          "choices": [
+            "caught",
+            "paid",
+            "spent",
+            "sold"
+          ],
+          "correctIndex": 0,
+          "answer": "caught"
+        },
+        {
+          "id": "E01-S15-Q08",
+          "prompt": "กริยาช่องที่ 3 ของ “catch” คือข้อใด?",
+          "choices": [
+            "caught",
+            "paid",
+            "spent",
+            "sold"
+          ],
+          "correctIndex": 0,
+          "answer": "caught"
+        },
+        {
+          "id": "E01-S15-Q09",
+          "prompt": "กริยาช่องที่ 2 ของ “forget” คือข้อใด?",
+          "choices": [
+            "paid",
+            "forgot",
+            "spent",
+            "sold"
+          ],
+          "correctIndex": 1,
+          "answer": "forgot"
+        },
+        {
+          "id": "E01-S15-Q10",
+          "prompt": "กริยาช่องที่ 3 ของ “forget” คือข้อใด?",
+          "choices": [
+            "forgotten",
+            "paid",
+            "spent",
+            "sold"
+          ],
+          "correctIndex": 0,
+          "answer": "forgotten"
+        }
+      ]
+    }
+  ]
+}

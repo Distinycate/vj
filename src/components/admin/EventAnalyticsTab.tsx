@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Sparkles, Users, Play, Pause, Wrench, Trophy, X, Gift } from 'lucide-react';
 import { adjustStudentCoins, adjustStudentTickets } from '@/utils/cardBattle';
+import RemedialEventManager from './RemedialEventManager';
 
 export default function EventAnalyticsTab({ teacher }: { teacher: any }) {
   const [events, setEvents] = useState<any[]>([]);
@@ -94,21 +95,29 @@ export default function EventAnalyticsTab({ teacher }: { teacher: any }) {
   if (loading) return <div className="text-white text-center py-10">กำลังโหลดข้อมูล Event...</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="bg-slate-900/40 p-6 rounded-3xl border border-slate-900 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-black text-white flex items-center gap-2"><Sparkles className="text-amber-400"/> Event Center Management</h2>
-          <p className="text-slate-400 text-sm mt-1">จัดการสถานะกิจกรรมพิเศษและดูผลการเรียนรู้ของนักเรียน</p>
+    <div className="space-y-8">
+      {/* 1. Remedial Event Run Management Module (Active Spec) */}
+      <RemedialEventManager teacher={teacher} />
+
+      {/* 2. Global Template / Legacy Event Statuses */}
+      <div className="pt-6 border-t border-slate-800 space-y-6">
+        <div className="bg-slate-900/40 p-6 rounded-3xl border border-slate-900 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-black text-white flex items-center gap-2">
+              <Sparkles className="text-amber-400 w-4 h-4"/> ภาพรวม Event Center ระดับโรงเรียน
+            </h3>
+            <p className="text-slate-400 text-xs mt-1">จัดการสถานะกิจกรรมใหญ่ของโรงเรียนและแจกรางวัล</p>
+          </div>
+          <button
+            onClick={setupVerbMaster}
+            disabled={setupBusy}
+            className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 text-white font-bold py-2.5 px-4 rounded-xl inline-flex items-center justify-center gap-2 text-xs transition-colors"
+          >
+            <Wrench className="w-4 h-4" />
+            {setupBusy ? 'กำลังสร้างข้อมูล...' : 'สร้าง/ซ่อม Verb Master'}
+          </button>
         </div>
-        <button
-          onClick={setupVerbMaster}
-          disabled={setupBusy}
-          className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 text-white font-bold py-3 px-5 rounded-xl inline-flex items-center justify-center gap-2"
-        >
-          <Wrench className="w-5 h-5" />
-          {setupBusy ? 'กำลังสร้างข้อมูล...' : 'สร้าง/ซ่อม Verb Master'}
-        </button>
-      </div>
+
 
       {error && <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-rose-300">{error}</div>}
 
@@ -245,7 +254,7 @@ export default function EventAnalyticsTab({ teacher }: { teacher: any }) {
           </div>
         </div>
       )}
-      
+      </div>
     </div>
   );
 }
