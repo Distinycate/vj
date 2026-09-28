@@ -24,8 +24,12 @@ export default function EventsPage() {
           setAssignedRuns(runsRes.runs);
         }
 
-        // 2. Load general legacy events
-        const { data } = await supabase.from('events').select('*').order('created_at', { ascending: false });
+        // 2. Load general legacy events (school-wide events only)
+        const { data } = await supabase
+          .from('events')
+          .select('*')
+          .neq('event_type', 'remedial_fixed')
+          .order('created_at', { ascending: false });
         if (data) {
           setLegacyEvents(data);
         }
@@ -210,7 +214,7 @@ export default function EventsPage() {
                   
                   <div className="flex justify-end">
                     <Link 
-                      href={`/events/${event.slug}`}
+                      href={`/events/${event.slug === 'christmas-word-hunt' ? 'christmas' : event.slug}`}
                       className={`px-5 py-2 rounded-xl text-xs font-black transition-colors ${
                         event.status === 'upcoming' 
                           ? 'bg-slate-800 text-slate-500 cursor-not-allowed pointer-events-none'

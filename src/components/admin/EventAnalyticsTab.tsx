@@ -20,7 +20,11 @@ export default function EventAnalyticsTab({ teacher }: { teacher: any }) {
   const loadEvents = async () => {
     setLoading(true);
     setError('');
-    const { data, error: loadError } = await supabase.from('events').select('*').order('created_at', { ascending: false });
+    const { data, error: loadError } = await supabase
+      .from('events')
+      .select('*')
+      .neq('event_type', 'remedial_fixed')
+      .order('created_at', { ascending: false });
     if (data) setEvents(data);
     if (loadError) setError(`โหลดกิจกรรมไม่สำเร็จ: ${loadError.message}`);
     setLoading(false);
