@@ -44,6 +44,7 @@ async function main() {
       academic_year: '2567-T1',
       is_active: false
     })
+    .eq('user_type', 'INTERNAL')
     .neq('academic_year', '2567-T2');
 
   if (archiveErr) {

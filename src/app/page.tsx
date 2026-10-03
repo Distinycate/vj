@@ -581,8 +581,22 @@ export default function Home() {
                 นักเรียนสามารถพักผ่อนได้อย่างเต็มที่ แล้วพบกันใหม่ในวันเปิดเทอมครับ!
               </p>
             </div>
-            <div className="p-3 bg-slate-900/80 rounded-2xl border border-slate-800 text-[11px] text-slate-400">
-              💡 สำหรับนักเรียนโรงเรียนเครือข่าย สามารถใช้งาน <span className="text-cyan-400 font-bold">VJ Lite</span> ได้ตามปกติที่ปุ่มด้านล่าง
+            <div className="p-4 bg-indigo-950/50 rounded-2xl border border-indigo-500/30 text-xs text-slate-300 space-y-3">
+              <div className="flex items-center justify-center gap-2 text-indigo-300 font-bold">
+                <Globe2 className="w-4 h-4 text-cyan-400" />
+                <span>สำหรับนักเรียนโรงเรียนเครือข่าย (VJ Lite)</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                นักเรียนโรงเรียนเครือข่ายสามารถเข้าสู่ระบบเพื่อฝึกคำศัพท์ได้ตามปกติ ไม่ได้รับผลกระทบจากการปิดภาคเรียน
+              </p>
+              <button
+                type="button"
+                onClick={() => router.push('/network/login')}
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs sm:text-sm transition-all shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <span>🌐 เข้าสู่ระบบนักเรียน VJ Lite ที่นี่</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         ) : mode === 'login' ? (
