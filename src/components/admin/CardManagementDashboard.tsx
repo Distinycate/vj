@@ -19,6 +19,7 @@ interface StudentSummary {
   student_id: string;
   student_name: string;
   classroom_id: string;
+  currentStage: number;
   tickets: number;
   coins: number;
   currentCards: number;
@@ -29,6 +30,11 @@ interface StudentSummary {
   cardsRemoved: number;
   coinsAwarded: number;
   coinsRemoved: number;
+  volunteerActions: number;
+  responsibilityActions: number;
+  disciplineActions: number;
+  positiveActions: number;
+  ruleViolations: number;
   pretestScore?: number;
   posttestScore?: number;
   accuracy?: number;
@@ -171,6 +177,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
       setStudents(rawStudents.map((student: any) => {
         const studentInventory = inventoryRows.filter((row: any) => row.student_id === student.id);
         const studentActions = actionRows.filter((action: any) => action.student_id === student.id);
+        const countCategory = (cat: string) => studentActions.filter((a: any) => a.category === cat).length;
         const sumAction = (type: string) => studentActions
           .filter((action: any) => action.action_type === type)
           .reduce((sum: number, action: any) => sum + Number(action.amount || 0), 0);
@@ -180,6 +187,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
 
         return {
           ...student,
+          currentStage: lp?.current_stage || 1,
           tickets: lp?.free_pull_tickets || 0,
           coins: lp?.coins || 0,
           currentCards: studentInventory.reduce((sum: number, row: any) => sum + Number(row.quantity || 0), 0),
@@ -190,6 +198,11 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
           cardsRemoved: sumAction('CARD_REMOVAL'),
           coinsAwarded: sumAction('COIN_AWARD'),
           coinsRemoved: sumAction('COIN_REMOVAL'),
+          volunteerActions: countCategory('VOLUNTEER'),
+          responsibilityActions: countCategory('RESPONSIBILITY'),
+          disciplineActions: countCategory('DISCIPLINE'),
+          positiveActions: countCategory('POSITIVE_BEHAVIOR'),
+          ruleViolations: countCategory('RULE_VIOLATION'),
           pretestScore: stats?.pretest_score || 0,
           posttestScore: stats?.posttest_score || 0,
           accuracy: stats?.success_rate || 0,
@@ -207,20 +220,64 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     loadData();
   }, [loadData]);
 
-  // Rubric calculation functions with softened/growth-oriented thresholds
+  // Rubric calculation functions differentiated by trait and reading indicators
   const calculateStudentTrait = useCallback((student: StudentSummary, traitId: string) => {
     if (traitOverrides[student.id]?.[traitId] !== undefined) {
       return traitOverrides[student.id][traitId];
     }
     const positive = student.ticketsAwarded + student.coinsAwarded;
     const deductions = student.ticketsRemoved + student.cardsRemoved + student.coinsRemoved;
-    
-    // Softened rubric: 3 >= 60%, 2 >= 35%, 1 >= 1%, 0 = 0%
-    const ratio = (positive + deductions) > 0 ? positive / (positive + deductions) : 0.8;
-    if (positive >= 2 || ratio >= 0.6 || (student.learningGain || 0) > 20) return 3;
-    if (positive >= 1 || ratio >= 0.35 || student.coins > 100) return 2;
-    if (deductions > positive + 2) return 1;
-    return 2; // Default encouraging grade for participation
+    const violations = student.ruleViolations || 0;
+    const stage = student.currentStage || 1;
+    const gain = student.learningGain || 0;
+    const acc = student.accuracy || 0;
+
+    switch (traitId) {
+      case 't1': // 1. รักชาติ ศาสน์ กษัตริย์: พฤติกรรมพื้นฐาน การร่วมกิจกรรมโรงเรียน ไม่ทำผิดกฎ
+        if (violations === 0 && deductions === 0) return 3;
+        if (violations <= 1) return 2;
+        return 1;
+
+      case 't2': // 2. ซื่อสัตย์สุจริต: ไม่สแปม ไม่โกง ไม่โดนหักของรางวัล มีความประพฤติเชิงบวก
+        if (deductions === 0 && (student.positiveActions > 0 || positive >= 1)) return 3;
+        if (deductions <= 1) return 2;
+        return 1;
+
+      case 't3': // 3. มีวินัย: เข้าเรียนต่อเนื่อง สม่ำเสมอ ไม่ทำผิดระเบียบ
+        if ((student.disciplineActions > 0 || stage >= 5) && violations === 0) return 3;
+        if (violations <= 1) return 2;
+        return 1;
+
+      case 't4': // 4. ใฝ่เรียนรู้: พัฒนาการคำศัพท์ (Learning Gain), ผ่านหลายด่าน, ความแม่นยำสูง
+        if (gain >= 25 || stage >= 10 || acc >= 65) return 3;
+        if (gain >= 10 || stage >= 3 || acc >= 35) return 2;
+        return 1;
+
+      case 't5': // 5. อยู่อย่างพอเพียง: บริหารจัดการเหรียญและไอเทมในเกมอย่างคุ้มค่า
+        if (student.coins >= 80) return 3;
+        if (student.coins >= 25) return 2;
+        return 1;
+
+      case 't6': // 6. มุ่งมั่นในการทำงาน: ความรับผิดชอบ ความพยายามผ่านด่าน Post-test และสเตจยาก
+        if (student.responsibilityActions > 0 || stage >= 8 || (student.posttestScore || 0) >= 50) return 3;
+        if (stage >= 3 || (student.posttestScore || 0) >= 25) return 2;
+        return 1;
+
+      case 't7': // 7. รักความเป็นไทย: ความถูกต้องในการแปล/บริบทภาษาไทย และมารยาท
+        if (acc >= 50 && violations === 0) return 3;
+        if (acc >= 30) return 2;
+        return 1;
+
+      case 't8': // 8. มีจิตสาธารณะ: จิตอาสา ช่วยเหลือเพื่อน การ์ดแบทเทิลทีม
+        if (student.volunteerActions > 0 || student.ticketsAwarded >= 2 || student.cardsReceived >= 2) return 3;
+        if (positive >= 1 || student.cardsReceived >= 1) return 2;
+        return 1;
+
+      default:
+        if (positive >= 2 || gain > 20) return 3;
+        if (positive >= 1 || student.coins > 50) return 2;
+        return 1;
+    }
   }, [traitOverrides]);
 
   const calculateStudentReading = useCallback((student: StudentSummary, indicatorId: string) => {
@@ -230,12 +287,41 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     const acc = student.accuracy || 0;
     const post = student.posttestScore || 0;
     const gain = student.learningGain || 0;
+    const stage = student.currentStage || 1;
+    const positive = student.ticketsAwarded + student.coinsAwarded;
 
-    // Softened rubric: Post >= 60% or Gain >= 30% or Acc >= 60% -> Level 3
-    if (post >= 60 || gain >= 30 || acc >= 60) return 3;
-    if (post >= 35 || gain >= 15 || acc >= 35) return 2;
-    if (post > 0 || acc > 0 || student.coins > 0) return 1;
-    return 1; // Default pass for participating
+    switch (indicatorId) {
+      case 'r1': // 1. การจับใจความสำคัญ: วัดจากความถูกต้องของคำศัพท์และความหมาย (Accuracy)
+        if (acc >= 65 || post >= 60) return 3;
+        if (acc >= 35 || post >= 30) return 2;
+        return 1;
+
+      case 'r2': // 2. การระบุรายละเอียดสนับสนุน: วัดจากการผ่านด่านและทำข้อสอบปลายภาคได้
+        if (stage >= 10 || post >= 65) return 3;
+        if (stage >= 4 || post >= 35) return 2;
+        return 1;
+
+      case 'r3': // 3. การวิเคราะห์แยกแยะ/เชื่อมโยง: วัดจากพัฒนาการทางความรู้ (Learning Gain)
+        if (gain >= 25) return 3;
+        if (gain >= 10) return 2;
+        return 1;
+
+      case 'r4': // 4. การแสดงความคิดเห็นและให้เหตุผล: วัดจากการมีส่วนร่วมและรางวัลพฤติกรรม
+        if (positive >= 2) return 3;
+        if (positive >= 1 || stage >= 3) return 2;
+        return 1;
+
+      case 'r5': // 5. การสรุปความและเขียนถ่ายทอด: วัดจากคะแนนสังเคราะห์รวม (Posttest + Accuracy)
+        const composite = (post + acc) / 2;
+        if (composite >= 55) return 3;
+        if (composite >= 30) return 2;
+        return 1;
+
+      default:
+        if (post >= 60 || gain >= 30 || acc >= 60) return 3;
+        if (post >= 35 || gain >= 15 || acc >= 35) return 2;
+        return 1;
+    }
   }, [readingOverrides]);
 
   // Short diagnostic rationale generator

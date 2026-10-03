@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Plus, Search, CheckCircle2, Clock, AlertCircle, X, ChevronRight,
-  ArrowLeft, RefreshCw, Sparkles, Bell, Trophy, BookOpen, User, Eye
+  ArrowLeft, RefreshCw, Sparkles, Bell, Trophy, BookOpen, User, Eye, Calendar
 } from 'lucide-react';
 import { calculateTargetStages } from '@/lib/events/remedialEventsRegistry';
 
@@ -12,6 +12,9 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
   const [unreadTotal, setUnreadTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Term Filter
+  const [termFilter, setTermFilter] = useState<string>('all');
 
   // Selected Run for Inspection
   const [inspectRunId, setInspectRunId] = useState<string | null>(null);
@@ -25,6 +28,7 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
   const [createStep, setCreateStep] = useState<1 | 2 | 3>(1);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('event-01-verb-master-challenge');
   const [runTitle, setRunTitle] = useState('');
+  const [createAcademicYear, setCreateAcademicYear] = useState<string>('2567-T2');
   const [selectedClassroomId, setSelectedClassroomId] = useState('');
   const [classroomsList, setClassroomsList] = useState<any[]>([]);
   const [studentsList, setStudentsList] = useState<any[]>([]);
@@ -38,7 +42,11 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch('/api/events/runs');
+      let url = '/api/events/runs';
+      if (termFilter && termFilter !== 'all') {
+        url += `?academicYear=${encodeURIComponent(termFilter)}`;
+      }
+      const res = await fetch(url);
       if (!res.ok) throw new Error('โหลดรายการ Event ไม่สำเร็จ');
       const json = await res.json();
       if (json.success) {
@@ -51,7 +59,7 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [termFilter]);
 
   useEffect(() => {
     loadRuns();
@@ -195,6 +203,7 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
           templateId: selectedTemplateId,
           title: runTitle.trim(),
           classroomId: selectedClassroomId || null,
+          academicYear: createAcademicYear || '2567-T2',
           participants: selectedParticipants,
         }),
       });
@@ -456,6 +465,28 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
         </div>
       )}
 
+      {/* Term Filter Toolbar */}
+      <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Calendar className="w-4 h-4 text-cyan-400" />
+          <span className="text-xs font-bold text-slate-400">ภาคเรียน:</span>
+          <select
+            value={termFilter}
+            onChange={e => setTermFilter(e.target.value)}
+            className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-bold focus:outline-none focus:border-cyan-500"
+          >
+            <option value="all">ทุกภาคเรียนทั้งหมด (All Terms)</option>
+            <option value="2567-T2">ภาคเรียนที่ 2/2567 (ปัจจุบัน)</option>
+            <option value="2567-T1">ภาคเรียนที่ 1/2567 (ย้อนหลัง)</option>
+            <option value="2568-T1">ภาคเรียนที่ 1/2568</option>
+          </select>
+        </div>
+
+        <div className="text-xs text-slate-400 font-medium">
+          รอบกิจกรรมทั้งหมด: <strong className="text-white">{runs.length}</strong> รอบ
+        </div>
+      </div>
+
       {/* Runs Grid */}
       {loading ? (
         <div className="text-center py-16 text-slate-500 text-xs">กำลังโหลดรายการ Event Runs...</div>
@@ -479,11 +510,16 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
                   <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-2xl shadow-inner">
                     {run.icon || '⭐'}
                   </div>
-                  {run.summary?.unreadPassed > 0 && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-slate-950 animate-pulse flex items-center gap-1">
-                      <Bell className="w-3 h-3" /> ผ่านใหม่ {run.summary.unreadPassed}
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
+                      {run.academicYear === '2567-T1' ? 'เทอม 1/2567' : run.academicYear === '2567-T2' ? 'เทอม 2/2567' : run.academicYear || 'เทอม 2/2567'}
                     </span>
-                  )}
+                    {run.summary?.unreadPassed > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-slate-950 animate-pulse flex items-center gap-1">
+                        <Bell className="w-3 h-3" /> ผ่านใหม่ {run.summary.unreadPassed}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <h3 className="text-base font-black text-white mt-3 line-clamp-1">{run.title}</h3>
@@ -594,9 +630,23 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
                       type="text"
                       value={runTitle}
                       onChange={e => setRunTitle(e.target.value)}
-                      placeholder="เช่น Verb Master Challenge แก้ 0 ม.2 ภาคเรียน 1/2569"
+                      placeholder="เช่น Verb Master Challenge แก้ 0 ม.2 ภาคเรียน 2/2567"
                       className="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
                     />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1.5">ภาคเรียนที่จัดกิจกรรม (Academic Year / Term):</label>
+                    <select
+                      value={createAcademicYear}
+                      onChange={e => setCreateAcademicYear(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                    >
+                      <option value="2567-T2">ภาคเรียนที่ 2/2567 (ปัจจุบัน)</option>
+                      <option value="2567-T1">ภาคเรียนที่ 1/2567 (ย้อนหลัง)</option>
+                      <option value="2568-T1">ภาคเรียนที่ 1/2568</option>
+                      <option value="2568-T2">ภาคเรียนที่ 2/2568</option>
+                    </select>
                   </div>
 
                   <div>

@@ -186,6 +186,11 @@ export default function Home() {
           ...data.progress,
           pretest_date: pretestDate,
         });
+
+        if (data.has_remedial_access) {
+          window.location.href = '/events';
+          return;
+        }
       } else if (data.role === 'CARD_TEACHER' || data.role === 'TEACHER') {
         localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(data.user));
         window.location.href = '/card-teacher/dashboard';
@@ -458,32 +463,61 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Prominent Mode Switcher Pill */}
-        <div className="grid grid-cols-2 gap-2 bg-slate-950/95 border-2 border-slate-800 rounded-2xl p-1.5 mb-5 shadow-inner">
-          <button 
-            type="button"
-            onClick={() => { setMode('login'); setError(''); }}
-            className={`min-h-[50px] py-3 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 border-2 ${
-              mode === 'login' 
-                ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 text-slate-950 border-emerald-300 shadow-xl shadow-emerald-500/35 scale-[1.02]' 
-                : 'text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800/80 border-slate-800/80 hover:border-emerald-500/40'
-            }`}
-          >
-            <LogIn className="w-4 h-4 shrink-0" />
-            <span>เข้าสู่ระบบ</span>
-          </button>
-          <button 
-            type="button"
-            onClick={() => { setMode('register'); setError(''); }}
-            className={`min-h-[50px] py-3 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 border-2 ${
-              mode === 'register' 
-                ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 text-slate-950 border-emerald-300 shadow-xl shadow-emerald-500/35 scale-[1.02]' 
-                : 'text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800/80 border-slate-800/80 hover:border-emerald-500/40'
-            }`}
-          >
-            <UserPlus className="w-4 h-4 shrink-0" />
-            <span>สมัครสมาชิก</span>
-          </button>
+        {/* Prominent Mode Switcher Pill (hidden when registration is closed) */}
+        {isRegistrationOpen ? (
+          <div className="grid grid-cols-2 gap-2 bg-slate-950/95 border-2 border-slate-800 rounded-2xl p-1.5 mb-5 shadow-inner">
+            <button 
+              type="button"
+              onClick={() => { setMode('login'); setError(''); }}
+              className={`min-h-[50px] py-3 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 border-2 ${
+                mode === 'login' 
+                  ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 text-slate-950 border-emerald-300 shadow-xl shadow-emerald-500/35 scale-[1.02]' 
+                  : 'text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800/80 border-slate-800/80 hover:border-emerald-500/40'
+              }`}
+            >
+              <LogIn className="w-4 h-4 shrink-0" />
+              <span>เข้าสู่ระบบ</span>
+            </button>
+            <button 
+              type="button"
+              onClick={() => { setMode('register'); setError(''); }}
+              className={`min-h-[50px] py-3 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 border-2 ${
+                mode === 'register' 
+                  ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 text-slate-950 border-emerald-300 shadow-xl shadow-emerald-500/35 scale-[1.02]' 
+                  : 'text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800/80 border-slate-800/80 hover:border-emerald-500/40'
+              }`}
+            >
+              <UserPlus className="w-4 h-4 shrink-0" />
+              <span>สมัครสมาชิก</span>
+            </button>
+          </div>
+        ) : (
+          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3 mb-5 text-center shadow-inner">
+            <p className="text-xs font-bold text-emerald-300">
+              🔑 บัญชีนักเรียนได้รับการลงทะเบียนโดยคุณครูเรียบร้อยแล้ว
+            </p>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              ใช้เลขประจำตัวประชาชนเข้าใช้งานได้ทันที
+            </p>
+          </div>
+        )}
+
+        {/* Semester Break / Maintenance Status for Internal School */}
+        <div className="mb-5 bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-rose-500/15 border-2 border-amber-500/40 rounded-3xl p-4 text-center shadow-lg">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-black mb-1.5">
+            <span>🏖️ ประกาศปิดปรับปรุงระบบช่วงปิดภาคเรียน</span>
+          </div>
+          <h3 className="text-sm sm:text-base font-black text-amber-200">
+            ระบบ Vocab Journey (ภายในโรงเรียน) ปิดให้บริการชั่วคราว
+          </h3>
+          <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+            ระบบกำลังอยู่ระหว่างการ <strong className="text-amber-300">สรุปผลสัมฤทธิ์และจัดทำรายงาน ปพ.5</strong> ประจำภาคเรียนที่ 1<br />
+            และเตรียมความพร้อมอัปเกรดระบบสำหรับภาคเรียนใหม่
+          </p>
+          <div className="mt-2.5 text-[11px] text-slate-300 bg-slate-950/70 rounded-xl py-2 px-3 border border-slate-800/80 space-y-1">
+            <div>👨‍🏫 <strong>คุณครูและผู้บริหาร:</strong> เข้าสู่ระบบเพื่อสรุปผลคะแนนและ ปพ.5 ได้ตามปกติ</div>
+            <div className="text-cyan-300 font-semibold">📝 <strong>นักเรียนที่มีภารกิจแก้ 0/ร:</strong> เข้าสู่ระบบด้วยเลข ปชช. 13 หลัก และรหัส นร. 4 หลัก เพื่อทำภารกิจซ่อมเสริมได้ทันที</div>
+          </div>
         </div>
 
         {error && (
@@ -499,12 +533,12 @@ export default function Home() {
               onClick={() => { setLoginRole('student'); setError(''); }}
               className={`min-h-[54px] py-2 px-1 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 border-2 ${
                 loginRole === 'student' 
-                  ? 'bg-gradient-to-br from-emerald-500/30 via-teal-500/25 to-emerald-600/30 text-emerald-200 border-emerald-400 shadow-lg shadow-emerald-500/30 scale-[1.03]' 
-                  : 'text-slate-400 hover:text-emerald-300 hover:bg-slate-900/80 border-slate-800/80'
+                  ? 'bg-gradient-to-br from-amber-500/30 via-orange-500/25 to-rose-600/30 text-amber-200 border-amber-400 shadow-lg shadow-amber-500/30 scale-[1.03]' 
+                  : 'text-slate-400 hover:text-amber-300 hover:bg-slate-900/80 border-slate-800/80'
               }`}
             >
               <span className="text-xs sm:text-sm font-black">👩‍🎓 นักเรียน</span>
-              <span className="text-[10px] text-emerald-400/90 font-bold">ผู้เรียนรู้</span>
+              <span className="text-[10px] text-amber-400/90 font-bold">🔒 ปิดช่วงปิดเทอม</span>
             </button>
             <button 
               type="button"
@@ -516,7 +550,7 @@ export default function Home() {
               }`}
             >
               <span className="text-xs sm:text-sm font-black">👨‍🏫 ครูผู้สอน</span>
-              <span className="text-[10px] text-indigo-400/90 font-bold">จัดการเรียนรู้</span>
+              <span className="text-[10px] text-indigo-400/90 font-bold">สรุปผล/จัดการ</span>
             </button>
             <button 
               type="button"
@@ -533,38 +567,60 @@ export default function Home() {
           </div>
         )}
 
-        {mode === 'login' ? (
+        {mode === 'login' && loginRole === 'student' ? (
+          <div className="bg-slate-950/80 border-2 border-amber-500/30 rounded-3xl p-6 text-center space-y-4 shadow-inner">
+            <div className="w-14 h-14 mx-auto rounded-full bg-amber-500/20 flex items-center justify-center text-3xl">
+              🏖️
+            </div>
+            <div>
+              <h4 className="text-base font-black text-amber-200">
+                ระบบปิดรับการเข้าเล่นในช่วงปิดภาคเรียน
+              </h4>
+              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                ขณะนี้ระบบปิดปรับปรุงชั่วคราว เพื่อให้คุณครูดำเนินการสรุปผลคะแนนและจัดเตรียมเนื้อหาสำหรับภาคเรียนใหม่<br />
+                นักเรียนสามารถพักผ่อนได้อย่างเต็มที่ แล้วพบกันใหม่ในวันเปิดเทอมครับ!
+              </p>
+            </div>
+            <div className="p-3 bg-slate-900/80 rounded-2xl border border-slate-800 text-[11px] text-slate-400">
+              💡 สำหรับนักเรียนโรงเรียนเครือข่าย สามารถใช้งาน <span className="text-cyan-400 font-bold">VJ Lite</span> ได้ตามปกติที่ปุ่มด้านล่าง
+            </div>
+          </div>
+        ) : mode === 'login' ? (
           <div className="flex flex-col gap-4" onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(e); }}>
             <div className="space-y-1.5">
-              <label className="text-slate-200 text-xs sm:text-sm font-black flex items-center gap-1.5">
-                <User className="w-4 h-4 text-emerald-400" />
-                <span>Username</span>
+              <label className="text-slate-200 text-xs sm:text-sm font-black flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-indigo-400" />
+                  <span>Username (ชื่อผู้ใช้งาน)</span>
+                </span>
               </label>
               <input 
                 type="text" 
                 autoComplete="off" 
                 value={loginUsername} 
                 onChange={(e) => setLoginUsername(e.target.value)} 
-                className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/25 rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all placeholder:text-slate-500 shadow-inner" 
-                placeholder="กรอกชื่อผู้ใช้งาน" 
+                className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/25 rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all placeholder:text-slate-500 shadow-inner" 
+                placeholder="กรอกชื่อผู้ใช้งานครูหรือผู้บริหาร" 
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-slate-200 text-xs sm:text-sm font-black flex items-center gap-1.5">
-                <Lock className="w-4 h-4 text-emerald-400" />
-                <span>Password</span>
+              <label className="text-slate-200 text-xs sm:text-sm font-black flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Lock className="w-4 h-4 text-indigo-400" />
+                  <span>Password (รหัสผ่าน)</span>
+                </span>
               </label>
               <input 
                 type="password" 
                 autoComplete="new-password" 
                 value={loginPassword} 
                 onChange={(e) => setLoginPassword(e.target.value)} 
-                className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/25 rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all placeholder:text-slate-500 shadow-inner" 
+                className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/25 rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all placeholder:text-slate-500 shadow-inner" 
                 placeholder="กรอกรหัสผ่าน" 
               />
             </div>
             <label className="flex items-center gap-2 cursor-pointer mt-1">
-              <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900" />
+              <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-slate-900" />
               <span className="text-slate-300 text-xs sm:text-sm font-medium hover:text-white transition-colors">จดจำรหัสผ่าน</span>
             </label>
 
@@ -573,16 +629,14 @@ export default function Home() {
               type="button" 
               onClick={handleLogin} 
               disabled={isLoading} 
-              className="w-full min-h-[62px] py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500 hover:from-emerald-300 hover:to-teal-200 text-slate-950 font-black text-base sm:text-lg transition-all shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-400/60 flex items-center justify-center gap-3 mt-2 disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] border-2 border-emerald-200/50"
+              className="w-full min-h-[62px] py-4 px-6 rounded-2xl bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-600 hover:from-indigo-400 hover:to-blue-400 text-white font-black text-base sm:text-lg transition-all shadow-2xl shadow-indigo-500/40 hover:shadow-indigo-400/60 flex items-center justify-center gap-3 mt-2 disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] border-2 border-indigo-300/50"
             >
               {isLoading ? (
                 <div className="w-6 h-6 border-3 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" />
               ) : (
                 <>
                   <span>
-                    {loginRole === 'student' ? 'เข้าสู่ระบบผจญภัย 🚀' : 
-                     loginRole === 'teacher' ? 'เข้าสู่ระบบจัดการเรียนรู้ 👨‍🏫' : 
-                     'เข้าสู่ระบบรายงานผู้บริหาร 📊'}
+                    {loginRole === 'teacher' ? 'เข้าสู่ระบบจัดการเรียนรู้ 👨‍🏫' : 'เข้าสู่ระบบรายงานผู้บริหาร 📊'}
                   </span>
                   <ArrowRight className="w-5 h-5 shrink-0" />
                 </>
@@ -596,7 +650,7 @@ export default function Home() {
               className="w-full min-h-[58px] py-4 px-5 rounded-2xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white font-black text-sm sm:text-base transition-all shadow-2xl shadow-fuchsia-600/40 hover:shadow-fuchsia-500/60 flex items-center justify-center gap-2.5 border-2 border-fuchsia-300/60 mt-1 hover:scale-[1.02] active:scale-[0.98]"
             >
               <Sparkles className="w-5 h-5 text-yellow-300 shrink-0 animate-pulse" />
-              <span>🃏 ระบบการ์ดคำศัพท์สำหรับคุณครู (สมัคร/เข้าใช้) &rarr;</span>
+              <span>🃏 ระบบการ์ดคำศัพท์สำหรับคุณครู (สรุปผล/จัดการ) &rarr;</span>
             </button>
           </div>
         ) : mode === 'register' && !isRegistrationOpen ? (

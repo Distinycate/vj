@@ -9,6 +9,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const classroomId = searchParams.get('classroomId');
     const userType = searchParams.get('userType');
+    const academicYear = searchParams.get('academicYear');
+    const isActiveParam = searchParams.get('isActive');
+    const includeInactive = searchParams.get('includeInactive') === 'true';
     const fields = searchParams.get('fields');
     const countOnly = searchParams.get('countOnly') === 'true' || fields === 'roster_count' || fields === 'count';
     const rankOnly = fields === 'rank';
@@ -23,6 +26,14 @@ export async function GET(request: Request) {
       }
       if (userType) {
         countQuery = countQuery.eq('user_type', userType);
+      }
+      if (academicYear && academicYear !== 'all') {
+        countQuery = countQuery.eq('academic_year', academicYear);
+      }
+      if (isActiveParam !== null) {
+        countQuery = countQuery.eq('is_active', isActiveParam === 'true');
+      } else if (!includeInactive && !academicYear) {
+        countQuery = countQuery.eq('is_active', true);
       }
 
       const { data: countData, error: countError } = await countQuery;
@@ -43,6 +54,14 @@ export async function GET(request: Request) {
       if (userType) {
         rankQuery = rankQuery.eq('user_type', userType);
       }
+      if (academicYear && academicYear !== 'all') {
+        rankQuery = rankQuery.eq('academic_year', academicYear);
+      }
+      if (isActiveParam !== null) {
+        rankQuery = rankQuery.eq('is_active', isActiveParam === 'true');
+      } else if (!includeInactive && !academicYear) {
+        rankQuery = rankQuery.eq('is_active', true);
+      }
 
       const { data: rankData, error: rankError } = await rankQuery;
       if (rankError) throw rankError;
@@ -60,6 +79,14 @@ export async function GET(request: Request) {
     }
     if (userType) {
       query = query.eq('user_type', userType);
+    }
+    if (academicYear && academicYear !== 'all') {
+      query = query.eq('academic_year', academicYear);
+    }
+    if (isActiveParam !== null) {
+      query = query.eq('is_active', isActiveParam === 'true');
+    } else if (!includeInactive && !academicYear) {
+      query = query.eq('is_active', true);
     }
 
     const { data, error } = await query;

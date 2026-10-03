@@ -63,6 +63,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, runs: activeRuns });
     }
 
+    const { searchParams } = new URL(request.url);
+    const academicYear = searchParams.get('academicYear');
+
     // Teacher / Admin: load all runs with stats
     const { data: runs, error: runsErr } = await supabaseAdmin
       .from('event_runs')
@@ -110,6 +113,7 @@ export async function GET(request: Request) {
         theme: tmpl?.theme || 'General',
         icon: tmpl?.icon || '⭐',
         className: r.classrooms?.class_name || r.grade_level || 'ทั่วไป',
+        academicYear: r.academic_year || '2567-T2',
         status: r.status,
         createdAt: r.created_at,
         summary: {
@@ -122,9 +126,13 @@ export async function GET(request: Request) {
       };
     });
 
+    const finalRuns = (academicYear && academicYear !== 'all')
+      ? formattedRuns.filter(r => (r.academicYear || '2567-T2') === academicYear)
+      : formattedRuns;
+
     return NextResponse.json({
       success: true,
-      runs: formattedRuns,
+      runs: finalRuns,
       unreadPassedTotal: unreadCount,
       templates: REMEDIAL_TEMPLATES.map(t => ({
         eventId: t.eventId,
@@ -147,6 +155,7 @@ const createRunSchema = z.object({
   title: z.string().min(1),
   classroomId: z.string().uuid().optional().nullable(),
   gradeLevel: z.string().optional().nullable(),
+  academicYear: z.string().optional().nullable(),
   participants: z.array(
     z.object({
       studentId: z.string().uuid(),
@@ -170,7 +179,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid payload', details: parsed.error.issues }, { status: 400 });
     }
 
-    const { templateId, title, classroomId, gradeLevel, participants } = parsed.data;
+    const { templateId, title, classroomId, gradeLevel, academicYear, participants } = parsed.data;
 
     // Verify template exists
     const template = getRemedialTemplate(templateId);
@@ -179,18 +188,37 @@ export async function POST(request: Request) {
     }
 
     // 1. Create Event Run
-    const { data: run, error: runErr } = await supabaseAdmin
+    let runResult = await supabaseAdmin
       .from('event_runs')
       .insert({
         template_id: templateId,
         title,
         classroom_id: classroomId || null,
         grade_level: gradeLevel || null,
+        academic_year: academicYear || '2567-T2',
         status: 'active',
         created_by: session.subjectId,
       })
       .select('id')
       .single();
+
+    if (runResult.error && runResult.error.message?.includes('academic_year')) {
+      // Fallback if column not yet added in Supabase
+      runResult = await supabaseAdmin
+        .from('event_runs')
+        .insert({
+          template_id: templateId,
+          title,
+          classroom_id: classroomId || null,
+          grade_level: gradeLevel || null,
+          status: 'active',
+          created_by: session.subjectId,
+        })
+        .select('id')
+        .single();
+    }
+
+    const { data: run, error: runErr } = runResult;
 
     if (runErr || !run) {
       console.error('Error inserting event_run:', runErr);

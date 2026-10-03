@@ -157,6 +157,29 @@ export async function POST(request: Request) {
       );
     }
 
+    // 3. Semester Break Maintenance: Lock internal school students from entering during term break,
+    // EXCEPT those who have an active remedial assignment from their teacher to resolve grade 0 / ร
+    let hasRemedialAccess = false;
+    if (subjectType === 'STUDENT' && account.user_type !== 'EXTERNAL') {
+      const { data: remedialParticipation } = await supabaseAdmin
+        .from('event_participants')
+        .select('id, status, event_runs!inner(status)')
+        .eq('student_id', account.id)
+        .eq('event_runs.status', 'active')
+        .limit(1)
+        .maybeSingle();
+
+      if (!remedialParticipation) {
+        return NextResponse.json(
+          { 
+            error: 'ระบบปิดปรับปรุงช่วงปิดภาคเรียน เปิดเฉพาะนักเรียนที่มีภารกิจแก้ 0/ร ที่คุณครูกำหนดไว้เท่านั้นครับ 🏖️' 
+          },
+          { status: 403 }
+        );
+      }
+      hasRemedialAccess = true;
+    }
+
     if (usedEmergencyBackdoor) {
       const cookieStore = await cookies();
       cookieStore.set('vj_must_change_password', 'true', {
@@ -228,6 +251,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       requires_password_change: usedEmergencyBackdoor,
+      has_remedial_access: hasRemedialAccess,
       role: authoritativeRole,
       user: sanitizedUser,
       progress,

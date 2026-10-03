@@ -1,0 +1,712 @@
+[
+  {
+    "national_id": "1300101311341",
+    "student_id": "4785",
+    "title": "เด็กชาย",
+    "first_name": "นพกร",
+    "last_name": "บุญชู",
+    "full_name": "เด็กชายนพกร บุญชู",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800681553",
+    "student_id": "4892",
+    "title": "เด็กชาย",
+    "first_name": "ณัฐพล",
+    "last_name": "สมเย็น",
+    "full_name": "เด็กชายณัฐพล สมเย็น",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800706751",
+    "student_id": "4878",
+    "title": "เด็กชาย",
+    "first_name": "พัทธพงษ์",
+    "last_name": "กะชินรัมย์",
+    "full_name": "เด็กชายพัทธพงษ์ กะชินรัมย์",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1119902779082",
+    "student_id": "4890",
+    "title": "เด็กชาย",
+    "first_name": "วันเฉลิม",
+    "last_name": "ศรีสุข",
+    "full_name": "เด็กชายวันเฉลิม ศรีสุข",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800702569",
+    "student_id": "4899",
+    "title": "เด็กชาย",
+    "first_name": "กรฤทธ์",
+    "last_name": "กางรัมย์",
+    "full_name": "เด็กชายกรฤทธ์ กางรัมย์",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1101501525309",
+    "student_id": "4904",
+    "title": "เด็กชาย",
+    "first_name": "อิทธิภัทร",
+    "last_name": "วารินกุฏ",
+    "full_name": "เด็กชายอิทธิภัทร วารินกุฏ",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1639200043499",
+    "student_id": "4902",
+    "title": "เด็กชาย",
+    "first_name": "เอกบดินทร์",
+    "last_name": "คุณวงค์",
+    "full_name": "เด็กชายเอกบดินทร์ คุณวงค์",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800697417",
+    "student_id": "4905",
+    "title": "เด็กชาย",
+    "first_name": "นคเรศ",
+    "last_name": "โด่งดัง",
+    "full_name": "เด็กชายนคเรศ โด่งดัง",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1129701586309",
+    "student_id": "4980",
+    "title": "เด็กชาย",
+    "first_name": "วิชยุตม์",
+    "last_name": "พิศงาม",
+    "full_name": "เด็กชายวิชยุตม์ พิศงาม",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319901554760",
+    "student_id": "5092",
+    "title": "เด็กชาย",
+    "first_name": "กฤติเดช",
+    "last_name": "พุ่มพวง",
+    "full_name": "เด็กชายกฤติเดช พุ่มพวง",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800681821",
+    "student_id": "5100",
+    "title": "เด็กชาย",
+    "first_name": "สรวิชญ์",
+    "last_name": "ประกายแก้ว",
+    "full_name": "เด็กชายสรวิชญ์ ประกายแก้ว",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319200135451",
+    "student_id": "5167",
+    "title": "เด็กชาย",
+    "first_name": "พรชัย",
+    "last_name": "รักพินิจ",
+    "full_name": "เด็กชายพรชัย รักพินิจ",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800698634",
+    "student_id": "5170",
+    "title": "เด็กชาย",
+    "first_name": "เกียรติศักดิ์",
+    "last_name": "หนูช้างเผือก",
+    "full_name": "เด็กชายเกียรติศักดิ์ หนูช้างเผือก",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800704685",
+    "student_id": "5208",
+    "title": "เด็กชาย",
+    "first_name": "จิรพัฒน์",
+    "last_name": "จัตุภัทรกุล",
+    "full_name": "เด็กชายจิรพัฒน์ จัตุภัทรกุล",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800699169",
+    "student_id": "5209",
+    "title": "เด็กชาย",
+    "first_name": "บุญธวัช",
+    "last_name": "นุชสาย",
+    "full_name": "เด็กชายบุญธวัช นุชสาย",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800680875",
+    "student_id": "4889",
+    "title": "เด็กหญิง",
+    "first_name": "ศิริญญา",
+    "last_name": "จันทร์สิงห์",
+    "full_name": "เด็กหญิงศิริญญา จันทร์สิงห์",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1248000045598",
+    "student_id": "4897",
+    "title": "เด็กหญิง",
+    "first_name": "ธัญญรัตน์",
+    "last_name": "ปิ่นคล้าย",
+    "full_name": "เด็กหญิงธัญญรัตน์ ปิ่นคล้าย",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800698570",
+    "student_id": "4903",
+    "title": "เด็กหญิง",
+    "first_name": "อรธิรา",
+    "last_name": "ชัยศรีรัมย์",
+    "full_name": "เด็กหญิงอรธิรา ชัยศรีรัมย์",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319901559630",
+    "student_id": "4906",
+    "title": "เด็กหญิง",
+    "first_name": "วริสรา",
+    "last_name": "อาญาเมือง",
+    "full_name": "เด็กหญิงวริสรา อาญาเมือง",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1209601826854",
+    "student_id": "4909",
+    "title": "เด็กหญิง",
+    "first_name": "ภัครมัย",
+    "last_name": "บุญไกร",
+    "full_name": "เด็กหญิงภัครมัย บุญไกร",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800689597",
+    "student_id": "4913",
+    "title": "เด็กหญิง",
+    "first_name": "รุ่งนภา",
+    "last_name": "วิเสโส",
+    "full_name": "เด็กหญิงรุ่งนภา วิเสโส",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1130201233531",
+    "student_id": "5058",
+    "title": "เด็กหญิง",
+    "first_name": "นภัสวรรณ์",
+    "last_name": "พูนมาล",
+    "full_name": "เด็กหญิงนภัสวรรณ์ พูนมาล",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1239900573257",
+    "student_id": "5096",
+    "title": "เด็กหญิง",
+    "first_name": "วสุนันท์",
+    "last_name": "โทวะดี",
+    "full_name": "เด็กหญิงวสุนันท์ โทวะดี",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800701562",
+    "student_id": "5210",
+    "title": "เด็กหญิง",
+    "first_name": "ณัฐณิชา",
+    "last_name": "พิพัฒน์สิริวงค์",
+    "full_name": "เด็กหญิงณัฐณิชา พิพัฒน์สิริวงค์",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800699223",
+    "student_id": "5211",
+    "title": "เด็กหญิง",
+    "first_name": "พัทธ์ชราภา",
+    "last_name": "วนาลัย",
+    "full_name": "เด็กหญิงพัทธ์ชราภา วนาลัย",
+    "grade_level": "ม.1",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800674662",
+    "student_id": "4843",
+    "title": "เด็กชาย",
+    "first_name": "สุริยัณห์",
+    "last_name": "รักษา",
+    "full_name": "เด็กชายสุริยัณห์ รักษา",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800655579",
+    "student_id": "4837",
+    "title": "เด็กชาย",
+    "first_name": "ชินภัทร",
+    "last_name": "นาคประสพ",
+    "full_name": "เด็กชายชินภัทร นาคประสพ",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800664021",
+    "student_id": "4844",
+    "title": "เด็กชาย",
+    "first_name": "อภิชาติ",
+    "last_name": "นักรบ",
+    "full_name": "เด็กชายอภิชาติ นักรบ",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800672457",
+    "student_id": "4838",
+    "title": "เด็กชาย",
+    "first_name": "ธนวันต์",
+    "last_name": "สีดา",
+    "full_name": "เด็กชายธนวันต์ สีดา",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800651336",
+    "student_id": "4845",
+    "title": "เด็กชาย",
+    "first_name": "มงคลชัย",
+    "last_name": "วิเศษบันดิษฐ์",
+    "full_name": "เด็กชายมงคลชัย วิเศษบันดิษฐ์",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800665531",
+    "student_id": "4839",
+    "title": "เด็กชาย",
+    "first_name": "ปารัช",
+    "last_name": "น้อมเกลี้ยง",
+    "full_name": "เด็กชายปารัช น้อมเกลี้ยง",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1119902736278",
+    "student_id": "4841",
+    "title": "เด็กชาย",
+    "first_name": "พงษธร",
+    "last_name": "แถวอุทุม",
+    "full_name": "เด็กชายพงษธร แถวอุทุม",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800659850",
+    "student_id": "4854",
+    "title": "เด็กชาย",
+    "first_name": "พัฒน์พงศ์",
+    "last_name": "วิสิทธิมูล",
+    "full_name": "เด็กชายพัฒน์พงศ์ วิสิทธิมูล",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1551200068479",
+    "student_id": "4855",
+    "title": "เด็กชาย",
+    "first_name": "มโนพัศ",
+    "last_name": "นวลปักษี",
+    "full_name": "เด็กชายมโนพัศ นวลปักษี",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800654572",
+    "student_id": "4856",
+    "title": "เด็กชาย",
+    "first_name": "มิถุนา",
+    "last_name": "เนตรนี",
+    "full_name": "เด็กชายมิถุนา เนตรนี",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1209000610873",
+    "student_id": "4787",
+    "title": "เด็กชาย",
+    "first_name": "พชร",
+    "last_name": "ชื่นจิต",
+    "full_name": "เด็กชายพชร ชื่นจิต",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800678722",
+    "student_id": "4836",
+    "title": "เด็กชาย",
+    "first_name": "กิตติศักดิ์",
+    "last_name": "เนตรแสง",
+    "full_name": "เด็กชายกิตติศักดิ์ เนตรแสง",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1329400137333",
+    "student_id": "5109",
+    "title": "นาย",
+    "first_name": "อภิวัฒน์",
+    "last_name": "คุณวงค์",
+    "full_name": "นายอภิวัฒน์ คุณวงค์",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1749800574206",
+    "student_id": "5145",
+    "title": "เด็กชาย",
+    "first_name": "ปิยพัทธ์",
+    "last_name": "วนาลัย",
+    "full_name": "เด็กชายปิยพัทธ์ วนาลัย",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1329901816926",
+    "student_id": "5146",
+    "title": "เด็กชาย",
+    "first_name": "อครินทร์",
+    "last_name": "ศรีซองเชษฐ์",
+    "full_name": "เด็กชายอครินทร์ ศรีซองเชษฐ์",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800616000",
+    "student_id": "5171",
+    "title": "นาย",
+    "first_name": "ปลวัชร",
+    "last_name": "ประกายแก้ว",
+    "full_name": "นายปลวัชร ประกายแก้ว",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1341501530670",
+    "student_id": "4756",
+    "title": "นาย",
+    "first_name": "อรรถพล",
+    "last_name": "วิสิทธิมูล",
+    "full_name": "นายอรรถพล วิสิทธิมูล",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800662036",
+    "student_id": "4848",
+    "title": "เด็กหญิง",
+    "first_name": "เบญจมาศ",
+    "last_name": "ณะจันทร์",
+    "full_name": "เด็กหญิงเบญจมาศ ณะจันทร์",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800662419",
+    "student_id": "4849",
+    "title": "เด็กหญิง",
+    "first_name": "พิณนะภัตร",
+    "last_name": "เลิศสกุล",
+    "full_name": "เด็กหญิงพิณนะภัตร เลิศสกุล",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1749800581075",
+    "student_id": "4851",
+    "title": "เด็กหญิง",
+    "first_name": "อัญมณี",
+    "last_name": "ศรีเมือง",
+    "full_name": "เด็กหญิงอัญมณี ศรีเมือง",
+    "grade_level": "ม.2",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1200901645750",
+    "student_id": "4789",
+    "title": "เด็กชาย",
+    "first_name": "ภัทรดนัย",
+    "last_name": "เทพบำรุง",
+    "full_name": "เด็กชายภัทรดนัย เทพบำรุง",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800624649",
+    "student_id": "4781",
+    "title": "นาย",
+    "first_name": "กมลภพ",
+    "last_name": "บวชประโคน",
+    "full_name": "นายกมลภพ บวชประโคน",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800642221",
+    "student_id": "4786",
+    "title": "เด็กชาย",
+    "first_name": "ปรองดอง",
+    "last_name": "ทะเรรัมย์",
+    "full_name": "เด็กชายปรองดอง ทะเรรัมย์",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800644909",
+    "student_id": "4790",
+    "title": "เด็กชาย",
+    "first_name": "ภาคิน",
+    "last_name": "อินทร์ชื่น",
+    "full_name": "เด็กชายภาคิน อินทร์ชื่น",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800627974",
+    "student_id": "4791",
+    "title": "เด็กชาย",
+    "first_name": "อดิศักดิ์",
+    "last_name": "พิมพ์ทอง",
+    "full_name": "เด็กชายอดิศักดิ์ พิมพ์ทอง",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1579901519423",
+    "student_id": "4793",
+    "title": "เด็กชาย",
+    "first_name": "อัฏฐพล",
+    "last_name": "สดมสุข",
+    "full_name": "เด็กชายอัฏฐพล สดมสุข",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1118700212277",
+    "student_id": "5059",
+    "title": "เด็กชาย",
+    "first_name": "ธนากร",
+    "last_name": "พูนมาล",
+    "full_name": "เด็กชายธนากร พูนมาล",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1321400064487",
+    "student_id": "4868",
+    "title": "นาย",
+    "first_name": "ศิรสิทธิ์",
+    "last_name": "รักพินิจ",
+    "full_name": "นายศิรสิทธิ์ รักพินิจ",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1309801631584",
+    "student_id": "5105",
+    "title": "นาย",
+    "first_name": "ไกรสิทธิ",
+    "last_name": "ด้วงพิทักษ์",
+    "full_name": "นายไกรสิทธิ ด้วงพิทักษ์",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800607981",
+    "student_id": "4753",
+    "title": "นาย",
+    "first_name": "สหรัฐ",
+    "last_name": "สวัสดี",
+    "full_name": "นายสหรัฐ สวัสดี",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800633541",
+    "student_id": "4794",
+    "title": "เด็กหญิง",
+    "first_name": "กัญญารัตน์",
+    "last_name": "ศรีเมือง",
+    "full_name": "เด็กหญิงกัญญารัตน์ ศรีเมือง",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800635578",
+    "student_id": "4795",
+    "title": "เด็กหญิง",
+    "first_name": "กัญนิกา",
+    "last_name": "สมเย็น",
+    "full_name": "เด็กหญิงกัญนิกา สมเย็น",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800646375",
+    "student_id": "4797",
+    "title": "เด็กหญิง",
+    "first_name": "จริยา",
+    "last_name": "อะรัญ",
+    "full_name": "เด็กหญิงจริยา อะรัญ",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800631882",
+    "student_id": "4800",
+    "title": "เด็กหญิง",
+    "first_name": "สุฐิตา",
+    "last_name": "จะเชิญรัมย์",
+    "full_name": "เด็กหญิงสุฐิตา จะเชิญรัมย์",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1317600022210",
+    "student_id": "4802",
+    "title": "เด็กหญิง",
+    "first_name": "ฑิตฐิตา",
+    "last_name": "แต้มสี",
+    "full_name": "เด็กหญิงฑิตฐิตา แต้มสี",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800628512",
+    "student_id": "4801",
+    "title": "เด็กหญิง",
+    "first_name": "ณัฐลดา",
+    "last_name": "คำคนซื่อ",
+    "full_name": "เด็กหญิงณัฐลดา คำคนซื่อ",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800625912",
+    "student_id": "4808",
+    "title": "นางสาว",
+    "first_name": "พิมพ์ชนก",
+    "last_name": "สวนเกษ",
+    "full_name": "นางสาวพิมพ์ชนก สวนเกษ",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1317600022295",
+    "student_id": "4811",
+    "title": "เด็กหญิง",
+    "first_name": "วรดา",
+    "last_name": "จันทร์วิเชียร",
+    "full_name": "เด็กหญิงวรดา จันทร์วิเชียร",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800626609",
+    "student_id": "4813",
+    "title": "เด็กหญิง",
+    "first_name": "สุพรรษา",
+    "last_name": "หวังสำราญ",
+    "full_name": "เด็กหญิงสุพรรษา หวังสำราญ",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1119902632961",
+    "student_id": "4814",
+    "title": "เด็กหญิง",
+    "first_name": "ไอริณ",
+    "last_name": "โอสถประสาท",
+    "full_name": "เด็กหญิงไอริณ โอสถประสาท",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1119902632987",
+    "student_id": "4815",
+    "title": "เด็กหญิง",
+    "first_name": "ไอลดา",
+    "last_name": "โอสถประสาท",
+    "full_name": "เด็กหญิงไอลดา โอสถประสาท",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800640326",
+    "student_id": "4818",
+    "title": "เด็กหญิง",
+    "first_name": "สุดาภรณ์",
+    "last_name": "ทองเกลี้ยง",
+    "full_name": "เด็กหญิงสุดาภรณ์ ทองเกลี้ยง",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1319800641365",
+    "student_id": "4825",
+    "title": "เด็กหญิง",
+    "first_name": "นรินธร",
+    "last_name": "วงศ์ศักดิ์",
+    "full_name": "เด็กหญิงนรินธร วงศ์ศักดิ์",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1317600022473",
+    "student_id": "4803",
+    "title": "เด็กหญิง",
+    "first_name": "ทองไพลิน",
+    "last_name": "เลิศเมือง",
+    "full_name": "เด็กหญิงทองไพลิน เลิศเมือง",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1309903910300",
+    "student_id": "5064",
+    "title": "เด็กหญิง",
+    "first_name": "สุพรรษา",
+    "last_name": "แสนโคตร",
+    "full_name": "เด็กหญิงสุพรรษา แสนโคตร",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  },
+  {
+    "national_id": "1739902559567",
+    "student_id": "4796",
+    "title": "เด็กหญิง",
+    "first_name": "กันยาวีร์",
+    "last_name": "ยางศิลา",
+    "full_name": "เด็กหญิงกันยาวีร์ ยางศิลา",
+    "grade_level": "ม.3",
+    "room_number": "1"
+  }
+]

@@ -22,8 +22,9 @@ import EventAnalyticsTab from '@/components/admin/EventAnalyticsTab';
 import SettingsTab from '@/components/admin/SettingsTab';
 import EditStudentModal from '@/components/admin/EditStudentModal';
 import IndividualComparisonTable from '@/components/admin/IndividualComparisonTable';
+import TermArchiveTab from '@/components/admin/TermArchiveTab';
 
-type AdminTab = 'school-overview' | 'overview' | 'students' | 'assessments' | 'teams' | 'weak-words' | 'risks' | 'events' | 'settings';
+type AdminTab = 'school-overview' | 'overview' | 'students' | 'assessments' | 'teams' | 'events' | 'term-archive' | 'weak-words' | 'risks' | 'settings';
 type AnalyticsDataStatus = 'IDLE' | 'LOADING' | 'LOADED' | 'ERROR';
 
 import { getAdminInitialData, getAdminClassroomStats, getAdminAnalyticsDatasets } from './actions';
@@ -513,6 +514,7 @@ export default function AdminPage() {
             { id: 'assessments', icon: <Target className="w-4 h-4"/>, label: 'ผลการทดสอบ' },
             { id: 'teams', icon: <Trophy className="w-4 h-4"/>, label: 'ทีม (Team Battle)' },
             { id: 'events', icon: <Sparkles className="w-4 h-4"/>, label: 'กิจกรรม (Events)' },
+            { id: 'term-archive', icon: <BookOpen className="w-4 h-4 text-cyan-400"/>, label: 'คลังประวัติเทอมเก่า & สรุปผล' },
             { id: 'weak-words', icon: <BookOpen className="w-4 h-4"/>, label: 'คำที่ผิดบ่อย' },
             { id: 'risks', icon: <AlertTriangle className="w-4 h-4"/>, label: 'กลุ่มเสี่ยง' },
             { id: 'settings', icon: <Settings className="w-4 h-4"/>, label: 'ตั้งค่าระบบ' }
@@ -1098,6 +1100,13 @@ export default function AdminPage() {
           {activeTab === 'events' && (
             <motion.div key="events" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
                <EventAnalyticsTab teacher={teacher} />
+            </motion.div>
+          )}
+
+          {/* TAB: TERM ARCHIVE & REPORTS */}
+          {activeTab === 'term-archive' && (
+            <motion.div key="term-archive" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-6">
+              <TermArchiveTab classrooms={classrooms} />
             </motion.div>
           )}
         </AnimatePresence>

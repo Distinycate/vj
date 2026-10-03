@@ -73,3 +73,7 @@ CREATE POLICY "Allow read event_progress" ON public.event_progress FOR SELECT TO
 GRANT ALL ON public.event_runs TO anon, authenticated, service_role;
 GRANT ALL ON public.event_participants TO anon, authenticated, service_role;
 GRANT ALL ON public.event_progress TO anon, authenticated, service_role;
+
+-- Support per-term academic year isolation
+ALTER TABLE public.event_runs ADD COLUMN IF NOT EXISTS academic_year text DEFAULT '2567-T2';
+CREATE INDEX IF NOT EXISTS idx_event_runs_academic_year ON public.event_runs(academic_year);
