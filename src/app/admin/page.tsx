@@ -66,7 +66,7 @@ export default function AdminPage() {
     const saved = localStorage.getItem('vocab_journey_teacher');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed.role !== 'ADMIN') {
+      if (parsed.role !== 'ADMIN' && parsed.role !== 'TEACHER') {
         localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(parsed));
         window.location.href = '/card-teacher/dashboard';
         return;
@@ -82,8 +82,8 @@ export default function AdminPage() {
     try {
       const { data, error } = await supabase.rpc('login_teacher', { p_username: username.trim(), p_password: password.trim() });
       if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านแอดมินไม่ถูกต้อง');
-      if (data.role !== 'ADMIN') {
-        if (['TEACHER', 'CARD_TEACHER'].includes(data.role)) {
+      if (data.role !== 'ADMIN' && data.role !== 'TEACHER') {
+        if (data.role === 'CARD_TEACHER') {
           localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(data));
           window.location.href = '/card-teacher/dashboard';
           return;
@@ -449,26 +449,44 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans safe-bottom relative overflow-x-hidden">
-      {/* Sticky Top Filter & Header */}
-      <div className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 p-3 sm:p-4">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between lg:items-center gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 bg-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center font-black border border-indigo-500/30">
-              {teacher.role === 'ADMIN' ? 'AD' : 'TC'}
+      {/* Sticky Top Filter & Header with Layered Depth */}
+      <div className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-2xl border-b border-slate-800/80 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-3.5 flex flex-col lg:flex-row justify-between lg:items-center gap-4">
+          
+          {/* Identity & Role Brand */}
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="relative">
+              <div className="w-11 h-11 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 p-[2px] rounded-2xl shadow-lg shadow-indigo-500/20 flex items-center justify-center">
+                <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center text-indigo-400 font-black text-sm">
+                  {teacher.role === 'ADMIN' ? 'AD' : 'TC'}
+                </div>
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-950 rounded-full"></span>
             </div>
+
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-black text-white break-words">Vocab Journey | Teacher Dashboard</h1>
-              <p className="text-xs text-slate-400 truncate">ยินดีต้อนรับ, {teacher.name}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold tracking-wider text-indigo-400 uppercase bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
+                  TEACHER COMMAND HUB
+                </span>
+                <span className="text-xs text-slate-500 font-mono hidden sm:inline">• Vocab Journey</span>
+              </div>
+              <h1 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                ศูนย์จัดการเรียนรู้และการสอน
+                <span className="text-xs font-normal text-slate-400 font-sans hidden md:inline">| {teacher.name}</span>
+              </h1>
             </div>
           </div>
           
+          {/* Action & Filter Hub */}
           <div className="grid grid-cols-2 min-[520px]:flex min-[520px]:flex-wrap items-stretch min-[520px]:items-center gap-2 w-full lg:w-auto">
-            <div className="col-span-2 min-[520px]:col-span-1 flex items-center bg-slate-900 border border-slate-700 rounded-xl overflow-hidden px-2 min-w-0">
-              <Filter className="w-4 h-4 text-slate-400 ml-2" />
+            {/* Classroom Selector */}
+            <div className="col-span-2 min-[520px]:col-span-1 flex items-center bg-slate-900/90 border border-indigo-500/30 hover:border-indigo-500/60 transition-all rounded-xl overflow-hidden px-2.5 min-w-0 shadow-inner">
+              <Filter className="w-4 h-4 text-indigo-400 shrink-0" />
               <select 
                 value={selectedClassroom} 
                 onChange={(e) => setSelectedClassroom(e.target.value)}
-                className="w-full min-[520px]:w-auto bg-transparent text-white text-sm font-bold p-2 focus:outline-none cursor-pointer"
+                className="w-full min-[520px]:w-auto bg-transparent text-white text-xs sm:text-sm font-bold p-2 focus:outline-none cursor-pointer"
               >
                 {Object.entries(groupedClassrooms).map(([grade, rooms]) => (
                   <optgroup key={grade} label={grade} className="bg-slate-900 text-indigo-400 font-bold">
@@ -479,24 +497,20 @@ export default function AdminPage() {
                 ))}
               </select>
             </div>
-            <button onClick={() => window.location.reload()} className="min-h-11 p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-xs font-bold">
-              <RefreshCw className="w-4 h-4" /> รีเฟรช
-            </button>
-            <button onClick={() => window.location.href = '/admin/cards'} className="min-h-11 p-2.5 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/20 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-xs font-bold">
-              <Sparkles className="w-4 h-4" /> จัดการการ์ด
-            </button>
-            <button onClick={() => window.location.href = '/admin/external-network'} className="min-h-11 p-2.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/20 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-xs font-bold">
-              <Globe2 className="w-4 h-4" /> เครือข่าย
-            </button>
-            <button onClick={() => window.location.href = '/'} className="min-h-11 p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-xs font-bold">
-              <Home className="w-4 h-4" /> หน้าเข้าใช้งาน
-            </button>
 
-            <button onClick={() => window.open('/admin/cards', '_blank')} className="hidden md:flex items-center gap-2 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-300 border border-fuchsia-500/30 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-lg">
-              <Gift className="w-4 h-4" /> แจกเหรียญและตั๋ว
+            <button onClick={() => window.location.reload()} title="รีเฟรชข้อมูลล่าสุด" className="min-h-10 px-3 py-2 bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm">
+              <RefreshCw className="w-3.5 h-3.5 text-indigo-400" /> รีเฟรช
             </button>
-
-            <button onClick={handleLogout} className="min-h-11 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl transition-colors">
+            <button onClick={() => window.location.href = '/admin/cards'} className="min-h-10 px-3 py-2 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm">
+              <Sparkles className="w-3.5 h-3.5" /> จัดการการ์ด
+            </button>
+            <button onClick={() => window.location.href = '/admin/external-network'} className="min-h-10 px-3 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm">
+              <Globe2 className="w-3.5 h-3.5" /> เครือข่าย
+            </button>
+            <button onClick={() => window.location.href = '/'} className="min-h-10 px-3 py-2 bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm">
+              <Home className="w-3.5 h-3.5" /> หน้าแรก
+            </button>
+            <button onClick={handleLogout} title="ออกจากระบบ" className="min-h-10 p-2.5 bg-slate-900/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 border border-slate-800 hover:border-rose-500/30 rounded-xl transition-all flex items-center justify-center">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
@@ -505,33 +519,300 @@ export default function AdminPage() {
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 mt-5 sm:mt-6">
         
-        {/* Tabs Menu */}
-        <div className="flex overflow-x-auto gap-2 pb-2 mb-6 custom-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
-          {[
-            { id: 'school-overview', icon: <Activity className="w-4 h-4"/>, label: 'ภาพรวมโรงเรียน' },
-            { id: 'overview', icon: <Activity className="w-4 h-4"/>, label: 'ภาพรวมห้องเรียน' },
-            { id: 'students', icon: <Users className="w-4 h-4"/>, label: 'นักเรียน' },
-            { id: 'assessments', icon: <Target className="w-4 h-4"/>, label: 'ผลการทดสอบ' },
-            { id: 'teams', icon: <Trophy className="w-4 h-4"/>, label: 'ทีม (Team Battle)' },
-            { id: 'events', icon: <Sparkles className="w-4 h-4"/>, label: 'กิจกรรม (Events)' },
-            { id: 'term-archive', icon: <BookOpen className="w-4 h-4 text-cyan-400"/>, label: 'คลังประวัติเทอมเก่า & สรุปผล' },
-            { id: 'weak-words', icon: <BookOpen className="w-4 h-4"/>, label: 'คำที่ผิดบ่อย' },
-            { id: 'risks', icon: <AlertTriangle className="w-4 h-4"/>, label: 'กลุ่มเสี่ยง' },
-            { id: 'settings', icon: <Settings className="w-4 h-4"/>, label: 'ตั้งค่าระบบ' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as AdminTab)}
-              className={`min-h-11 flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${
-                activeTab === tab.id 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
-                  : 'bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800'
-              }`}
-            >
-              {tab.icon} {tab.label}
-            </button>
-          ))}
+        {/* Term Switcher Bar (Elevation 1) */}
+        <div className="bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-slate-900/90 border border-slate-800/90 rounded-2xl p-2.5 sm:p-3 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-xl backdrop-blur-md">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wider text-slate-400 font-mono font-bold hidden sm:inline">ภาคเรียน:</span>
+            <div className="flex items-center bg-slate-950/80 border border-slate-800 rounded-xl p-1 gap-1">
+              <button
+                onClick={() => {
+                  if (activeTab === 'term-archive') setActiveTab('students');
+                }}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-black flex items-center gap-2 transition-all ${
+                  activeTab !== 'term-archive'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                ภาคเรียนที่ 2/2567 (ปัจจุบัน)
+              </button>
+              <button
+                onClick={() => setActiveTab('term-archive')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-black flex items-center gap-2 transition-all ${
+                  activeTab === 'term-archive'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+                📁 คลังข้อมูลเทอมเก่า (1/2567)
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="px-2.5 py-1 rounded-lg bg-slate-950/80 border border-slate-800/80 text-slate-300 font-mono font-bold">
+              👥 3 ระดับชั้น • 71 นักเรียน
+            </span>
+            {activeTab === 'term-archive' ? (
+              <span className="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-bold flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5" /> ประวัติย้อนหลัง (Archive)
+              </span>
+            ) : (
+              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" /> ฤดูกาลใช้งานจริง Season 2
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* 4 Clean Functional Pillars (Elevation 2) */}
+        {activeTab !== 'term-archive' ? (
+          <div className="space-y-4 mb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { 
+                  id: 'students_pillar', 
+                  label: '1. จัดการผู้เรียน', 
+                  subtext: 'รายชื่อ, ห้องเรียน, กลุ่มเสี่ยง',
+                  icon: <Users className="w-4 h-4" />,
+                  themeColor: 'indigo',
+                  isActive: ['students', 'overview', 'school-overview', 'weak-words', 'risks'].includes(activeTab),
+                  activeClasses: 'bg-gradient-to-b from-indigo-950/70 via-slate-900/90 to-slate-950 border-indigo-500/60 ring-1 ring-indigo-500/40 shadow-lg shadow-indigo-500/15',
+                  accentBar: 'bg-indigo-400',
+                  iconBg: 'bg-indigo-500 text-white',
+                  inactiveIconBg: 'bg-indigo-500/10 text-indigo-400',
+                  onClick: () => {
+                    if (!['students', 'overview', 'school-overview', 'weak-words', 'risks'].includes(activeTab)) {
+                      setActiveTab('students');
+                    }
+                  }
+                },
+                { 
+                  id: 'activities_pillar', 
+                  label: '2. กิจกรรม & แข่งขัน', 
+                  subtext: 'Team Battle, ชาเลนจ์แก้ 0/ร',
+                  icon: <Trophy className="w-4 h-4" />,
+                  themeColor: 'amber',
+                  isActive: ['teams', 'events'].includes(activeTab),
+                  activeClasses: 'bg-gradient-to-b from-amber-950/70 via-slate-900/90 to-slate-950 border-amber-500/60 ring-1 ring-amber-500/40 shadow-lg shadow-amber-500/15',
+                  accentBar: 'bg-amber-400',
+                  iconBg: 'bg-amber-500 text-slate-950 font-black',
+                  inactiveIconBg: 'bg-amber-500/10 text-amber-400',
+                  onClick: () => {
+                    if (!['teams', 'events'].includes(activeTab)) {
+                      setActiveTab('teams');
+                    }
+                  }
+                },
+                { 
+                  id: 'assessments_pillar', 
+                  label: '3. วัดผล & ออก ปพ.5', 
+                  subtext: 'คะแนน Pre/Post, ปพ.5 รายคน',
+                  icon: <Target className="w-4 h-4" />,
+                  themeColor: 'emerald',
+                  isActive: ['assessments'].includes(activeTab),
+                  activeClasses: 'bg-gradient-to-b from-emerald-950/70 via-slate-900/90 to-slate-950 border-emerald-500/60 ring-1 ring-emerald-500/40 shadow-lg shadow-emerald-500/15',
+                  accentBar: 'bg-emerald-400',
+                  iconBg: 'bg-emerald-500 text-slate-950 font-black',
+                  inactiveIconBg: 'bg-emerald-500/10 text-emerald-400',
+                  onClick: () => setActiveTab('assessments')
+                },
+                { 
+                  id: 'lifecycle_pillar', 
+                  label: '4. ภาคเรียน & ระบบ', 
+                  subtext: 'เริ่มเทอมใหม่, นำเข้านักเรียน',
+                  icon: <Settings className="w-4 h-4" />,
+                  themeColor: 'fuchsia',
+                  isActive: ['settings'].includes(activeTab),
+                  activeClasses: 'bg-gradient-to-b from-fuchsia-950/70 via-slate-900/90 to-slate-950 border-fuchsia-500/60 ring-1 ring-fuchsia-500/40 shadow-lg shadow-fuchsia-500/15',
+                  accentBar: 'bg-fuchsia-400',
+                  iconBg: 'bg-fuchsia-500 text-white',
+                  inactiveIconBg: 'bg-fuchsia-500/10 text-fuchsia-400',
+                  onClick: () => setActiveTab('settings')
+                },
+              ].map(pillar => (
+                <button
+                  key={pillar.id}
+                  onClick={pillar.onClick}
+                  className={`p-3.5 rounded-2xl text-left transition-all duration-200 border relative overflow-hidden group ${
+                    pillar.isActive
+                      ? pillar.activeClasses
+                      : 'bg-slate-900/50 hover:bg-slate-900/80 border-slate-800/80 hover:border-slate-700 text-slate-400 hover:text-white shadow-sm'
+                  }`}
+                >
+                  {/* Active Pillar Top Accent Bar */}
+                  {pillar.isActive && (
+                    <div className={`absolute top-0 left-0 right-0 h-1 ${pillar.accentBar} shadow-sm`}></div>
+                  )}
+
+                  <div className="flex items-center gap-2.5 mb-1.5">
+                    <span className={`p-2 rounded-xl transition-all ${pillar.isActive ? pillar.iconBg : pillar.inactiveIconBg}`}>
+                      {pillar.icon}
+                    </span>
+                    <span className={`font-black text-sm tracking-tight ${pillar.isActive ? 'text-white' : 'text-slate-300'}`}>
+                      {pillar.label}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 pl-9 truncate font-medium">{pillar.subtext}</p>
+                </button>
+              ))}
+            </div>
+
+            {/* Sub-Navigation Pills for Active Pillar (Elevation 3) */}
+            <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800/90 p-1.5 rounded-2xl flex overflow-x-auto gap-1.5 custom-scrollbar shadow-inner">
+              {['students', 'overview', 'school-overview', 'weak-words', 'risks'].includes(activeTab) && (
+                <>
+                  <button
+                    onClick={() => setActiveTab('students')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all whitespace-nowrap ${
+                      activeTab === 'students' 
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Users className="w-3.5 h-3.5" /> รายชื่อนักเรียน & ข้อมูลรายคน
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all whitespace-nowrap ${
+                      activeTab === 'overview' 
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Activity className="w-3.5 h-3.5" /> ภาพรวมห้องเรียน
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('school-overview')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all whitespace-nowrap ${
+                      activeTab === 'school-overview' 
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Activity className="w-3.5 h-3.5 text-indigo-400" /> ภาพรวมทั้งโรงเรียน
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('weak-words')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all whitespace-nowrap ${
+                      activeTab === 'weak-words' 
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" /> คำศัพท์ที่ผิดบ่อย
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('risks')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all whitespace-nowrap ${
+                      activeTab === 'risks' 
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> นักเรียนกลุ่มเสี่ยง
+                  </button>
+                </>
+              )}
+
+              {['teams', 'events'].includes(activeTab) && (
+                <>
+                  <button
+                    onClick={() => setActiveTab('teams')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all whitespace-nowrap ${
+                      activeTab === 'teams' 
+                        ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Trophy className="w-3.5 h-3.5 text-amber-300" /> การแข่งขันทีม (Team Battle Season 2)
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('events')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all whitespace-nowrap ${
+                      activeTab === 'events' 
+                        ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-fuchsia-300" /> กิจกรรมพิเศษ & เควสต์แก้ 0/ร
+                  </button>
+                </>
+              )}
+
+              {['assessments'].includes(activeTab) && (
+                <>
+                  <button
+                    onClick={() => setActiveTab('assessments')}
+                    className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 bg-emerald-600 text-white shadow-md shadow-emerald-600/30 whitespace-nowrap"
+                  >
+                    <Target className="w-3.5 h-3.5" /> ผลการทดสอบ Pre/Post & สถิติพัฒนาการ
+                  </button>
+                  <button
+                    onClick={() => window.open('/admin/cards', '_blank')}
+                    className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all whitespace-nowrap"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" /> ตาราง ปพ.5 สมจริง & คัดลอกลง Excel ↗
+                  </button>
+                </>
+              )}
+
+              {['settings'].includes(activeTab) && (
+                <>
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 bg-fuchsia-600 text-white shadow-md shadow-fuchsia-600/30 whitespace-nowrap"
+                  >
+                    <Settings className="w-3.5 h-3.5" /> จัดการภาคเรียน & นำเข้านักเรียน Season 2 (71 คน)
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Contextual Breadcrumb Indicator */}
+            <div className="flex items-center gap-2 text-xs text-slate-400 px-1">
+              <span className="text-slate-500 font-mono">กำลังแสดง:</span>
+              <span className="font-bold text-slate-200">
+                {activeTab === 'students' && '👩‍🎓 จัดการผู้เรียน › รายชื่อนักเรียนและข้อมูลการเรียน'}
+                {activeTab === 'overview' && '🏫 จัดการผู้เรียน › สรุปสถิติภาพรวมห้องเรียน'}
+                {activeTab === 'school-overview' && '🌐 จัดการผู้เรียน › สรุปสถิติภาพรวมโรงเรียน'}
+                {activeTab === 'weak-words' && '📖 จัดการผู้เรียน › คำศัพท์ที่นักเรียนตอบผิดบ่อย'}
+                {activeTab === 'risks' && '⚠️ จัดการผู้เรียน › นักเรียนกลุ่มเสี่ยงที่ต้องช่วยเหลือ'}
+                {activeTab === 'teams' && '⚔️ กิจกรรม & แข่งขัน › ตารางอันดับ Team Battle'}
+                {activeTab === 'events' && '✨ กิจกรรม & แข่งขัน › ชาเลนจ์พิเศษ & เควสต์แก้ 0/ร'}
+                {activeTab === 'assessments' && '📊 วัดผล & ออก ปพ.5 › คะแนนสอบ Pre/Post & Analytics'}
+                {activeTab === 'settings' && '⚙️ ภาคเรียน & ระบบ › ตั้งค่าระบบและนำเข้านักเรียน'}
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* Archive Banner When in Term Archive Tab */
+          <div className="bg-gradient-to-r from-cyan-950/60 via-slate-900 to-cyan-950/60 border border-cyan-500/40 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 shadow-2xl backdrop-blur-md">
+            <div className="flex items-center gap-3.5">
+              <div className="p-3 bg-cyan-500/20 text-cyan-300 rounded-2xl border border-cyan-500/30 shadow-inner">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold tracking-wider text-cyan-300 uppercase bg-cyan-500/20 px-2 py-0.5 rounded border border-cyan-500/30">
+                    HISTORICAL ARCHIVE
+                  </span>
+                  <span className="text-xs text-slate-400">โหมดคลังข้อมูลย้อนหลัง</span>
+                </div>
+                <h3 className="font-black text-white text-base mt-0.5">คลังประวัติภาคเรียนที่ 1/2567</h3>
+                <p className="text-xs text-slate-400 mt-0.5">ข้อมูลผลสัมฤทธิ์และผลการประเมินเดิมถูกจัดเก็บรักษาไว้อย่างปลอดภัย สามารถค้นหาและตรวจสอบได้ตลอดเวลา</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setActiveTab('students')}
+              className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap active:scale-95"
+            >
+              ⬅️ กลับสู่ภาคเรียนปัจจุบัน (2/2567)
+            </button>
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
           

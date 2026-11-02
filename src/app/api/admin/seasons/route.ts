@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       // Close all active seasons first
       await supabaseAdmin
         .from('team_battle_seasons')
-        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .update({ is_active: false })
         .eq('is_active', true);
 
       // Create new active season
@@ -49,7 +49,6 @@ export async function POST(request: Request) {
           scope: 'school',
           status: 'ACTIVE',
           is_active: true,
-          created_by_id: teacherId,
         })
         .select()
         .single();
@@ -256,7 +255,7 @@ export async function POST(request: Request) {
         .update({
           status: 'REWARDED',
           is_active: false,
-          updated_at: new Date().toISOString(),
+          closed_at: new Date().toISOString(),
         })
         .eq('id', season.id);
 

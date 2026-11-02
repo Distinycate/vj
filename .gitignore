@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+.git_corrupted/
 
 # debug
 npm-debug.log*

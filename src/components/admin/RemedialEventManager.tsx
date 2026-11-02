@@ -21,6 +21,8 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
   const [inspectData, setInspectData] = useState<any | null>(null);
   const [inspectLoading, setInspectLoading] = useState(false);
   const [inspectSearch, setInspectSearch] = useState('');
+  const [addingStudents, setAddingStudents] = useState(false);
+  const [addBusy, setAddBusy] = useState(false);
   const [inspectStatusFilter, setInspectStatusFilter] = useState<'all' | 'passed' | 'in_progress' | 'not_started'>('all');
 
   // Create Run Modal
@@ -66,19 +68,21 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
   }, [loadRuns]);
 
   // Load classrooms and students for modal
-  const loadClassroomsAndStudents = async () => {
+  const loadClassroomsAndStudents = async (includeInactive = false) => {
     try {
-      const [resClass, resStudents] = await Promise.all([
-        fetch('/api/admin/classrooms').then(r => r.ok ? r.json() : { classrooms: [] }).catch(() => ({ classrooms: [] })),
-        fetch('/api/admin/students').then(r => r.ok ? r.json() : { students: [] }).catch(() => ({ students: [] })),
-      ]);
-
-      const cList = resClass.classrooms || [];
+      const response = await fetch(`/api/admin/students${includeInactive ? '?includeInactive=true' : ''}`);
+      if (!response.ok) throw new Error('โหลดรายชื่อนักเรียนไม่สำเร็จ');
+      const resStudents = await response.json();
       const sList = resStudents.students || [];
-      setClassroomsList(cList);
+      const classrooms = new Map<string, string>();
+      sList.forEach((s: any) => { const room = Array.isArray(s.classrooms) ? s.classrooms[0] : s.classrooms; if (s.classroom_id && room?.class_name) classrooms.set(s.classroom_id, room.class_name); });
+      setClassroomsList(Array.from(classrooms, ([id, class_name]) => ({ id, class_name })));
       setStudentsList(sList);
     } catch (e) {
       console.warn('Failed to load classrooms/students for modal:', e);
+      setStudentsList([]);
+      setClassroomsList([]);
+      alert('โหลดรายชื่อนักเรียนไม่สำเร็จ กรุณาลองใหม่');
     }
   };
 
@@ -226,6 +230,22 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
   };
 
   // Filter participants in Inspect view
+  const handleAddParticipants = async () => {
+    const participants = Object.entries(participantConfigs).filter(([, c]) => c.selected).map(([studentId, c]) => ({ studentId, originalScore: c.originalScore === '' ? null : Number(c.originalScore), targetStages: c.targetStages }));
+    if (!inspectRunId || !participants.length) return;
+    setAddBusy(true);
+    try {
+      const res = await fetch(`/api/events/runs/${inspectRunId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ participants }) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'เพิ่มนักเรียนไม่สำเร็จ');
+      setAddingStudents(false);
+      await handleInspectRun(inspectRunId);
+      alert(`เพิ่มนักเรียนแล้ว ${json.added} คน`);
+    } catch (err: any) { alert(err.message || 'เพิ่มนักเรียนไม่สำเร็จ'); }
+    finally { setAddBusy(false); }
+  };
+
+  // Filter participants in Inspect view
   const filteredInspectParticipants = useMemo(() => {
     if (!inspectData?.participants) return [];
     return inspectData.participants.filter((p: any) => {
@@ -269,6 +289,7 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
           </div>
 
           <div className="flex items-center gap-2">
+            {run.status !== 'closed' && <button onClick={async () => { setParticipantConfigs({}); setStudentSearch(''); setSelectedClassroomId(''); setAddingStudents(true); await loadClassroomsAndStudents(true); }} className="px-4 py-2 bg-cyan-500 text-slate-950 text-xs font-bold rounded-xl">+ เพิ่มนักเรียน</button>}
             <button
               onClick={() => handleInspectRun(inspectRunId)}
               className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors border border-slate-700"
@@ -277,6 +298,16 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
             </button>
           </div>
         </div>
+
+        {addingStudents && <div className="bg-slate-900 border border-slate-700 rounded-2xl p-5 space-y-4">
+          <div className="flex justify-between"><h3 className="font-bold text-white">เพิ่มนักเรียนเข้ารอบนี้</h3><button onClick={() => setAddingStudents(false)} className="text-slate-300">ปิด</button></div>
+          <div className="flex flex-wrap gap-3"><input value={studentSearch} onChange={e => setStudentSearch(e.target.value)} placeholder="ค้นหาชื่อหรือรหัสนักเรียน" className="bg-slate-950 text-white rounded-lg p-2" /><select value={selectedClassroomId} onChange={e => setSelectedClassroomId(e.target.value)} className="bg-slate-950 text-white rounded-lg p-2"><option value="">ทุกห้อง</option>{classroomsList.map(c => <option key={c.id} value={c.id}>{c.class_name}</option>)}</select></div>
+          <div className="max-h-80 overflow-y-auto space-y-2">{filteredStudentsForCreate.filter(s => !inspectData.participants.some((p: any) => p.studentId === s.id)).map(s => {
+            const c = participantConfigs[s.id] || { selected: false, originalScore: '', targetStages: 15 };
+            return <div key={s.id} className="flex flex-wrap items-center gap-3 text-sm text-white"><label className="flex-1 min-w-48"><input type="checkbox" checked={c.selected} onChange={e => setParticipantConfigs(prev => ({ ...prev, [s.id]: { ...c, selected: e.target.checked } }))} /> {s.student_name || s.username} ({s.student_id})</label>{c.selected && <><label>คะแนนเดิม <input type="number" min="0" max="100" value={c.originalScore} onChange={e => handleScoreChange(s.id, e.target.value)} className="w-20 bg-slate-950 rounded p-1" /></label><label>ด่าน <select value={c.targetStages} onChange={e => handleTargetOverride(s.id, Number(e.target.value))} className="bg-slate-950 rounded p-1">{Array.from({ length: 15 }, (_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}</select></label></>}</div>;
+          })}</div>
+          <button disabled={addBusy || !selectedCount} onClick={handleAddParticipants} className="bg-emerald-500 text-slate-950 rounded-xl px-4 py-2 font-bold disabled:opacity-50">{addBusy ? 'กำลังบันทึก...' : `เพิ่มนักเรียน ${selectedCount} คน`}</button>
+        </div>}
 
         {/* 4 Summary Stat Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

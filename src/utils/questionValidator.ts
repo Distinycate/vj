@@ -1,4 +1,3 @@
-import { supabase } from './supabase/client.ts';
 import {
   normalizeAnswer,
   QUESTION_ANSWER_CONFIG,
@@ -211,6 +210,7 @@ export async function logQuestionValidationError(question: any, reason: string |
   if (!reason) return;
   
   try {
+    const { supabase } = await import('./supabase/client.ts');
     await supabase.from('question_validation_logs').insert([{
       question_id: `GEN_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
       word_id: question.word_id || question.id || null,

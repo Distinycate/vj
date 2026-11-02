@@ -157,8 +157,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Semester Break Maintenance: Lock internal school students from entering during term break,
-    // EXCEPT those who have an active remedial assignment from their teacher to resolve grade 0 / ร
+    // 3. New Season: All internal students are permitted to log in.
+    // Check if the student has an active remedial assignment to resolve grade 0 / ร
     let hasRemedialAccess = false;
     if (subjectType === 'STUDENT' && account.user_type !== 'EXTERNAL') {
       const { data: remedialParticipation } = await supabaseAdmin
@@ -169,15 +169,9 @@ export async function POST(request: Request) {
         .limit(1)
         .maybeSingle();
 
-      if (!remedialParticipation) {
-        return NextResponse.json(
-          { 
-            error: 'ระบบปิดปรับปรุงช่วงปิดภาคเรียน เปิดเฉพาะนักเรียนที่มีภารกิจแก้ 0/ร ที่คุณครูกำหนดไว้เท่านั้นครับ 🏖️' 
-          },
-          { status: 403 }
-        );
+      if (remedialParticipation) {
+        hasRemedialAccess = true;
       }
-      hasRemedialAccess = true;
     }
 
     if (usedEmergencyBackdoor) {

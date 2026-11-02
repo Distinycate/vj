@@ -78,6 +78,47 @@ export default function SeasonManager() {
     }
   }
 
+  async function handleTermReset() {
+    if (!window.confirm('ยืนยันเริ่มต้นภาคเรียนใหม่ (Season 2)?\n- นักเรียนทุกคนจะเริ่มต้นใหม่ที่ด่าน 1\n- เปิดฤดูกาล Team Battle ใหม่ (คะแนนเริ่มนับใหม่)\n- เหรียญ, ตั๋วสุ่ม, คลังการ์ด และประวัติคะแนนเดิมจะถูกเก็บรักษาไว้ทั้งหมด\n\nต้องการดำเนินการหรือไม่?')) return;
+
+    setIsCreating(true);
+    setMessage('');
+    try {
+      const res = await fetch('/api/admin/term/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seasonName: 'ภาคเรียนที่ 2/2567 (Season 2)' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'รีเซ็ตไม่สำเร็จ');
+      setMessage(`🎉 ${data.message}`);
+      await loadSeasons();
+    } catch (err: any) {
+      setMessage(err.message || 'เกิดข้อผิดพลาดในการรีเซ็ต');
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
+  async function handleImportSeasonStudents() {
+    if (!window.confirm("ยืนยันนำเข้ารหัสนักเรียนทั้ง 71 คน (ม.1 - ม.3) เข้าสู่ระบบหรือไม่?\n- Username: เลข ปชช. 13 หลัก\n- Password: รหัส นร. 4 หลัก\n- ตั้งต้นที่ด่าน 1")) return;
+    setIsCreating(true);
+    setMessage('');
+    try {
+      const res = await fetch('/api/admin/students/import-season', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'นำเข้าไม่สำเร็จ');
+      setMessage(`🎉 ${data.message}`);
+    } catch (err: any) {
+      setMessage(err.message || 'เกิดข้อผิดพลาดในการนำเข้า');
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
   if (loading) {
     return <div className="text-slate-400 p-8 text-center bg-slate-900/40 rounded-3xl animate-pulse">กำลังโหลดข้อมูลฤดูกาล...</div>;
   }
@@ -130,7 +171,7 @@ export default function SeasonManager() {
           </div>
         )}
         {/* New Season Form */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-6">
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6">
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Plus className="w-5 h-5 text-indigo-400" />
@@ -159,6 +200,32 @@ export default function SeasonManager() {
                 {isCreating ? 'กำลังสร้าง...' : 'สร้างฤดูกาลใหม่'}
               </button>
             </form>
+
+            <div className="mt-6 pt-6 border-t border-slate-800">
+              <h4 className="text-xs font-black text-emerald-400 uppercase tracking-wider mb-2">
+                🚀 เริ่มต้นภาคเรียนใหม่ (Semester Transition)
+              </h4>
+              <p className="text-xs text-slate-400 mb-3 leading-relaxed">
+                รีเซ็ตให้นักเรียนทุกคนเริ่มใหม่ที่ <strong className="text-emerald-300">ด่าน 1</strong> พร้อมเปิด <strong className="text-emerald-300">Season 2</strong> โดยคงคลังการ์ดและเหรียญไว้ครบถ้วน
+              </p>
+              <button
+                type="button"
+                onClick={handleTermReset}
+                disabled={isCreating}
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm border border-emerald-400/30"
+              >
+                <span>🚀 เริ่มภาคเรียนใหม่ & รีเซ็ตด่าน 1</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleImportSeasonStudents}
+                disabled={isCreating}
+                className="w-full mt-2 bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm border border-indigo-400/30"
+              >
+                <span>📥 นำเข้ารหัสนักเรียน 71 คน (ม.1 - ม.3)</span>
+              </button>
+            </div>
           </div>
         </div>
 

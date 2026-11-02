@@ -11,6 +11,16 @@ import {
   adjustStudentCoins, adjustStudentTickets, BehaviorCategory, removeStudentCard,
 } from '@/utils/cardBattle';
 import CardWorkflowPanel from './CardWorkflowPanel';
+import {
+  DESIRABLE_8_TRAITS,
+  READING_5_INDICATORS,
+  calculateStudentTrait as calcTrait,
+  calculateStudentReading as calcReading,
+  getStudentOverallTrait,
+  getStudentOverallReading,
+  getStudentRationale as calcRationale,
+  isStudentTested,
+} from '@/utils/pp5Evaluation';
 
 type CardPageTab = 'overview' | 'cards' | 'behavior' | 'pp5-traits' | 'pp5-reading' | 'workflow' | 'history';
 
@@ -49,25 +59,6 @@ const BEHAVIOR_CATEGORIES: Array<{ value: BehaviorCategory; label: string }> = [
   { value: 'RULE_VIOLATION', label: 'ไม่ปฏิบัติตามข้อตกลง' },
   { value: 'OTHER', label: 'ใฝ่เรียนรู้ / อื่น ๆ' },
 ];
-
-const DESIRABLE_8_TRAITS = [
-  { id: 't1', name: '1. รักชาติ ศาสน์ กษัตริย์', short: 'รักชาติฯ' },
-  { id: 't2', name: '2. ซื่อสัตย์สุจริต', short: 'ซื่อสัตย์' },
-  { id: 't3', name: '3. มีวินัย', short: 'มีวินัย' },
-  { id: 't4', name: '4. ใฝ่เรียนรู้', short: 'ใฝ่เรียนรู้' },
-  { id: 't5', name: '5. อยู่อย่างพอเพียง', short: 'พอเพียง' },
-  { id: 't6', name: '6. มุ่งมั่นในการทำงาน', short: 'มุ่งมั่น' },
-  { id: 't7', name: '7. รักความเป็นไทย', short: 'รักไทย' },
-  { id: 't8', name: '8. มีจิตสาธารณะ', short: 'จิตสาธารณะ' },
-] as const;
-
-const READING_5_INDICATORS = [
-  { id: 'r1', name: '1. การจับใจความสำคัญ', short: 'จับใจความ' },
-  { id: 'r2', name: '2. การระบุรายละเอียดสนับสนุน', short: 'รายละเอียด' },
-  { id: 'r3', name: '3. การวิเคราะห์แยกแยะ/เชื่อมโยง', short: 'วิเคราะห์' },
-  { id: 'r4', name: '4. การแสดงความคิดเห็นและให้เหตุผล', short: 'แสดงความเห็น' },
-  { id: 'r5', name: '5. การสรุปความและเขียนถ่ายทอด', short: 'สรุปถ่ายทอด' },
-] as const;
 
 const QUICK_REASONS = {
   POSITIVE: [
@@ -220,130 +211,18 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
     loadData();
   }, [loadData]);
 
-  // Rubric calculation functions differentiated by trait and reading indicators
+  // Standardized authentic assessment calculation
   const calculateStudentTrait = useCallback((student: StudentSummary, traitId: string) => {
-    if (traitOverrides[student.id]?.[traitId] !== undefined) {
-      return traitOverrides[student.id][traitId];
-    }
-    const positive = student.ticketsAwarded + student.coinsAwarded;
-    const deductions = student.ticketsRemoved + student.cardsRemoved + student.coinsRemoved;
-    const violations = student.ruleViolations || 0;
-    const stage = student.currentStage || 1;
-    const gain = student.learningGain || 0;
-    const acc = student.accuracy || 0;
-
-    switch (traitId) {
-      case 't1': // 1. รักชาติ ศาสน์ กษัตริย์: พฤติกรรมพื้นฐาน การร่วมกิจกรรมโรงเรียน ไม่ทำผิดกฎ
-        if (violations === 0 && deductions === 0) return 3;
-        if (violations <= 1) return 2;
-        return 1;
-
-      case 't2': // 2. ซื่อสัตย์สุจริต: ไม่สแปม ไม่โกง ไม่โดนหักของรางวัล มีความประพฤติเชิงบวก
-        if (deductions === 0 && (student.positiveActions > 0 || positive >= 1)) return 3;
-        if (deductions <= 1) return 2;
-        return 1;
-
-      case 't3': // 3. มีวินัย: เข้าเรียนต่อเนื่อง สม่ำเสมอ ไม่ทำผิดระเบียบ
-        if ((student.disciplineActions > 0 || stage >= 5) && violations === 0) return 3;
-        if (violations <= 1) return 2;
-        return 1;
-
-      case 't4': // 4. ใฝ่เรียนรู้: พัฒนาการคำศัพท์ (Learning Gain), ผ่านหลายด่าน, ความแม่นยำสูง
-        if (gain >= 25 || stage >= 10 || acc >= 65) return 3;
-        if (gain >= 10 || stage >= 3 || acc >= 35) return 2;
-        return 1;
-
-      case 't5': // 5. อยู่อย่างพอเพียง: บริหารจัดการเหรียญและไอเทมในเกมอย่างคุ้มค่า
-        if (student.coins >= 80) return 3;
-        if (student.coins >= 25) return 2;
-        return 1;
-
-      case 't6': // 6. มุ่งมั่นในการทำงาน: ความรับผิดชอบ ความพยายามผ่านด่าน Post-test และสเตจยาก
-        if (student.responsibilityActions > 0 || stage >= 8 || (student.posttestScore || 0) >= 50) return 3;
-        if (stage >= 3 || (student.posttestScore || 0) >= 25) return 2;
-        return 1;
-
-      case 't7': // 7. รักความเป็นไทย: ความถูกต้องในการแปล/บริบทภาษาไทย และมารยาท
-        if (acc >= 50 && violations === 0) return 3;
-        if (acc >= 30) return 2;
-        return 1;
-
-      case 't8': // 8. มีจิตสาธารณะ: จิตอาสา ช่วยเหลือเพื่อน การ์ดแบทเทิลทีม
-        if (student.volunteerActions > 0 || student.ticketsAwarded >= 2 || student.cardsReceived >= 2) return 3;
-        if (positive >= 1 || student.cardsReceived >= 1) return 2;
-        return 1;
-
-      default:
-        if (positive >= 2 || gain > 20) return 3;
-        if (positive >= 1 || student.coins > 50) return 2;
-        return 1;
-    }
+    return calcTrait(student, traitId, traitOverrides[student.id]);
   }, [traitOverrides]);
 
   const calculateStudentReading = useCallback((student: StudentSummary, indicatorId: string) => {
-    if (readingOverrides[student.id]?.[indicatorId] !== undefined) {
-      return readingOverrides[student.id][indicatorId];
-    }
-    const acc = student.accuracy || 0;
-    const post = student.posttestScore || 0;
-    const gain = student.learningGain || 0;
-    const stage = student.currentStage || 1;
-    const positive = student.ticketsAwarded + student.coinsAwarded;
-
-    switch (indicatorId) {
-      case 'r1': // 1. การจับใจความสำคัญ: วัดจากความถูกต้องของคำศัพท์และความหมาย (Accuracy)
-        if (acc >= 65 || post >= 60) return 3;
-        if (acc >= 35 || post >= 30) return 2;
-        return 1;
-
-      case 'r2': // 2. การระบุรายละเอียดสนับสนุน: วัดจากการผ่านด่านและทำข้อสอบปลายภาคได้
-        if (stage >= 10 || post >= 65) return 3;
-        if (stage >= 4 || post >= 35) return 2;
-        return 1;
-
-      case 'r3': // 3. การวิเคราะห์แยกแยะ/เชื่อมโยง: วัดจากพัฒนาการทางความรู้ (Learning Gain)
-        if (gain >= 25) return 3;
-        if (gain >= 10) return 2;
-        return 1;
-
-      case 'r4': // 4. การแสดงความคิดเห็นและให้เหตุผล: วัดจากการมีส่วนร่วมและรางวัลพฤติกรรม
-        if (positive >= 2) return 3;
-        if (positive >= 1 || stage >= 3) return 2;
-        return 1;
-
-      case 'r5': // 5. การสรุปความและเขียนถ่ายทอด: วัดจากคะแนนสังเคราะห์รวม (Posttest + Accuracy)
-        const composite = (post + acc) / 2;
-        if (composite >= 55) return 3;
-        if (composite >= 30) return 2;
-        return 1;
-
-      default:
-        if (post >= 60 || gain >= 30 || acc >= 60) return 3;
-        if (post >= 35 || gain >= 15 || acc >= 35) return 2;
-        return 1;
-    }
+    return calcReading(student, indicatorId, readingOverrides[student.id]);
   }, [readingOverrides]);
 
   // Short diagnostic rationale generator
   const getStudentRationale = useCallback((student: StudentSummary) => {
-    const positive = student.ticketsAwarded + student.coinsAwarded;
-    const deductions = student.ticketsRemoved + student.cardsRemoved + student.coinsRemoved;
-    const gain = student.learningGain || 0;
-    const acc = student.accuracy || 0;
-
-    if (positive >= 3 && gain > 25) {
-      return 'ใฝ่เรียนรู้สูง มีพัฒนาการคำศัพท์โดดเด่น และมีความรับผิดชอบสม่ำเสมอ';
-    }
-    if (positive >= 2) {
-      return 'มีความตั้งใจเรียน มีจิตสาธารณะและปฏิบัติตามกฎกติกาห้องเรียนได้ดี';
-    }
-    if (deductions >= 2 && deductions > positive) {
-      return 'มีความพยายามร่วมกิจกรรม แนะนำให้เสริมสร้างวินัยและการส่งงานตรงเวลา';
-    }
-    if (acc < 40) {
-      return 'มีความตั้งใจฝึกฝน พยายามผ่านด่านได้ดีแม้มีข้อจำกัดด้านอุปกรณ์/พื้นฐานเดิม';
-    }
-    return 'ปฏิบัติตนตามเกณฑ์ได้ดี มีความร่วมมือและพัฒนาการทางคำศัพท์ต่อเนื่อง';
+    return calcRationale(student);
   }, []);
 
   // Classroom P.P.5 Aggregates
@@ -941,7 +820,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-slate-200">
                   {students.map((student, idx) => {
-                    const overall = calculateStudentTrait(student, 't4');
+                    const overall = getStudentOverallTrait(student, traitOverrides[student.id]);
                     const rationale = getStudentRationale(student);
                     return (
                       <tr key={student.id} className="hover:bg-slate-800/30 transition">
@@ -966,11 +845,13 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                                     val === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' :
                                     val === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30' :
                                     val === 1 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30' :
-                                    'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
+                                    val === 0 ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30' :
+                                    'bg-slate-800/40 text-slate-400 border-slate-700/50'
                                   }`}
                                   style={{ textAlignLast: 'center' }}
-                                  title={`${t.name}: ระดับ ${val}`}
+                                  title={`${t.name}: ${val >= 0 ? `ระดับ ${val}` : 'รอประเมิน'}`}
                                 >
+                                  <option value={-1} className="bg-slate-900 text-slate-400 font-bold">-</option>
                                   <option value={3} className="bg-slate-900 text-emerald-300 font-bold">3</option>
                                   <option value={2} className="bg-slate-900 text-indigo-300 font-bold">2</option>
                                   <option value={1} className="bg-slate-900 text-amber-300 font-bold">1</option>
@@ -981,15 +862,21 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                           );
                         })}
                         <td className="p-3 text-center whitespace-nowrap align-middle">
-                          <span className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border shadow-sm ${
-                            overall === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' :
-                            overall === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' :
-                            overall === 1 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
-                            'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                          }`}>
-                            <span className="text-sm font-extrabold">{overall}</span>
-                            <span className="text-[11px] font-bold">({overall === 3 ? 'ดีเยี่ยม' : overall === 2 ? 'ดี' : overall === 1 ? 'ผ่าน' : 'ปรับปรุง'})</span>
-                          </span>
+                          {overall === -1 ? (
+                            <span className="inline-flex items-center justify-center px-3 py-1.5 rounded-xl text-xs font-bold border bg-slate-800/50 text-slate-400 border-slate-700/60 shadow-sm">
+                              รอประเมิน
+                            </span>
+                          ) : (
+                            <span className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border shadow-sm ${
+                              overall === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' :
+                              overall === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' :
+                              overall === 1 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
+                              'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                            }`}>
+                              <span className="text-sm font-extrabold">{overall}</span>
+                              <span className="text-[11px] font-bold">({overall === 3 ? 'ดีเยี่ยม' : overall === 2 ? 'ดี' : overall === 1 ? 'ผ่าน' : 'ปรับปรุง'})</span>
+                            </span>
+                          )}
                         </td>
                         <td className="p-3 text-slate-300 text-xs leading-relaxed align-middle">
                           {rationale}
@@ -1040,8 +927,10 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-slate-200">
                   {students.map((student, idx) => {
-                    const overall = calculateStudentReading(student, 'r1');
-                    const evidence = `Post-test ${student.posttestScore || 0}%, Gain +${Math.round(student.learningGain || 0)}%, Accuracy ${student.accuracy || 0}%`;
+                    const overall = getStudentOverallReading(student, readingOverrides[student.id]);
+                    const evidence = isStudentTested(student)
+                      ? `Post-test ${student.posttestScore || 0}%, Gain +${Math.round(student.learningGain || 0)}%, Accuracy ${student.accuracy || 0}%`
+                      : 'ยังไม่มีข้อมูลการประเมิน (รอทำแบบทดสอบหรือเริ่มเล่นในภาคเรียนนี้)';
                     return (
                       <tr key={student.id} className="hover:bg-slate-800/30 transition">
                         <td className="p-3 text-center text-slate-400 font-bold align-middle">{idx + 1}</td>
@@ -1065,11 +954,13 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                                     val === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' :
                                     val === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30' :
                                     val === 1 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30' :
-                                    'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
+                                    val === 0 ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30' :
+                                    'bg-slate-800/40 text-slate-400 border-slate-700/50'
                                   }`}
                                   style={{ textAlignLast: 'center' }}
-                                  title={`${r.name}: ระดับ ${val}`}
+                                  title={`${r.name}: ${val >= 0 ? `ระดับ ${val}` : 'รอประเมิน'}`}
                                 >
+                                  <option value={-1} className="bg-slate-900 text-slate-400 font-bold">-</option>
                                   <option value={3} className="bg-slate-900 text-emerald-300 font-bold">3</option>
                                   <option value={2} className="bg-slate-900 text-indigo-300 font-bold">2</option>
                                   <option value={1} className="bg-slate-900 text-amber-300 font-bold">1</option>
@@ -1080,15 +971,21 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
                           );
                         })}
                         <td className="p-3 text-center whitespace-nowrap align-middle">
-                          <span className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border shadow-sm ${
-                            overall === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' :
-                            overall === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' :
-                            overall === 1 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
-                            'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                          }`}>
-                            <span className="text-sm font-extrabold">{overall}</span>
-                            <span className="text-[11px] font-bold">({overall === 3 ? 'ดีเยี่ยม' : overall === 2 ? 'ดี' : overall === 1 ? 'ผ่าน' : 'ปรับปรุง'})</span>
-                          </span>
+                          {overall === -1 ? (
+                            <span className="inline-flex items-center justify-center px-3 py-1.5 rounded-xl text-xs font-bold border bg-slate-800/50 text-slate-400 border-slate-700/60 shadow-sm">
+                              รอประเมิน
+                            </span>
+                          ) : (
+                            <span className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border shadow-sm ${
+                              overall === 3 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' :
+                              overall === 2 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' :
+                              overall === 1 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
+                              'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                            }`}>
+                              <span className="text-sm font-extrabold">{overall}</span>
+                              <span className="text-[11px] font-bold">({overall === 3 ? 'ดีเยี่ยม' : overall === 2 ? 'ดี' : overall === 1 ? 'ผ่าน' : 'ปรับปรุง'})</span>
+                            </span>
+                          )}
                         </td>
                         <td className="p-3 text-slate-300 text-xs leading-relaxed align-middle">
                           <div className="text-indigo-300 font-mono text-[11px] font-bold">{evidence}</div>

@@ -1,8 +1,28 @@
 import { NextResponse } from 'next/server';
-import { requireSession } from '@/lib/server/session';
+import { requireSession, requireInternalTeacherRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
 import { getRemedialTemplate } from '@/lib/events/remedialEventsRegistry';
+import { z } from 'zod';
+
+export async function POST(request: Request, { params }: { params: Promise<{ runId: string }> }) {
+  try {
+    assertSameOrigin(request);
+    await requireInternalTeacherRole(['TEACHER', 'ADMIN']);
+    const { runId } = await params;
+    const schema = z.object({ participants: z.array(z.object({ studentId: z.string().uuid(), originalScore: z.number().min(0).max(100).nullable(), targetStages: z.number().int().min(1).max(15) })).min(1).max(500) });
+    const parsed = schema.safeParse(await request.json().catch(() => null));
+    if (!z.string().uuid().safeParse(runId).success || !parsed.success) return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
+    const { data: run, error: runError } = await supabaseAdmin.from('event_runs').select('id,status').eq('id', runId).maybeSingle();
+    if (runError || !run) return NextResponse.json({ error: 'ไม่พบกิจกรรม' }, { status: 404 });
+    if (run.status === 'closed') return NextResponse.json({ error: 'กิจกรรมปิดแล้ว' }, { status: 400 });
+    const unique = new Map(parsed.data.participants.map(p => [p.studentId, p]));
+    const rows = [...unique.values()].map(p => ({ event_run_id: runId, student_id: p.studentId, original_score: p.originalScore, target_stages: p.targetStages }));
+    const { data, error } = await supabaseAdmin.from('event_participants').upsert(rows, { onConflict: 'event_run_id,student_id', ignoreDuplicates: true }).select('id');
+    if (error) { console.error(error); return NextResponse.json({ error: 'เพิ่มนักเรียนไม่สำเร็จ' }, { status: 500 }); }
+    return NextResponse.json({ success: true, added: data?.length || 0 });
+  } catch (error: any) { if (error?.status === 401 || error?.status === 403) return NextResponse.json({ error: 'ไม่มีสิทธิ์ดำเนินการ' }, { status: error.status }); console.error(error); return NextResponse.json({ error: 'เพิ่มนักเรียนไม่สำเร็จ' }, { status: 500 }); }
+}
 
 export async function GET(
   request: Request,

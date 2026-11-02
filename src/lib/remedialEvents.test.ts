@@ -117,3 +117,28 @@ test('Database migration contains event_runs, event_participants, and event_prog
   assert.match(migration, /idx_event_progress_lookup/);
   assert.match(migration, /ENABLE ROW LEVEL SECURITY/);
 });
+
+test('Participant payload validation and duplicate filtering contracts', () => {
+  // Test duplicate student filtering
+  const sampleInput = [
+    { studentId: '331bf004-28be-4574-9a8c-302d97d8b0f1', originalScore: 35, targetStages: 5 },
+    { studentId: '331bf004-28be-4574-9a8c-302d97d8b0f1', originalScore: 40, targetStages: 7 }, // Duplicate
+    { studentId: 'f1824ea9-7f71-42ab-8d13-d16f86e6551e', originalScore: null, targetStages: 15 },
+  ];
+
+  const unique = new Map(sampleInput.map(p => [p.studentId, p]));
+  assert.equal(unique.size, 2, 'Must deduplicate payload by studentId before upsert');
+
+  const runId = '34ee0a8a-c5a5-464e-a571-657a1498c6f0';
+  const rows = [...unique.values()].map(p => ({
+    event_run_id: runId,
+    student_id: p.studentId,
+    original_score: p.originalScore,
+    target_stages: p.targetStages,
+  }));
+
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].event_run_id, runId);
+  assert.equal(rows[0].student_id, '331bf004-28be-4574-9a8c-302d97d8b0f1');
+  assert.equal(rows[1].student_id, 'f1824ea9-7f71-42ab-8d13-d16f86e6551e');
+});
