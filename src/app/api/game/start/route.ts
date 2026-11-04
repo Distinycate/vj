@@ -36,78 +36,12 @@ export async function POST(request: Request) {
 
     const { stageNumber, missionLevel } = parsed.data;
 
-    // Stale tabs cannot bypass the new campaign's baseline assessment.
-    if (session.user.userType !== 'EXTERNAL') {
-      const { count, error } = await supabaseAdmin.from('pre_tests')
-        .select('id', { count: 'exact', head: true }).eq('student_id', session.subjectId);
-      if (error) throw error;
-      if ((count ?? 0) < 5) return NextResponse.json({ error: 'กรุณาทำ Pre-test รอบปัจจุบันให้ครบ 5 ครั้งก่อนเริ่มด่าน', code: 'PRETEST_REQUIRED' }, { status: 409 });
-    }
-
-    // ── Phase 3.2F: Campaign boundary guard ─────────────────────────────────
-    // Reject LEGACY_OVERFLOW stages 101–105 explicitly.
-    // (The schema max(100) already blocks this, but explicit guard matches V3 invariant.)
-    if (!isCampaignStage(stageNumber) || isLegacyOverflow(stageNumber)) {
-      return NextResponse.json(
-        { error: 'Stage is outside the Main Campaign (1–100).' },
-        { status: 400 }
-      );
-    }
-
-    // ── Phase 3.2F: Authoritative unlock check ───────────────────────────────
-    // Load V3 progression authority first, then fall back to legacy current_stage
-    // ONLY when V3 migration data is unavailable.
-
-    // Load legacy learning_path for coins/exp context and fallback unlock
-    const { data: path } = await supabaseAdmin
-      .from('learning_paths')
-      .select('current_stage, current_rank, coins, total_exp, campaign_completed_at')
-      .eq('student_id', session.subjectId)
-      .maybeSingle();
-
-    const legacyCurrentStage = path?.current_stage ?? 1;
-
-    // Try to load V3 progression data (student_stage_progress)
-    let completedStages: Set<number> | null = null;
-    try {
-      const { data: progressRows } = await supabaseAdmin
-        .from('student_stage_progress')
-        .select('stage_number')
-        .eq('student_id', session.subjectId)
-        .eq('completed', true);
-
-      if (progressRows && progressRows.length > 0) {
-        completedStages = new Set(progressRows.map((r: any) => r.stage_number as number));
-      } else if (progressRows !== null) {
-        // Table exists and query succeeded but no rows — V3 migration is present,
-        // student just hasn't completed anything. Use empty set (V3 authority).
-        completedStages = new Set();
-      }
-      // If progressRows is null (query error / table missing), completedStages stays null
-      // → legacy fallback will be used.
-    } catch {
-      // V3 migration table absent — fall back to legacy pointer
-      completedStages = null;
-    }
-
-    const unlocked = isStageUnlocked({
-      targetStageNumber: stageNumber,
-      completedStages,
-      legacyCurrentStage,
-    });
-
-    if (!unlocked) {
-      return NextResponse.json(
-        { error: 'Stage locked. You must complete all prerequisite stages first.' },
-        { status: 403 }
-      );
-    }
-
     // ── Derive stage type from registry ─────────────────────────────────────
     const stageType = getStageType(stageNumber);
     const isBossMode = isBossStage(stageNumber);
+    const isExternalStudent = session.user.userType === 'EXTERNAL';
 
-    // ── Fetch active vocabulary ──────────────────────────────────────────────
+    // Build stage vocabulary query
     let stageWordsQuery = supabaseAdmin
       .from('vocabulary')
       .select('*')
@@ -130,7 +64,78 @@ export async function POST(request: Request) {
       stageWordsQuery = stageWordsQuery.eq('stage_number', stageNumber);
     }
 
-    let { data: stageWords } = await stageWordsQuery;
+    // Run independent queries in parallel to minimize latency
+    const [
+      pretestRes,
+      pathRes,
+      progressRes,
+      stageWordsRes,
+      userReviewRes,
+      allVocabRes,
+    ] = await Promise.all([
+      !isExternalStudent
+        ? supabaseAdmin.from('pre_tests').select('id', { count: 'exact', head: true }).eq('student_id', session.subjectId)
+        : Promise.resolve({ count: 5, error: null }),
+      supabaseAdmin
+        .from('learning_paths')
+        .select('current_stage, current_rank, coins, total_exp, campaign_completed_at')
+        .eq('student_id', session.subjectId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('student_stage_progress')
+        .select('stage_number')
+        .eq('student_id', session.subjectId)
+        .eq('completed', true),
+      stageWordsQuery,
+      !isExternalStudent
+        ? supabaseAdmin
+            .from('user_review_words')
+            .select('word_id, mastery_status, mastery_score, review_step, wrong_count, attempt_count, next_review_at, last_seen_at')
+            .eq('user_id', session.subjectId)
+        : Promise.resolve({ data: null }),
+      !isExternalStudent
+        ? supabaseAdmin
+            .from('vocabulary')
+            .select('id, word, meaning, meaning_th')
+            .eq('is_active', true)
+            .limit(100)
+        : Promise.resolve({ data: null }),
+    ]);
+
+    // Stale tabs cannot bypass the new campaign's baseline assessment.
+    if (!isExternalStudent) {
+      if (pretestRes.error) throw pretestRes.error;
+      if ((pretestRes.count ?? 0) < 5) {
+        return NextResponse.json({ error: 'กรุณาทำ Pre-test รอบปัจจุบันให้ครบ 5 ครั้งก่อนเริ่มด่าน', code: 'PRETEST_REQUIRED' }, { status: 409 });
+      }
+    }
+
+    // ── Phase 3.2F: Authoritative unlock check ───────────────────────────────
+    const path = pathRes.data;
+    const legacyCurrentStage = path?.current_stage ?? 1;
+
+    let completedStages: Set<number> | null = null;
+    const progressRows = progressRes.data;
+    if (progressRows && progressRows.length > 0) {
+      completedStages = new Set(progressRows.map((r: any) => r.stage_number as number));
+    } else if (progressRows !== null) {
+      completedStages = new Set();
+    }
+
+    const unlocked = isStageUnlocked({
+      targetStageNumber: stageNumber,
+      completedStages,
+      legacyCurrentStage,
+    });
+
+    if (!unlocked) {
+      return NextResponse.json(
+        { error: 'Stage locked. You must complete all prerequisite stages first.' },
+        { status: 403 }
+      );
+    }
+
+    let stageWords = stageWordsRes.data;
 
     if (!stageWords || stageWords.length < 4) {
       const { data: fallbackWords } = await supabaseAdmin
@@ -148,34 +153,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const isExternalStudent = session.user.userType === 'EXTERNAL';
-
-    // ── Fetch student SRS review data (Internal full mode only, bypass for Lite to maximize speed) ──
+    // ── Map student SRS review data ──
     const reviewMap = new Map<string, any>();
-    let reviewWordDetails: any[] = [];
-
-    if (!isExternalStudent) {
-      const { data: userReviewData } = await supabaseAdmin
-        .from('user_review_words')
-        .select('word_id, mastery_status, mastery_score, review_step, wrong_count, attempt_count, next_review_at, last_seen_at')
-        .eq('user_id', session.subjectId);
-
-      if (userReviewData) {
-        for (const r of userReviewData) {
-          reviewMap.set(r.word_id, r);
-        }
-      }
-
-      if (userReviewData && userReviewData.length > 0) {
-        const reviewWordIds = userReviewData.map((r: any) => r.word_id).filter(Boolean);
-        if (reviewWordIds.length > 0) {
-          const { data: revDetails } = await supabaseAdmin
-            .from('vocabulary')
-            .select('*')
-            .in('id', reviewWordIds.slice(0, 30))
-            .eq('is_active', true);
-          reviewWordDetails = revDetails || [];
-        }
+    if (!isExternalStudent && userReviewRes.data) {
+      for (const r of userReviewRes.data) {
+        reviewMap.set(r.word_id, r);
       }
     }
 
@@ -258,12 +240,7 @@ export async function POST(request: Request) {
         }
       }
     } else {
-      const { data: allVocab } = await supabaseAdmin
-        .from('vocabulary')
-        .select('id, word, meaning, meaning_th')
-        .eq('is_active', true)
-        .limit(100);
-      distractorPool = allVocab || stageWords;
+      distractorPool = allVocabRes.data || stageWords;
     }
 
     // ── Question selection ───────────────────────────────────────────────────
