@@ -51,21 +51,21 @@ export async function GET(request: Request) {
     assertSameOrigin(request);
     const session = await requireRole(['STUDENT']);
 
-    // Load legacy learning_path (always available, needed for compatibility pointer)
-    const { data: path } = await supabaseAdmin
-      .from('learning_paths')
-      .select('current_stage, campaign_completed_at')
-      .eq('student_id', session.subjectId)
-      .maybeSingle();
+    // Load legacy learning_path and V3 student_stage_progress in parallel
+    const [{ data: path }, { data: progressRows, error: progressError }] = await Promise.all([
+      supabaseAdmin
+        .from('learning_paths')
+        .select('current_stage, campaign_completed_at')
+        .eq('student_id', session.subjectId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('student_stage_progress')
+        .select('*')
+        .eq('student_id', session.subjectId),
+    ]);
 
     const legacyCurrentStage: number = path?.current_stage ?? 1;
     const campaignCompleted: boolean = path?.campaign_completed_at != null;
-
-    // ── Attempt V3 authority ───────────────────────────────────────────────
-    const { data: progressRows, error: progressError } = await supabaseAdmin
-      .from('student_stage_progress')
-      .select('stage_number, best_stars, best_accuracy, completed, attempt_count, evidence_source')
-      .eq('student_id', session.subjectId);
 
     // ── FAIL-CLOSED: V3 table exists but query errored ─────────────────────
     if (progressError && !isV3TableAbsent(progressError)) {
@@ -105,7 +105,7 @@ export async function GET(request: Request) {
           completed: row.completed ?? false,
           attemptCount: row.attempt_count ?? 0,
           stageType: getStageType(row.stage_number),
-          evidenceSource: row.evidence_source ?? null,
+          evidenceSource: (row as any).evidence_source ?? (row as any).progress_source ?? null,
         });
       }
 

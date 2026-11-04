@@ -74,6 +74,7 @@ export function useGameEngine(): UseGameEngineReturn {
   const answerLockRef = useRef(false);
   const answersRecordRef = useRef<Array<{ wordId: string; answer: string; responseTime: number }>>([]);
   const [stageAttemptId, setStageAttemptId] = useState<string | null>(null);
+  const stageAttemptIdRef = useRef<string | null>(null);
   
   // Game Play States
   const [score, setScore] = useState(0);
@@ -186,27 +187,10 @@ export function useGameEngine(): UseGameEngineReturn {
 
       const isLite = student?.user_type === 'EXTERNAL' || student?.userType === 'EXTERNAL';
 
-      if (!isLite) {
-        const { data: stageData } = await supabase
-          .from('stages')
-          .select('id')
-          .eq('stage_number', stageNum)
-          .maybeSingle();
-        
-        if (stageData) {
-          setCurrentStageId(stageData.id);
-        }
-
-        const diffConfig = await getAdaptiveDifficulty(student.id, stageNum);
-        setDifficultyConfig(diffConfig);
-        setTimeLeft(diffConfig.timeLimit || 15);
-      } else {
-        setTimeLeft(20);
-      }
-
       // Weakness Boss / Spaced Repetition Review session:
       // Review sessions MUST NOT call /api/game/start with campaign stageNumber or advance current_stage!
       if (isReviewMode) {
+        stageAttemptIdRef.current = null;
         setStageAttemptId(null);
         let reviewQuestions: any[] = [];
         if (student?.id) {
@@ -227,20 +211,46 @@ export function useGameEngine(): UseGameEngineReturn {
         }
       }
 
-      // Attempt to initiate server-authoritative stage attempt
+      // Run stage metadata, difficulty config, inventory, and server attempt start in parallel
       try {
-        const startRes = await fetch('/api/game/start', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            stageNumber: stageNum,
-            missionLevel,
-            isBossMode,
+        const [startRes, stageDataRes, diffConfig, inventoryRes] = await Promise.all([
+          fetch('/api/game/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              stageNumber: stageNum,
+              missionLevel,
+              isBossMode,
+            }),
           }),
-        });
+          !isLite
+            ? supabase.from('stages').select('id').eq('stage_number', stageNum).maybeSingle()
+            : Promise.resolve({ data: null }),
+          !isLite
+            ? getAdaptiveDifficulty(student.id, stageNum)
+            : Promise.resolve({ timeLimit: 20, passScore: 75, hintMode: 'limited' }),
+          !isLite && student?.id
+            ? supabase.from('student_inventory').select('*, items(*)').eq('student_id', student.id)
+            : Promise.resolve({ data: null }),
+        ]);
+
+        if (stageDataRes?.data) {
+          setCurrentStageId(stageDataRes.data.id);
+        }
+        if (diffConfig) {
+          setDifficultyConfig(diffConfig);
+          setTimeLeft(diffConfig.timeLimit || (isLite ? 20 : 15));
+        }
+        if (inventoryRes?.data) {
+          setInventory(
+            inventoryRes.data.filter((item: any) => item.items && Number(item.quantity || 0) > 0)
+          );
+        }
+
         if (startRes.ok) {
           const startData = await startRes.json();
           if (startData.success && Array.isArray(startData.questions) && startData.questions.length > 0) {
+            stageAttemptIdRef.current = startData.attemptId;
             setStageAttemptId(startData.attemptId);
             setWords(startData.questions);
             setLoading(false);
@@ -600,13 +610,41 @@ export function useGameEngine(): UseGameEngineReturn {
       return;
     }
 
-    if (stageAttemptId) {
+    if (useDemoStore.getState().isDemoMode) {
+      const passed = accuracyVal >= 60 && finalScore > 0;
+      const earnedCoins = passed ? 25 : 5;
+      const earnedExp = passed ? 50 : 10;
+      setPassReport({
+        earnedCoins,
+        earnedExp,
+        passed,
+        score: finalScore,
+        accuracy: accuracyVal,
+        totalQuestions: words.length,
+        newCoins: (progress?.coins || 0) + earnedCoins,
+        newTotalExp: (progress?.total_exp || 0) + earnedExp,
+        currentStage: passed ? Math.min(100, stageNum + 1) : (progress?.current_stage || stageNum),
+        stars: accuracyVal >= 90 ? 3 : accuracyVal >= 80 ? 2 : passed ? 1 : 0,
+        primaryReason: passed ? 'FIRST_CLEAR' : null,
+        bonusFlags: [],
+        bossDefeated: isBossMode && passed,
+        bossDamage: accuracyVal,
+        bossRemainingHp: Math.max(0, 100 - accuracyVal),
+        campaignCompleted: false,
+      });
+      setGameState('results');
+      return;
+    }
+
+    const activeAttemptId = stageAttemptIdRef.current || stageAttemptId;
+
+    if (activeAttemptId) {
       try {
         const compRes = await fetch('/api/game/complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            attemptId: stageAttemptId,
+            attemptId: activeAttemptId,
             answers: answersRecordRef.current,
           }),
         });
@@ -654,22 +692,23 @@ export function useGameEngine(): UseGameEngineReturn {
             return;
           } else {
             console.error('Server completion failed:', compData.error);
-            alert('Failed to submit results: ' + (compData.error || 'Server error. Please try again.'));
-            return; // Fail closed, allow retry
+            setLoadError(compData.error || 'บันทึกผลด่านไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+            return;
           }
         } else {
-          console.error('Server completion failed, HTTP:', compRes.status);
-          alert('Failed to submit results. Please check your connection and try again.');
-          return; // Fail closed, allow retry
+          const errJson = await compRes.json().catch(() => ({}));
+          console.error('Server completion failed, HTTP:', compRes.status, errJson);
+          setLoadError(errJson.error || 'บันทึกผลด่านไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+          return;
         }
       } catch (serverErr) {
         console.error('Server completion network error:', serverErr);
-        alert('Network error. Please check your connection and try again.');
-        return; // Fail closed, allow retry
+        setLoadError('การเชื่อมต่อขัดข้องขณะบันทึกผลด่าน กรุณากลับหน้าแผนที่แล้วลองใหม่');
+        return;
       }
     } else {
       console.error('No stageAttemptId available for submission.');
-      alert('Error: Missing attempt ID. Please refresh and try again.');
+      setLoadError('เซสชันของด่านนี้หมดอายุหรือเริ่มด่านไม่สมบูรณ์ กรุณากลับหน้าแผนที่เพื่อเริ่มด่านใหม่');
       return;
     }
   };

@@ -107,6 +107,7 @@ export default function Dashboard() {
     if (!student) return;
 
     // Load V3 progression authority first
+    let v3FrontierStage: number | null = null;
     try {
       const progRes = await fetch('/api/student/progression');
       if (progRes.ok) {
@@ -123,6 +124,9 @@ export default function Dashboard() {
           if (s.completed && s.bestStars > 0) {
             starsByStage[s.stageNumber] = s.bestStars;
           }
+        }
+        if (progData.authority === 'V3' && unlocked.size > 0) {
+          v3FrontierStage = Array.from(unlocked).find(s => !completed.get(s)?.completed) || Math.max(...Array.from(unlocked), 1);
         }
         setV3Progression({
           authority: progData.authority,
@@ -224,7 +228,9 @@ export default function Dashboard() {
     }
     
     if (pathData) {
-
+      if (v3FrontierStage !== null) {
+        pathData.current_stage = v3FrontierStage;
+      }
       if (!pathData.avatar_seed) pathData.avatar_seed = student.id;
       setProgress(pathData);
       const level = Math.floor((pathData.total_exp || pathData.exp || 0) / 100) + 1;
