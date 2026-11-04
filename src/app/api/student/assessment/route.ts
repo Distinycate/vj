@@ -3,203 +3,180 @@ import { z } from 'zod';
 import { requireSession } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
-import { calculateNormalizedGain } from '@/utils/analyticsUtils';
+import { loadAssessmentProgress } from '@/lib/server/assessmentProgress';
 
 const assessmentSchema = z.object({
   type: z.enum(['PRE_TEST', 'POST_TEST']),
+  submissionId: z.string().uuid().optional(),
+  epoch: z.string().uuid().optional(),
   score: z.number().int().min(0),
-  totalQuestions: z.number().int().min(1),
-  timeSpentSec: z.number().int().min(0),
-});
+  totalQuestions: z.number().int().min(1).max(500),
+  timeSpentSec: z.number().int().min(0).max(86400),
+}).refine(body => body.score <= body.totalQuestions);
+
+export async function GET() {
+  try {
+    const session = await requireSession();
+    if (session.subjectType !== 'STUDENT') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const state = await loadAssessmentProgress(session.subjectId, session.user.userType === 'EXTERNAL');
+    return NextResponse.json(state, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (error: any) {
+    const status = error?.status === 401 || error?.status === 403 ? error.status : 500;
+    console.error('Assessment state error:', error);
+    return NextResponse.json({ error: 'โหลดสถานะข้อสอบไม่สำเร็จ กรุณาลองใหม่' }, { status });
+  }
+}
 
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
     const session = await requireSession();
-    if (session.subjectType !== 'STUDENT') {
-      return NextResponse.json({ error: 'Only students can submit assessments' }, { status: 403 });
-    }
-
+    if (session.subjectType !== 'STUDENT') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const body = await request.json().catch(() => null);
     const parsed = assessmentSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid assessment payload' }, { status: 400 });
+    if (!parsed.success) return NextResponse.json({ error: 'ข้อมูลข้อสอบไม่ครบ กรุณาโหลดหน้าใหม่ก่อนสอบ' }, { status: 400 });
+    const { type, score, totalQuestions, timeSpentSec } = parsed.data;
+    const submissionId = parsed.data.submissionId || crypto.randomUUID();
+    const epoch = parsed.data.epoch || '00000000-0000-0000-0000-000000000000';
+
+    // 1. Attempt atomic RPC if present on database
+    try {
+      const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('submit_assessment_v2', {
+        p_student_id: session.subjectId,
+        p_epoch: epoch,
+        p_submission_id: submissionId,
+        p_type: type,
+        p_score: score,
+        p_total: totalQuestions,
+        p_duration: timeSpentSec,
+      });
+
+      if (!rpcErr && rpcData) {
+        return NextResponse.json(rpcData);
+      }
+
+      if (rpcErr && !rpcErr.message.includes('submit_assessment_v2') && rpcErr.code !== 'PGRST202') {
+        if (/ASSESSMENT_SEASON_CHANGED/.test(rpcErr.message)) {
+          return NextResponse.json({ error: 'เริ่มรอบการเรียนใหม่แล้ว กรุณาโหลดหน้าใหม่เพื่อทำข้อสอบรอบปัจจุบัน', reload: true }, { status: 409 });
+        }
+        if (/ASSESSMENT_ALREADY_COMPLETE/.test(rpcErr.message)) {
+          return NextResponse.json({ error: 'บันทึก Pre-test ครบแล้ว กรุณาโหลดหน้าใหม่', reload: true }, { status: 409 });
+        }
+        if (/PRETEST_REQUIRED|ASSESSMENT_ID_CONFLICT|INVALID_ASSESSMENT/.test(rpcErr.message)) {
+          return NextResponse.json({ error: 'สถานะข้อสอบไม่ถูกต้อง กรุณาโหลดหน้าใหม่', reload: true }, { status: 409 });
+        }
+      }
+    } catch {
+      // Fall through to direct table write
     }
 
-    const { type, score, totalQuestions, timeSpentSec } = parsed.data;
-    const studentId = session.subjectId;
+    // 2. Direct table fallback for immediate low-latency processing
+    const isExternal = session.user.userType === 'EXTERNAL';
+    const requiredRounds = isExternal ? 1 : 5;
 
     if (type === 'PRE_TEST') {
-      // 1. Insert into pre_tests table
-      await supabaseAdmin.from('pre_tests').insert([{
-        student_id: studentId,
+      const { error: insertErr } = await supabaseAdmin.from('pre_tests').upsert([{
+        id: submissionId,
+        student_id: session.subjectId,
         score,
         total_questions: totalQuestions,
         time_spent_sec: timeSpentSec,
-      }]);
+      }], { onConflict: 'id', ignoreDuplicates: true });
+      if (insertErr) throw insertErr;
 
-      // 2. Query previous pretests to see total completed
-      const { data: allPretests } = await supabaseAdmin
-        .from('pre_tests')
-        .select('score, time_spent_sec')
-        .eq('student_id', studentId);
+      const { data: allPre, error: fetchErr } = await supabaseAdmin.from('pre_tests')
+        .select('score, total_questions, time_spent_sec, created_at')
+        .eq('student_id', session.subjectId)
+        .order('created_at', { ascending: true });
+      if (fetchErr) throw fetchErr;
 
-      const count = allPretests?.length || 1;
-      let completedAll = false;
-      let newRank = 1;
-      let newStage = 1;
+      const count = allPre?.length || 1;
+      const completedAll = count >= requiredRounds;
+      const recentTests = allPre ? allPre.slice(-requiredRounds) : [];
+      const totalScore = recentTests.reduce((sum, p) => sum + (Number(p.score) / (p.total_questions || 25) * 25), 0);
+      const preScore = recentTests.length > 0 ? Math.round((totalScore / recentTests.length) * 10) / 10 : score;
 
-      const isExternal = session.user.userType === 'EXTERNAL';
+      const { data: lp } = await supabaseAdmin.from('learning_paths')
+        .select('current_stage, current_rank')
+        .eq('student_id', session.subjectId)
+        .maybeSingle();
 
-      if (count >= 5 || isExternal) {
-        completedAll = true;
-        const totalScore = (allPretests || []).reduce((sum, p) => sum + Number(p.score || 0), 0);
-        const avgScore = totalScore / count;
-
-        if (isExternal) {
-          newRank = 1;
-          newStage = 1;
-        } else {
-          if (avgScore >= 20) { newRank = 5; newStage = 41; }
-          else if (avgScore >= 15) { newRank = 4; newStage = 31; }
-          else if (avgScore >= 10) { newRank = 3; newStage = 21; }
-          else if (avgScore >= 5) { newRank = 2; newStage = 11; }
-          else { newRank = 1; newStage = 1; }
-        }
-
-        // Fetch current learning path & progress to prevent decreasing stage
-        const [{ data: currentLp }, { data: passedStages }] = await Promise.all([
-          supabaseAdmin
-            .from('learning_paths')
-            .select('current_stage, current_rank, initial_rank')
-            .eq('student_id', studentId)
-            .maybeSingle(),
-          supabaseAdmin
-            .from('student_stage_progress')
-            .select('stage_number')
-            .eq('student_id', studentId)
-            .eq('completed', true),
-        ]);
-
-        const maxPassed = passedStages && passedStages.length > 0
-          ? Math.max(...passedStages.map(s => s.stage_number))
-          : 0;
-
-        // Stage calculation: For external students, strictly follow map progression (Stage 1..100)
-        const preservedStage = isExternal
-          ? (maxPassed > 0 ? maxPassed + 1 : 1)
-          : Math.max(
-              currentLp?.current_stage || 1,
-              maxPassed > 0 ? maxPassed + 1 : 1,
-              newStage
-            );
-        const finalStage = Math.min(100, Math.max(1, preservedStage));
-        const finalRank = isExternal ? 1 : Math.max(currentLp?.current_rank || 1, newRank);
-
-        await supabaseAdmin
-          .from('learning_paths')
-          .update({
-            initial_rank: currentLp?.initial_rank ? currentLp.initial_rank : newRank,
-            current_rank: finalRank,
-            current_stage: finalStage,
-            last_active_date: new Date().toISOString(),
-          })
-          .eq('student_id', studentId);
-
-        const totalDuration = (allPretests || []).reduce((sum, p) => sum + Number(p.time_spent_sec || 0), 0);
-
-        const { data: analytics } = await supabaseAdmin
-          .from('analytics_summary')
-          .select('*')
-          .eq('student_id', studentId)
-          .maybeSingle();
+      if (completedAll) {
+        await supabaseAdmin.from('learning_paths').update({
+          last_active_date: new Date().toISOString(),
+        }).eq('student_id', session.subjectId);
 
         await supabaseAdmin.from('analytics_summary').upsert({
-          student_id: studentId,
-          pretest_score: avgScore,
-          total_time_on_task_sec: Number(analytics?.total_time_on_task_sec || 0) + totalDuration,
+          student_id: session.subjectId,
+          pretest_score: preScore,
           last_updated_at: new Date().toISOString(),
         }, { onConflict: 'student_id' });
-
-        // Ensure stage is unlocked and insert initial attempt
-        const { data: stageRecord } = await supabaseAdmin
-          .from('stages')
-          .select('id')
-          .eq('stage_number', finalStage)
-          .limit(1);
-
-        if (stageRecord && stageRecord.length > 0) {
-          const stageId = stageRecord[0].id;
-          await supabaseAdmin.from('attempts').insert([{
-            student_id: studentId,
-            stage_id: stageId,
-            score: 0,
-            total_questions: 10,
-            time_spent_sec: 0,
-            is_passed: false
-          }]);
-        }
-
-        newStage = finalStage;
-        newRank = finalRank;
       }
 
       return NextResponse.json({
         success: true,
-        completedAll,
         count,
-        newRank: completedAll ? newRank : undefined,
-        newStage: completedAll ? newStage : undefined,
+        completedAll,
+        preScore,
+        postScore: null,
+        newStage: lp?.current_stage || 1,
+        newRank: lp?.current_rank || 1,
       });
     } else {
       // POST_TEST
-      await supabaseAdmin.from('post_tests').insert([{
-        student_id: studentId,
+      const { error: postErr } = await supabaseAdmin.from('post_tests').upsert([{
+        id: submissionId,
+        student_id: session.subjectId,
         score,
         total_questions: totalQuestions,
         time_spent_sec: timeSpentSec,
-      }]);
+      }], { onConflict: 'id', ignoreDuplicates: true });
+      if (postErr) throw postErr;
 
-      const { data: analytics } = await supabaseAdmin
-        .from('analytics_summary')
-        .select('*')
-        .eq('student_id', studentId)
-        .maybeSingle();
+      const [{ data: preTests }, { data: analytics }, { data: lp }] = await Promise.all([
+        supabaseAdmin.from('pre_tests').select('score, total_questions').eq('student_id', session.subjectId),
+        supabaseAdmin.from('analytics_summary').select('*').eq('student_id', session.subjectId).maybeSingle(),
+        supabaseAdmin.from('learning_paths').select('current_stage, current_rank').eq('student_id', session.subjectId).maybeSingle(),
+      ]);
 
-      const preScore = Number(analytics?.pretest_score || 0);
-      const postScore = score;
-      const normalizedGain = calculateNormalizedGain(preScore, postScore, totalQuestions);
-      const absoluteGain = postScore - preScore;
+      const recentPre = preTests ? preTests.slice(-requiredRounds) : [];
+      const preScore = recentPre.length > 0
+        ? recentPre.reduce((s, p) => s + (Number(p.score) / (p.total_questions || 25) * 25), 0) / recentPre.length
+        : 0;
+      const postScore = (score / totalQuestions) * 25;
+      const gain = postScore - preScore;
+      const normalizedGain = preScore >= 25 ? null : Math.round(((postScore - preScore) / (25 - preScore)) * 10000) / 100;
 
       await supabaseAdmin.from('analytics_summary').upsert({
-        student_id: studentId,
+        student_id: session.subjectId,
         posttest_score: postScore,
-        learning_gain: absoluteGain,
+        learning_gain: gain,
         normalized_gain: normalizedGain,
         total_time_on_task_sec: Number(analytics?.total_time_on_task_sec || 0) + timeSpentSec,
         last_updated_at: new Date().toISOString(),
       }, { onConflict: 'student_id' });
 
-      await supabaseAdmin
-        .from('learning_paths')
-        .update({
-          posttest_date: new Date().toISOString(),
-          last_active_date: new Date().toISOString(),
-        })
-        .eq('student_id', studentId);
+      await supabaseAdmin.from('learning_paths').update({
+        last_active_date: new Date().toISOString(),
+      }).eq('student_id', session.subjectId);
 
       return NextResponse.json({
         success: true,
+        count: 1,
+        completedAll: true,
         preScore,
         postScore,
         normalizedGain,
-        absoluteGain,
+        absoluteGain: gain,
+        newStage: lp?.current_stage || 1,
+        newRank: lp?.current_rank || 1,
       });
     }
   } catch (error: any) {
-    if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (error?.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (error?.status === 401 || error?.status === 403) {
+      return NextResponse.json({ error: 'ไม่มีสิทธิ์บันทึกข้อสอบ กรุณาเข้าสู่ระบบใหม่' }, { status: error.status });
+    }
     console.error('Assessment submission error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'บันทึกผลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง' }, { status: 500 });
   }
 }

@@ -1,7 +1,7 @@
+import { loadAssessmentProgress } from '@/lib/server/assessmentProgress';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getSession } from '@/lib/server/session';
-import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 
 export async function GET() {
   try {
@@ -12,41 +12,7 @@ export async function GET() {
 
     let progress: any = null;
     if (session.subjectType === 'STUDENT') {
-      const [{ data: path }, { data: pretestList, count: pretestCount }, { data: analytics }] = await Promise.all([
-        supabaseAdmin
-          .from('learning_paths')
-          .select('*')
-          .eq('student_id', session.subjectId)
-          .maybeSingle(),
-        supabaseAdmin
-          .from('pre_tests')
-          .select('created_at', { count: 'exact' })
-          .eq('student_id', session.subjectId)
-          .order('created_at', { ascending: false }),
-        supabaseAdmin
-          .from('analytics_summary')
-          .select('pretest_score')
-          .eq('student_id', session.subjectId)
-          .maybeSingle(),
-      ]);
-
-      const isExternal = session.user?.userType === 'EXTERNAL';
-      const hasPretests = (pretestCount !== null && pretestCount >= 5) || (analytics?.pretest_score !== null && analytics?.pretest_score !== undefined);
-      const pretestDate = isExternal || hasPretests
-        ? (pretestList?.[0]?.created_at || new Date().toISOString())
-        : null;
-
-      progress = {
-        ...(path || {
-          current_stage: 1,
-          coins: 0,
-          exp: 0,
-          total_exp: 0,
-          current_rank: 1,
-          study_streak: 0,
-        }),
-        pretest_date: pretestDate,
-      };
+      progress = (await loadAssessmentProgress(session.subjectId, session.user.userType === 'EXTERNAL')).progress;
     }
 
     const cookieStore = await cookies();

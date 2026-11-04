@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import TermOneReport from './TermOneReport';
+import CampaignArchiveReport from './CampaignArchiveReport';
 import { 
   BookOpen, Download, Search, RefreshCw, FileSpreadsheet,
   Award, TrendingUp, Users, Target, CheckCircle2, ChevronRight,
@@ -23,6 +25,7 @@ interface TermArchiveTabProps {
 }
 
 export default function TermArchiveTab({ classrooms }: TermArchiveTabProps) {
+  const [showTermOne, setShowTermOne] = useState(true);
   // Filters
   const [selectedTerm, setSelectedTerm] = useState<string>('2567-T1');
   const [selectedClassroom, setSelectedClassroom] = useState<string>('');
@@ -68,8 +71,8 @@ export default function TermArchiveTab({ classrooms }: TermArchiveTabProps) {
   }, [selectedTerm, selectedClassroom]);
 
   useEffect(() => {
-    loadTermStudents();
-  }, [loadTermStudents]);
+    if (!showTermOne) loadTermStudents();
+  }, [loadTermStudents, showTermOne]);
 
   // Filtered students by search
   const filteredStudents = useMemo(() => {
@@ -264,8 +267,11 @@ export default function TermArchiveTab({ classrooms }: TermArchiveTabProps) {
     link.click();
   };
 
+  if (showTermOne) return <div className="space-y-4"><CampaignArchiveReport /><div className="flex flex-wrap gap-2"><button aria-pressed="true" className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white">ผลการเรียนเทอม 1/2569</button><button onClick={() => setShowTermOne(false)} className="rounded-xl bg-slate-800 px-4 py-3 text-sm font-bold text-white">รายงาน ปพ.5 และคลังเดิม</button></div><TermOneReport classrooms={classrooms} /></div>;
+
   return (
     <div className="space-y-6">
+      <button onClick={() => setShowTermOne(true)} className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white">← กลับผลการเรียนเทอม 1/2569</button>
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 p-6 rounded-3xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

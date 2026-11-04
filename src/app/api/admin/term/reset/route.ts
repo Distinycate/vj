@@ -1,85 +1,24 @@
 import { NextResponse } from 'next/server';
 import { requireInternalTeacherRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
+import { assertSameOrigin } from '@/lib/server/security';
 
 export async function POST(request: Request) {
   try {
-    const session = await requireInternalTeacherRole(['TEACHER', 'ADMIN', 'EXECUTIVE']);
-    const teacherId = session.subjectId;
-
-    const body = await request.json().catch(() => ({}));
-    const seasonName = body.seasonName || 'ภาคเรียนที่ 2/2567 (Season 2)';
-
-    // 1. Close all active team battle seasons
-    await supabaseAdmin
-      .from('team_battle_seasons')
-      .update({ is_active: false, closed_at: new Date().toISOString() })
-      .eq('is_active', true);
-
-    // 2. Insert new active season
-    const { data: newSeason, error: seasonErr } = await supabaseAdmin
-      .from('team_battle_seasons')
-      .insert({
-        season_name: seasonName,
-        scope: 'school',
-        status: 'ACTIVE',
-        is_active: true,
-      })
-      .select()
-      .single();
-
-    if (seasonErr) {
-      console.error('Failed to create new team battle season:', seasonErr);
+    assertSameOrigin(request);
+    const session = await requireInternalTeacherRole(['ADMIN']);
+    const body = await request.json().catch(() => null);
+    if (body?.confirmation !== '2569-T2-restart-1') {
+      return NextResponse.json({ error: 'กรุณายืนยันการเก็บประวัติและเริ่มรอบใหม่' }, { status: 400 });
     }
-
-    // 3. Reset learning_paths current_stage to 1 for all internal students (keep coins, exp, cards intact)
-    const { error: lpErr } = await supabaseAdmin
-      .from('learning_paths')
-      .update({
-        current_stage: 1,
-        campaign_completed_at: null,
-      })
-      .neq('current_stage', 0); // targets all rows
-
-    if (lpErr) {
-      return NextResponse.json({ error: `รีเซ็ตด่านใน learning_paths ไม่สำเร็จ: ${lpErr.message}` }, { status: 500 });
-    }
-
-    // 4. Clear/Reset student_stage_progress so campaign progression begins fresh at stage 1
-    // (Historical stage_results remain untouched as immutable historical log)
-    const { error: progErr } = await supabaseAdmin
-      .from('student_stage_progress')
-      .delete()
-      .neq('stage_number', 0);
-
-    if (progErr) {
-      console.warn('Notice: student_stage_progress clear warning:', progErr.message);
-    }
-
-    // 5. Reset pretest/posttest scores in analytics_summary for new term baseline (keep cards, coins, and total_time_on_task_sec intact)
-    const { error: analyticsErr } = await supabaseAdmin
-      .from('analytics_summary')
-      .update({
-        pretest_score: null,
-        posttest_score: null,
-        learning_gain: null,
-        normalized_gain: null,
-        last_updated_at: new Date().toISOString(),
-      })
-      .not('student_id', 'is', null);
-
-    if (analyticsErr) {
-      console.warn('Notice: analytics_summary reset warning:', analyticsErr.message);
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'เริ่มต้นฤดูกาลใหม่เรียบร้อยแล้ว ทุกคนเริ่มต้นที่ด่าน 1 (เหรียญและการ์ดยังอยู่ครบ)',
-      season: newSeason,
-    });
+    const { data, error } = await supabaseAdmin.rpc('restart_learning_campaign_v2', { p_actor_id: session.subjectId });
+    if (error) throw error;
+    return NextResponse.json({ ...data, message: data.alreadyReset
+      ? 'เปิดรอบนี้แล้ว ไม่รีเซ็ตข้อมูลซ้ำ'
+      : 'เก็บประวัติแล้ว นักเรียนภายในที่เปิดใช้งาน ' + data.studentCount + ' คนเริ่ม Pre-test ใหม่และด่าน 1' });
   } catch (error: any) {
-    if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (error?.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    if (error?.status === 401 || error?.status === 403) return NextResponse.json({ error: 'เฉพาะแอดมินเท่านั้น' }, { status: error.status });
+    console.error('Campaign reset failed:', error);
+    return NextResponse.json({ error: 'เริ่มรอบใหม่ไม่สำเร็จ ไม่มีการรีเซ็ตบางส่วน กรุณาตรวจ migration และการเชื่อมต่อฐานข้อมูล' }, { status: 500 });
   }
 }

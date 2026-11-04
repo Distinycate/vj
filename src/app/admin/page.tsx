@@ -535,7 +535,7 @@ export default function AdminPage() {
                 }`}
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                ภาคเรียนที่ 2/2567 (ปัจจุบัน)
+                ข้อมูลปัจจุบัน
               </button>
               <button
                 onClick={() => setActiveTab('term-archive')}
@@ -546,14 +546,14 @@ export default function AdminPage() {
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
-                📁 คลังข้อมูลเทอมเก่า (1/2567)
+                📁 คลังข้อมูลเทอมเก่า (1/2569)
               </button>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="px-2.5 py-1 rounded-lg bg-slate-950/80 border border-slate-800/80 text-slate-300 font-mono font-bold">
-              👥 3 ระดับชั้น • 71 นักเรียน
+              👥 รายงานนักเรียน
             </span>
             {activeTab === 'term-archive' ? (
               <span className="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-bold flex items-center gap-1.5">

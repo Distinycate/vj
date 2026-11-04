@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import SchoolTermWrongWords from './SchoolTermWrongWords';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Legend, Tooltip, ResponsiveContainer 
 } from 'recharts';
@@ -143,7 +144,6 @@ export default function SchoolLevelDashboard({ studentsList, wrongWords }: Schoo
     avgAcc = 0,
     pdcaStatus = { label: 'On Track', status: 'ตามเป้าหมาย', color: 'text-emerald-400', badgeBg: 'bg-emerald-500/10 border-emerald-500/30' },
     rankDistribution = [],
-    frequentWrongWords = [],
     monthlyTrend = []
   } = data || {};
 
@@ -437,76 +437,7 @@ export default function SchoolLevelDashboard({ studentsList, wrongWords }: Schoo
 
       </div>
 
-      {/* Top 10 Frequently Wrong Words in School */}
-      <div className="bg-slate-900/60 border border-slate-800/80 p-5 sm:p-6 rounded-3xl shadow-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-black text-white">10 คำศัพท์ที่นักเรียนทั้งโรงเรียนตอบผิดบ่อยที่สุด</h3>
-              <p className="text-xs text-slate-400">คำศัพท์วิกฤตที่ครูควรจัดกิจกรรมทบทวนและเน้นย้ำเป็นพิเศษ</p>
-            </div>
-          </div>
-          {frequentWrongWords.length > 0 && (
-            <span className="text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-1 rounded-xl self-start sm:self-auto">
-              คำผิดสูงสุด: {frequentWrongWords[0]?.word} ({frequentWrongWords[0]?.count} ครั้ง)
-            </span>
-          )}
-        </div>
-
-        {frequentWrongWords.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {frequentWrongWords.map((item, idx) => {
-              const maxCount = frequentWrongWords[0].count;
-              const barWidth = Math.max(8, (item.count / maxCount) * 100);
-              return (
-                <div key={idx} className="relative bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800/80 overflow-hidden group hover:border-rose-500/30 transition-all">
-                  <div 
-                    className="absolute top-0 left-0 bottom-0 bg-rose-500/10 transition-all duration-700 ease-out" 
-                    style={{ width: `${barWidth}%` }}
-                  />
-                  <div className="relative flex justify-between items-center z-10">
-                    <div className="flex items-center gap-3">
-                      <span className={`w-6 h-6 rounded-xl flex items-center justify-center text-xs font-black ${
-                        idx === 0 ? 'bg-rose-500 text-white' :
-                        idx === 1 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
-                        idx === 2 ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' :
-                        'bg-slate-800 text-slate-400'
-                      }`}>
-                        {idx + 1}
-                      </span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-black text-white group-hover:text-rose-300 transition-colors">
-                            {item.word}
-                          </h4>
-                          {item.partOfSpeech && (
-                            <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded">
-                              {item.partOfSpeech}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-400 mt-0.5">{item.meaning || 'ไม่มีคำแปล'}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-rose-400 font-black text-base">{item.count}</span>
-                      <span className="text-[10px] text-slate-500 ml-1">ครั้ง</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="py-12 text-center text-slate-500 text-xs bg-slate-950/30 rounded-2xl border border-slate-850">
-            <Sparkles className="w-6 h-6 text-slate-600 mx-auto mb-2" />
-            <span>ยอดเยี่ยม! ยังไม่มีสถิติคำศัพท์ที่ตอบผิดสะสมในระบบ</span>
-          </div>
-        )}
-      </div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5"><SchoolTermWrongWords term="1" /><SchoolTermWrongWords term="2" /></div>
 
     </div>
   );

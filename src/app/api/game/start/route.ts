@@ -36,6 +36,14 @@ export async function POST(request: Request) {
 
     const { stageNumber, missionLevel } = parsed.data;
 
+    // Stale tabs cannot bypass the new campaign's baseline assessment.
+    if (session.user.userType !== 'EXTERNAL') {
+      const { count, error } = await supabaseAdmin.from('pre_tests')
+        .select('id', { count: 'exact', head: true }).eq('student_id', session.subjectId);
+      if (error) throw error;
+      if ((count ?? 0) < 5) return NextResponse.json({ error: 'กรุณาทำ Pre-test รอบปัจจุบันให้ครบ 5 ครั้งก่อนเริ่มด่าน', code: 'PRETEST_REQUIRED' }, { status: 409 });
+    }
+
     // ── Phase 3.2F: Campaign boundary guard ─────────────────────────────────
     // Reject LEGACY_OVERFLOW stages 101–105 explicitly.
     // (The schema max(100) already blocks this, but explicit guard matches V3 invariant.)
@@ -445,6 +453,9 @@ export async function POST(request: Request) {
       .single();
 
     if (attemptErr || !attempt) {
+      if (attemptErr?.message.includes('PRETEST_REQUIRED')) {
+        return NextResponse.json({ error: 'กรุณาทำ Pre-test รอบปัจจุบันให้ครบก่อนเริ่มด่าน', code: 'PRETEST_REQUIRED' }, { status: 409 });
+      }
       console.error('Failed to create stage attempt:', attemptErr);
       return NextResponse.json({ error: 'Failed to start stage attempt' }, { status: 500 });
     }

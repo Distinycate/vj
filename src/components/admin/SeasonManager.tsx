@@ -79,7 +79,7 @@ export default function SeasonManager() {
   }
 
   async function handleTermReset() {
-    if (!window.confirm('ยืนยันเริ่มต้นภาคเรียนใหม่ (Season 2)?\n- นักเรียนทุกคนจะเริ่มต้นใหม่ที่ด่าน 1\n- เปิดฤดูกาล Team Battle ใหม่ (คะแนนเริ่มนับใหม่)\n- เหรียญ, ตั๋วสุ่ม, คลังการ์ด และประวัติคะแนนเดิมจะถูกเก็บรักษาไว้ทั้งหมด\n\nต้องการดำเนินการหรือไม่?')) return;
+    if (!window.confirm('ยืนยันเปิดรอบเรียนใหม่ 2/2569? ทำเฉพาะช่วงที่นักเรียนหยุดใช้งาน\n- เก็บประวัติ Pre/Post-test และด่านก่อนรีเซ็ต แอดมินย้อนดูได้\n- เฉพาะนักเรียนภายในที่เปิดใช้งาน: ทำ Pre-test ใหม่ 5 รอบ และเริ่มด่าน 1\n- ยกเลิกเกมที่ยังค้างอยู่ และอาจรับรางวัลผ่านด่านครั้งแรกได้อีก\n- ไม่เปลี่ยนเหรียญ ตั๋ว การ์ด Rank หรือ Team Battle\n- บัญชีเก่าที่ปิดและโรงเรียนเครือข่ายไม่เปลี่ยน\n- เปิดรอบนี้ได้ครั้งเดียว กดซ้ำไม่ล้างข้อมูลใหม่\n\nต้องการดำเนินการหรือไม่?')) return;
 
     setIsCreating(true);
     setMessage('');
@@ -87,7 +87,7 @@ export default function SeasonManager() {
       const res = await fetch('/api/admin/term/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seasonName: 'ภาคเรียนที่ 2/2567 (Season 2)' }),
+        body: JSON.stringify({ confirmation: '2569-T2-restart-1' }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'รีเซ็ตไม่สำเร็จ');
@@ -206,7 +206,7 @@ export default function SeasonManager() {
                 🚀 เริ่มต้นภาคเรียนใหม่ (Semester Transition)
               </h4>
               <p className="text-xs text-slate-400 mb-3 leading-relaxed">
-                รีเซ็ตให้นักเรียนทุกคนเริ่มใหม่ที่ <strong className="text-emerald-300">ด่าน 1</strong> พร้อมเปิด <strong className="text-emerald-300">Season 2</strong> โดยคงคลังการ์ดและเหรียญไว้ครบถ้วน
+                เฉพาะแอดมิน: เก็บประวัติรอบเดิม แล้วให้นักเรียนภายในที่เปิดใช้งานทำ <strong className="text-emerald-300">Pre-test ใหม่และเริ่มด่าน 1</strong> ไม่เปลี่ยนเหรียญ การ์ด หรือ Team Battle
               </p>
               <button
                 type="button"
@@ -214,7 +214,7 @@ export default function SeasonManager() {
                 disabled={isCreating}
                 className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm border border-emerald-400/30"
               >
-                <span>🚀 เริ่มภาคเรียนใหม่ & รีเซ็ตด่าน 1</span>
+                <span>เก็บประวัติและเริ่มรอบใหม่ 2/2569</span>
               </button>
 
               <button

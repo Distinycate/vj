@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vocab-journey-cache-v2';
+const CACHE_NAME = 'vocab-journey-cache-v3';
 const ASSETS_TO_CACHE = [
   '/manifest.json',
   '/globe.svg',
@@ -33,8 +33,8 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
-  // Skip Supabase API calls so they are always fresh
-  if (event.request.url.includes('supabase.co') || event.request.url.includes('_next/webpack-hmr')) {
+  // Never return cached sessions/assessment epochs after a season reset (or logout).
+  if (new URL(event.request.url).pathname.startsWith('/api/') || event.request.url.includes('supabase.co') || event.request.url.includes('_next/webpack-hmr')) {
     return;
   }
 

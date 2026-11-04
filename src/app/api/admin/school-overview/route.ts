@@ -25,7 +25,6 @@ export async function GET(request: Request) {
 
     const [
       studentsRes,
-      wrongWordsRes,
       preTestsRes,
       postTestsRes,
       classroomsRes,
@@ -34,10 +33,6 @@ export async function GET(request: Request) {
         .from('students')
         .select('id, student_name, classroom_id, is_active, learning_paths(current_rank, rank_score, coins, total_exp, last_active_date), analytics_summary(pretest_score, posttest_score, success_rate, normalized_gain, learning_gain)')
         .eq('is_active', true),
-      supabaseAdmin
-        .from('wrong_words')
-        .select('error_count, vocabulary(word, meaning_th, part_of_speech)')
-        .limit(1000),
       supabaseAdmin
         .from('pre_tests')
         .select('score, created_at')
@@ -100,29 +95,6 @@ export async function GET(request: Request) {
       { rank: 5, name: 'Rank 5 (Legend)', title: 'ตำนานแห่งคำศัพท์', count: rankCounts[5], percent: totalStudents ? Math.round((rankCounts[5] / totalStudents) * 100) : 0, color: '#ec4899' },
     ];
 
-    // 3. Top 10 Frequent Wrong Words
-    const wordCounts: Record<string, { count: number; meaning: string; partOfSpeech: string }> = {};
-    (wrongWordsRes.data || []).forEach((row: any) => {
-      const vocab = Array.isArray(row.vocabulary) ? row.vocabulary[0] : row.vocabulary;
-      const word = vocab?.word || 'Unknown';
-      const meaning = vocab?.meaning_th || vocab?.meaning || '';
-      const partOfSpeech = vocab?.part_of_speech || '';
-      if (!wordCounts[word]) {
-        wordCounts[word] = { count: 0, meaning, partOfSpeech };
-      }
-      wordCounts[word].count += Number(row.error_count || 1);
-    });
-
-    const frequentWrongWords = Object.keys(wordCounts)
-      .filter(w => w !== 'Unknown')
-      .map(word => ({
-        word,
-        count: wordCounts[word].count,
-        meaning: wordCounts[word].meaning,
-        partOfSpeech: wordCounts[word].partOfSpeech,
-      }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
 
     // 4. Monthly Learning Gain Trend (Pre vs Post)
     const monthMap: Record<string, { preSum: number; preCount: number; postSum: number; postCount: number }> = {};
@@ -174,9 +146,6 @@ export async function GET(request: Request) {
       avgAcc,
       pdcaStatus,
       rankDistribution,
-      frequentWrongWords,
-      topWrongWord: frequentWrongWords[0]?.word || '-',
-      topWrongCount: frequentWrongWords[0]?.count || 0,
       monthlyTrend,
     };
 

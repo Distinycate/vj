@@ -60,7 +60,7 @@ export default function Home() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').then(
         (registration) => {
-          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          if (registration) console.log('ServiceWorker registration successful with scope: ', registration.scope);
         },
         (err) => {
           console.log('ServiceWorker registration failed: ', err);
@@ -169,23 +169,9 @@ export default function Home() {
       }
 
       if (data.role === 'STUDENT') {
-        const { data: pretestList, count: pretestCount } = await supabase
-          .from('pre_tests')
-          .select('created_at', { count: 'exact' })
-          .eq('student_id', data.user.id)
-          .order('created_at', { ascending: false });
-
-        const hasCompleted5Pretests = pretestCount !== null && pretestCount >= 5;
-        const pretestDate = data.user.user_type === 'EXTERNAL'
-          ? new Date().toISOString()
-          : hasCompleted5Pretests && pretestList && pretestList.length > 0 ? pretestList[0].created_at : null;
-
         setStudent(data.user);
         saveStudentSession(data.user);
-        setProgress({
-          ...data.progress,
-          pretest_date: pretestDate,
-        });
+        setProgress(data.progress);
 
         if (data.has_remedial_access) {
           window.location.href = '/events';

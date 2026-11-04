@@ -24,11 +24,13 @@ test('landing page explains Vocab Journey and presents the innovator profile', (
   assert.match(homeSource, /PDCA/);
 });
 
-test('pre-test is gated by five attempts and uses the average score for initial rank', () => {
-  assert.match(pretestSource, /newCount >= 5/);
-  assert.match(pretestSource, /averageScore/);
-  assert.match(pretestSource, /pretest_date: new Date\(\)\.toISOString\(\)/);
-  assert.match(homeSource, /pretestCount !== null && pretestCount >= 5/);
+test('pre-test completion uses authoritative saved tests, not a score-based rank', () => {
+  const state = readFileSync('src/lib/server/assessmentProgress.ts', 'utf8');
+  assert.match(state, /summarizePretests\(pre.data \|\| \[\], isExternal \? 1 : 5\)/);
+  assert.match(homeSource, /setProgress\(data.progress\)/);
+  assert.doesNotMatch(homeSource, /from\('pre_tests'\)/);
+  assert.match(pretestSource, /pretest_score: result.preScore/);
+  assert.doesNotMatch(pretestSource, /if \(averageScore >=/);
 });
 
 test('stage map treats every tenth stage as a boss and stage 100 as Final Boss', () => {

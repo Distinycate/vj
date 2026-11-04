@@ -499,6 +499,9 @@ export default function Dashboard() {
   };
 
   const currentStage = progress?.current_stage || 1;
+  const completedPosttestCheckpoint = v3Progression.authority === 'V3'
+    ? Math.max(0, ...Array.from(v3Progression.completedStages.entries()).filter(([stage, details]) => stage % 10 === 0 && details.completed).map(([stage]) => stage))
+    : Math.floor((currentStage - 1) / 10) * 10;
   const currentRank = progress?.current_rank || 1;
   const rankConfig = ADAPTIVE_RANK_CONFIG[currentRank] || ADAPTIVE_RANK_CONFIG[1];
   const currentWorld = getWorldForStage(currentStage);
@@ -1028,13 +1031,13 @@ export default function Dashboard() {
               </div>
 
               {/* Post-Test CTA — shows when student has played enough stages */}
-              {currentStage >= 20 && !isExternalUser && (
+              {completedPosttestCheckpoint >= 10 && !isExternalUser && (
                 <div className="bg-gradient-to-tr from-indigo-950/60 to-slate-950 border border-indigo-500/20 rounded-3xl p-6 flex flex-col md:flex-row gap-5 justify-between items-center shadow-xl">
                   <div className="text-center md:text-left w-full md:w-auto">
                     <span className="text-xs bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full border border-indigo-500/20 font-bold uppercase tracking-widest">แบบทดสอบหลังเรียน</span>
-                    <h3 className="text-xl font-black text-white mt-3">📝 Post-Test พร้อมแล้ว!</h3>
+                    <h3 className="text-xl font-black text-white mt-3">📝 Post-Test หลังด่าน {completedPosttestCheckpoint}</h3>
                     <p className="text-slate-400 text-sm mt-1">
-                      ทำแบบทดสอบหลังเรียนเพื่อวัดพัฒนาการ เปรียบเทียบกับ Pre-test
+                      ทำแบบทดสอบเพื่อเปรียบเทียบกับ Pre-test ได้ตามสะดวก ไม่บังคับก่อนเล่นด่านถัดไป
                     </p>
                   </div>
                   <button 

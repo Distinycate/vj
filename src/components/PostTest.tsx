@@ -14,6 +14,8 @@ import {
   uniqueChoicesByText,
 } from '@/lib/quizUtils';
 import { calculateNormalizedGain } from '@/utils/analyticsUtils';
+import { useAssessmentSubmission } from '@/hooks/useAssessmentSubmission';
+import AssessmentSaveStatus from './AssessmentSaveStatus';
 
 const POSTTEST_REQUIRED_ROUNDS = 3;
 const POSTTEST_QUESTION_COUNT = 25;
@@ -33,6 +35,9 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [posttestCount, setPosttestCount] = useState(0);
   const [previousPosttests, setPreviousPosttests] = useState<any[]>([]);
+  const [epoch, setEpoch] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const submission = useAssessmentSubmission();
 
   function generateQuestion(correctWord: any, allVocab: any[]) {
     const distractors = filterDistractors({
@@ -63,6 +68,7 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
 
   const fetchPosttestData = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const isDemo = useDemoStore.getState().isDemoMode;
 
@@ -109,11 +115,12 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
       // --- REAL MODE: Use actual Supabase data ---
 
       // 1. Fetch completed post-test count
-      const { data: posttestHistory, count } = await supabase
-        .from('post_tests')
-        .select('*', { count: 'exact' })
-        .eq('student_id', student.id)
-        .order('created_at', { ascending: true });
+      const response = await fetch('/api/student/assessment', { cache: 'no-store' });
+      const state = await response.json();
+      if (!response.ok) throw new Error(state.error || 'โหลดสถานะข้อสอบไม่สำเร็จ');
+      setEpoch(state.epoch);
+      const posttestHistory = [...state.posttests].reverse();
+      const count = posttestHistory.length;
       
       setPosttestCount(count || 0);
       setPreviousPosttests(posttestHistory || []);
@@ -123,12 +130,13 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
       const currentStage = progress?.current_stage || 1;
       const maxStageToTest = Math.max(1, currentStage - 1); // Test up to stages they've completed
 
-      const { data: vocab } = await supabase
+      const { data: vocab, error: vocabError } = await supabase
         .from('vocabulary')
         .select('*')
         .eq('is_active', true)
         .lte('stage_number', maxStageToTest)
         .limit(200);
+      if (vocabError) throw vocabError;
         
       if (vocab && vocab.length > 0) {
         const shuffled = vocab
@@ -142,6 +150,7 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
       }
     } catch (e) {
       console.error(e);
+      setLoadError(e instanceof Error ? e.message : 'โหลดข้อสอบไม่สำเร็จ กรุณาลองใหม่');
     } finally {
       setLoading(false);
     }
@@ -152,6 +161,7 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
   }, [student.id]);
 
   const handleAnswer = (choice: QuizChoice) => {
+    if (submission.saving || submission.error || isFinished) return;
     const currentQuestion = questions[currentIndex];
     const isCorrect =
       choice.is_correct === true &&
@@ -166,7 +176,6 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
   };
 
   const finishTest = async (finalScore: number) => {
-    setIsFinished(true);
     const duration = Math.round((Date.now() - startTime) / 1000);
 
     const allScores = [
@@ -179,6 +188,7 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
     );
 
     if (useDemoStore.getState().isDemoMode) {
+      setIsFinished(true);
       // Demo mode: just update local state
       setProgress({
         ...progress,
@@ -188,35 +198,20 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
       return;
     }
 
-    try {
-      await fetch('/api/student/assessment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'POST_TEST',
-          score: finalScore,
-          totalQuestions: questions.length,
-          timeSpentSec: duration,
-        }),
-      });
-
-      const newCount = posttestCount + 1;
-      const posttestScoreNormalized = finalScore;
-
-      if (newCount >= POSTTEST_REQUIRED_ROUNDS) {
-
-        setProgress({
-          ...progress,
-          posttest_score: posttestScoreNormalized,
-          posttest_date: new Date().toISOString(),
-        });
-      }
-    } catch (err) {
-      console.error('Error saving post-test results:', err);
-    }
+    const result = await submission.submit({ type: 'POST_TEST', score: finalScore,
+      totalQuestions: questions.length, timeSpentSec: duration, epoch });
+    if (result) acceptSavedResult(result);
   };
 
+  const acceptSavedResult = (result: any) => {
+    setIsFinished(true);
+    setProgress({ ...progress, pretest_score: result.preScore,
+      posttest_score: result.postScore, posttest_date: new Date().toISOString() });
+  };
+  const retrySave = async () => { const result = await submission.submit(); if (result) acceptSavedResult(result); };
+
   const handleNextAttempt = () => {
+    submission.reset();
     setCurrentIndex(0);
     setScore(0);
     setIsFinished(false);
@@ -242,6 +237,9 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
       </div>
     );
   }
+
+  if (loadError || (!loading && questions.length === 0)) return <AssessmentSaveStatus mode="load" saving={false} error={loadError || 'ยังไม่มีข้อสอบที่พร้อมใช้งาน กรุณาแจ้งครู'} reloadRequired={false} onRetry={fetchPosttestData} />;
+  if (submission.saving || submission.error) return <AssessmentSaveStatus {...submission} onRetry={retrySave} />;
 
   if (isFinished) {
     const currentAttemptNum = posttestCount + 1;

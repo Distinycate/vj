@@ -6,6 +6,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { useDemoStore } from '@/store/useDemoStore';
 import { Volume2 } from 'lucide-react';
 import { playWordAudio } from '@/utils/audio';
+import { useAssessmentSubmission } from '@/hooks/useAssessmentSubmission';
+import AssessmentSaveStatus from './AssessmentSaveStatus';
 import {
   filterDistractors,
   getVocabularyField,
@@ -30,6 +32,11 @@ export default function PreTest({
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [pretestCount, setPretestCount] = useState(0);
   const [previousPretests, setPreviousPretests] = useState<any[]>([]);
+  const [epoch, setEpoch] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [savedCount, setSavedCount] = useState<number | null>(null);
+  const submission = useAssessmentSubmission();
+  const requiredRounds = student?.user_type === 'EXTERNAL' ? 1 : 5;
 
   function generateQuestion(correctWord: any, allVocab: any[]) {
     const distractors = filterDistractors({
@@ -60,6 +67,7 @@ export default function PreTest({
 
   const fetchPretestData = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const isDemo = useDemoStore.getState().isDemoMode;
 
@@ -103,22 +111,29 @@ export default function PreTest({
         return;
       }
 
-      // 1. Fetch completed pretest count (real students only)
-      const { data: pretestHistory, count } = await supabase
-        .from('pre_tests')
-        .select('*', { count: 'exact' })
-        .eq('student_id', student.id)
-        .order('created_at', { ascending: true });
+      // History and vocabulary are independent and can load together.
+      const [historyResult, vocabularyResult] = await Promise.all([
+        fetch('/api/student/assessment', { cache: 'no-store' }).then(async response => {
+          const state = await response.json();
+          if (!response.ok) throw new Error(state.error || 'โหลดสถานะข้อสอบไม่สำเร็จ');
+          return state;
+        }),
+        supabase.from('vocabulary').select('*').eq('is_active', true).limit(150),
+      ]);
+      if (vocabularyResult.error) throw vocabularyResult.error;
+      const pretestHistory = [...historyResult.pretests].reverse();
+      const count = historyResult.summary.count;
+      setEpoch(historyResult.epoch);
+      if (historyResult.summary.completed) {
+        setProgress(historyResult.progress);
+        setScreen('dashboard');
+        return;
+      }
       
       setPretestCount(count || 0);
       setPreviousPretests(pretestHistory || []);
 
-      // 2. Fetch 25 random vocabulary words from Supabase
-      const { data: vocab } = await supabase
-        .from('vocabulary')
-        .select('*')
-        .eq('is_active', true)
-        .limit(150);
+      const { data: vocab } = vocabularyResult;
         
       if (vocab && vocab.length > 0) {
          const shuffled = vocab.sort(() => 0.5 - Math.random()).slice(0, vocab.length > 25 ? 25 : vocab.length);
@@ -130,6 +145,7 @@ export default function PreTest({
       }
     } catch (e) {
       console.error(e);
+      setLoadError(e instanceof Error ? e.message : 'โหลดข้อสอบไม่สำเร็จ กรุณาลองใหม่');
     } finally {
       setLoading(false);
     }
@@ -140,6 +156,7 @@ export default function PreTest({
   }, [student.id]);
 
   const handleAnswer = (choice: QuizChoice) => {
+    if (submission.saving || submission.error || isFinished) return;
     const currentQuestion = questions[currentIndex];
     const isCorrect =
       choice.is_correct === true &&
@@ -154,7 +171,6 @@ export default function PreTest({
   };
 
   const finishTest = async (finalScore: number) => {
-    setIsFinished(true);
     const duration = Math.round((Date.now() - startTime) / 1000);
 
     const allScores = [
@@ -166,16 +182,13 @@ export default function PreTest({
       allScores.length
     );
 
-    // Calculate Rank from the average of all completed pre-test attempts.
-    let newRank = 1;
-    if (averageScore >= 6) newRank = 2;
-    if (averageScore >= 11) newRank = 3;
-    if (averageScore >= 16) newRank = 4;
-    if (averageScore >= 21) newRank = 5;
+    // Assessment scores measure the baseline; they do not determine rank.
+    const newRank = progress?.current_rank || 1;
 
     const newStage = 1; // All students start at Stage 1 in Adaptive Difficulty model!
 
     if (useDemoStore.getState().isDemoMode) {
+      setIsFinished(true);
       const newCount = pretestCount + 1;
       
       // Update Demo state
@@ -197,38 +210,22 @@ export default function PreTest({
       return;
     }
 
-    try {
-      // 1. Submit pre-test via secure server assessment endpoint
-      const assessRes = await fetch('/api/student/assessment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'PRE_TEST',
-          score: finalScore,
-          totalQuestions: questions.length,
-          timeSpentSec: duration,
-        }),
-      });
-
-      const assessJson = await assessRes.json();
-      const newCount = assessJson.count ?? (pretestCount + 1);
-
-      if (newCount >= 5) {
-        setProgress({
-          ...progress,
-          initial_rank: newRank,
-          current_rank: newRank,
-          current_stage: newStage,
-          pretest_score: averageScore,
-          pretest_date: new Date().toISOString()
-        });
-      }
-    } catch (err) {
-      console.error('Error saving pre-test results:', err);
-    }
+    const result = await submission.submit({ type: 'PRE_TEST', score: finalScore,
+      totalQuestions: questions.length, timeSpentSec: duration, epoch });
+    if (result) acceptSavedResult(result);
   };
 
+  const acceptSavedResult = (result: any) => {
+    setSavedCount(result.count);
+    setIsFinished(true);
+    setProgress({ ...progress, current_stage: result.newStage,
+      pretest_score: result.preScore, pretest_date: result.completedAll ? new Date().toISOString() : null });
+  };
+  const retrySave = async () => { const result = await submission.submit(); if (result) acceptSavedResult(result); };
+
   const handleNextAttempt = () => {
+    submission.reset();
+    setSavedCount(null);
     setCurrentIndex(0);
     setScore(0);
     setIsFinished(false);
@@ -261,9 +258,12 @@ export default function PreTest({
     );
   }
 
+  if (loadError || (!loading && questions.length === 0)) return <AssessmentSaveStatus mode="load" saving={false} error={loadError || 'ยังไม่มีข้อสอบที่พร้อมใช้งาน กรุณาแจ้งครู'} reloadRequired={false} onRetry={fetchPretestData} />;
+  if (submission.saving || submission.error) return <AssessmentSaveStatus {...submission} onRetry={retrySave} />;
+
   if (isFinished) {
-    const currentAttemptNum = pretestCount + 1;
-    const isAllCompleted = currentAttemptNum >= 5;
+    const currentAttemptNum = savedCount ?? pretestCount + 1;
+    const isAllCompleted = currentAttemptNum >= requiredRounds;
 
     return (
       <div data-demo-guide="pretest-result" className="min-h-screen bg-slate-950 flex justify-center items-center p-4">
@@ -300,7 +300,7 @@ export default function PreTest({
                 ✅ ประเมินครบ 5 ครั้งเรียบร้อย!
               </p>
               <p className="text-slate-400 text-xs leading-relaxed">
-                ระบบได้วิเคราะห์ผลประเมินเฉลี่ยและทำการปลดล็อกเส้นทางการเรียนรู้ตาม Rank ของนักเรียนเป็นที่เรียบร้อยแล้ว กดเข้าสู่ Dashboard ด้านล่างเพื่อไปเล่น Camp ได้เลย!
+                บันทึกคะแนนเพื่อใช้เปรียบเทียบความก้าวหน้าแล้ว กดเข้าสู่ Dashboard เพื่อเริ่มเรียนรู้ได้เลย
               </p>
             </div>
           )}

@@ -43,6 +43,11 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
       setLoading(true);
       setLoadError('');
 
+      // Independent student queries start immediately; do not wait for the class roster.
+      const studentAttemptsPromise = getAdminStudentAttempts(student.id).then(data => ({ data, error: null })).catch(error => ({ data: [], error }));
+      const studentWrongPromise = getAdminStudentWrongWords(student.id).then(data => ({ data, error: null })).catch(error => ({ data: [], error }));
+      const studentTestsPromise = getAdminStudentTests(student.id).then(data => ({ data, error: null })).catch(error => ({ data: { pre: 0, post: 0 }, error }));
+
       try {
         let studentProfile = student;
         const profileRes = await fetch(`/api/student/profile?studentId=${student.id}`);
@@ -62,7 +67,7 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
         let classStudentIds: string[] = [];
         if (classroomId) {
           try {
-            const classRes = await fetch(`/api/admin/students?classroomId=${classroomId}`);
+            const classRes = await fetch(`/api/admin/students?fields=roster_count&classroomId=${encodeURIComponent(classroomId)}`);
             if (classRes.ok) {
               const classJson = await classRes.json();
               classStudentIds = (classJson.students || []).map((item: any) => item.id);
@@ -73,25 +78,19 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
         }
 
         const [attemptResult, classAttemptResult, wrongResult, classWrongResult, testsResult] = await Promise.all([
-          getAdminStudentAttempts(student.id)
-            .then(data => ({ data, error: null }))
-            .catch(error => ({ data: [], error })),
+          studentAttemptsPromise,
           classStudentIds.length
             ? getAdminClassAttempts(classStudentIds)
                 .then(data => ({ data, error: null }))
                 .catch(error => ({ data: [], error }))
             : Promise.resolve({ data: [], error: null }),
-          getAdminStudentWrongWords(student.id)
-            .then(data => ({ data, error: null }))
-            .catch(error => ({ data: [], error })),
+          studentWrongPromise,
           classStudentIds.length
             ? getAdminClassWrongWords(classStudentIds)
                 .then(data => ({ data, error: null }))
                 .catch(error => ({ data: [], error }))
             : Promise.resolve({ data: [], error: null }),
-          getAdminStudentTests(student.id)
-            .then(data => ({ data, error: null }))
-            .catch(error => ({ data: { pre: 0, post: 0 }, error })),
+          studentTestsPromise,
         ]);
 
         setProfile(studentProfile);
@@ -100,9 +99,13 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
         setWrongWords(wrongResult.data || []);
         setClassWrongWords(classWrongResult.data || []);
         setAssessmentCounts(testsResult.data || { pre: 0, post: 0 });
+        if ([attemptResult, classAttemptResult, wrongResult, classWrongResult, testsResult].some(result => result.error)) {
+          setLoadError('ข้อมูลบางรายการโหลดไม่สำเร็จ กรุณาลองเปิดข้อมูลอีกครั้ง');
+        }
       } catch (err: any) {
         console.error('Failed to load student details:', err);
         setProfile(student);
+        setLoadError('โหลดรายละเอียดไม่สำเร็จ กรุณาลองเปิดข้อมูลอีกครั้ง');
       } finally {
         setLoading(false);
       }
@@ -125,18 +128,19 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
     };
   }, [attempts, wrongWords]);
 
-  const progressData = useMemo(() => attempts.slice(-25).map((attempt, index) => ({
+  const progressData = useMemo(() => {
+    const classTotal = classAttempts.reduce((sum, row) => sum + Number(row.total_questions || 0), 0);
+    const classCorrect = classAttempts.reduce((sum, row) => sum + Number(row.score || 0), 0);
+    const classAverage = classTotal > 0 ? Math.round((classCorrect / classTotal) * 100) : 0;
+    return attempts.slice(-25).map((attempt, index) => ({
     label: `ครั้ง ${Math.max(1, attempts.length - Math.min(25, attempts.length) + index + 1)}`,
     stage: relationObject(attempt.stages)?.stage_number || '-',
     accuracy: Number(attempt.total_questions) > 0
       ? Math.round((Number(attempt.score) / Number(attempt.total_questions)) * 100)
       : 0,
-    classAverage: (() => {
-      const total = classAttempts.reduce((sum, row) => sum + Number(row.total_questions || 0), 0);
-      const correct = classAttempts.reduce((sum, row) => sum + Number(row.score || 0), 0);
-      return total > 0 ? Math.round((correct / total) * 100) : 0;
-    })(),
-  })), [attempts, classAttempts]);
+    classAverage,
+  }));
+  }, [attempts, classAttempts]);
 
   const errorPatternData = useMemo(() => {
     const studentMap: Record<string, number> = {};
@@ -188,7 +192,7 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition">
+          <button onClick={onClose} aria-label="ปิดข้อมูลนักเรียน" className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition">
             <X className="w-5 h-5" />
           </button>
         </div>

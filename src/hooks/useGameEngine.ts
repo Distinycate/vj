@@ -246,9 +246,19 @@ export function useGameEngine(): UseGameEngineReturn {
             setLoading(false);
             return;
           }
+        } else {
+          const errData = await startRes.json().catch(() => ({}));
+          setLoadError(errData.error || 'ไม่สามารถเริ่มด่านได้ กรุณาลองใหม่อีกครั้ง');
+          setLoading(false);
+          return;
         }
       } catch (e) {
-        console.warn('Server attempt initiation error, using fallback:', e);
+        console.warn('Server attempt initiation error:', e);
+        if (!useDemoStore.getState().isDemoMode) {
+          setLoadError('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง');
+          setLoading(false);
+          return;
+        }
       }
 
       let generatedQuestions: any[] = [];
