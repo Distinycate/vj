@@ -1,0 +1,101 @@
+import { NextResponse } from 'next/server';
+import { requireRole } from '@/lib/server/session';
+import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
+import { assertSameOrigin } from '@/lib/server/security';
+import { NATIONAL_BENCHMARKS } from '@/data/onet/onetData';
+
+export async function GET(request: Request) {
+  try {
+    assertSameOrigin(request);
+    await requireRole(['ADMIN', 'TEACHER']);
+
+    // 1. Fetch internal students
+    const { data: students, error: sErr } = await supabaseAdmin
+      .from('students')
+      .select('id, student_id, student_name, grade_level, room_number, academic_year, is_skull')
+      .eq('user_type', 'INTERNAL')
+      .order('student_id', { ascending: true });
+
+    if (sErr) {
+      console.error('Failed to fetch students for ONET admin:', sErr);
+      return NextResponse.json({ error: 'Failed to fetch students' }, { status: 500 });
+    }
+
+    // 2. Fetch all ONET transactions from economy_transactions
+    const { data: txs, error: txErr } = await supabaseAdmin
+      .from('economy_transactions')
+      .select('student_id, metadata, created_at')
+      .eq('source', 'onet_challenge')
+      .order('created_at', { ascending: false });
+
+    if (txErr) {
+      console.error('Failed to fetch ONET transactions:', txErr);
+      return NextResponse.json({ error: 'Failed to fetch ONET records' }, { status: 500 });
+    }
+
+    // Map latest submission per student per year
+    // Key: `${student_id}_${year}`
+    const submissionsMap: Record<string, any> = {};
+
+    (txs || []).forEach((tx) => {
+      const meta = tx.metadata || {};
+      const year = meta.year;
+      if (!year || !tx.student_id) return;
+
+      const key = `${tx.student_id}_${year}`;
+      // Since ordered by created_at DESC, first seen is latest
+      if (!submissionsMap[key]) {
+        submissionsMap[key] = {
+          studentId: tx.student_id,
+          year: Number(year),
+          score100: Number(meta.score100 ?? 0),
+          correctCount: Number(meta.correctCount ?? 0),
+          totalQuestions: Number(meta.totalQuestions ?? 32),
+          stars: Number(meta.stars ?? 0),
+          isPassed: Boolean(meta.isPassed),
+          durationSeconds: Number(meta.durationSeconds ?? 0),
+          completedAt: tx.created_at,
+        };
+      }
+    });
+
+    // Format classrooms
+    const classroomsSet = new Set<string>();
+    const formattedStudents = (students || []).map((s) => {
+      let roomLabel = 'ไม่ระบุห้อง';
+      if (s.grade_level && s.room_number) {
+        roomLabel = `ม.${s.grade_level}/${s.room_number}`;
+        classroomsSet.add(roomLabel);
+      } else if (s.academic_year) {
+        roomLabel = `ม.3/1`; // default fallback
+        classroomsSet.add(roomLabel);
+      }
+
+      return {
+        id: s.id,
+        studentId: s.student_id,
+        name: s.student_name,
+        gradeLevel: s.grade_level,
+        roomNumber: s.room_number,
+        classroom: roomLabel,
+        isSkull: Boolean(s.is_skull),
+      };
+    });
+
+    const classrooms = Array.from(classroomsSet).sort();
+
+    return NextResponse.json({
+      success: true,
+      classrooms,
+      students: formattedStudents,
+      submissions: submissionsMap,
+      benchmarks: NATIONAL_BENCHMARKS,
+    });
+  } catch (error: any) {
+    if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error?.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    console.error('Admin ONET API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+

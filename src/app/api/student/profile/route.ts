@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { requireSession } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: Request) {
   try {
     const session = await requireSession();
@@ -30,7 +33,7 @@ export async function GET(request: Request) {
     ] = await Promise.all([
       supabaseAdmin
         .from('students')
-        .select('id, student_name, username, classroom_id, user_type, school_name, is_active, is_verified, classrooms(class_name)')
+        .select('id, student_name, username, classroom_id, user_type, school_name, is_active, is_verified, is_skull, classrooms(class_name)')
         .eq('id', targetStudentId)
         .maybeSingle(),
       supabaseAdmin
@@ -85,21 +88,24 @@ export async function GET(request: Request) {
     const reviewedCount = reviewWords?.length || 0;
     const newCount = Math.max(0, totalUniverse - reviewedCount);
 
-    return NextResponse.json({
-      success: true,
-      student,
-      learningPath: learningPath || null,
-      analyticsSummary: analyticsSummary || null,
-      wrongWords: wrongWords || [],
-      masteryBreakdown: {
-        totalUniverse,
-        newCount,
-        learningCount,
-        familiarCount,
-        masteredCount,
-        dueReviewCount,
+    return NextResponse.json(
+      {
+        success: true,
+        student,
+        learningPath: learningPath || null,
+        analyticsSummary: analyticsSummary || null,
+        wrongWords: wrongWords || [],
+        masteryBreakdown: {
+          totalUniverse,
+          newCount,
+          learningCount,
+          familiarCount,
+          masteredCount,
+          dueReviewCount,
+        },
       },
-    });
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    );
   } catch (error: any) {
     if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (error?.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

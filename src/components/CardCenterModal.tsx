@@ -230,7 +230,20 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
       setLatestPull(result.card);
       setLatestPullWasPity(Boolean(result.is_pity));
       if (result.card.card_code === 'DEMON_TEACHER') {
-        setMessage('😱 โดนคำสาปครูปีศาจ! การ์ดในคลังของคุณถูกทำลายแบบสุ่ม 10 ใบ!');
+        try {
+          const curseRes = await fetch('/api/student/cards', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'use_card',
+              cardId: result.card.id,
+            }),
+          });
+          const curseData = await curseRes.json();
+          setMessage(curseData.message || '😱 โดนคำสาปครูปีศาจ! การ์ดในคลังถูกทำลาย 10 ใบ และการ์ดครูปีศาจสลายตัวทันที!');
+        } catch {
+          setMessage('😱 โดนคำสาปครูปีศาจ!');
+        }
       }
       setProgress({
         ...progress,
@@ -574,7 +587,7 @@ export default function CardCenterModal({ onClose }: CardCenterModalProps) {
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {inventory.map((row) => {
                     const available = row.quantity - row.reserved_quantity;
-                    const canStart = row.cards.effect_type !== 'DUD';
+                    const canStart = row.cards.effect_type !== 'DUD' || row.cards.card_code === 'DEMON_TEACHER';
                     return (
                       <button
                         key={row.id}

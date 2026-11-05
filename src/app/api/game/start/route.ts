@@ -72,6 +72,7 @@ export async function POST(request: Request) {
       stageWordsRes,
       userReviewRes,
       allVocabRes,
+      studentRes,
     ] = await Promise.all([
       !isExternalStudent
         ? supabaseAdmin.from('pre_tests').select('id', { count: 'exact', head: true }).eq('student_id', session.subjectId)
@@ -100,6 +101,11 @@ export async function POST(request: Request) {
             .eq('is_active', true)
             .limit(100)
         : Promise.resolve({ data: null }),
+      supabaseAdmin
+        .from('students')
+        .select('is_skull')
+        .eq('id', session.subjectId)
+        .maybeSingle(),
     ]);
 
     // Stale tabs cannot bypass the new campaign's baseline assessment.
@@ -279,8 +285,15 @@ export async function POST(request: Request) {
           ? target.meaning
           : (target.meaning_th || target.meaning || '');
       
-      // For EXTERNAL students (VJ Network Lite), enforce Skull Mode: 100% Multiple Choice only (no FILL_BLANK/spelling)
-      const qPattern = isExternalStudent ? (i % 2) : (i % 3);
+      const isSkullStudent = Boolean(studentRes?.data?.is_skull);
+      // For EXTERNAL students (VJ Network Lite) or Skull Mode students (เด็กพิเศษ), enforce 100% Multiple Choice only (no FILL_BLANK/spelling)
+      const basePattern = isExternalStudent ? (i % 2) : (i % 3);
+      const forceMultipleChoice = isExternalStudent || isSkullStudent || missionLevel === 1;
+      const qPattern = forceMultipleChoice
+        ? (i % 2)
+        : (missionLevel === 3 && i % 2 === 1)
+          ? 2
+          : basePattern;
 
       if (qPattern === 2) {
         // 1. FILL_BLANK (ข้อเขียน / พิมพ์สะกดคำ) - INTERNAL Full Mode only
@@ -437,12 +450,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to start stage attempt' }, { status: 500 });
     }
 
+    const timeLimit = missionLevel === 3 ? 15 : missionLevel === 2 ? 20 : 25;
+
     return NextResponse.json({
       success: true,
       attemptId: attempt.id,
       stageNumber,
       stageType,
       missionLevel,
+      timeLimit,
       isBossMode,
       questions: clientQuestions,
     });

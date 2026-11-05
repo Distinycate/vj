@@ -118,7 +118,7 @@ export default function PreTest({
           if (!response.ok) throw new Error(state.error || 'โหลดสถานะข้อสอบไม่สำเร็จ');
           return state;
         }),
-        supabase.from('vocabulary').select('*').eq('is_active', true).limit(150),
+        supabase.from('vocabulary').select('id, word, meaning, meaning_th').eq('is_active', true).limit(100),
       ]);
       if (vocabularyResult.error) throw vocabularyResult.error;
       const pretestHistory = [...historyResult.pretests].reverse();

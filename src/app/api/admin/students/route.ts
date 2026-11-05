@@ -4,6 +4,9 @@ import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
 import { enrichStudentsWithLiveMetrics } from '@/lib/server/adminAnalyticsEnricher';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: Request) {
   try {
     await requireInternalTeacherRole(['ADMIN', 'TEACHER', 'CARD_TEACHER', 'EXECUTIVE']);
@@ -103,7 +106,10 @@ export async function GET(request: Request) {
 
     const enriched = await enrichStudentsWithLiveMetrics(sanitized);
 
-    return NextResponse.json({ success: true, students: enriched });
+    return NextResponse.json(
+      { success: true, students: enriched },
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    );
   } catch (error: any) {
     if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (error?.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -122,15 +128,15 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Missing studentId' }, { status: 400 });
     }
 
-    const { studentId, ...updates } = body;
-    // Disallow password updates or role escalations through this endpoint
-    delete updates.password;
-    delete updates.role;
+    const updateFields = body.updates && typeof body.updates === 'object' ? { ...body.updates } : { ...body };
+    delete updateFields.studentId;
+    delete updateFields.password;
+    delete updateFields.role;
 
     const { data, error } = await supabaseAdmin
       .from('students')
-      .update(updates)
-      .eq('id', studentId)
+      .update(updateFields)
+      .eq('id', body.studentId)
       .select('*')
       .single();
 

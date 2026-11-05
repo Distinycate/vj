@@ -43,7 +43,7 @@ function getRareCardStatus(inventory: any) {
 import { getMockQuests } from '@/utils/questUtils';
 
 export default function Dashboard() {
-  const { student, progress, logout, setScreen, setProgress, setStudiedCurrentStage, setMissionLevel, setSelectedStageNumber } = useAppStore();
+  const { student, progress, logout, setScreen, setProgress, setStudiedCurrentStage, missionLevel, setMissionLevel, setSelectedStageNumber } = useAppStore();
   const [reviewWords, setReviewWords] = useState<any[]>([]);
   const [wordCollection, setWordCollection] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({ xp: 0, level: 1 });
@@ -705,12 +705,20 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2">
             {!isExternalUser && (
-              <Link 
-                href="/events" 
-                className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm font-bold"
-              >
-                ⭐ กิจกรรมซ่อมเสริม / Events
-              </Link>
+              <>
+                <Link 
+                  href="/challenge/onet" 
+                  className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-cyan-300 hover:text-cyan-200 bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm font-bold"
+                >
+                  🎯 O-NET Challenge
+                </Link>
+                <Link 
+                  href="/events" 
+                  className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm font-bold"
+                >
+                  ⭐ กิจกรรมซ่อมเสริม / Events
+                </Link>
+              </>
             )}
             <button onClick={handleManualRefresh} className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm">
               <RefreshCw className="w-3 h-3" /> รีเฟรชข้อมูล
@@ -937,7 +945,8 @@ export default function Dashboard() {
 
                               const handleStageClick = () => {
                                 if (!canPlayStage) return;
-                                setMissionLevel(1);
+                                const chosenLevel = missionLevel || 1;
+                                setMissionLevel(chosenLevel);
                                 // Set boss mode for boss stages (5, 10, 15, 20, ... 100)
                                 const shouldBeBoss = stageNum % 5 === 0;
                                 useAppStore.getState().setBossMode(shouldBeBoss);
@@ -1009,10 +1018,51 @@ export default function Dashboard() {
               {/* Start Game section */}
               <div className="bg-gradient-to-tr from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 flex flex-col md:flex-row gap-5 justify-between items-center shadow-xl">
                 <div className="text-center md:text-left w-full md:w-auto">
-                  <span className="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 font-bold uppercase tracking-widest">ความก้าวหน้าปัจจุบัน</span>
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                    <span className="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 font-bold uppercase tracking-widest">ความก้าวหน้าปัจจุบัน</span>
+                    {/* Compact Difficulty Tier Selector */}
+                    <div className="inline-flex items-center gap-1 p-1 bg-slate-950/80 rounded-xl border border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setMissionLevel(1)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all ${
+                          (missionLevel || 1) === 1
+                            ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                        title="ระดับ 1: ปรนัย 4 ตัวเลือก (25 วิ/ข้อ)"
+                      >
+                        ⭐ ง่าย
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMissionLevel(2)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all ${
+                          missionLevel === 2
+                            ? 'bg-amber-400 text-slate-950 shadow-sm'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                        title="ระดับ 2: ปรนัยความเร็ว (20 วิ/ข้อ)"
+                      >
+                        ⭐⭐ ปกติ
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMissionLevel(3)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all ${
+                          missionLevel === 3
+                            ? 'bg-rose-500 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                        title="ระดับ 3: มีพิมพ์สะกดคำ (15 วิ/ข้อ)"
+                      >
+                        ⭐⭐⭐ ท้าทาย
+                      </button>
+                    </div>
+                  </div>
                   <h3 className="text-2xl font-black text-white mt-3">ด่านผจญภัยที่ {currentStage} / 100</h3>
                   <p className="text-slate-400 text-sm mt-1">
-                    ธีมปัจจุบัน: <strong className="text-white">{currentWorld.title}</strong> • การตั้งค่า: 10 ข้อ • เวลา {rankConfig.timeLimit} วินาที
+                    ธีมปัจจุบัน: <strong className="text-white">{currentWorld.title}</strong> • โหมด: <span className="text-emerald-400 font-bold">{(missionLevel || 1) === 1 ? '⭐ ง่าย (ปรนัย 25s)' : missionLevel === 2 ? '⭐⭐ ปกติ (20s)' : '⭐⭐⭐ ท้าทาย (พิมพ์สะกด 15s)'}</span>
                   </p>
                 </div>
                 
@@ -1025,7 +1075,8 @@ export default function Dashboard() {
                   </button>
                   <button 
                     onClick={() => {
-                      setMissionLevel(1);
+                      const chosenLevel = missionLevel || 1;
+                      setMissionLevel(chosenLevel);
                       setSelectedStageNumber(currentStage);
                       setScreen('game');
                     }}

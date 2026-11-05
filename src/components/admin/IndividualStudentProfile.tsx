@@ -50,7 +50,7 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
 
       try {
         let studentProfile = student;
-        const profileRes = await fetch(`/api/student/profile?studentId=${student.id}`);
+        const profileRes = await fetch(`/api/student/profile?studentId=${student.id}`, { cache: 'no-store' });
         if (profileRes.ok) {
           const profileData = await profileRes.json();
           if (profileData.student) {
@@ -115,6 +115,29 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
     }
     loadProfile();
   }, [student?.id]);
+
+  const [updatingSkull, setUpdatingSkull] = useState(false);
+
+  const toggleSkullMode = async () => {
+    const isCurrentlySkull = Boolean(profile?.is_skull ?? student.is_skull);
+    const nextVal = !isCurrentlySkull;
+    setUpdatingSkull(true);
+    try {
+      const res = await fetch('/api/admin/students', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId: student.id, updates: { is_skull: nextVal } }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update skull mode');
+      setProfile((prev: any) => ({ ...prev, is_skull: nextVal }));
+      alert(`${nextVal ? '💀 เปิดโหมดหัวกะโหลก (เด็กพิเศษ: ข้อสอบปรนัยล้วน 100%)' : 'ปิดโหมดเด็กพิเศษ'} เรียบร้อยแล้ว`);
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการเปลี่ยนโหมดเด็กพิเศษ');
+    } finally {
+      setUpdatingSkull(false);
+    }
+  };
 
   const metrics = useMemo(() => {
     const totalQuestions = attempts.reduce((sum, attempt) => sum + Number(attempt.total_questions || 0), 0);
@@ -184,11 +207,25 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
               <User className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-xl sm:text-2xl font-black text-white">{profile?.student_name || student.student_name}</h2>
                 <span className="text-[11px] bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full font-bold">
                   {classroom?.class_name || student.classroom?.class_name || 'ห้องเรียน'}
                 </span>
+                <button
+                  type="button"
+                  onClick={toggleSkullMode}
+                  disabled={updatingSkull}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 shadow-sm ${
+                    Boolean(profile?.is_skull ?? student.is_skull)
+                      ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/40'
+                      : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border-slate-700'
+                  }`}
+                  title="รหัสหัวกะโหลก: บังคับข้อสอบเป็นปรนัยเลือกตอบ 100% (ไม่มีข้อเขียนสะกดคำ) สำหรับเด็กพิเศษ"
+                >
+                  <span>💀</span>
+                  <span>{Boolean(profile?.is_skull ?? student.is_skull) ? 'โหมดเด็กพิเศษ (เปิดอยู่)' : 'ตั้งเป็นเด็กพิเศษ (Skull)'}</span>
+                </button>
               </div>
               <p className="text-xs text-slate-400 mt-1 font-mono">
                 รหัส: {profile?.student_id || student.student_id} • บัญชี: {profile?.username || student.username}

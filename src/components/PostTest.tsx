@@ -132,10 +132,10 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
 
       const { data: vocab, error: vocabError } = await supabase
         .from('vocabulary')
-        .select('*')
+        .select('id, word, meaning, meaning_th')
         .eq('is_active', true)
         .lte('stage_number', maxStageToTest)
-        .limit(200);
+        .limit(100);
       if (vocabError) throw vocabError;
         
       if (vocab && vocab.length > 0) {

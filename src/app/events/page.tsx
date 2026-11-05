@@ -200,6 +200,30 @@ export default function EventsPage() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* O-NET Challenge Card */}
+            <div className="bg-slate-900/60 rounded-2xl overflow-hidden border border-indigo-500/40 shadow-xl transition-transform hover:-translate-y-1">
+              <div className="h-28 bg-gradient-to-r from-indigo-950 via-slate-900 to-cyan-950 flex items-center justify-between p-5 relative border-b border-indigo-500/30">
+                <div>
+                  <span className="text-xs font-bold text-cyan-300 block">🎯 National Examination</span>
+                  <h3 className="text-lg font-black text-white drop-shadow-md">O-NET English Challenge (10 ปี)</h3>
+                </div>
+                <div className="text-3xl">📚</div>
+              </div>
+              <div className="p-5">
+                <p className="text-slate-400 text-xs mb-4 line-clamp-2">
+                  ฝึกทำข้อสอบ O-NET ภาษาอังกฤษ ม.3 ย้อนหลัง 10 ปี (2559 - 2568) พร้อมกระดาษคำตอบดิจิทัลและตรวจคะแนนอัตโนมัติ
+                </p>
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-black text-cyan-400">🔥 พร้อมทดสอบปี 2568</span>
+                  <Link 
+                    href="/challenge/onet"
+                    className="px-5 py-2 rounded-xl text-xs font-black transition-colors bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 shadow-md inline-flex items-center gap-1.5"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" /> เข้าร่วมชาเล้นจ์
+                  </Link>
+                </div>
+              </div>
+            </div>
             {legacyEvents.map(event => (
               <div key={event.slug} className="bg-slate-900/60 rounded-2xl overflow-hidden border border-slate-800 shadow-xl transition-transform hover:-translate-y-1">
                 <div className="h-28 bg-gradient-to-r from-indigo-950 to-purple-950 flex items-center justify-between p-5 relative border-b border-slate-800">

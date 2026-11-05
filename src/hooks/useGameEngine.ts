@@ -75,6 +75,7 @@ export function useGameEngine(): UseGameEngineReturn {
   const answersRecordRef = useRef<Array<{ wordId: string; answer: string; responseTime: number }>>([]);
   const [stageAttemptId, setStageAttemptId] = useState<string | null>(null);
   const stageAttemptIdRef = useRef<string | null>(null);
+  const isSubmittingRef = useRef(false);
   
   // Game Play States
   const [score, setScore] = useState(0);
@@ -252,6 +253,19 @@ export function useGameEngine(): UseGameEngineReturn {
           if (startData.success && Array.isArray(startData.questions) && startData.questions.length > 0) {
             stageAttemptIdRef.current = startData.attemptId;
             setStageAttemptId(startData.attemptId);
+            if (typeof window !== 'undefined' && startData.attemptId) {
+              try {
+                sessionStorage.setItem('vj_active_attempt_id', startData.attemptId);
+                sessionStorage.setItem('vj_active_stage', String(stageNum));
+              } catch (_) {}
+            }
+            if (startData.timeLimit) {
+              setTimeLeft(startData.timeLimit);
+              setDifficultyConfig((prev: any) => ({
+                ...(prev || {}),
+                timeLimit: startData.timeLimit,
+              }));
+            }
             setWords(startData.questions);
             setLoading(false);
             return;
@@ -636,9 +650,16 @@ export function useGameEngine(): UseGameEngineReturn {
       return;
     }
 
-    const activeAttemptId = stageAttemptIdRef.current || stageAttemptId;
+    let activeAttemptId = stageAttemptIdRef.current || stageAttemptId;
+    if (!activeAttemptId && typeof window !== 'undefined') {
+      try {
+        activeAttemptId = sessionStorage.getItem('vj_active_attempt_id');
+      } catch (_) {}
+    }
 
     if (activeAttemptId) {
+      if (isSubmittingRef.current) return;
+      isSubmittingRef.current = true;
       try {
         const compRes = await fetch('/api/game/complete', {
           method: 'POST',
@@ -652,6 +673,13 @@ export function useGameEngine(): UseGameEngineReturn {
         if (compRes.ok) {
           const compData = await compRes.json();
           if (compData.success) {
+            if (typeof window !== 'undefined') {
+              try {
+                sessionStorage.removeItem('vj_active_attempt_id');
+                sessionStorage.removeItem('vj_active_stage');
+              } catch (_) {}
+            }
+            isSubmittingRef.current = false;
             setPassReport({
               earnedCoins: compData.earnedCoins,
               earnedExp: compData.earnedExp,
@@ -691,22 +719,26 @@ export function useGameEngine(): UseGameEngineReturn {
             setGameState('results');
             return;
           } else {
+            isSubmittingRef.current = false;
             console.error('Server completion failed:', compData.error);
             setLoadError(compData.error || 'บันทึกผลด่านไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
             return;
           }
         } else {
+          isSubmittingRef.current = false;
           const errJson = await compRes.json().catch(() => ({}));
           console.error('Server completion failed, HTTP:', compRes.status, errJson);
           setLoadError(errJson.error || 'บันทึกผลด่านไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
           return;
         }
       } catch (serverErr) {
+        isSubmittingRef.current = false;
         console.error('Server completion network error:', serverErr);
         setLoadError('การเชื่อมต่อขัดข้องขณะบันทึกผลด่าน กรุณากลับหน้าแผนที่แล้วลองใหม่');
         return;
       }
     } else {
+      isSubmittingRef.current = false;
       console.error('No stageAttemptId available for submission.');
       setLoadError('เซสชันของด่านนี้หมดอายุหรือเริ่มด่านไม่สมบูรณ์ กรุณากลับหน้าแผนที่เพื่อเริ่มด่านใหม่');
       return;

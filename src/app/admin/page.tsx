@@ -23,6 +23,7 @@ import SettingsTab from '@/components/admin/SettingsTab';
 import EditStudentModal from '@/components/admin/EditStudentModal';
 import IndividualComparisonTable from '@/components/admin/IndividualComparisonTable';
 import TermArchiveTab from '@/components/admin/TermArchiveTab';
+import OnetAnalyticsManager from '@/components/admin/OnetAnalyticsManager';
 
 type AdminTab = 'school-overview' | 'overview' | 'students' | 'assessments' | 'teams' | 'events' | 'term-archive' | 'weak-words' | 'risks' | 'settings';
 type AnalyticsDataStatus = 'IDLE' | 'LOADING' | 'LOADED' | 'ERROR';
@@ -40,6 +41,7 @@ export default function AdminPage() {
   const [isResettingAll, setIsResettingAll] = useState(false);
 
   const [activeTab, setActiveTab] = useState<AdminTab>('school-overview');
+  const [assessmentSubTab, setAssessmentSubTab] = useState<'onet' | 'pre-post'>('onet');
   const [classrooms, setClassrooms] = useState<any[]>([]);
   const [selectedClassroom, setSelectedClassroom] = useState<string>('');
   const [classroomStudentCounts, setClassroomStudentCounts] = useState<Record<string, number>>({});
@@ -246,6 +248,23 @@ export default function AdminPage() {
     }
   };
 
+  const handleToggleSkull = async (studentId: string, studentName: string, currentSkull: boolean) => {
+    const nextVal = !currentSkull;
+    try {
+      const res = await fetch('/api/admin/students', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, updates: { is_skull: nextVal } }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update skull mode');
+      setStudentsList(prev => prev.map(s => s.id === studentId ? { ...s, is_skull: nextVal } : s));
+      alert(`${nextVal ? '💀 เปิดโหมดหัวกะโหลก (เด็กพิเศษ: ข้อสอบปรนัยล้วน 100%)' : 'ปิดโหมดเด็กพิเศษ'} ให้ ${studentName} เรียบร้อยแล้ว`);
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการเปลี่ยนโหมดเด็กพิเศษ');
+    }
+  };
+
 
   useEffect(() => {
     if (!teacher) return;
@@ -319,7 +338,7 @@ export default function AdminPage() {
 
       let students: any[] = [];
       try {
-        const res = await fetch(`/api/admin/students?classroomId=${selectedClassroom}`);
+        const res = await fetch(`/api/admin/students?classroomId=${selectedClassroom}`, { cache: 'no-store' });
         if (res.ok) {
           const json = await res.json();
           students = json.students || [];
@@ -1136,6 +1155,11 @@ export default function AdminPage() {
                                   <CheckCircle2 className="w-4 h-4" />
                                 </span>
                               )}
+                              {s.is_skull && (
+                                <span title="รหัสหัวกะโหลก: เด็กพิเศษ (ข้อสอบปรนัยล้วน 100%)" className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-black flex items-center gap-1">
+                                  💀 เด็กพิเศษ
+                                </span>
+                              )}
                             </div>
                             <div className="text-xs text-slate-500">{s.first_name} {s.last_name}</div>
                           </td>
@@ -1162,7 +1186,19 @@ export default function AdminPage() {
                             }`}>{s.riskLevel}</span>
                           </td>
                           <td className="p-4 text-right">
-                            <div className="flex justify-end gap-2">
+                            <div className="flex justify-end gap-2 items-center">
+                            <button
+                              onClick={() => handleToggleSkull(s.id, s.student_name, Boolean(s.is_skull))}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 shadow-sm ${
+                                s.is_skull
+                                  ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/40'
+                                  : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700'
+                              }`}
+                              title={s.is_skull ? 'คลิกเพื่อปิดโหมดเด็กพิเศษ' : 'คลิกเพื่อตั้งรหัสหัวกะโหลก (เด็กพิเศษ: ปรนัยล้วน 100%)'}
+                            >
+                              <span>💀</span>
+                              <span>{s.is_skull ? 'เด็กพิเศษ (เปิด)' : 'ตั้งเด็กพิเศษ'}</span>
+                            </button>
                             <button onClick={() => setEditingStudent(s)} className="px-3.5 py-1.5 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all shadow-sm">
                               แก้ไข
                             </button>
@@ -1189,9 +1225,41 @@ export default function AdminPage() {
             </motion.div>
           )}
 
-          {/* TAB: ASSESSMENTS (POST-TEST) */}
+          {/* TAB: ASSESSMENTS (POST-TEST & O-NET) */}
           {activeTab === 'assessments' && (
             <motion.div key="assessments" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-4">
+              {/* Assessment Sub-tabs */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-2 bg-slate-900/60 rounded-2xl border border-slate-800">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAssessmentSubTab('onet')}
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      assessmentSubTab === 'onet'
+                        ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-slate-950 shadow-md'
+                        : 'text-slate-400 hover:text-white bg-slate-950/60'
+                    }`}
+                  >
+                    🎯 O-NET Analytics & เทียบระดับประเทศ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssessmentSubTab('pre-post')}
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      assessmentSubTab === 'pre-post'
+                        ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-slate-950 shadow-md'
+                        : 'text-slate-400 hover:text-white bg-slate-950/60'
+                    }`}
+                  >
+                    📊 ตารางพัฒนาการ Pre/Post (ปพ.5)
+                  </button>
+                </div>
+              </div>
+
+              {assessmentSubTab === 'onet' ? (
+                <OnetAnalyticsManager />
+              ) : (
+                <>
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-2">
                 <div>
                   <h2 className="text-lg font-black text-white flex items-center gap-2">
@@ -1236,6 +1304,8 @@ export default function AdminPage() {
               </div>
 
               <IndividualComparisonTable studentsList={classroomMetrics?.students || []} />
+                </>
+              )}
             </motion.div>
           )}
 

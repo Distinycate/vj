@@ -122,11 +122,22 @@ export async function POST(request: Request) {
       const cardCode = card.card_code;
       const effectType = card.effect_type;
 
-      // Deduct 1 card from attacker inventory
-      const { error: deductErr } = await supabaseAdmin
-        .from('card_inventory')
-        .update({ quantity: inventoryItem.quantity - 1, updated_at: new Date().toISOString() })
-        .eq('id', inventoryItem.id);
+      // Deduct 1 card from attacker inventory (and delete if quantity reaches 0 so it disappears immediately)
+      const nextQty = inventoryItem.quantity - 1;
+      let deductErr: any = null;
+      if (nextQty <= 0) {
+        const res = await supabaseAdmin
+          .from('card_inventory')
+          .delete()
+          .eq('id', inventoryItem.id);
+        deductErr = res.error;
+      } else {
+        const res = await supabaseAdmin
+          .from('card_inventory')
+          .update({ quantity: nextQty, updated_at: new Date().toISOString() })
+          .eq('id', inventoryItem.id);
+        deductErr = res.error;
+      }
 
       if (deductErr) {
         return NextResponse.json({ error: 'ไม่สามารถหักการ์ดจากคลังได้' }, { status: 500 });
@@ -259,10 +270,15 @@ export async function POST(request: Request) {
           for (const item of (attackerInv || [])) {
             if (destroyed >= 5) break;
             const toDeduct = Math.min(item.quantity, 5 - destroyed);
-            await supabaseAdmin
-              .from('card_inventory')
-              .update({ quantity: item.quantity - toDeduct, updated_at: new Date().toISOString() })
-              .eq('id', item.id);
+            const rem = item.quantity - toDeduct;
+            if (rem <= 0) {
+              await supabaseAdmin.from('card_inventory').delete().eq('id', item.id);
+            } else {
+              await supabaseAdmin
+                .from('card_inventory')
+                .update({ quantity: rem, updated_at: new Date().toISOString() })
+                .eq('id', item.id);
+            }
             destroyed += toDeduct;
           }
 
@@ -314,10 +330,15 @@ export async function POST(request: Request) {
         for (const item of (targetInv || [])) {
           if (destroyed >= 5) break;
           const toDeduct = Math.min(item.quantity, 5 - destroyed);
-          await supabaseAdmin
-            .from('card_inventory')
-            .update({ quantity: item.quantity - toDeduct, updated_at: new Date().toISOString() })
-            .eq('id', item.id);
+          const rem = item.quantity - toDeduct;
+          if (rem <= 0) {
+            await supabaseAdmin.from('card_inventory').delete().eq('id', item.id);
+          } else {
+            await supabaseAdmin
+              .from('card_inventory')
+              .update({ quantity: rem, updated_at: new Date().toISOString() })
+              .eq('id', item.id);
+          }
           destroyed += toDeduct;
         }
 
@@ -420,10 +441,15 @@ export async function POST(request: Request) {
             .maybeSingle();
 
           if (invRow && invRow.quantity > 0) {
-            await supabaseAdmin
-              .from('card_inventory')
-              .update({ quantity: invRow.quantity - 1, updated_at: new Date().toISOString() })
-              .eq('id', invRow.id);
+            const rem = invRow.quantity - 1;
+            if (rem <= 0) {
+              await supabaseAdmin.from('card_inventory').delete().eq('id', invRow.id);
+            } else {
+              await supabaseAdmin
+                .from('card_inventory')
+                .update({ quantity: rem, updated_at: new Date().toISOString() })
+                .eq('id', invRow.id);
+            }
             destroyedCount++;
           }
         }
@@ -555,10 +581,15 @@ export async function POST(request: Request) {
           .maybeSingle();
 
         if (targetItem && targetItem.quantity > 0) {
-          await supabaseAdmin
-            .from('card_inventory')
-            .update({ quantity: targetItem.quantity - 1, updated_at: new Date().toISOString() })
-            .eq('id', targetItem.id);
+          const rem = targetItem.quantity - 1;
+          if (rem <= 0) {
+            await supabaseAdmin.from('card_inventory').delete().eq('id', targetItem.id);
+          } else {
+            await supabaseAdmin
+              .from('card_inventory')
+              .update({ quantity: rem, updated_at: new Date().toISOString() })
+              .eq('id', targetItem.id);
+          }
 
           // Add to attacker
           const { data: attackerExisting } = await supabaseAdmin
@@ -641,7 +672,15 @@ export async function POST(request: Request) {
             metadata: metadata || {},
             status: 'RESOLVED',
             final_result_text: `เป้าหมายสะท้อนการโจมตีกลับ! ผลคำสั่งสะท้อนเข้าหาผู้ใช้`,
-            teacher_executed: false,
+            teacher_executed: true,
+          });
+
+          await supabaseAdmin.from('card_notifications').insert({
+            student_id: studentId,
+            notification_type: 'CARD_ALERT',
+            title: '🔄 การโจมตีถูกสะท้อนกลับ!',
+            message: `${targetData.student_name} มีโล่สะท้อน คำสั่ง "${card.name}" จึงสะท้อนกลับมาที่คุณ!`,
+            data: { targetId, cardId },
           });
 
           return NextResponse.json({
@@ -667,13 +706,21 @@ export async function POST(request: Request) {
             teacher_executed: true,
           });
 
+          await supabaseAdmin.from('card_notifications').insert({
+            student_id: targetId,
+            notification_type: 'CARD_ALERT',
+            title: '🛡️ ป้องกันคำสั่งสำเร็จ!',
+            message: `โล่ของคุณป้องกันคำสั่ง "${card.name}" จากเพื่อนไว้ได้!`,
+            data: { attackerId: studentId, cardId },
+          });
+
           return NextResponse.json({
             success: true,
             message: `🛡️ ${targetData.student_name} ใช้โล่ป้องกันคำสั่งไว้ได้!`,
           });
         }
 
-        // Normal attack execution
+        // Normal attack execution: resolves immediately without waiting for teacher
         await supabaseAdmin.from('card_logs').insert({
           attacker_id: studentId,
           target_id: targetId || null,
@@ -681,12 +728,23 @@ export async function POST(request: Request) {
           metadata: metadata || {},
           status: 'RESOLVED',
           final_result_text: `ใช้การ์ด ${card.name} สำเร็จ`,
-          teacher_executed: false,
+          teacher_executed: true,
         });
+
+        // Send instant notification to target student
+        if (targetId && targetData) {
+          await supabaseAdmin.from('card_notifications').insert({
+            student_id: targetId,
+            notification_type: 'CARD_ATTACK',
+            title: `⚡ โดนการ์ดคำสั่ง: ${card.name}!`,
+            message: `เพื่อนใช้การ์ด "${card.name}" ส่งผลกับคุณทันที`,
+            data: { attackerId: studentId, cardId },
+          });
+        }
 
         return NextResponse.json({
           success: true,
-          message: `✨ ใช้การ์ด "${card.name}" สำเร็จ!`,
+          message: `✨ ใช้การ์ด "${card.name}" สำเร็จและส่งผลทันที!`,
         });
       }
 
@@ -702,10 +760,15 @@ export async function POST(request: Request) {
         for (const item of (ownInv || [])) {
           if (destroyed >= 10) break;
           const toDeduct = Math.min(item.quantity, 10 - destroyed);
-          await supabaseAdmin
-            .from('card_inventory')
-            .update({ quantity: item.quantity - toDeduct, updated_at: new Date().toISOString() })
-            .eq('id', item.id);
+          const rem = item.quantity - toDeduct;
+          if (rem <= 0) {
+            await supabaseAdmin.from('card_inventory').delete().eq('id', item.id);
+          } else {
+            await supabaseAdmin
+              .from('card_inventory')
+              .update({ quantity: rem, updated_at: new Date().toISOString() })
+              .eq('id', item.id);
+          }
           destroyed += toDeduct;
         }
 
