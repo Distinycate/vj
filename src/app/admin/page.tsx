@@ -664,16 +664,19 @@ export default function AdminPage() {
                 },
                 { 
                   id: 'assessments_pillar', 
-                  label: '3. วัดผล & ออก ปพ.5', 
-                  subtext: 'คะแนน Pre/Post, ปพ.5 รายคน',
+                  label: '3. วัดผล & O-NET', 
+                  subtext: '🎯 O-NET เทียบประเทศ, Pre/Post, ปพ.5',
                   icon: <Target className="w-4 h-4" />,
-                  themeColor: 'emerald',
+                  themeColor: 'cyan',
                   isActive: ['assessments'].includes(activeTab),
-                  activeClasses: 'bg-gradient-to-b from-emerald-950/70 via-slate-900/90 to-slate-950 border-emerald-500/60 ring-1 ring-emerald-500/40 shadow-lg shadow-emerald-500/15',
-                  accentBar: 'bg-emerald-400',
-                  iconBg: 'bg-emerald-500 text-slate-950 font-black',
-                  inactiveIconBg: 'bg-emerald-500/10 text-emerald-400',
-                  onClick: () => setActiveTab('assessments')
+                  activeClasses: 'bg-gradient-to-b from-cyan-950/70 via-slate-900/90 to-slate-950 border-cyan-500/60 ring-1 ring-cyan-500/40 shadow-lg shadow-cyan-500/15',
+                  accentBar: 'bg-cyan-400',
+                  iconBg: 'bg-cyan-500 text-slate-950 font-black',
+                  inactiveIconBg: 'bg-cyan-500/10 text-cyan-400',
+                  onClick: () => {
+                    setActiveTab('assessments');
+                    setAssessmentSubTab('onet');
+                  }
                 },
                 { 
                   id: 'lifecycle_pillar', 
@@ -795,22 +798,48 @@ export default function AdminPage() {
                   >
                     <Sparkles className="w-3.5 h-3.5 text-fuchsia-300" /> กิจกรรมพิเศษ & เควสต์แก้ 0/ร
                   </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab('assessments');
+                      setAssessmentSubTab('onet');
+                    }}
+                    className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 text-cyan-300 hover:bg-cyan-500/20 border border-cyan-500/30 transition-all whitespace-nowrap cursor-pointer"
+                  >
+                    <Target className="w-3.5 h-3.5 text-cyan-400" /> 🎯 O-NET Challenge (10 ปี)
+                  </button>
                 </>
               )}
 
               {['assessments'].includes(activeTab) && (
                 <>
                   <button
-                    onClick={() => setActiveTab('assessments')}
-                    className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 bg-emerald-600 text-white shadow-md shadow-emerald-600/30 whitespace-nowrap"
+                    type="button"
+                    onClick={() => setAssessmentSubTab('onet')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+                      assessmentSubTab === 'onet'
+                        ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30 font-black'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
                   >
-                    <Target className="w-3.5 h-3.5" /> ผลการทดสอบ Pre/Post & สถิติพัฒนาการ
+                    <Target className="w-3.5 h-3.5 text-cyan-300" /> 🎯 O-NET Analytics & เทียบระดับประเทศ
                   </button>
                   <button
-                    onClick={() => window.open('/admin/cards', '_blank')}
-                    className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all whitespace-nowrap"
+                    type="button"
+                    onClick={() => setAssessmentSubTab('pre-post')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+                      assessmentSubTab === 'pre-post'
+                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 font-black'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
                   >
-                    <BookOpen className="w-3.5 h-3.5" /> ตาราง ปพ.5 สมจริง & คัดลอกลง Excel ↗
+                    <Target className="w-3.5 h-3.5 text-emerald-300" /> 📊 ตารางพัฒนาการ Pre/Post (ปพ.5)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => window.open('/admin/cards', '_blank')}
+                    className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all whitespace-nowrap cursor-pointer"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" /> 📋 ตาราง ปพ.5 สมจริง & คัดลอกลง Excel ↗
                   </button>
                 </>
               )}
@@ -838,7 +867,8 @@ export default function AdminPage() {
                 {activeTab === 'risks' && '⚠️ จัดการผู้เรียน › นักเรียนกลุ่มเสี่ยงที่ต้องช่วยเหลือ'}
                 {activeTab === 'teams' && '⚔️ กิจกรรม & แข่งขัน › ตารางอันดับ Team Battle'}
                 {activeTab === 'events' && '✨ กิจกรรม & แข่งขัน › ชาเลนจ์พิเศษ & เควสต์แก้ 0/ร'}
-                {activeTab === 'assessments' && '📊 วัดผล & ออก ปพ.5 › คะแนนสอบ Pre/Post & Analytics'}
+                {activeTab === 'assessments' && assessmentSubTab === 'onet' && '🎯 วัดผล & O-NET › วิเคราะห์ข้อสอบ O-NET 10 ปี และเปรียบเทียบระดับประเทศ'}
+                {activeTab === 'assessments' && assessmentSubTab === 'pre-post' && '📊 วัดผล & O-NET › คะแนนสอบ Pre/Post & ตารางพัฒนาการ ปพ.5'}
                 {activeTab === 'settings' && '⚙️ ภาคเรียน & ระบบ › ตั้งค่าระบบและนำเข้านักเรียน'}
               </span>
             </div>

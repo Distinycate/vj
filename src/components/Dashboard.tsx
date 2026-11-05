@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Trophy, Star, LogOut, Award, Compass, Store,
-  Bookmark, Eye, CheckCircle2, BookOpen, Volume2, User, ChevronDown, ChevronUp, BookMarked, Activity, Shuffle, RefreshCw, Mail, CheckSquare
+  Bookmark, Eye, CheckCircle2, BookOpen, Volume2, User, ChevronDown, ChevronUp, BookMarked, Activity, Shuffle, RefreshCw, Mail, CheckSquare, ArrowRight
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
@@ -863,6 +863,43 @@ export default function Dashboard() {
                   >
                     ⚔️ ท้าทายบอส
                   </button>
+                </div>
+              )}
+
+              {/* O-NET English Challenge Featured Banner */}
+              {!isExternalUser && (
+                <div className="rounded-3xl border border-cyan-500/40 bg-gradient-to-r from-cyan-950/90 via-slate-900/90 to-indigo-950/90 p-5 shadow-2xl mb-6 relative overflow-hidden group hover:border-cyan-400/60 transition-all">
+                  <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-lg shadow-cyan-500/25">
+                        🎯
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="text-[10px] uppercase tracking-wider font-black px-2 py-0.5 rounded-full bg-cyan-400 text-slate-950 shadow-sm">
+                            NEW EVENT
+                          </span>
+                          <span className="text-xs font-bold text-amber-300">
+                            🎁 สอบได้ &ge; 50% รับทันที 5 ตั๋วสุ่มการ์ดฟรี! 🎟️
+                          </span>
+                        </div>
+                        <h3 className="text-lg sm:text-xl font-black text-white">
+                          O-NET English Challenge (ม.3 ย้อนหลัง 10 ปี)
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-300 mt-0.5">
+                          ฝึกทำข้อสอบจริง 2559 - 2568 พร้อมกระดาษคำตอบดิจิทัล ตรวจคำตอบทันที และเทียบเกณฑ์ประเทศ สทศ.
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/challenge/onet"
+                      className="w-full md:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-sm text-center shadow-lg shadow-cyan-500/30 transition-all hover:scale-105 active:scale-95 shrink-0 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>เริ่มทำข้อสอบ O-NET</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
                 </div>
               )}
 

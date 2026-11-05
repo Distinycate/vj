@@ -6,7 +6,9 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  Copy,
   Download,
+  ExternalLink,
   Filter,
   Layers,
   Printer,
@@ -52,6 +54,15 @@ export default function OnetAnalyticsManager() {
   const [classrooms, setClassrooms] = useState<string[]>([]);
   const [submissions, setSubmissions] = useState<Record<string, SubmissionItem>>({});
   const [benchmarks, setBenchmarks] = useState(NATIONAL_BENCHMARKS);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const handleCopyLink = () => {
+    if (typeof window === 'undefined') return;
+    const url = `${window.location.origin}/challenge/onet`;
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+  };
 
   // Fetch data
   const fetchData = async () => {
@@ -200,6 +211,60 @@ export default function OnetAnalyticsManager() {
 
   return (
     <div className="space-y-6">
+      {/* ── Teacher Guide & Live Status Box ──────────────────────────── */}
+      <div className="rounded-3xl border border-cyan-500/40 bg-gradient-to-r from-cyan-950/80 via-slate-900/90 to-indigo-950/80 p-5 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
+        
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                สถานะระบบ: เปิดให้นักเรียนทุกคนเข้าสอบได้ทันที (Online 24 ชม.)
+              </span>
+              <span className="text-xs font-bold text-amber-300">
+                🎁 รางวัล: สอบได้ &ge; 50% รับทันที 5 ตั๋วสุ่มการ์ดฟรี! 🎟️
+              </span>
+            </div>
+            <h3 className="text-lg font-black text-white flex items-center gap-2">
+              🎯 วิธีเปิดให้นักเรียนเข้าทำข้อสอบ O-NET (ครูไม่ต้องกดเปิดระบบเพิ่ม)
+            </h3>
+            <div className="text-xs text-slate-300 space-y-1 leading-relaxed bg-slate-950/50 p-3 rounded-2xl border border-slate-800/80">
+              <p>
+                <strong>วิธีที่ 1 (แนะนำ)</strong>: ให้นักเรียนล็อกอินเข้าเว็บ จะเห็นกล่องสีฟ้า <em>"🎯 O-NET English Challenge"</em> บนหน้าแรกทันที
+              </p>
+              <p>
+                <strong>วิธีที่ 2 (ส่งลิงก์ตรง)</strong>: คลิกปุ่ม <span className="text-cyan-300 font-bold">"📋 คัดลอกลิงก์ส่งให้นักเรียน"</span> ด้านขวา แล้ววางใน LINE กลุ่ม หรือมอบหมายใน Google Classroom ได้เลย
+              </p>
+              <p>
+                <strong>การตรวจและประเมินผล</strong>: เมื่อเด็กกดส่งข้อสอบ คะแนนจะตรวจอัตโนมัติและวิ่งมาอัปเดตบนตารางด้านล่างนี้ทันที ครูสามารถติ๊กเลือกนักเรียนเพื่อดูค่าเฉลี่ยเทียบระดับประเทศได้ตลอดเวลา
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25 transition-all cursor-pointer hover:scale-105 active:scale-95"
+            >
+              {copiedLink ? <Check className="w-4 h-4 text-emerald-950" /> : <Copy className="w-4 h-4" />}
+              <span>{copiedLink ? 'คัดลอกลิงก์เรียบร้อยแล้ว! (พร้อมส่ง)' : '📋 คัดลอกลิงก์ส่งให้นักเรียน'}</span>
+            </button>
+
+            <a
+              href="/challenge/onet"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer hover:border-cyan-400"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>👁️ ดูหน้าจอข้อสอบของนักเรียน ↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
       {/* ── Control Bar ─────────────────────────────────────────────── */}
       <div className="glass-card p-5 rounded-3xl border border-slate-800 bg-slate-900/70 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
