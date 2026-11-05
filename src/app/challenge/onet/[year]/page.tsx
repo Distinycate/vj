@@ -102,6 +102,26 @@ export default function OnetExamRoomPage({ params }: PageProps) {
     }
   };
 
+  // Debounced live sync to server so teacher can see realtime progress
+  useEffect(() => {
+    if (examResult) return;
+    if (Object.keys(answers).length === 0) return;
+
+    const timer = setTimeout(() => {
+      fetch('/api/student/onet/live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          year: yearNum,
+          answers,
+          durationSeconds: secondsElapsed,
+        }),
+      }).catch(() => {});
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [answers, yearNum, secondsElapsed, examResult]);
+
   const updateOrderingAnswer = (questionNumber: number, stepIndex: number, letter: string) => {
     const current = Array.isArray(answers[String(questionNumber)])
       ? [...answers[String(questionNumber)]]

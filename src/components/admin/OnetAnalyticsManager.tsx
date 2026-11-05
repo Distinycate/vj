@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import {
+  Activity,
+  AlertTriangle,
   BarChart3,
   Calendar,
   Check,
@@ -10,10 +12,14 @@ import {
   Copy,
   Download,
   ExternalLink,
+  Eye,
   Filter,
+  Flame,
+  HelpCircle,
   History,
   Layers,
   Printer,
+  Radio,
   RefreshCw,
   Search,
   Sparkles,
@@ -23,8 +29,9 @@ import {
   Users,
   X,
   XCircle,
+  Zap,
 } from 'lucide-react';
-import { NATIONAL_BENCHMARKS } from '@/data/onet/onetData';
+import { NATIONAL_BENCHMARKS, getOnetYearConfig, OnetQuestion } from '@/data/onet/onetData';
 import OnetYearAccessControl from './OnetYearAccessControl';
 
 interface StudentItem {
@@ -64,6 +71,8 @@ interface SubmissionItem {
   growthDelta?: number;
   isImproved?: boolean;
   attempts?: AttemptItem[];
+  answers?: Record<string, any>;
+  questionResults?: Record<string, any>;
 }
 
 export default function OnetAnalyticsManager() {
@@ -75,8 +84,12 @@ export default function OnetAnalyticsManager() {
   const [students, setStudents] = useState<StudentItem[]>([]);
   const [classrooms, setClassrooms] = useState<string[]>([]);
   const [submissions, setSubmissions] = useState<Record<string, SubmissionItem>>({});
+  const [liveProgress, setLiveProgress] = useState<Record<string, any>>({});
   const [benchmarks, setBenchmarks] = useState(NATIONAL_BENCHMARKS);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [classroomTab, setClassroomTab] = useState<Record<string, 'roster' | 'itemAnalysis'>>({});
+  const [selectedQuestionModal, setSelectedQuestionModal] = useState<any | null>(null);
   const [selectedHistory, setSelectedHistory] = useState<{
     student: StudentItem;
     sub: SubmissionItem;
@@ -87,6 +100,9 @@ export default function OnetAnalyticsManager() {
     'ม.3/1': true, // Default open the primary target class ม.3/1
   });
 
+  const yearConfig = useMemo(() => getOnetYearConfig(selectedYear), [selectedYear]);
+  const allQuestions = useMemo(() => yearConfig?.questions || [], [yearConfig]);
+
   const handleCopyLink = () => {
     if (typeof window === 'undefined') return;
     const url = `${window.location.origin}/challenge/onet`;
@@ -96,8 +112,8 @@ export default function OnetAnalyticsManager() {
   };
 
   // Fetch data
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (isQuiet = false) => {
+    if (!isQuiet) setLoading(true);
     try {
       const res = await fetch('/api/admin/onet');
       const data = await res.json();
@@ -105,23 +121,35 @@ export default function OnetAnalyticsManager() {
         setStudents(data.students || []);
         setClassrooms(data.classrooms || []);
         setSubmissions(data.submissions || {});
+        if (data.liveProgress) setLiveProgress(data.liveProgress);
         if (data.benchmarks) setBenchmarks(data.benchmarks);
 
-        // Default select all students initially
-        const initialSelected = new Set<string>();
-        (data.students || []).forEach((s: StudentItem) => initialSelected.add(s.id));
-        setSelectedStudentIds(initialSelected);
+        // Default select all students initially if not selected yet
+        if (!isQuiet && selectedStudentIds.size === 0) {
+          const initialSelected = new Set<string>();
+          (data.students || []).forEach((s: StudentItem) => initialSelected.add(s.id));
+          setSelectedStudentIds(initialSelected);
+        }
       }
     } catch (e) {
       console.warn('Failed to fetch O-NET admin data:', e);
     } finally {
-      setLoading(false);
+      if (!isQuiet) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Real-time polling every 5 seconds
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const interval = setInterval(() => {
+      fetchData(true);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [autoRefresh, selectedYear]);
 
   // Classrooms list
   const classroomsList = useMemo(() => {
@@ -131,8 +159,10 @@ export default function OnetAnalyticsManager() {
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'th', { numeric: true }));
   }, [classrooms, students]);
 
-  // Group students and calculate room-level stats
+  // Group students and calculate room-level stats + item analysis
   const classroomData = useMemo(() => {
+    const yearLive = liveProgress[String(selectedYear)] || {};
+
     return classroomsList.map((room) => {
       const roomStudents = students.filter((s) => s.classroom === room);
       const scoredStudents = roomStudents.filter((s) => submissions[`${s.id}_${selectedYear}`]);
@@ -149,27 +179,132 @@ export default function OnetAnalyticsManager() {
       const allSelected = roomStudents.length > 0 && selectedInRoomCount === roomStudents.length;
       const someSelected = selectedInRoomCount > 0 && !allSelected;
 
+      // Merge submission and live in-progress state for each student
+      const studentsWithLive = roomStudents.map((s) => {
+        const sub = submissions[`${s.id}_${selectedYear}`];
+        const live = yearLive[s.id];
+        const isLive = live && live.status === 'in_progress' && !sub;
+        const questionResults = sub?.questionResults || live?.questionResults || {};
+        const answers = sub?.answers || live?.answers || {};
+        const status: 'submitted' | 'in_progress' | 'idle' = sub
+          ? 'submitted'
+          : isLive
+          ? 'in_progress'
+          : 'idle';
+
+        const displayScore = sub
+          ? sub.score100
+          : live
+          ? Number(((live.correctCount / (live.totalQuestions || 32)) * 100).toFixed(1))
+          : null;
+
+        const answeredCount = sub ? sub.totalQuestions : live?.answeredCount || 0;
+        const correctCount = sub ? sub.correctCount : live?.correctCount || 0;
+
+        return {
+          ...s,
+          status,
+          score: displayScore,
+          answeredCount,
+          correctCount,
+          sub,
+          live,
+          answers,
+          questionResults,
+        };
+      });
+
       // Filtered students in this room if user searched
-      const displayedStudents = roomStudents.filter((s) => {
+      const displayedStudents = studentsWithLive.filter((s) => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
         return s.name.toLowerCase().includes(query) || s.studentId.includes(query);
       });
 
+      // Item analysis across all questions for this classroom
+      const itemAnalysis = allQuestions.map((q) => {
+        const qNum = q.number;
+        const qKey = String(qNum);
+        let correctCount = 0;
+        let wrongCount = 0;
+        let unansweredCount = 0;
+        const answerDist: Record<string, number> = {};
+
+        studentsWithLive.forEach((st) => {
+          const qRes = st.questionResults?.[qKey];
+          const rawAns = st.answers?.[qKey];
+          if (rawAns) {
+            const ansStr = String(rawAns).toUpperCase();
+            answerDist[ansStr] = (answerDist[ansStr] || 0) + 1;
+          }
+
+          if (qRes && (qRes.answered || qRes.studentAnswer !== null || qRes.isCorrect !== undefined)) {
+            if (qRes.isCorrect) correctCount++;
+            else wrongCount++;
+          } else {
+            unansweredCount++;
+          }
+        });
+
+        const attemptedCount = correctCount + wrongCount;
+        const accuracyRate = attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 0;
+        const wrongRate = attemptedCount > 0 ? Math.round((wrongCount / attemptedCount) * 100) : 0;
+
+        return {
+          question: q,
+          number: qNum,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation || null,
+          points: q.points,
+          correctCount,
+          wrongCount,
+          unansweredCount,
+          attemptedCount,
+          accuracyRate,
+          wrongRate,
+          answerDist,
+        };
+      });
+
+      const attemptedItems = itemAnalysis.filter((item) => item.attemptedCount > 0);
+      const mostMissed = [...attemptedItems]
+        .sort((a, b) => b.wrongRate - a.wrongRate || b.wrongCount - a.wrongCount)
+        .slice(0, 5);
+
+      const mostCorrect = [...attemptedItems]
+        .sort((a, b) => b.accuracyRate - a.accuracyRate || b.correctCount - a.correctCount)
+        .slice(0, 5);
+
+      const liveTestingCount = studentsWithLive.filter((s) => s.status === 'in_progress').length;
+
       return {
         room,
         roomStudents,
+        studentsWithLive,
         displayedStudents,
         totalCount: roomStudents.length,
         submittedCount: scoredStudents.length,
+        liveTestingCount,
         mean,
         passRate,
         selectedInRoomCount,
         allSelected,
         someSelected,
+        itemAnalysis,
+        mostMissed,
+        mostCorrect,
       };
     });
-  }, [classroomsList, students, submissions, selectedYear, selectedStudentIds, searchQuery]);
+  }, [
+    classroomsList,
+    students,
+    submissions,
+    liveProgress,
+    selectedYear,
+    selectedStudentIds,
+    searchQuery,
+    allQuestions,
+  ]);
 
   // Expand / Collapse controls
   const toggleExpandRoom = (room: string) => {
@@ -417,18 +552,37 @@ export default function OnetAnalyticsManager() {
             </p>
           </div>
 
-          {/* Active Year Badge & Refresh */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-400">ชุดข้อสอบที่กำลังวิเคราะห์:</span>
-            <div className="px-3.5 py-2 rounded-xl bg-slate-950 border border-indigo-500/40 text-xs font-black text-cyan-300">
-              ปีการศึกษา {selectedYear} (100 คะแนน)
+          {/* Active Year Badge, Realtime Toggle & Refresh */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-slate-400">ชุดข้อสอบ:</span>
+            <div className="px-3 py-1.5 rounded-xl bg-slate-950 border border-indigo-500/40 text-xs font-black text-cyan-300">
+              ปีการศึกษา {selectedYear}
             </div>
 
+            {/* Realtime Auto-refresh Toggle */}
             <button
-              onClick={fetchData}
+              type="button"
+              onClick={() => setAutoRefresh((prev) => !prev)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                autoRefresh
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                  : 'bg-slate-800 text-slate-400 hover:text-white'
+              }`}
+              title={autoRefresh ? 'กำลังอัปเดตข้อมูลสดทุก 5 วินาที' : 'คลิกเพื่อเปิดการอัปเดตสดอัตโนมัติ'}
+            >
+              <Radio
+                className={`w-3.5 h-3.5 ${
+                  autoRefresh ? 'text-emerald-400 animate-pulse' : 'text-slate-500'
+                }`}
+              />
+              <span>{autoRefresh ? '🔴 Real-time สด (5วิ)' : '⚪ Real-time ปิด'}</span>
+            </button>
+
+            <button
+              onClick={() => fetchData()}
               disabled={loading}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
-              title="รีเฟรชข้อมูล"
+              className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
+              title="รีเฟรชข้อมูลทันที"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
             </button>
@@ -807,224 +961,626 @@ export default function OnetAnalyticsManager() {
                   </div>
                 </div>
 
-                {/* Collapsible Student Table */}
+                {/* Collapsible Content */}
                 {isExpanded && (
-                  <div className="border-t border-slate-800/80 p-4 sm:p-5 bg-slate-950/40 space-y-3 animate-in fade-in duration-150">
-                    {/* Room Mini-Toolbar */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/60 text-xs">
-                      <span className="text-slate-400 font-bold">
-                        รายชื่อนักเรียนห้อง {c.room} ({c.displayedStudents.length} คน):
-                      </span>
-                      <div className="flex items-center gap-1.5">
+                  <div className="border-t border-slate-800/80 p-4 sm:p-5 bg-slate-950/40 space-y-4 animate-in fade-in duration-150">
+                    {/* View Switcher: Roster vs Item Analysis */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+                      <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900 border border-slate-800">
                         <button
                           type="button"
-                          onClick={() => {
-                            const next = new Set(selectedStudentIds);
-                            c.roomStudents.forEach((s) => next.add(s.id));
-                            setSelectedStudentIds(next);
-                          }}
-                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition-colors cursor-pointer text-[11px]"
+                          onClick={() =>
+                            setClassroomTab((prev) => ({ ...prev, [c.room]: 'roster' }))
+                          }
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                            (classroomTab[c.room] || 'roster') === 'roster'
+                              ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
+                              : 'text-slate-400 hover:text-white'
+                          }`}
                         >
-                          ✓ เลือกทุกคนในห้องนี้
+                          <Users className="w-3.5 h-3.5" />
+                          <span>รายชื่อ & คะแนน ({c.displayedStudents.length} คน)</span>
                         </button>
+
                         <button
                           type="button"
-                          onClick={() => selectRoomOnlySubmitted(c.room)}
-                          className="px-2.5 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-bold transition-colors cursor-pointer text-[11px]"
+                          onClick={() =>
+                            setClassroomTab((prev) => ({ ...prev, [c.room]: 'itemAnalysis' }))
+                          }
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                            classroomTab[c.room] === 'itemAnalysis'
+                              ? 'bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 shadow-md font-black'
+                              : 'text-slate-400 hover:text-white'
+                          }`}
                         >
-                          ⭐ เฉพาะคนที่ส่งในห้องนี้
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const next = new Set(selectedStudentIds);
-                            c.roomStudents.forEach((s) => next.delete(s.id));
-                            setSelectedStudentIds(next);
-                          }}
-                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold transition-colors cursor-pointer text-[11px]"
-                        >
-                          ✕ ปลดออกทั้งห้อง
+                          <Target className="w-3.5 h-3.5" />
+                          <span>🎯 ตรวจรายข้อ & วิเคราะห์จุดอ่อนห้องนี้ (Realtime)</span>
+                          {c.liveTestingCount > 0 && (
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+                          )}
                         </button>
                       </div>
+
+                      {/* Mini Toolbar for Roster */}
+                      {(classroomTab[c.room] || 'roster') === 'roster' && (
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = new Set(selectedStudentIds);
+                              c.roomStudents.forEach((s) => next.add(s.id));
+                              setSelectedStudentIds(next);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition-colors cursor-pointer text-[11px]"
+                          >
+                            ✓ เลือกทุกคนในห้องนี้
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => selectRoomOnlySubmitted(c.room)}
+                            className="px-2.5 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-bold transition-colors cursor-pointer text-[11px]"
+                          >
+                            ⭐ เฉพาะคนที่ส่งในห้องนี้
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = new Set(selectedStudentIds);
+                              c.roomStudents.forEach((s) => next.delete(s.id));
+                              setSelectedStudentIds(next);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold transition-colors cursor-pointer text-[11px]"
+                          >
+                            ✕ ปลดออกทั้งห้อง
+                          </button>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Table */}
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-950/80 text-slate-400 font-bold border-b border-slate-800">
-                          <tr>
-                            <th className="py-2.5 px-3 w-10 text-center">เลือก</th>
-                            <th className="py-2.5 px-3">เลขประจำตัว</th>
-                            <th className="py-2.5 px-3">ชื่อ - นามสกุล</th>
-                            <th className="py-2.5 px-3 text-center">ครั้งที่สอบ</th>
-                            <th className="py-2.5 px-3 text-right">ครั้งแรก</th>
-                            <th className="py-2.5 px-3 text-right">ล่าสุด</th>
-                            <th className="py-2.5 px-3 text-center">พัฒนาการ</th>
-                            <th className="py-2.5 px-3 text-right">สูงสุด</th>
-                            <th className="py-2.5 px-3 text-center">ผลประเมิน</th>
-                            <th className="py-2.5 px-3 text-center">ประวัติ</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800/60">
-                          {c.displayedStudents.length === 0 ? (
+                    {/* ── TAB 1: ROSTER VIEW ──────────────────────────── */}
+                    {(classroomTab[c.room] || 'roster') === 'roster' && (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-950/80 text-slate-400 font-bold border-b border-slate-800">
                             <tr>
-                              <td colSpan={10} className="py-6 text-center text-slate-500">
-                                ไม่พบรายชื่อที่ค้นหาในห้องนี้
-                              </td>
+                              <th className="py-2.5 px-3 w-10 text-center">เลือก</th>
+                              <th className="py-2.5 px-3">เลขประจำตัว</th>
+                              <th className="py-2.5 px-3">ชื่อ - นามสกุล</th>
+                              <th className="py-2.5 px-3 text-center">สถานะสอบ</th>
+                              <th className="py-2.5 px-3 text-center">ครั้งที่สอบ</th>
+                              <th className="py-2.5 px-3 text-right">ครั้งแรก</th>
+                              <th className="py-2.5 px-3 text-right">ล่าสุด</th>
+                              <th className="py-2.5 px-3 text-center">พัฒนาการ</th>
+                              <th className="py-2.5 px-3 text-right">สูงสุด</th>
+                              <th className="py-2.5 px-3 text-center">ผลประเมิน</th>
+                              <th className="py-2.5 px-3 text-center">ประวัติ</th>
                             </tr>
-                          ) : (
-                            c.displayedStudents.map((s) => {
-                              const isChecked = selectedStudentIds.has(s.id);
-                              const sub = submissions[`${s.id}_${selectedYear}`];
-                              const attemptCount = sub?.attemptCount || (sub ? 1 : 0);
-                              const growthDelta = sub?.growthDelta ?? 0;
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/60">
+                            {c.displayedStudents.length === 0 ? (
+                              <tr>
+                                <td colSpan={11} className="py-6 text-center text-slate-500">
+                                  ไม่พบรายชื่อที่ค้นหาในห้องนี้
+                                </td>
+                              </tr>
+                            ) : (
+                              c.displayedStudents.map((s) => {
+                                const isChecked = selectedStudentIds.has(s.id);
+                                const sub = s.sub;
+                                const live = s.live;
+                                const isLive = s.status === 'in_progress';
+                                const attemptCount = sub?.attemptCount || (sub ? 1 : 0);
+                                const growthDelta = sub?.growthDelta ?? 0;
 
-                              return (
-                                <tr
-                                  key={s.id}
-                                  onClick={() => toggleStudent(s.id)}
-                                  className={`cursor-pointer transition-colors ${
-                                    isChecked
-                                      ? 'bg-indigo-950/20 hover:bg-indigo-950/30'
-                                      : 'hover:bg-slate-800/40 opacity-60'
-                                  }`}
-                                >
-                                  {/* Checkbox */}
-                                  <td
-                                    className="py-2.5 px-3 text-center"
-                                    onClick={(e) => e.stopPropagation()}
+                                return (
+                                  <tr
+                                    key={s.id}
+                                    onClick={() => toggleStudent(s.id)}
+                                    className={`cursor-pointer transition-colors ${
+                                      isLive
+                                        ? 'bg-emerald-950/20 hover:bg-emerald-950/30'
+                                        : isChecked
+                                        ? 'bg-indigo-950/20 hover:bg-indigo-950/30'
+                                        : 'hover:bg-slate-800/40 opacity-60'
+                                    }`}
                                   >
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={() => toggleStudent(s.id)}
-                                      className="w-4 h-4 rounded text-cyan-500 bg-slate-950 border-slate-700 focus:ring-cyan-400 focus:ring-offset-slate-900 cursor-pointer"
-                                    />
-                                  </td>
+                                    {/* Checkbox */}
+                                    <td
+                                      className="py-2.5 px-3 text-center"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isChecked}
+                                        onChange={() => toggleStudent(s.id)}
+                                        className="w-4 h-4 rounded text-cyan-500 bg-slate-950 border-slate-700 focus:ring-cyan-400 focus:ring-offset-slate-900 cursor-pointer"
+                                      />
+                                    </td>
 
-                                  {/* Student ID */}
-                                  <td className="py-2.5 px-3 font-mono text-slate-400">
-                                    {s.studentId}
-                                  </td>
+                                    {/* Student ID */}
+                                    <td className="py-2.5 px-3 font-mono text-slate-400">
+                                      {s.studentId}
+                                    </td>
 
-                                  {/* Name */}
-                                  <td className="py-2.5 px-3 font-bold text-white flex items-center gap-1.5">
-                                    <span>{s.name}</span>
-                                    {s.isSkull && (
-                                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                        💀 พิเศษ
-                                      </span>
-                                    )}
-                                  </td>
+                                    {/* Name */}
+                                    <td className="py-2.5 px-3 font-bold text-white flex items-center gap-1.5">
+                                      <span>{s.name}</span>
+                                      {s.isSkull && (
+                                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                          💀 พิเศษ
+                                        </span>
+                                      )}
+                                    </td>
 
-                                  {/* Attempt Count Badge */}
-                                  <td className="py-2.5 px-3 text-center">
-                                    {attemptCount > 0 ? (
-                                      <span
-                                        className={`px-2 py-0.5 rounded-full text-[10px] font-black inline-flex items-center gap-1 ${
-                                          attemptCount >= 2
-                                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                                            : 'bg-slate-800 text-slate-300 border border-slate-700'
-                                        }`}
-                                      >
-                                        {attemptCount} ครั้ง
-                                      </span>
-                                    ) : (
-                                      <span className="text-slate-600 text-[10px]">-</span>
-                                    )}
-                                  </td>
-
-                                  {/* First Score */}
-                                  <td className="py-2.5 px-3 text-right font-mono text-slate-400">
-                                    {sub ? sub.firstScore ?? sub.score100 : '-'}
-                                  </td>
-
-                                  {/* Latest Score */}
-                                  <td className="py-2.5 px-3 text-right font-mono font-black text-sm">
-                                    {sub ? (
-                                      <span
-                                        className={
-                                          sub.score100 >= 50 ? 'text-cyan-400' : 'text-rose-400'
-                                        }
-                                      >
-                                        {sub.score100}
-                                      </span>
-                                    ) : (
-                                      <span className="text-slate-600">-</span>
-                                    )}
-                                  </td>
-
-                                  {/* Growth Delta */}
-                                  <td className="py-2.5 px-3 text-center font-mono font-bold text-xs">
-                                    {attemptCount >= 2 ? (
-                                      <span
-                                        className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md ${
-                                          growthDelta > 0
-                                            ? 'text-emerald-400 bg-emerald-500/10'
-                                            : growthDelta === 0
-                                            ? 'text-slate-400 bg-slate-800'
-                                            : 'text-rose-400 bg-rose-500/10'
-                                        }`}
-                                      >
-                                        {growthDelta > 0
-                                          ? `+${growthDelta} 📈`
-                                          : growthDelta === 0
-                                          ? '0.0'
-                                          : `${growthDelta} 📉`}
-                                      </span>
-                                    ) : (
-                                      <span className="text-slate-600 text-[10px]">-</span>
-                                    )}
-                                  </td>
-
-                                  {/* Max Score */}
-                                  <td className="py-2.5 px-3 text-right font-mono text-emerald-400 font-bold">
-                                    {sub ? sub.maxScore ?? sub.score100 : '-'}
-                                  </td>
-
-                                  {/* Result */}
-                                  <td className="py-2.5 px-3 text-center">
-                                    {sub ? (
-                                      sub.score100 >= 50 ? (
-                                        <span className="text-emerald-400 font-bold inline-flex items-center gap-1 text-[11px]">
-                                          <CheckCircle2 className="w-3.5 h-3.5" /> ผ่าน (5 ตั๋ว)
+                                    {/* Live Status Badge */}
+                                    <td className="py-2.5 px-3 text-center">
+                                      {isLive ? (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                          กำลังสอบ ({s.answeredCount}/32)
+                                        </span>
+                                      ) : sub ? (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                                          🏁 ส่งแล้ว
                                         </span>
                                       ) : (
-                                        <span className="text-rose-400 font-bold inline-flex items-center gap-1 text-[11px]">
-                                          <XCircle className="w-3.5 h-3.5" /> ต้องพัฒนา
-                                        </span>
-                                      )
-                                    ) : (
-                                      <span className="text-slate-600 text-[10px]">ยังไม่สอบ</span>
-                                    )}
-                                  </td>
+                                        <span className="text-slate-600 text-[10px]">ยังไม่เริ่ม</span>
+                                      )}
+                                    </td>
 
-                                  {/* History Inspection Button */}
-                                  <td
-                                    className="py-2.5 px-3 text-center"
-                                    onClick={(e) => e.stopPropagation()}
+                                    {/* Attempt Count Badge */}
+                                    <td className="py-2.5 px-3 text-center">
+                                      {attemptCount > 0 ? (
+                                        <span
+                                          className={`px-2 py-0.5 rounded-full text-[10px] font-black inline-flex items-center gap-1 ${
+                                            attemptCount >= 2
+                                              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                                              : 'bg-slate-800 text-slate-300 border border-slate-700'
+                                          }`}
+                                        >
+                                          {attemptCount} ครั้ง
+                                        </span>
+                                      ) : (
+                                        <span className="text-slate-600 text-[10px]">-</span>
+                                      )}
+                                    </td>
+
+                                    {/* First Score */}
+                                    <td className="py-2.5 px-3 text-right font-mono text-slate-400">
+                                      {sub ? sub.firstScore ?? sub.score100 : '-'}
+                                    </td>
+
+                                    {/* Latest Score */}
+                                    <td className="py-2.5 px-3 text-right font-mono font-black text-sm">
+                                      {s.score !== null ? (
+                                        <span
+                                          className={
+                                            s.score >= 50 ? 'text-cyan-400' : 'text-rose-400'
+                                          }
+                                        >
+                                          {s.score}
+                                          {isLive && (
+                                            <span className="text-[10px] text-emerald-400 ml-1">
+                                              (สด)
+                                            </span>
+                                          )}
+                                        </span>
+                                      ) : (
+                                        <span className="text-slate-600">-</span>
+                                      )}
+                                    </td>
+
+                                    {/* Growth Delta */}
+                                    <td className="py-2.5 px-3 text-center font-mono font-bold text-xs">
+                                      {attemptCount >= 2 ? (
+                                        <span
+                                          className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md ${
+                                            growthDelta > 0
+                                              ? 'text-emerald-400 bg-emerald-500/10'
+                                              : growthDelta === 0
+                                              ? 'text-slate-400 bg-slate-800'
+                                              : 'text-rose-400 bg-rose-500/10'
+                                          }`}
+                                        >
+                                          {growthDelta > 0
+                                            ? `+${growthDelta} 📈`
+                                            : growthDelta === 0
+                                            ? '0.0'
+                                            : `${growthDelta} 📉`}
+                                        </span>
+                                      ) : (
+                                        <span className="text-slate-600 text-[10px]">-</span>
+                                      )}
+                                    </td>
+
+                                    {/* Max Score */}
+                                    <td className="py-2.5 px-3 text-right font-mono text-emerald-400 font-bold">
+                                      {sub ? sub.maxScore ?? sub.score100 : '-'}
+                                    </td>
+
+                                    {/* Result */}
+                                    <td className="py-2.5 px-3 text-center">
+                                      {sub ? (
+                                        sub.score100 >= 50 ? (
+                                          <span className="text-emerald-400 font-bold inline-flex items-center gap-1 text-[11px]">
+                                            <CheckCircle2 className="w-3.5 h-3.5" /> ผ่าน (5 ตั๋ว)
+                                          </span>
+                                        ) : (
+                                          <span className="text-rose-400 font-bold inline-flex items-center gap-1 text-[11px]">
+                                            <XCircle className="w-3.5 h-3.5" /> ต้องพัฒนา
+                                          </span>
+                                        )
+                                      ) : isLive ? (
+                                        <span className="text-emerald-400 text-[10px] font-bold">
+                                          ทำข้อสอบอยู่
+                                        </span>
+                                      ) : (
+                                        <span className="text-slate-600 text-[10px]">ยังไม่สอบ</span>
+                                      )}
+                                    </td>
+
+                                    {/* History Inspection Button */}
+                                    <td
+                                      className="py-2.5 px-3 text-center"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {sub ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => setSelectedHistory({ student: s, sub })}
+                                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                                          title="ดูประวัติการสอบทุกครั้ง"
+                                        >
+                                          <History className="w-3 h-3" />
+                                          <span>ดูประวัติ</span>
+                                        </button>
+                                      ) : (
+                                        <span className="text-slate-600 text-[10px]">-</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {/* ── TAB 2: ITEM ANALYSIS & WEAKNESS BREAKDOWN ──── */}
+                    {classroomTab[c.room] === 'itemAnalysis' && (
+                      <div className="space-y-5 animate-in fade-in duration-150">
+                        {/* Section 1: Most Missed vs Most Correct Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Left: Top Missed (จุดอ่อนที่ต้องติวด่วน) */}
+                          <div className="p-4 rounded-2xl bg-rose-950/30 border border-rose-500/30 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-black text-rose-300 flex items-center gap-1.5">
+                                <AlertTriangle className="w-4 h-4 text-rose-400" />
+                                🚨 ข้อที่เด็กในห้องนี้ผิดมากที่สุด (จุดอ่อนที่ต้องติวด่วน)
+                              </span>
+                              <span className="text-[10px] text-rose-400/80 font-bold">
+                                เรียงตาม % ผิด
+                              </span>
+                            </div>
+
+                            {c.mostMissed.length === 0 ? (
+                              <p className="text-xs text-slate-500 py-3 text-center">
+                                ยังไม่มีข้อมูลการตอบข้อสอบในห้องนี้
+                              </p>
+                            ) : (
+                              <div className="space-y-2">
+                                {c.mostMissed.map((item, idx) => (
+                                  <div
+                                    key={item.number}
+                                    onClick={() => setSelectedQuestionModal(item)}
+                                    className="p-3 rounded-xl bg-slate-950/70 border border-rose-500/20 hover:border-rose-400 flex items-center justify-between transition-colors cursor-pointer group"
                                   >
-                                    {sub ? (
-                                      <button
-                                        type="button"
-                                        onClick={() => setSelectedHistory({ student: s, sub })}
-                                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
-                                        title="ดูประวัติการสอบทุกครั้ง"
-                                      >
-                                        <History className="w-3 h-3" />
-                                        <span>ดูประวัติ</span>
-                                      </button>
-                                    ) : (
-                                      <span className="text-slate-600 text-[10px]">-</span>
-                                    )}
-                                  </td>
-                                </tr>
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center font-black text-xs">
+                                        #{idx + 1}
+                                      </div>
+                                      <div>
+                                        <strong className="text-sm font-black text-white group-hover:text-cyan-300 transition-colors">
+                                          ข้อที่ {item.number}
+                                        </strong>
+                                        <p className="text-[11px] text-slate-400">
+                                          ตอบผิด {item.wrongCount}/{item.attemptedCount} คน • เฉลย{' '}
+                                          <span className="text-cyan-300 font-bold">
+                                            {Array.isArray(item.correctAnswer)
+                                              ? item.correctAnswer.join(', ')
+                                              : item.correctAnswer}
+                                          </span>
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <div className="text-right">
+                                      <strong className="text-lg font-black text-rose-400 font-mono">
+                                        {item.wrongRate}%
+                                      </strong>
+                                      <span className="text-[10px] text-rose-300/80 block">
+                                        ผิด
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Right: Top Mastered (ข้อที่ตอบถูกมากที่สุด) */}
+                          <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-black text-emerald-300 flex items-center gap-1.5">
+                                <Trophy className="w-4 h-4 text-emerald-400" />
+                                ⭐ ข้อที่เด็กในห้องนี้ตอบถูกมากที่สุด (จุดแข็ง)
+                              </span>
+                              <span className="text-[10px] text-emerald-400/80 font-bold">
+                                เรียงตาม % ถูก
+                              </span>
+                            </div>
+
+                            {c.mostCorrect.length === 0 ? (
+                              <p className="text-xs text-slate-500 py-3 text-center">
+                                ยังไม่มีข้อมูลการตอบข้อสอบในห้องนี้
+                              </p>
+                            ) : (
+                              <div className="space-y-2">
+                                {c.mostCorrect.map((item, idx) => (
+                                  <div
+                                    key={item.number}
+                                    onClick={() => setSelectedQuestionModal(item)}
+                                    className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20 hover:border-emerald-400 flex items-center justify-between transition-colors cursor-pointer group"
+                                  >
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-black text-xs">
+                                        #{idx + 1}
+                                      </div>
+                                      <div>
+                                        <strong className="text-sm font-black text-white group-hover:text-cyan-300 transition-colors">
+                                          ข้อที่ {item.number}
+                                        </strong>
+                                        <p className="text-[11px] text-slate-400">
+                                          ตอบถูก {item.correctCount}/{item.attemptedCount} คน • เฉลย{' '}
+                                          <span className="text-emerald-300 font-bold">
+                                            {Array.isArray(item.correctAnswer)
+                                              ? item.correctAnswer.join(', ')
+                                              : item.correctAnswer}
+                                          </span>
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <div className="text-right">
+                                      <strong className="text-lg font-black text-emerald-400 font-mono">
+                                        {item.accuracyRate}%
+                                      </strong>
+                                      <span className="text-[10px] text-emerald-300/80 block">
+                                        ถูก
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Section 2: 32-Question Item Difficulty Heatmap Matrix */}
+                        <div className="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div>
+                              <h5 className="text-xs font-black text-white flex items-center gap-1.5">
+                                <BarChart3 className="w-4 h-4 text-cyan-400" />
+                                แผนผังความยากง่ายรายข้อ (32 ข้อ) • ข้อสอบปี {selectedYear}
+                              </h5>
+                              <p className="text-[11px] text-slate-400">
+                                สีบ่งบอกความเข้าใจ: 🟩 ถูกมากกว่า 70% | 🟨 ปานกลาง 40-70% | 🟥
+                                ผิดเยอะ (&lt;40% ต้องติวซ้ำ) • คลิกที่ข้อเพื่อดูเฉลยละเอียด
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-3 text-[11px]">
+                              <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                                <span className="w-2.5 h-2.5 rounded bg-emerald-500" /> ถูกดี
+                              </span>
+                              <span className="flex items-center gap-1 text-amber-400 font-bold">
+                                <span className="w-2.5 h-2.5 rounded bg-amber-500" /> ปานกลาง
+                              </span>
+                              <span className="flex items-center gap-1 text-rose-400 font-bold">
+                                <span className="w-2.5 h-2.5 rounded bg-rose-500" /> ผิดเยอะ
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-16 gap-2 pt-2">
+                            {c.itemAnalysis.map((item) => {
+                              const attempted = item.attemptedCount > 0;
+                              const isGood = attempted && item.accuracyRate >= 70;
+                              const isMid =
+                                attempted && item.accuracyRate >= 40 && item.accuracyRate < 70;
+                              const isHard = attempted && item.accuracyRate < 40;
+
+                              return (
+                                <button
+                                  key={item.number}
+                                  type="button"
+                                  onClick={() => setSelectedQuestionModal(item)}
+                                  className={`p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1 ${
+                                    !attempted
+                                      ? 'bg-slate-900/60 border-slate-800 text-slate-500 hover:border-slate-700'
+                                      : isGood
+                                      ? 'bg-emerald-950/50 border-emerald-500/40 text-emerald-300 hover:border-emerald-400 hover:scale-105'
+                                      : isMid
+                                      ? 'bg-amber-950/50 border-amber-500/40 text-amber-300 hover:border-amber-400 hover:scale-105'
+                                      : 'bg-rose-950/60 border-rose-500/50 text-rose-300 hover:border-rose-400 hover:scale-105 ring-1 ring-rose-500/30'
+                                  }`}
+                                  title={`ข้อที่ ${item.number}: ตอบถูก ${item.accuracyRate}% (${item.correctCount}/${item.attemptedCount} คน) คลิกดูโจทย์`}
+                                >
+                                  <span className="text-[10px] font-bold text-slate-400">
+                                    ข้อ {item.number}
+                                  </span>
+                                  <strong className="text-xs font-black font-mono">
+                                    {attempted ? `${item.accuracyRate}%` : '-'}
+                                  </strong>
+                                  <span className="text-[9px] font-bold px-1 rounded bg-slate-950/80 text-slate-400">
+                                    เฉลย{' '}
+                                    {Array.isArray(item.correctAnswer)
+                                      ? item.correctAnswer[0]
+                                      : item.correctAnswer}
+                                  </span>
+                                </button>
                               );
-                            })
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Section 3: Live Student-by-Question Checking Matrix Table */}
+                        <div className="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div>
+                              <h5 className="text-xs font-black text-white flex items-center gap-1.5">
+                                <Activity className="w-4 h-4 text-emerald-400 animate-pulse" />
+                                ตารางตรวจรายข้อรายบุคคล (Real-time Live Matrix)
+                              </h5>
+                              <p className="text-[11px] text-slate-400">
+                                แสดงผลสด: 🟩 ถูก | 🟥 ผิด (แสดงตัวอักษรที่เด็กตอบ) | ⬜ ยังไม่ตอบ
+                                • ครูเห็นคำตอบนักเรียนทันทีเมื่อเริ่มทำข้อสอบ
+                              </p>
+                            </div>
+                            <span className="text-[11px] font-mono text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20">
+                              ห้อง {c.room} ({c.studentsWithLive.length} คน)
+                            </span>
+                          </div>
+
+                          <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                            <table className="w-full text-left text-xs border-collapse">
+                              <thead className="bg-slate-900 text-slate-400 font-bold border-b border-slate-800 sticky top-0 z-10">
+                                <tr>
+                                  <th className="py-2.5 px-3 min-w-[140px] sticky left-0 bg-slate-900 z-20">
+                                    นักเรียน
+                                  </th>
+                                  <th className="py-2.5 px-2 text-center min-w-[80px]">สถานะ</th>
+                                  <th className="py-2.5 px-2 text-center min-w-[60px]">คะแนน</th>
+                                  {allQuestions.map((q) => (
+                                    <th
+                                      key={q.number}
+                                      className="py-2.5 px-1.5 text-center min-w-[34px] font-mono text-[10px]"
+                                      title={`ข้อ ${q.number} เฉลย ${q.correctAnswer}`}
+                                    >
+                                      Q{q.number}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-800/60 font-mono">
+                                {c.studentsWithLive.map((st) => {
+                                  const isLive = st.status === 'in_progress';
+                                  const isSubmitted = st.status === 'submitted';
+
+                                  return (
+                                    <tr
+                                      key={st.id}
+                                      className={`hover:bg-slate-900/50 transition-colors ${
+                                        isLive ? 'bg-emerald-950/10' : ''
+                                      }`}
+                                    >
+                                      {/* Student info sticky on left */}
+                                      <td className="py-2 px-3 sticky left-0 bg-slate-950 font-sans z-10 border-r border-slate-800/60">
+                                        <div className="flex flex-col">
+                                          <strong className="text-white text-xs truncate max-w-[130px]">
+                                            {st.name}
+                                          </strong>
+                                          <span className="text-[10px] text-slate-500 font-mono">
+                                            {st.studentId}
+                                          </span>
+                                        </div>
+                                      </td>
+
+                                      {/* Status */}
+                                      <td className="py-2 px-2 text-center font-sans">
+                                        {isLive ? (
+                                          <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 animate-pulse">
+                                            กำลังสอบ ({st.answeredCount})
+                                          </span>
+                                        ) : isSubmitted ? (
+                                          <span className="text-[10px] font-bold text-slate-400">
+                                            ส่งแล้ว
+                                          </span>
+                                        ) : (
+                                          <span className="text-[10px] text-slate-600">-</span>
+                                        )}
+                                      </td>
+
+                                      {/* Score */}
+                                      <td className="py-2 px-2 text-center font-bold">
+                                        {st.score !== null ? (
+                                          <span
+                                            className={
+                                              st.score >= 50 ? 'text-cyan-400' : 'text-rose-400'
+                                            }
+                                          >
+                                            {st.score}
+                                          </span>
+                                        ) : (
+                                          <span className="text-slate-600">-</span>
+                                        )}
+                                      </td>
+
+                                      {/* Question Cells Q1..Q32 */}
+                                      {allQuestions.map((q) => {
+                                        const qKey = String(q.number);
+                                        const qRes = st.questionResults?.[qKey];
+                                        const rawAns = st.answers?.[qKey];
+                                        const hasAnswer =
+                                          rawAns !== undefined && rawAns !== null && rawAns !== '';
+
+                                        if (!hasAnswer && !qRes) {
+                                          return (
+                                            <td
+                                              key={q.number}
+                                              className="py-1.5 px-1 text-center text-slate-700 text-[10px]"
+                                            >
+                                              -
+                                            </td>
+                                          );
+                                        }
+
+                                        const isCorrect = qRes?.isCorrect;
+                                        const displayAns = Array.isArray(rawAns)
+                                          ? rawAns[0] || '?'
+                                          : String(rawAns || '').toUpperCase();
+
+                                        return (
+                                          <td
+                                            key={q.number}
+                                            className="py-1 px-0.5 text-center"
+                                            title={`นักเรียนตอบ: ${rawAns || '-'} | เฉลย: ${
+                                              q.correctAnswer
+                                            }`}
+                                          >
+                                            <div
+                                              className={`w-6 h-6 mx-auto rounded flex items-center justify-center font-black text-[10px] transition-transform hover:scale-125 cursor-pointer ${
+                                                isCorrect
+                                                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                                                  : 'bg-rose-500/30 text-rose-300 border border-rose-500/40'
+                                              }`}
+                                            >
+                                              {isCorrect ? '✓' : displayAns || '✕'}
+                                            </div>
+                                          </td>
+                                        );
+                                      })}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1146,6 +1702,124 @@ export default function OnetAnalyticsManager() {
             <div className="pt-2">
               <button
                 onClick={() => setSelectedHistory(null)}
+                className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
+              >
+                ปิดหน้าต่าง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Question Detail & Explanation Modal ────────────────────── */}
+      {selectedQuestionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center font-black">
+                  🎯
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">
+                    รายละเอียดข้อสอบ: ข้อที่ {selectedQuestionModal.number} (ปี {selectedYear})
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    คะแนนเต็ม {selectedQuestionModal.points || 2.5} คะแนน • ชนิดข้อสอบ:{' '}
+                    {selectedQuestionModal.question?.type === 'single'
+                      ? 'เลือกตอบ (4 ตัวเลือก)'
+                      : 'เรียงลำดับ'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedQuestionModal(null)}
+                className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Answer & Stats Row */}
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                <span className="text-[10px] text-slate-400 font-bold block mb-1">
+                  เฉลยที่ถูกต้อง
+                </span>
+                <strong className="text-lg font-black text-emerald-400 font-mono">
+                  {Array.isArray(selectedQuestionModal.correctAnswer)
+                    ? selectedQuestionModal.correctAnswer.join(', ')
+                    : selectedQuestionModal.correctAnswer}
+                </strong>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                <span className="text-[10px] text-slate-400 font-bold block mb-1">
+                  ตอบถูกในห้อง
+                </span>
+                <strong className="text-lg font-black text-cyan-400 font-mono">
+                  {selectedQuestionModal.correctCount || 0} คน (
+                  {selectedQuestionModal.accuracyRate || 0}%)
+                </strong>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                <span className="text-[10px] text-slate-400 font-bold block mb-1">
+                  ตอบผิดในห้อง
+                </span>
+                <strong className="text-lg font-black text-rose-400 font-mono">
+                  {selectedQuestionModal.wrongCount || 0} คน ({selectedQuestionModal.wrongRate || 0}
+                  %)
+                </strong>
+              </div>
+            </div>
+
+            {/* Answer Choice Distribution */}
+            {selectedQuestionModal.answerDist &&
+              Object.keys(selectedQuestionModal.answerDist).length > 0 && (
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                  <span className="text-xs font-bold text-slate-300 block">
+                    📊 สัดส่วนตัวเลือกที่นักเรียนในห้องนี้ตอบ:
+                  </span>
+                  <div className="grid grid-cols-4 gap-2">
+                    {['A', 'B', 'C', 'D'].map((opt) => {
+                      const count = selectedQuestionModal.answerDist[opt] || 0;
+                      const isCorrect =
+                        String(selectedQuestionModal.correctAnswer).toUpperCase() === opt;
+                      return (
+                        <div
+                          key={opt}
+                          className={`p-2 rounded-xl border text-center ${
+                            isCorrect
+                              ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                              : 'bg-slate-900 border-slate-800 text-slate-400'
+                          }`}
+                        >
+                          <strong className="text-sm font-black block font-mono">
+                            {opt} {isCorrect && '✓'}
+                          </strong>
+                          <span className="text-[11px] font-bold">{count} คน</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+            {/* Explanation / Notes */}
+            <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/30 space-y-1.5">
+              <span className="text-xs font-bold text-indigo-300 flex items-center gap-1">
+                💡 คำอธิบาย / แนวทางการเฉลย:
+              </span>
+              <p className="text-xs text-slate-200 leading-relaxed">
+                {selectedQuestionModal.explanation ||
+                  'สามารถดูรูปโจทย์ข้อนี้ได้จากไฟล์ข้อสอบ PDF ในห้องสอบ'}
+              </p>
+            </div>
+
+            <div className="pt-1">
+              <button
+                onClick={() => setSelectedQuestionModal(null)}
                 className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
               >
                 ปิดหน้าต่าง

@@ -216,6 +216,15 @@ export async function POST(request: Request) {
 
     // Grant reward via server RPC
     let rewardResult: any = null;
+    const compactQuestionResults: Record<string, { isCorrect: boolean; studentAnswer: any; correctAnswer: any }> = {};
+    detailedResults.forEach((r) => {
+      compactQuestionResults[String(r.questionNumber)] = {
+        isCorrect: r.isCorrect,
+        studentAnswer: r.studentAnswer,
+        correctAnswer: r.correctAnswer,
+      };
+    });
+
     try {
       const { data, error } = await supabaseAdmin.rpc('grant_student_reward', {
         p_student_id: session.subjectId,
@@ -232,6 +241,8 @@ export async function POST(request: Request) {
           stars,
           isPassed,
           durationSeconds,
+          answers,
+          questionResults: compactQuestionResults,
         },
       });
       if (!error && data) {
@@ -239,6 +250,46 @@ export async function POST(request: Request) {
       }
     } catch (e) {
       console.warn('Could not grant reward via RPC:', e);
+    }
+
+    // Mark submitted in events table live_progress
+    try {
+      const { data: eventRow } = await supabaseAdmin
+        .from('events')
+        .select('settings')
+        .eq('slug', 'onet-challenge')
+        .maybeSingle();
+
+      const currentSettings = eventRow?.settings || {};
+      const liveProgress = currentSettings.live_progress || {};
+      const yearProgress = liveProgress[String(year)] || {};
+
+      yearProgress[session.subjectId] = {
+        studentId: session.subjectId,
+        studentCode: student?.grade_level ? studentClassroom : 'STUDENT',
+        classroom: studentClassroom,
+        answers,
+        questionResults: compactQuestionResults,
+        answeredCount: totalQuestions,
+        correctCount,
+        totalQuestions,
+        score100,
+        status: 'submitted',
+        updatedAt: new Date().toISOString(),
+      };
+
+      liveProgress[String(year)] = yearProgress;
+      await supabaseAdmin
+        .from('events')
+        .update({
+          settings: {
+            ...currentSettings,
+            live_progress: liveProgress,
+          },
+        })
+        .eq('slug', 'onet-challenge');
+    } catch (err) {
+      console.warn('Failed to update live_progress on submit:', err);
     }
 
     return NextResponse.json({

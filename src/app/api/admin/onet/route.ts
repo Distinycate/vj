@@ -71,6 +71,8 @@ export async function GET(request: Request) {
         stars: Number(meta.stars ?? 0),
         isPassed: Boolean(meta.isPassed),
         durationSeconds: Number(meta.durationSeconds ?? 0),
+        answers: meta.answers || {},
+        questionResults: meta.questionResults || {},
         completedAt: tx.created_at,
       });
     });
@@ -157,6 +159,8 @@ export async function GET(request: Request) {
       };
     });
 
+    const liveProgress = eventRow?.settings?.live_progress || {};
+
     return NextResponse.json({
       success: true,
       classrooms,
@@ -164,6 +168,7 @@ export async function GET(request: Request) {
       submissions: submissionsMap,
       benchmarks: NATIONAL_BENCHMARKS,
       openYears,
+      liveProgress,
     });
   } catch (error: any) {
     if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
