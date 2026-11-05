@@ -26,16 +26,16 @@ export async function GET(request: Request) {
       .from('economy_transactions')
       .select('student_id, metadata, created_at')
       .eq('source', 'onet_challenge')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: true });
 
     if (txErr) {
       console.error('Failed to fetch ONET transactions:', txErr);
       return NextResponse.json({ error: 'Failed to fetch ONET records' }, { status: 500 });
     }
 
-    // Map latest submission per student per year
+    // Group all attempts chronologically per student per year
     // Key: `${student_id}_${year}`
-    const submissionsMap: Record<string, any> = {};
+    const attemptsMap: Record<string, any[]> = {};
 
     (txs || []).forEach((tx) => {
       const meta = tx.metadata || {};
@@ -43,20 +43,51 @@ export async function GET(request: Request) {
       if (!year || !tx.student_id) return;
 
       const key = `${tx.student_id}_${year}`;
-      // Since ordered by created_at DESC, first seen is latest
-      if (!submissionsMap[key]) {
-        submissionsMap[key] = {
-          studentId: tx.student_id,
-          year: Number(year),
-          score100: Number(meta.score100 ?? 0),
-          correctCount: Number(meta.correctCount ?? 0),
-          totalQuestions: Number(meta.totalQuestions ?? 32),
-          stars: Number(meta.stars ?? 0),
-          isPassed: Boolean(meta.isPassed),
-          durationSeconds: Number(meta.durationSeconds ?? 0),
-          completedAt: tx.created_at,
-        };
+      if (!attemptsMap[key]) {
+        attemptsMap[key] = [];
       }
+
+      attemptsMap[key].push({
+        studentId: tx.student_id,
+        year: Number(year),
+        score100: Number(meta.score100 ?? 0),
+        correctCount: Number(meta.correctCount ?? 0),
+        totalQuestions: Number(meta.totalQuestions ?? 32),
+        stars: Number(meta.stars ?? 0),
+        isPassed: Boolean(meta.isPassed),
+        durationSeconds: Number(meta.durationSeconds ?? 0),
+        completedAt: tx.created_at,
+      });
+    });
+
+    // Build rich submission summary with full attempt history and growth delta
+    const submissionsMap: Record<string, any> = {};
+
+    Object.entries(attemptsMap).forEach(([key, list]) => {
+      // Sort oldest to newest
+      list.sort((a, b) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime());
+
+      const numberedAttempts = list.map((item, idx) => ({
+        ...item,
+        attemptNumber: idx + 1,
+      }));
+
+      const firstAttempt = numberedAttempts[0];
+      const latestAttempt = numberedAttempts[numberedAttempts.length - 1];
+      const scores = numberedAttempts.map((a) => a.score100);
+      const maxScore = Math.max(...scores);
+      const growthDelta = Number((latestAttempt.score100 - firstAttempt.score100).toFixed(1));
+
+      submissionsMap[key] = {
+        ...latestAttempt, // latest attempt as primary
+        attemptCount: numberedAttempts.length,
+        firstScore: firstAttempt.score100,
+        latestScore: latestAttempt.score100,
+        maxScore,
+        growthDelta,
+        isImproved: growthDelta > 0,
+        attempts: numberedAttempts,
+      };
     });
 
     // Format classrooms

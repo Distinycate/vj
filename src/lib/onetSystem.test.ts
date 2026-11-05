@@ -201,5 +201,57 @@ describe('O-NET Challenge & Assessment System Verification', () => {
     // Year 2565: Not configured
     assert.equal(checkAccess(2565, 'ม.3/1'), false, 'Unconfigured year should deny access');
   });
+
+  it('9. Multi-attempt progression tracking calculates attempts, growth delta, and max score', () => {
+    const rawAttempts = [
+      {
+        studentId: 'student_1',
+        year: 2568,
+        score100: 20,
+        correctCount: 6,
+        totalQuestions: 32,
+        completedAt: '2026-11-05T09:00:00Z',
+      },
+      {
+        studentId: 'student_1',
+        year: 2568,
+        score100: 21,
+        correctCount: 7,
+        totalQuestions: 32,
+        completedAt: '2026-11-05T10:00:00Z',
+      },
+      {
+        studentId: 'student_1',
+        year: 2568,
+        score100: 25,
+        correctCount: 8,
+        totalQuestions: 32,
+        completedAt: '2026-11-05T11:00:00Z',
+      },
+    ];
+
+    // Sort chronologically
+    rawAttempts.sort((a, b) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime());
+
+    const numbered = rawAttempts.map((att, i) => ({ ...att, attemptNumber: i + 1 }));
+    assert.equal(numbered.length, 3);
+    assert.equal(numbered[0].attemptNumber, 1);
+    assert.equal(numbered[0].score100, 20);
+    assert.equal(numbered[1].attemptNumber, 2);
+    assert.equal(numbered[1].score100, 21);
+    assert.equal(numbered[2].attemptNumber, 3);
+    assert.equal(numbered[2].score100, 25);
+
+    const firstScore = numbered[0].score100;
+    const latestScore = numbered[numbered.length - 1].score100;
+    const maxScore = Math.max(...numbered.map((a) => a.score100));
+    const growthDelta = Number((latestScore - firstScore).toFixed(1));
+
+    assert.equal(firstScore, 20);
+    assert.equal(latestScore, 25);
+    assert.equal(maxScore, 25);
+    assert.equal(growthDelta, 5.0);
+    assert.ok(growthDelta > 0, 'Positive growth from attempt 1 to latest attempt');
+  });
 });
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   BarChart3,
+  Calendar,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -10,14 +11,17 @@ import {
   Download,
   ExternalLink,
   Filter,
+  History,
   Layers,
   Printer,
   RefreshCw,
   Search,
   Sparkles,
   Target,
+  TrendingUp,
   Trophy,
   Users,
+  X,
   XCircle,
 } from 'lucide-react';
 import { NATIONAL_BENCHMARKS } from '@/data/onet/onetData';
@@ -33,6 +37,17 @@ interface StudentItem {
   isSkull?: boolean;
 }
 
+interface AttemptItem {
+  attemptNumber: number;
+  score100: number;
+  correctCount: number;
+  totalQuestions: number;
+  stars: number;
+  isPassed: boolean;
+  durationSeconds: number;
+  completedAt: string;
+}
+
 interface SubmissionItem {
   studentId: string;
   year: number;
@@ -42,6 +57,13 @@ interface SubmissionItem {
   stars: number;
   isPassed: boolean;
   completedAt: string;
+  attemptCount?: number;
+  firstScore?: number;
+  latestScore?: number;
+  maxScore?: number;
+  growthDelta?: number;
+  isImproved?: boolean;
+  attempts?: AttemptItem[];
 }
 
 export default function OnetAnalyticsManager() {
@@ -56,6 +78,10 @@ export default function OnetAnalyticsManager() {
   const [submissions, setSubmissions] = useState<Record<string, SubmissionItem>>({});
   const [benchmarks, setBenchmarks] = useState(NATIONAL_BENCHMARKS);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [selectedHistory, setSelectedHistory] = useState<{
+    student: StudentItem;
+    sub: SubmissionItem;
+  } | null>(null);
 
   const handleCopyLink = () => {
     if (typeof window === 'undefined') return;
@@ -168,6 +194,9 @@ export default function OnetAnalyticsManager() {
         sd: 0,
         passRate: 0,
         passedCount: 0,
+        avgGrowth: 0,
+        improvedCount: 0,
+        multiAttemptCount: 0,
       };
     }
 
@@ -184,6 +213,15 @@ export default function OnetAnalyticsManager() {
     const passedCount = scores.filter((s) => s >= 50).length;
     const passRate = Number(((passedCount / submittedCount) * 100).toFixed(1));
 
+    // Multi-attempt growth calculations
+    const multiAttemptItems = scoredList.filter((item) => (item.sub.attemptCount ?? 1) >= 2);
+    const totalGrowth = multiAttemptItems.reduce((acc, item) => acc + (item.sub.growthDelta ?? 0), 0);
+    const avgGrowth =
+      multiAttemptItems.length > 0
+        ? Number((totalGrowth / multiAttemptItems.length).toFixed(1))
+        : 0;
+    const improvedCount = multiAttemptItems.filter((item) => (item.sub.growthDelta ?? 0) > 0).length;
+
     return {
       totalSelected,
       submittedCount,
@@ -193,6 +231,9 @@ export default function OnetAnalyticsManager() {
       sd,
       passRate,
       passedCount,
+      avgGrowth,
+      improvedCount,
+      multiAttemptCount: multiAttemptItems.length,
     };
   }, [students, selectedStudentIds, submissions, selectedYear]);
 
@@ -462,8 +503,8 @@ export default function OnetAnalyticsManager() {
           </div>
         </div>
 
-        {/* RIGHT: Quick Metric Summary Pills (5 cols) */}
-        <div className="lg:col-span-5 grid grid-cols-2 gap-3">
+        {/* RIGHT: Quick Metric Summary Pills (6 cols responsive) */}
+        <div className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
           <div className="p-4 rounded-3xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
             <span className="text-xs text-slate-400 font-bold">นักเรียนที่เลือก</span>
             <div>
@@ -509,6 +550,43 @@ export default function OnetAnalyticsManager() {
             <span className="text-[10px] text-slate-500">
               {cohortStats.passedCount} จาก {cohortStats.submittedCount} คนที่ส่ง
             </span>
+          </div>
+
+          <div className="p-4 rounded-3xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
+            <span className="text-xs text-slate-400 font-bold flex items-center gap-1">
+              <TrendingUp className="w-3.5 h-3.5 text-cyan-400" /> พัฒนาการเฉลี่ย
+            </span>
+            <div>
+              <strong
+                className={`text-2xl sm:text-3xl font-black font-mono ${
+                  cohortStats.avgGrowth >= 0 ? 'text-cyan-400' : 'text-rose-400'
+                }`}
+              >
+                {cohortStats.multiAttemptCount > 0
+                  ? cohortStats.avgGrowth >= 0
+                    ? `+${cohortStats.avgGrowth}`
+                    : cohortStats.avgGrowth
+                  : '-'}
+              </strong>
+              {cohortStats.multiAttemptCount > 0 && (
+                <span className="text-xs text-slate-500 ml-1">คะแนน</span>
+              )}
+            </div>
+            <span className="text-[10px] text-slate-500">
+              {cohortStats.multiAttemptCount > 0
+                ? `ดีขึ้น ${cohortStats.improvedCount} จาก ${cohortStats.multiAttemptCount} คนที่สอบซ้ำ`
+                : 'ยังไม่มีนักเรียนสอบซ้ำ'}
+            </span>
+          </div>
+
+          <div className="p-4 rounded-3xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
+            <span className="text-xs text-slate-400 font-bold">ส่วนเบี่ยงเบน (S.D.)</span>
+            <div>
+              <strong className="text-2xl sm:text-3xl font-black text-slate-200 font-mono">
+                {cohortStats.sd}
+              </strong>
+            </div>
+            <span className="text-[10px] text-slate-500">การกระจายตัวของคะแนน</span>
           </div>
         </div>
       </div>
@@ -558,16 +636,19 @@ export default function OnetAnalyticsManager() {
                 <th className="py-3 px-3">เลขประจำตัว</th>
                 <th className="py-3 px-4">ชื่อ - นามสกุล</th>
                 <th className="py-3 px-3">ห้อง</th>
-                <th className="py-3 px-3 text-center">สถานะ</th>
-                <th className="py-3 px-3 text-right">ข้อที่ถูก</th>
-                <th className="py-3 px-4 text-right">คะแนนเต็ม 100</th>
+                <th className="py-3 px-3 text-center">ครั้งที่สอบ</th>
+                <th className="py-3 px-3 text-right">ครั้งแรก</th>
+                <th className="py-3 px-3 text-right">ล่าสุด</th>
+                <th className="py-3 px-3 text-center">พัฒนาการ</th>
+                <th className="py-3 px-3 text-right">สูงสุด</th>
                 <th className="py-3 px-3 text-center">ผลประเมิน</th>
+                <th className="py-3 px-3 text-center">ประวัติ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-500">
+                  <td colSpan={11} className="py-8 text-center text-slate-500">
                     ไม่พบข้อมูลนักเรียนที่ตรงกับเงื่อนไข
                   </td>
                 </tr>
@@ -575,6 +656,8 @@ export default function OnetAnalyticsManager() {
                 filteredStudents.map((s, idx) => {
                   const isChecked = selectedStudentIds.has(s.id);
                   const sub = submissions[`${s.id}_${selectedYear}`];
+                  const attemptCount = sub?.attemptCount || (sub ? 1 : 0);
+                  const growthDelta = sub?.growthDelta ?? 0;
 
                   return (
                     <tr
@@ -614,26 +697,30 @@ export default function OnetAnalyticsManager() {
                         {s.classroom}
                       </td>
 
-                      {/* Status */}
+                      {/* Attempt Count Badge */}
                       <td className="py-3 px-3 text-center">
-                        {sub ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1">
-                            <Check className="w-3 h-3" /> ส่งแล้ว
+                        {attemptCount > 0 ? (
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-black inline-flex items-center gap-1 ${
+                              attemptCount >= 2
+                                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                                : 'bg-slate-800 text-slate-300 border border-slate-700'
+                            }`}
+                          >
+                            {attemptCount} ครั้ง
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-500">
-                            ยังไม่ส่ง
-                          </span>
+                          <span className="text-slate-600 text-[10px]">-</span>
                         )}
                       </td>
 
-                      {/* Raw Score */}
-                      <td className="py-3 px-3 text-right font-mono text-slate-300">
-                        {sub ? `${sub.correctCount}/${sub.totalQuestions}` : '-'}
+                      {/* First Score */}
+                      <td className="py-3 px-3 text-right font-mono text-slate-400">
+                        {sub ? sub.firstScore ?? sub.score100 : '-'}
                       </td>
 
-                      {/* Score out of 100 */}
-                      <td className="py-3 px-4 text-right font-mono font-black text-sm">
+                      {/* Latest Score */}
+                      <td className="py-3 px-3 text-right font-mono font-black text-sm">
                         {sub ? (
                           <span className={sub.score100 >= 50 ? 'text-cyan-400' : 'text-rose-400'}>
                             {sub.score100}
@@ -641,6 +728,30 @@ export default function OnetAnalyticsManager() {
                         ) : (
                           <span className="text-slate-600">-</span>
                         )}
+                      </td>
+
+                      {/* Growth Delta */}
+                      <td className="py-3 px-3 text-center font-mono font-bold text-xs">
+                        {attemptCount >= 2 ? (
+                          <span
+                            className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md ${
+                              growthDelta > 0
+                                ? 'text-emerald-400 bg-emerald-500/10'
+                                : growthDelta === 0
+                                ? 'text-slate-400 bg-slate-800'
+                                : 'text-rose-400 bg-rose-500/10'
+                            }`}
+                          >
+                            {growthDelta > 0 ? `+${growthDelta} 📈` : growthDelta === 0 ? '0.0' : `${growthDelta} 📉`}
+                          </span>
+                        ) : (
+                          <span className="text-slate-600 text-[10px]">-</span>
+                        )}
+                      </td>
+
+                      {/* Max Score */}
+                      <td className="py-3 px-3 text-right font-mono text-emerald-400 font-bold">
+                        {sub ? sub.maxScore ?? sub.score100 : '-'}
                       </td>
 
                       {/* Result */}
@@ -659,6 +770,26 @@ export default function OnetAnalyticsManager() {
                           <span className="text-slate-600 text-[10px]">-</span>
                         )}
                       </td>
+
+                      {/* History Inspection Button */}
+                      <td
+                        className="py-3 px-3 text-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {sub ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedHistory({ student: s, sub })}
+                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                            title="ดูประวัติการสอบทุกครั้ง"
+                          >
+                            <History className="w-3 h-3" />
+                            <span>ดูประวัติ</span>
+                          </button>
+                        ) : (
+                          <span className="text-slate-600 text-[10px]">-</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })
@@ -667,6 +798,128 @@ export default function OnetAnalyticsManager() {
           </table>
         </div>
       </div>
+
+      {/* ── Student Attempt History Modal (Teacher View Only) ────────── */}
+      {selectedHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-black">
+                  📜
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">
+                    ประวัติและพัฒนาการสอบ: {selectedHistory.student.name}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    เลขประจำตัว {selectedHistory.student.studentId} • ห้อง {selectedHistory.student.classroom} • ข้อสอบปี {selectedYear}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedHistory(null)}
+                className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Summary Score Comparison */}
+            <div className="grid grid-cols-3 gap-2.5 p-3 rounded-2xl bg-slate-950 border border-slate-800/80 text-center">
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold block">สอบครั้งแรก</span>
+                <strong className="text-lg font-black text-slate-200 font-mono">
+                  {selectedHistory.sub.firstScore ?? selectedHistory.sub.score100}
+                </strong>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold block">สอบล่าสุด</span>
+                <strong className="text-lg font-black text-cyan-400 font-mono">
+                  {selectedHistory.sub.latestScore ?? selectedHistory.sub.score100}
+                </strong>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold block">พัฒนาการสุทธิ</span>
+                <strong
+                  className={`text-lg font-black font-mono ${
+                    (selectedHistory.sub.growthDelta ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  }`}
+                >
+                  {(selectedHistory.sub.attemptCount ?? 1) >= 2
+                    ? `${(selectedHistory.sub.growthDelta ?? 0) >= 0 ? '+' : ''}${selectedHistory.sub.growthDelta}`
+                    : '-'}
+                </strong>
+              </div>
+            </div>
+
+            {/* Attempts List */}
+            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+              {(selectedHistory.sub.attempts || [selectedHistory.sub]).map((att, idx) => {
+                const attemptNo = att.attemptNumber ?? idx + 1;
+                const prevAttempt = selectedHistory.sub.attempts?.[idx - 1];
+                const stepDelta = prevAttempt ? Number((att.score100 - prevAttempt.score100).toFixed(1)) : null;
+
+                return (
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 font-black text-xs">
+                          ครั้งที่ {attemptNo}
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-slate-500" />
+                          {new Date(att.completedAt).toLocaleString('th-TH', {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        ตอบถูก {att.correctCount}/{att.totalQuestions} ข้อ • ใช้เวลา {Math.floor(att.durationSeconds / 60)} นาที
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span
+                          className={`text-xl font-black font-mono ${
+                            att.score100 >= 50 ? 'text-emerald-400' : 'text-rose-400'
+                          }`}
+                        >
+                          {att.score100}
+                        </span>
+                        <span className="text-[10px] text-slate-500">/ 100</span>
+                      </div>
+                      {stepDelta !== null && (
+                        <span
+                          className={`text-[10px] font-bold ${
+                            stepDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                          }`}
+                        >
+                          {stepDelta >= 0 ? `+${stepDelta} 📈` : `${stepDelta} 📉`}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={() => setSelectedHistory(null)}
+                className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
+              >
+                ปิดหน้าต่าง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

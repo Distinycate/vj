@@ -42,6 +42,7 @@ export default function OnetExamRoomPage({ params }: PageProps) {
   const [reviewFilter, setReviewFilter] = useState<'all' | 'wrong'>('all');
   const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
   const [studentClassroom, setStudentClassroom] = useState<string>('');
+  const [mobileQNumber, setMobileQNumber] = useState<number>(1);
 
   const questionRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
@@ -131,6 +132,8 @@ export default function OnetExamRoomPage({ params }: PageProps) {
   });
 
   const progressPercent = Math.round((answeredCount / totalQuestions) * 100);
+  const currentMobileQ =
+    config.questions.find((q) => q.number === mobileQNumber) || config.questions[0];
 
   // Format stopwatch
   const formatTime = (secs: number) => {
@@ -326,9 +329,9 @@ export default function OnetExamRoomPage({ params }: PageProps) {
               href={config.pdfCleanUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-bold"
+              className="text-[11px] text-cyan-300 hover:text-cyan-200 flex items-center gap-1 font-bold bg-cyan-500/15 px-2.5 py-0.5 rounded-lg border border-cyan-500/30 transition-colors"
             >
-              <ExternalLink className="w-3 h-3" /> เปิดแท็บใหม่
+              <ExternalLink className="w-3 h-3" /> เปิดซูมเต็มจอ ↗
             </a>
           </div>
 
@@ -340,6 +343,83 @@ export default function OnetExamRoomPage({ params }: PageProps) {
               className="w-full h-full border-0"
             />
           </div>
+
+          {/* ── MOBILE QUICK BUBBLE DOCK (Only visible on mobile when in PDF mode) ── */}
+          <div className="lg:hidden bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 p-3 shadow-2xl shrink-0 z-20 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setMobileQNumber(Math.max(1, mobileQNumber - 1))}
+                  disabled={mobileQNumber <= 1}
+                  className="w-8 h-8 rounded-xl bg-slate-800 disabled:opacity-30 text-white flex items-center justify-center font-black cursor-pointer text-sm"
+                >
+                  ◀
+                </button>
+                <span className="px-3 py-1 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-black">
+                  ข้อที่ {mobileQNumber} / {totalQuestions}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setMobileQNumber(Math.min(totalQuestions, mobileQNumber + 1))}
+                  disabled={mobileQNumber >= totalQuestions}
+                  className="w-8 h-8 rounded-xl bg-slate-800 disabled:opacity-30 text-white flex items-center justify-center font-black cursor-pointer text-sm"
+                >
+                  ▶
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('sheet')}
+                className="text-xs font-black text-indigo-300 hover:text-white flex items-center gap-1.5 bg-indigo-500/20 px-3 py-1.5 rounded-xl border border-indigo-500/30 cursor-pointer"
+              >
+                <span>ดูแผ่นคำตอบ</span>
+                <span className="text-[10px] bg-indigo-400 text-slate-950 px-1.5 py-0.2 rounded-full font-black">
+                  {answeredCount}/{totalQuestions}
+                </span>
+              </button>
+            </div>
+
+            {/* Bubble Buttons for Current Question */}
+            {currentMobileQ?.type === 'single' ? (
+              <div className="grid grid-cols-4 gap-2">
+                {(['A', 'B', 'C', 'D'] as const).map((choice, cIdx) => {
+                  const isChosen = String(answers[String(mobileQNumber)] || '').toUpperCase() === choice;
+                  return (
+                    <button
+                      key={choice}
+                      type="button"
+                      onClick={() => {
+                        updateAnswer(mobileQNumber, choice);
+                        if (mobileQNumber < totalQuestions) {
+                          setMobileQNumber(mobileQNumber + 1);
+                        }
+                      }}
+                      className={`h-12 rounded-2xl font-black text-base flex flex-col items-center justify-center transition-all cursor-pointer active:scale-90 ${
+                        isChosen
+                          ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 shadow-lg shadow-cyan-500/30 ring-2 ring-cyan-300'
+                          : 'bg-slate-950 border border-slate-700/80 text-white hover:border-slate-500'
+                      }`}
+                    >
+                      <span>{choice}</span>
+                      <span className={`text-[9px] ${isChosen ? 'text-slate-900 font-bold' : 'text-slate-500'}`}>
+                        ({cIdx + 1})
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setActiveTab('sheet')}
+                className="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-2xl font-black text-xs shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>ข้อ 10 เป็นข้อเรียงลำดับ A - F › แตะเพื่อไปฝนในแผ่นคำตอบ</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* RIGHT PANEL: Digital OMR Answer Sheet */}
@@ -348,6 +428,19 @@ export default function OnetExamRoomPage({ params }: PageProps) {
             activeTab === 'pdf' ? 'hidden lg:flex' : 'flex'
           }`}
         >
+          {/* Mobile Top Return Bar */}
+          <div className="lg:hidden p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab('pdf')}
+              className="px-3.5 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 hover:text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-cyan-500/30"
+            >
+              <FileText className="w-3.5 h-3.5" /> 📄 กลับไปอ่านข้อสอบ (PDF)
+            </button>
+            <span className="text-xs font-bold text-emerald-400">
+              ตอบแล้ว {answeredCount}/{totalQuestions}
+            </span>
+          </div>
           {/* Quick Jump Bar */}
           <div className="p-3 bg-slate-900/60 border-b border-slate-800/80 shrink-0">
             <div className="flex items-center justify-between mb-2">
