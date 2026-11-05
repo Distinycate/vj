@@ -21,6 +21,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { NATIONAL_BENCHMARKS } from '@/data/onet/onetData';
+import OnetYearAccessControl from './OnetYearAccessControl';
 
 interface StudentItem {
   id: string;
@@ -264,6 +265,9 @@ export default function OnetAnalyticsManager() {
           </div>
         </div>
       </div>
+
+      {/* ── Year & Classroom Access Control ───────────────────────── */}
+      <OnetYearAccessControl onUpdated={fetchData} classrooms={classrooms} />
 
       {/* ── Control Bar ─────────────────────────────────────────────── */}
       <div className="glass-card p-5 rounded-3xl border border-slate-800 bg-slate-900/70 space-y-4">

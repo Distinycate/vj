@@ -11,6 +11,95 @@ const onetSubmitSchema = z.object({
   durationSeconds: z.number().int().min(0).default(0),
 });
 
+export async function GET(request: Request) {
+  try {
+    assertSameOrigin(request);
+    const session = await requireRole(['STUDENT']);
+
+    // 1. Get student classroom info
+    const { data: student, error: sErr } = await supabaseAdmin
+      .from('students')
+      .select('id, grade_level, room_number, academic_year')
+      .eq('id', session.subjectId)
+      .single();
+
+    if (sErr || !student) {
+      return NextResponse.json({ error: 'ไม่พบข้อมูลนักเรียน' }, { status: 404 });
+    }
+
+    const studentClassroom =
+      student.grade_level && student.room_number
+        ? `ม.${student.grade_level}/${student.room_number}`
+        : 'ม.3/1';
+
+    // 2. Fetch O-NET challenge settings
+    const { data: eventRow } = await supabaseAdmin
+      .from('events')
+      .select('settings')
+      .eq('slug', 'onet-challenge')
+      .maybeSingle();
+
+    const openYears = eventRow?.settings?.open_years || {
+      '2568': { isOpen: true, allowedClassrooms: ['ม.3/1'] },
+    };
+
+    // 3. Fetch student past submissions from economy_transactions
+    const { data: txs } = await supabaseAdmin
+      .from('economy_transactions')
+      .select('metadata, created_at')
+      .eq('student_id', session.subjectId)
+      .eq('source', 'onet_challenge')
+      .order('created_at', { ascending: false });
+
+    const submissionsMap: Record<string, any> = {};
+    (txs || []).forEach((tx) => {
+      const meta = tx.metadata || {};
+      const year = meta.year;
+      if (!year || submissionsMap[String(year)]) return;
+      submissionsMap[String(year)] = {
+        year: Number(year),
+        score100: Number(meta.score100 ?? 0),
+        correctCount: Number(meta.correctCount ?? 0),
+        totalQuestions: Number(meta.totalQuestions ?? 32),
+        stars: Number(meta.stars ?? 0),
+        isPassed: Boolean(meta.isPassed),
+        completedAt: tx.created_at,
+      };
+    });
+
+    // 4. Compute access status per year (2559 - 2568)
+    const allYears = [2568, 2567, 2566, 2565, 2564, 2563, 2562, 2561, 2560, 2559];
+    const yearAccess: Record<string, { isOpen: boolean; isAllowed: boolean; allowedClassrooms: string[] }> = {};
+
+    allYears.forEach((y) => {
+      const cfg = openYears[String(y)];
+      const isOpen = Boolean(cfg?.isOpen);
+      const allowedClassrooms = Array.isArray(cfg?.allowedClassrooms) ? cfg.allowedClassrooms : [];
+      const isAllowed =
+        isOpen &&
+        (allowedClassrooms.includes('ALL') || allowedClassrooms.includes(studentClassroom));
+
+      yearAccess[String(y)] = {
+        isOpen,
+        isAllowed,
+        allowedClassrooms,
+      };
+    });
+
+    return NextResponse.json({
+      success: true,
+      studentClassroom,
+      yearAccess,
+      submissions: submissionsMap,
+    });
+  } catch (error: any) {
+    if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error?.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    console.error('Student ONET GET error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
@@ -29,6 +118,43 @@ export async function POST(request: Request) {
     const config = getOnetYearConfig(year);
     if (!config) {
       return NextResponse.json({ error: 'ไม่พบชุดข้อสอบปีที่ระบุ' }, { status: 404 });
+    }
+
+    // Check student classroom and year permission
+    const { data: student } = await supabaseAdmin
+      .from('students')
+      .select('grade_level, room_number')
+      .eq('id', session.subjectId)
+      .single();
+
+    const studentClassroom =
+      student?.grade_level && student?.room_number
+        ? `ม.${student.grade_level}/${student.room_number}`
+        : 'ม.3/1';
+
+    const { data: eventRow } = await supabaseAdmin
+      .from('events')
+      .select('settings')
+      .eq('slug', 'onet-challenge')
+      .maybeSingle();
+
+    const openYears = eventRow?.settings?.open_years || {
+      '2568': { isOpen: true, allowedClassrooms: ['ม.3/1'] },
+    };
+
+    const yearConfig = openYears[String(year)];
+    const isYearOpen = Boolean(yearConfig?.isOpen);
+    const allowedRooms = Array.isArray(yearConfig?.allowedClassrooms) ? yearConfig.allowedClassrooms : [];
+    const hasAccess =
+      isYearOpen && (allowedRooms.includes('ALL') || allowedRooms.includes(studentClassroom));
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        {
+          error: `ชุดข้อสอบปี ${year} ยังไม่เปิดให้ห้อง ${studentClassroom} เข้าสอบ (กรุณารอคุณครูเปิดระบบ)`,
+        },
+        { status: 403 }
+      );
     }
 
     // Evaluate answers

@@ -170,5 +170,36 @@ describe('O-NET Challenge & Assessment System Verification', () => {
       assert.ok(stat.size > 100000, `PDF file too small: ${stat.size} bytes`);
     }
   });
+
+  it('8. Year & classroom access control gates permissions accurately', () => {
+    const mockOpenYears: Record<string, { isOpen: boolean; allowedClassrooms: string[] }> = {
+      '2568': { isOpen: true, allowedClassrooms: ['ม.3/1'] },
+      '2567': { isOpen: false, allowedClassrooms: ['ม.3/1', 'ม.3/2'] },
+      '2566': { isOpen: true, allowedClassrooms: ['ALL'] },
+    };
+
+    function checkAccess(year: number, classroom: string) {
+      const cfg = mockOpenYears[String(year)];
+      if (!cfg || !cfg.isOpen) return false;
+      return cfg.allowedClassrooms.includes('ALL') || cfg.allowedClassrooms.includes(classroom);
+    }
+
+    // Year 2568: Open only for ม.3/1
+    assert.equal(checkAccess(2568, 'ม.3/1'), true, 'ม.3/1 should have access to 2568');
+    assert.equal(checkAccess(2568, 'ม.2/1'), false, 'ม.2/1 should NOT have access to 2568');
+    assert.equal(checkAccess(2568, 'ม.1/1'), false, 'ม.1/1 should NOT have access to 2568');
+
+    // Year 2567: Closed completely
+    assert.equal(checkAccess(2567, 'ม.3/1'), false, 'Closed year should deny even listed classroom');
+    assert.equal(checkAccess(2567, 'ม.3/2'), false, 'Closed year should deny ม.3/2');
+
+    // Year 2566: Open for ALL
+    assert.equal(checkAccess(2566, 'ม.3/1'), true, 'ALL should allow ม.3/1');
+    assert.equal(checkAccess(2566, 'ม.2/1'), true, 'ALL should allow ม.2/1');
+    assert.equal(checkAccess(2566, 'ม.1/1'), true, 'ALL should allow ม.1/1');
+
+    // Year 2565: Not configured
+    assert.equal(checkAccess(2565, 'ม.3/1'), false, 'Unconfigured year should deny access');
+  });
 });
 

@@ -84,17 +84,99 @@ export async function GET(request: Request) {
 
     const classrooms = Array.from(classroomsSet).sort();
 
+    // 3. Fetch O-NET challenge settings from events table
+    const { data: eventRow, error: eErr } = await supabaseAdmin
+      .from('events')
+      .select('settings')
+      .eq('slug', 'onet-challenge')
+      .maybeSingle();
+
+    if (eErr) {
+      console.warn('Failed to load onet-challenge event settings:', eErr);
+    }
+
+    const openYears = eventRow?.settings?.open_years || {
+      '2568': { isOpen: true, allowedClassrooms: ['ม.3/1'] },
+    };
+
     return NextResponse.json({
       success: true,
       classrooms,
       students: formattedStudents,
       submissions: submissionsMap,
       benchmarks: NATIONAL_BENCHMARKS,
+      openYears,
     });
   } catch (error: any) {
     if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (error?.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('Admin ONET API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    assertSameOrigin(request);
+    await requireRole(['ADMIN', 'TEACHER']);
+
+    const body = await request.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: 'Missing request body' }, { status: 400 });
+    }
+
+    const { year, isOpen, allowedClassrooms } = body;
+    if (!year || typeof isOpen !== 'boolean') {
+      return NextResponse.json({ error: 'Invalid parameters: year and isOpen are required' }, { status: 400 });
+    }
+
+    // Load existing event settings
+    const { data: existingEvent } = await supabaseAdmin
+      .from('events')
+      .select('settings')
+      .eq('slug', 'onet-challenge')
+      .maybeSingle();
+
+    const existingOpenYears = existingEvent?.settings?.open_years || {};
+    const updatedOpenYears = {
+      ...existingOpenYears,
+      [String(year)]: {
+        isOpen: Boolean(isOpen),
+        allowedClassrooms: Array.isArray(allowedClassrooms) ? allowedClassrooms : [],
+      },
+    };
+
+    const { error: upsertErr } = await supabaseAdmin.from('events').upsert(
+      {
+        slug: 'onet-challenge',
+        title: 'O-NET English Challenge (ม.3)',
+        description: 'ฝึกทำข้อสอบ O-NET ภาษาอังกฤษ ม.3 ย้อนหลัง 10 ปี พร้อมตัดเกรดและเทียบค่าเฉลี่ยระดับประเทศ',
+        event_type: 'challenge',
+        status: 'active',
+        settings: {
+          ...(existingEvent?.settings || {}),
+          open_years: updatedOpenYears,
+        },
+      },
+      { onConflict: 'slug' }
+    );
+
+    if (upsertErr) {
+      console.error('Failed to update onet-challenge settings:', upsertErr);
+      return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      year: Number(year),
+      isOpen: Boolean(isOpen),
+      allowedClassrooms: Array.isArray(allowedClassrooms) ? allowedClassrooms : [],
+      openYears: updatedOpenYears,
+    });
+  } catch (error: any) {
+    if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error?.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    console.error('Admin ONET POST API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

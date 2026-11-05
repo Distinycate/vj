@@ -18,6 +18,7 @@ import {
   FileText,
   Check,
   Eye,
+  Lock,
 } from 'lucide-react';
 import { getOnetYearConfig, OnetQuestion, NATIONAL_BENCHMARKS } from '@/data/onet/onetData';
 
@@ -39,8 +40,34 @@ export default function OnetExamRoomPage({ params }: PageProps) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [examResult, setExamResult] = useState<any | null>(null);
   const [reviewFilter, setReviewFilter] = useState<'all' | 'wrong'>('all');
+  const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
+  const [studentClassroom, setStudentClassroom] = useState<string>('');
 
   const questionRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  // Check access permission on mount
+  useEffect(() => {
+    async function checkAccess() {
+      try {
+        const res = await fetch('/api/student/onet');
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setStudentClassroom(data.studentClassroom || '');
+          const access = data.yearAccess?.[String(yearNum)];
+          if (access && access.isAllowed === false) {
+            setIsAllowed(false);
+          } else {
+            setIsAllowed(true);
+          }
+        } else {
+          setIsAllowed(true);
+        }
+      } catch {
+        setIsAllowed(true);
+      }
+    }
+    checkAccess();
+  }, [yearNum]);
 
   // Timer
   useEffect(() => {
@@ -162,6 +189,33 @@ export default function OnetExamRoomPage({ params }: PageProps) {
       setIsSubmitting(false);
     }
   };
+
+  if (isAllowed === false) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans text-slate-100">
+        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 text-center space-y-4 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-3xl mx-auto border border-amber-500/30">
+            🔒
+          </div>
+          <h2 className="text-xl font-black text-white">ชุดข้อสอบปี {yearNum} ยังไม่เปิดให้เข้าทำ</h2>
+          <p className="text-sm text-slate-300">
+            คุณครูยังไม่ได้เปิดชุดข้อสอบปีนี้สำหรับห้องเรียนของน้อง {studentClassroom && <strong className="text-cyan-400">(ห้อง {studentClassroom})</strong>}
+          </p>
+          <p className="text-xs text-slate-500">
+            กรุณารอคุณครูประจำวิชาเปิดระบบห้องสอบเมื่อถึงคาบเรียน หรือเลือกลุยข้อสอบปีอื่นที่คุณครูเปิดไว้แล้ว
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/challenge/onet"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" /> กลับสู่หน้าชาเลนจ์ O-NET
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">

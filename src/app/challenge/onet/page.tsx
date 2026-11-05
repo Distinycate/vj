@@ -2,37 +2,77 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, CheckCircle, Clock, Play, Sparkles, Star, Trophy } from 'lucide-react';
+import {
+  ArrowLeft,
+  BookOpen,
+  CheckCircle,
+  Clock,
+  Lock,
+  Play,
+  RefreshCw,
+  Sparkles,
+  Star,
+  Trophy,
+  Users,
+} from 'lucide-react';
 import { ONET_YEARS_SUMMARY, NATIONAL_BENCHMARKS } from '@/data/onet/onetData';
 
-export default function OnetLobbyPage() {
-  const [history, setHistory] = useState<Record<string, any>>({});
+interface YearAccessInfo {
+  isOpen: boolean;
+  isAllowed: boolean;
+  allowedClassrooms: string[];
+}
 
-  useEffect(() => {
-    // Load student past attempts from localStorage
+export default function OnetLobbyPage() {
+  const [studentClassroom, setStudentClassroom] = useState<string>('');
+  const [yearAccess, setYearAccess] = useState<Record<string, YearAccessInfo>>({});
+  const [submissions, setSubmissions] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(true);
+
+  const fetchStudentData = async () => {
     try {
-      const saved = localStorage.getItem('vj_onet_records');
-      if (saved) {
-        setHistory(JSON.parse(saved));
+      setLoading(true);
+      const res = await fetch('/api/student/onet');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setStudentClassroom(data.studentClassroom || '');
+        setYearAccess(data.yearAccess || {});
+        setSubmissions(data.submissions || {});
       }
     } catch (e) {
-      console.warn('Failed to load onet history:', e);
+      console.warn('Failed to load student ONET status:', e);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchStudentData();
   }, []);
+
+  const openCount = Object.values(yearAccess).filter((y) => y.isAllowed).length;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 font-sans">
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Top bar */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/events"
             className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white transition-colors py-2 px-3 rounded-xl bg-slate-900 border border-slate-800"
           >
             <ArrowLeft className="w-4 h-4" /> กลับ Event Center
           </Link>
-          <div className="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-            <Sparkles className="w-3.5 h-3.5" /> ข้อสอบจริง สทศ. Clean B&W
+
+          <div className="flex items-center gap-2">
+            {studentClassroom && (
+              <span className="flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                <Users className="w-3.5 h-3.5" /> ห้องของน้อง: {studentClassroom}
+              </span>
+            )}
+            <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              <Sparkles className="w-3.5 h-3.5" /> ข้อสอบจริง สทศ. Clean B&W
+            </div>
           </div>
         </div>
 
@@ -51,7 +91,7 @@ export default function OnetLobbyPage() {
               พร้อมกระดาษคำตอบดิจิทัลและตรวจคะแนนอัตโนมัติ ไม่จำกัดเวลาทำ!
             </p>
 
-            <div className="mt-5 flex flex-wrap items-center gap-4 text-xs font-bold text-slate-300">
+            <div className="mt-5 flex flex-wrap items-center gap-3 text-xs font-bold text-slate-300">
               <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
                 <BookOpen className="w-4 h-4 text-cyan-400" /> รวม 10 ปีการศึกษา
               </div>
@@ -65,48 +105,81 @@ export default function OnetLobbyPage() {
           </div>
         </header>
 
+        {/* Access Status Announcement */}
+        {!loading && openCount === 0 && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 sm:p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-2xl shrink-0">
+              🔒
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-black text-amber-300">
+                ยังไม่มีชุดข้อสอบ O-NET ที่เปิดสำหรับห้อง {studentClassroom || 'ของน้อง'} ในขณะนี้
+              </h3>
+              <p className="text-xs text-slate-300 mt-0.5">
+                คุณครูจะเปิดระบบชุดข้อสอบให้เมื่อถึงคาบเรียน เมื่อคุณครูเปิดระบบแล้ว น้องสามารถเข้าทำข้อสอบได้ทันทีครับ
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Year Cards Grid */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-black text-white flex items-center gap-2">
               <Trophy className="w-5 h-5 text-amber-400" /> เลือกลุยข้อสอบแต่ละปี
             </h2>
-            <span className="text-xs text-slate-500 font-bold">10 ชุดข้อสอบ</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 font-bold">
+                เปิดให้ทำ {openCount} / 10 ชุด
+              </span>
+              <button
+                onClick={fetchStudentData}
+                disabled={loading}
+                className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                title="รีเฟรช"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {ONET_YEARS_SUMMARY.map((item) => {
-              const record = history[String(item.year)];
-              const isPassed = record && record.score100 >= 50;
+              const access = yearAccess[String(item.year)];
+              const isAllowed = Boolean(access?.isAllowed);
+              const isOpenGeneral = Boolean(access?.isOpen);
+              const record = submissions[String(item.year)];
 
               return (
                 <div
                   key={item.year}
                   className={`rounded-2xl p-5 border transition-all flex flex-col justify-between relative overflow-hidden ${
-                    item.available
-                      ? 'bg-slate-900/80 border-indigo-500/40 hover:border-indigo-400 shadow-lg shadow-indigo-950/20 hover:-translate-y-1'
-                      : 'bg-slate-900/40 border-slate-800/80 opacity-75'
+                    isAllowed
+                      ? 'bg-slate-900/90 border-cyan-500/50 hover:border-cyan-400 shadow-xl shadow-cyan-950/20 hover:-translate-y-1'
+                      : 'bg-slate-900/40 border-slate-800/80 opacity-60'
                   }`}
                 >
                   {/* Top status */}
                   <div className="flex items-start justify-between">
-                    <span className="text-2xl font-black text-indigo-400 font-mono tracking-tight">
+                    <span className={`text-2xl font-black font-mono tracking-tight ${isAllowed ? 'text-cyan-400' : 'text-slate-500'}`}>
                       ปี {item.year}
                     </span>
                     <div>
-                      {item.available ? (
+                      {isAllowed ? (
                         record ? (
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1">
                             <CheckCircle className="w-3 h-3" /> ทำแล้ว ({record.score100}%)
                           </span>
                         ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 animate-pulse">
-                            🔥 พร้อมลุย
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 inline-flex items-center gap-1 animate-pulse">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            เปิดสอบแล้ว
                           </span>
                         )
                       ) : (
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-500">
-                          ชุดถัดไป
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-500 inline-flex items-center gap-1">
+                          <Lock className="w-2.5 h-2.5" />
+                          {isOpenGeneral ? 'เฉพาะห้องอื่น' : 'ยังไม่เปิดสอบ'}
                         </span>
                       )}
                     </div>
@@ -118,6 +191,17 @@ export default function OnetLobbyPage() {
                     <p className="text-xs text-slate-400">
                       จำนวน {item.totalQuestions} ข้อ • คะแนนเต็ม 100
                     </p>
+
+                    {/* Room permission notice if locked */}
+                    {!isAllowed && (
+                      <div className="text-[11px] text-slate-500 pt-1">
+                        {isOpenGeneral ? (
+                          <span>คุณครูเปิดสำหรับห้อง: {access?.allowedClassrooms?.join(', ') || 'ไม่มีห้อง'}</span>
+                        ) : (
+                          <span>รอคุณครูประจำวิชาเปิดระบบสำหรับห้องของน้อง</span>
+                        )}
+                      </div>
+                    )}
 
                     {record && (
                       <div className="pt-2 space-y-1.5">
@@ -155,13 +239,13 @@ export default function OnetLobbyPage() {
                   {/* Bottom Action */}
                   <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
                     <span className="text-[11px] text-amber-400 font-bold">
-                      {item.available ? '🎟️ ผ่านครึ่งรับ 5 ตั๋วสุ่ม' : 'เปิดให้ฝึกเร็วๆ นี้'}
+                      {isAllowed ? '🎟️ ผ่านครึ่งรับ 5 ตั๋วสุ่ม' : 'รอครูเปิดระบบ'}
                     </span>
 
-                    {item.available ? (
+                    {isAllowed ? (
                       <Link
                         href={`/challenge/onet/${item.year}`}
-                        className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-black text-xs rounded-xl inline-flex items-center gap-1.5 shadow-md transition-transform active:scale-95"
+                        className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs rounded-xl inline-flex items-center gap-1.5 shadow-md transition-transform active:scale-95"
                       >
                         <Play className="w-3.5 h-3.5 fill-current" />
                         {record ? 'ทำใหม่อีกครั้ง' : 'เริ่มทำข้อสอบ'}
@@ -169,8 +253,9 @@ export default function OnetLobbyPage() {
                     ) : (
                       <button
                         disabled
-                        className="px-3 py-1.5 bg-slate-800 text-slate-600 rounded-xl font-bold text-xs cursor-not-allowed"
+                        className="px-3 py-1.5 bg-slate-800/80 text-slate-500 rounded-xl font-bold text-xs cursor-not-allowed inline-flex items-center gap-1"
                       >
+                        <Lock className="w-3 h-3" />
                         ยังไม่เปิด
                       </button>
                     )}
@@ -184,4 +269,3 @@ export default function OnetLobbyPage() {
     </div>
   );
 }
-
