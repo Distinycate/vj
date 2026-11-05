@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireInternalTeacherRole, requireRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
+import { enrichStudentsWithLiveMetrics } from '@/lib/server/adminAnalyticsEnricher';
 
 export async function GET(request: Request) {
   try {
@@ -26,6 +27,8 @@ export async function GET(request: Request) {
       }
       if (userType) {
         countQuery = countQuery.eq('user_type', userType);
+      } else {
+        countQuery = countQuery.eq('user_type', 'INTERNAL');
       }
       if (academicYear && academicYear !== 'all') {
         countQuery = countQuery.eq('academic_year', academicYear);
@@ -98,7 +101,9 @@ export async function GET(request: Request) {
       return rest;
     });
 
-    return NextResponse.json({ success: true, students: sanitized });
+    const enriched = await enrichStudentsWithLiveMetrics(sanitized);
+
+    return NextResponse.json({ success: true, students: enriched });
   } catch (error: any) {
     if (error?.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (error?.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

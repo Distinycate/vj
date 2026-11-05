@@ -63,16 +63,32 @@ export default function AdminPage() {
   const [isPurging, setIsPurging] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('vocab_journey_teacher');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.role !== 'ADMIN' && parsed.role !== 'TEACHER') {
-        localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(parsed));
-        window.location.href = '/card-teacher/dashboard';
-        return;
+    async function verifyTeacherSession() {
+      const saved = localStorage.getItem('vocab_journey_teacher');
+      if (!saved) return;
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.role !== 'ADMIN' && parsed.role !== 'TEACHER') {
+          localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(parsed));
+          window.location.href = '/card-teacher/dashboard';
+          return;
+        }
+        const meRes = await fetch('/api/auth/me');
+        if (meRes.ok) {
+          const meJson = await meRes.json();
+          if (meJson.authenticated && (meJson.role === 'ADMIN' || meJson.role === 'TEACHER')) {
+            setTeacher({ ...parsed, ...meJson.user, role: meJson.role });
+            return;
+          }
+        }
+        // Session cookie missing or expired -> clear stale localStorage so teacher logs in cleanly
+        localStorage.removeItem('vocab_journey_teacher');
+        setTeacher(null);
+      } catch {
+        setTeacher(null);
       }
-      setTeacher(parsed);
     }
+    verifyTeacherSession();
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -80,8 +96,20 @@ export default function AdminPage() {
     if (!username.trim() || !password.trim()) return setLoginError('กรุณากรอก Username และ Password');
     setIsLoading(true); setLoginError('');
     try {
-      const { data, error } = await supabase.rpc('login_teacher', { p_username: username.trim(), p_password: password.trim() });
-      if (error || !data) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านแอดมินไม่ถูกต้อง');
+      const loginRes = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'TEACHER',
+          username: username.trim(),
+          password: password.trim(),
+        }),
+      });
+      const loginJson = await loginRes.json();
+      if (!loginRes.ok || !loginJson.user) {
+        throw new Error(loginJson.error || 'ชื่อผู้ใช้หรือรหัสผ่านแอดมินไม่ถูกต้อง');
+      }
+      const data = { ...loginJson.user, role: loginJson.role || loginJson.user.role };
       if (data.role !== 'ADMIN' && data.role !== 'TEACHER') {
         if (data.role === 'CARD_TEACHER') {
           localStorage.setItem('vocab_journey_card_teacher', JSON.stringify(data));
@@ -99,7 +127,12 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignore logout network error
+    }
     localStorage.removeItem('vocab_journey_teacher');
     window.location.reload();
   };
@@ -334,13 +367,15 @@ export default function AdminPage() {
     if (studentsList.length === 0) return null;
     
     let totalPre = 0, totalPost = 0, totalGain = 0, totalAcc = 0;
+    let preCount = 0, postCount = 0, accCount = 0;
     let highRiskCount = 0;
     
     const processedStudents = studentsList.map(s => {
       const stats = (Array.isArray(s.analytics_summary) ? s.analytics_summary[0] : s.analytics_summary) || { pretest_score: 0, posttest_score: 0, success_rate: 0, attempt_count: 0, last_active_at: new Date(0).toISOString() };
       const pre = stats.pretest_score || 0;
       const post = stats.posttest_score || 0;
-      const { percentage: gainPercent } = calculateLearningGain(pre, post);
+      const { percentage: rawGainPercent } = calculateLearningGain(pre, post, 25);
+      const gainPercent = post > 0 ? rawGainPercent : 0;
       const acc = stats.success_rate || 0;
       const attempts = stats.attempt_count || 0;
       
@@ -352,13 +387,15 @@ export default function AdminPage() {
       const daysInactive = lastActive ? Math.floor((now.getTime() - lastActive.getTime()) / (1000 * 3600 * 24)) : 999;
       
       let riskLevel = 'No Data';
-      if (stats?.attempt_count > 0 || stats?.success_rate > 0) {
-        const riskScore = calculateRiskScore({ accuracy: acc, reviewWords: wwCount, daysInactive: lastActive ? daysInactive : 0, stageStagnationDays: 0 });
+      if (stats?.attempt_count > 0 || stats?.success_rate > 0 || pre > 0) {
+        const riskScore = calculateRiskScore({ accuracy: attempts > 0 ? acc : 70, reviewWords: wwCount, daysInactive: lastActive ? daysInactive : 0, stageStagnationDays: 0 });
         riskLevel = getRiskLevel(riskScore);
         if (riskLevel === 'High' || riskLevel === 'Critical') highRiskCount++;
       }
 
-      totalPre += pre; totalPost += post; totalGain += gainPercent; totalAcc += acc;
+      if (pre > 0) { totalPre += pre; preCount++; }
+      if (post > 0) { totalPost += post; totalGain += gainPercent; postCount++; }
+      if (attempts > 0 || acc > 0) { totalAcc += acc; accCount++; }
       
       return { ...s, pre, post, gainPercent, acc, attempts, reviewWordsCount: wwCount, daysInactive, riskLevel, trend: getProgressTrend(gainPercent, riskLevel) };
     });
@@ -370,10 +407,10 @@ export default function AdminPage() {
 
     return {
       students: processedStudents,
-      avgPre: (totalPre / processedStudents.length).toFixed(1),
-      avgPost: (totalPost / processedStudents.length).toFixed(1),
-      avgGain: (totalGain / processedStudents.length).toFixed(1),
-      avgAcc: (totalAcc / processedStudents.length).toFixed(1),
+      avgPre: (preCount > 0 ? totalPre / preCount : 0).toFixed(1),
+      avgPost: (postCount > 0 ? totalPost / postCount : 0).toFixed(1),
+      avgGain: (postCount > 0 ? totalGain / postCount : 0).toFixed(1),
+      avgAcc: (accCount > 0 ? totalAcc / accCount : 0).toFixed(1),
       activeToday,
       highRiskCount,
       weakestSkill
@@ -389,7 +426,7 @@ export default function AdminPage() {
       if (!map.has(word)) {
         map.set(word, {
           word,
-          meaning: w.vocabulary.meaning,
+          meaning: w.vocabulary.meaning_th || w.vocabulary.meaning || '',
           partOfSpeech: w.vocabulary.part_of_speech,
           totalErrors: 0,
           studentIds: new Set()

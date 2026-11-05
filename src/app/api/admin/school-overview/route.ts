@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireInternalTeacherRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
+import { enrichStudentsWithLiveMetrics } from '@/lib/server/adminAnalyticsEnricher';
 
 interface CachedSchoolOverview {
   data: any;
@@ -31,16 +32,17 @@ export async function GET(request: Request) {
     ] = await Promise.all([
       supabaseAdmin
         .from('students')
-        .select('id, student_name, classroom_id, is_active, learning_paths(current_rank, rank_score, coins, total_exp, last_active_date), analytics_summary(pretest_score, posttest_score, success_rate, normalized_gain, learning_gain)')
-        .eq('is_active', true),
+        .select('id, student_name, classroom_id, is_active, user_type, learning_paths(current_rank, rank_score, coins, total_exp, last_active_date), analytics_summary(pretest_score, posttest_score, success_rate, normalized_gain, learning_gain, attempt_count)')
+        .eq('is_active', true)
+        .eq('user_type', 'INTERNAL'),
       supabaseAdmin
         .from('pre_tests')
-        .select('score, created_at')
+        .select('score, total_questions, created_at')
         .order('created_at', { ascending: true })
         .limit(2000),
       supabaseAdmin
         .from('post_tests')
-        .select('score, created_at')
+        .select('score, total_questions, created_at')
         .order('created_at', { ascending: true })
         .limit(2000),
       supabaseAdmin
@@ -49,12 +51,17 @@ export async function GET(request: Request) {
         .order('class_name', { ascending: true }),
     ]);
 
-    const students = studentsRes.data || [];
+    const students = await enrichStudentsWithLiveMetrics(studentsRes.data || []);
     const totalStudents = students.length;
+    const validClassrooms = (classroomsRes.data || []).filter(
+      (c: any) =>
+        (c.class_name.includes('ม.1') || c.class_name.includes('ม.2') || c.class_name.includes('ม.3')) &&
+        !c.class_name.includes('ทดลอง')
+    );
 
     // 1. Calculate School-wide KPI averages
     let sumPre = 0, sumPost = 0, sumGain = 0, sumAcc = 0;
-    let prePostCount = 0, accCount = 0;
+    let preCount = 0, postCount = 0, accCount = 0;
     const rankCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
 
     students.forEach((s: any) => {
@@ -66,11 +73,14 @@ export async function GET(request: Request) {
       const acc = Number(stats?.success_rate || 0);
       const gain = Number(stats?.normalized_gain ?? stats?.learning_gain ?? (post > pre ? post - pre : 0));
 
-      if (pre > 0 || post > 0) {
+      if (pre > 0) {
         sumPre += pre;
+        preCount++;
+      }
+      if (post > 0) {
         sumPost += post;
         sumGain += gain;
-        prePostCount++;
+        postCount++;
       }
       if (acc > 0) {
         sumAcc += acc;
@@ -81,9 +91,9 @@ export async function GET(request: Request) {
       rankCounts[rank] = (rankCounts[rank] || 0) + 1;
     });
 
-    const avgPre = prePostCount ? Math.round(sumPre / prePostCount) : 0;
-    const avgPost = prePostCount ? Math.round(sumPost / prePostCount) : 0;
-    const avgGain = prePostCount ? Math.round(sumGain / prePostCount) : 0;
+    const avgPre = preCount ? Math.round(sumPre / preCount) : 0;
+    const avgPost = postCount ? Math.round(sumPost / postCount) : 0;
+    const avgGain = postCount ? Math.round(sumGain / postCount) : 0;
     const avgAcc = accCount ? Math.round(sumAcc / accCount) : 0;
 
     // 2. Rank Distribution Summary
@@ -96,13 +106,18 @@ export async function GET(request: Request) {
     ];
 
 
-    // 4. Monthly Learning Gain Trend (Pre vs Post)
+    // 4. Monthly Learning Gain Trend (Pre vs Post normalized to 25-point scale)
+    const normalizeScore25 = (score: any, total: any) => {
+      const s = Number(score || 0);
+      const t = Number(total) > 0 ? Number(total) : 25;
+      return (s / t) * 25;
+    };
     const monthMap: Record<string, { preSum: number; preCount: number; postSum: number; postCount: number }> = {};
     (preTestsRes.data || []).forEach((row: any) => {
       const date = new Date(row.created_at);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       if (!monthMap[key]) monthMap[key] = { preSum: 0, preCount: 0, postSum: 0, postCount: 0 };
-      monthMap[key].preSum += Number(row.score || 0);
+      monthMap[key].preSum += normalizeScore25(row.score, row.total_questions);
       monthMap[key].preCount++;
     });
 
@@ -110,7 +125,7 @@ export async function GET(request: Request) {
       const date = new Date(row.created_at);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       if (!monthMap[key]) monthMap[key] = { preSum: 0, preCount: 0, postSum: 0, postCount: 0 };
-      monthMap[key].postSum += Number(row.score || 0);
+      monthMap[key].postSum += normalizeScore25(row.score, row.total_questions);
       monthMap[key].postCount++;
     });
 
@@ -128,18 +143,24 @@ export async function GET(request: Request) {
         };
       });
 
-    // PDCA Status
-    const pdcaStatus = avgGain >= 15
-      ? { label: 'High Growth', status: 'ดีเยี่ยม', color: 'text-emerald-400', badgeBg: 'bg-emerald-500/10 border-emerald-500/30' }
-      : avgGain >= 5
-      ? { label: 'On Track', status: 'ตามเป้าหมาย', color: 'text-indigo-400', badgeBg: 'bg-indigo-500/10 border-indigo-500/30' }
-      : avgGain > 0
-      ? { label: 'Progressing', status: 'กำลังพัฒนา', color: 'text-amber-400', badgeBg: 'bg-amber-500/10 border-amber-500/30' }
-      : { label: 'Needs Support', status: 'ต้องติดตามใกล้ชิด', color: 'text-rose-400', badgeBg: 'bg-rose-500/10 border-rose-500/30' };
+    // PDCA Status (uses Post-test gain when available, or live gameplay accuracy during ongoing term)
+    const pdcaStatus = postCount > 0
+      ? (avgGain >= 15
+          ? { label: 'High Growth', status: 'ดีเยี่ยม', color: 'text-emerald-400', badgeBg: 'bg-emerald-500/10 border-emerald-500/30' }
+          : avgGain >= 5
+          ? { label: 'On Track', status: 'ตามเป้าหมาย', color: 'text-indigo-400', badgeBg: 'bg-indigo-500/10 border-indigo-500/30' }
+          : avgGain > 0
+          ? { label: 'Progressing', status: 'กำลังพัฒนา', color: 'text-amber-400', badgeBg: 'bg-amber-500/10 border-amber-500/30' }
+          : { label: 'Needs Support', status: 'ต้องติดตามใกล้ชิด', color: 'text-rose-400', badgeBg: 'bg-rose-500/10 border-rose-500/30' })
+      : (avgAcc >= 75
+          ? { label: 'Active Learning', status: 'กำลังเรียนรู้ดีเยี่ยม', color: 'text-emerald-400', badgeBg: 'bg-emerald-500/10 border-emerald-500/30' }
+          : avgAcc >= 50 || preCount > 0
+          ? { label: 'In Progress', status: 'กำลังดำเนินการตามแผน', color: 'text-indigo-400', badgeBg: 'bg-indigo-500/10 border-indigo-500/30' }
+          : { label: 'Starting Term', status: 'เริ่มภาคเรียน', color: 'text-amber-400', badgeBg: 'bg-amber-500/10 border-amber-500/30' });
 
     const payload = {
       totalStudents,
-      classroomsCount: classroomsRes.data?.length || 0,
+      classroomsCount: validClassrooms.length,
       avgPre,
       avgPost,
       avgGain,

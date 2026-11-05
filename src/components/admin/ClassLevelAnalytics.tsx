@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { Download, BrainCircuit, Users } from 'lucide-react';
 import RankDistribution from './RankDistribution';
-import { supabase } from '@/utils/supabase/client';
+import { getAdminClassWrongWords } from '@/app/admin/actions';
 
 interface ClassLevelAnalyticsProps {
   studentsList: any[];
@@ -73,17 +73,20 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
       if (!studentsList.length) return;
       const studentIds = studentsList.map(s => s.id);
       
-      const { data } = await supabase
-        .from('wrong_words')
-        .select('error_count, vocabulary(part_of_speech)')
-        .in('student_id', studentIds);
+      let data: any[] = [];
+      try {
+        data = await getAdminClassWrongWords(studentIds);
+      } catch (err) {
+        console.error('Failed to load classroom skill gap:', err);
+      }
 
-      if (data) {
+      if (data && data.length > 0) {
         const errorCounts: Record<string, number> = {};
         let totalErrors = 0;
         
         data.forEach((w: any) => {
-          const pos = w.vocabulary?.part_of_speech || 'Other';
+          const vocab = Array.isArray(w.vocabulary) ? w.vocabulary[0] : w.vocabulary;
+          const pos = vocab?.part_of_speech || 'Other';
           const count = w.error_count || 1;
           errorCounts[pos] = (errorCounts[pos] || 0) + count;
           totalErrors += count;
@@ -97,9 +100,10 @@ export default function ClassLevelAnalytics({ studentsList, weakestSkill }: Clas
         if (formatted.length > 0) {
           setSkillGapData(formatted);
         } else {
-           // Fallback to empty if no errors ever
           setSkillGapData([{category: 'ไม่มีประวัติ', errorRate: 0}]);
         }
+      } else {
+        setSkillGapData([{category: 'ไม่มีประวัติ', errorRate: 0}]);
       }
     }
     loadSkillGap();

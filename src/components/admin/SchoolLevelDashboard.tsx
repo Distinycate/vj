@@ -242,9 +242,9 @@ export default function SchoolLevelDashboard({ studentsList, wrongWords }: Schoo
             <span className="text-sm font-semibold text-slate-400">คะแนน</span>
           </div>
           <div className="mt-2 text-[11px] text-slate-400 flex items-center gap-1">
-            <span className="text-slate-500">Pre-test {avgPre}</span>
+            <span className="text-slate-500">Pre-test {avgPre}/25</span>
             <ArrowUpRight className="w-3 h-3 text-emerald-400" />
-            <span className="text-emerald-300 font-bold">Post-test {avgPost}</span>
+            <span className="text-emerald-300 font-bold">{avgPost > 0 ? `Post-test ${avgPost}/25` : 'รอ Post-test'}</span>
           </div>
         </div>
 

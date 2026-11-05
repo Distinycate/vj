@@ -54,11 +54,14 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
         if (profileRes.ok) {
           const profileData = await profileRes.json();
           if (profileData.student) {
+            const initialAn = relationObject(student.analytics_summary) || {};
+            const initialLp = relationObject(student.learning_paths) || {};
             studentProfile = {
+              ...student,
               ...profileData.student,
               // Profile relations contract: analytics_summary(*) and learning_paths(*)
-              analytics_summary: profileData.analyticsSummary,
-              learning_paths: profileData.learningPath,
+              analytics_summary: { ...initialAn, ...(profileData.analyticsSummary || {}), pretest_score: profileData.analyticsSummary?.pretest_score || initialAn.pretest_score || 0, posttest_score: profileData.analyticsSummary?.posttest_score || initialAn.posttest_score || 0 },
+              learning_paths: { ...initialLp, ...(profileData.learningPath || {}), current_stage: Math.max(Number(initialLp.current_stage || 1), Number(profileData.learningPath?.current_stage || 1)) },
             };
           }
         }
@@ -256,13 +259,13 @@ export default function IndividualStudentProfile({ student, onClose }: Individua
               <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">
                 <div className="text-xs text-slate-400 font-bold">Pre-test (ก่อนเรียน)</div>
                 <div className="text-2xl font-black text-white mt-1">
-                  {assessmentCounts.pre > 0 ? `${pretest}/10` : 'รอทำข้อสอบ'}
+                  {assessmentCounts.pre > 0 || pretest > 0 ? `${pretest}/25` : 'รอทำข้อสอบ'}
                 </div>
               </div>
               <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">
                 <div className="text-xs text-slate-400 font-bold">Post-test (หลังเรียน)</div>
                 <div className="text-2xl font-black text-white mt-1">
-                  {assessmentCounts.post > 0 ? `${posttest}/10` : 'รอทำข้อสอบ'}
+                  {assessmentCounts.post > 0 || posttest > 0 ? `${posttest}/25` : 'รอทำข้อสอบ'}
                 </div>
               </div>
               <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4">

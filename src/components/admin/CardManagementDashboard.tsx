@@ -131,9 +131,15 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
         setLoading(false);
         return;
       }
+      const validClasses = (data || []).filter(
+        (c: any) =>
+          (c.class_name.includes('ม.1') || c.class_name.includes('ม.2') || c.class_name.includes('ม.3')) &&
+          !c.class_name.includes('ทดลอง')
+      );
+      const finalClasses = validClasses.length > 0 ? validClasses : (data || []);
       setAllCards(cardsData || []);
-      setClassrooms(data || []);
-      if (data?.[0]) setClassroomId(data[0].id);
+      setClassrooms(finalClasses);
+      if (finalClasses[0]) setClassroomId(finalClasses[0].id);
       else setLoading(false);
     }
     loadClassrooms();
@@ -168,7 +174,7 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
       setStudents(rawStudents.map((student: any) => {
         const studentInventory = inventoryRows.filter((row: any) => row.student_id === student.id);
         const studentActions = actionRows.filter((action: any) => action.student_id === student.id);
-        const countCategory = (cat: string) => studentActions.filter((a: any) => a.category === cat).length;
+        const countCategory = (cat: string) => studentActions.filter((a: any) => (a.behavior_category || a.category) === cat).length;
         const sumAction = (type: string) => studentActions
           .filter((action: any) => action.action_type === type)
           .reduce((sum: number, action: any) => sum + Number(action.amount || 0), 0);

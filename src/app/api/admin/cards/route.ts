@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireInternalTeacherRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
+import { enrichStudentsWithLiveMetrics } from '@/lib/server/adminAnalyticsEnricher';
 
 export async function GET(request: Request) {
   try {
@@ -34,7 +35,8 @@ export async function GET(request: Request) {
       });
     }
 
-    const [invRes, pullsRes, actionsRes] = await Promise.all([
+    const [enrichedStudents, invRes, pullsRes, actionsRes] = await Promise.all([
+      enrichStudentsWithLiveMetrics(rawStudents || []),
       supabaseAdmin
         .from('card_inventory')
         .select('id, student_id, card_id, quantity, reserved_quantity, cards(*)')
@@ -54,7 +56,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      students: rawStudents || [],
+      students: enrichedStudents || [],
       inventory: invRes.data || [],
       pulls: pullsRes.data || [],
       actions: actionsRes.data || [],

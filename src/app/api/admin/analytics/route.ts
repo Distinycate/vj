@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireInternalTeacherRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
+import { enrichStudentsWithLiveMetrics } from '@/lib/server/adminAnalyticsEnricher';
 
 export async function GET() {
   try {
@@ -13,7 +14,7 @@ export async function GET() {
       { data: cardActionsData },
       { data: cardLogsData },
     ] = await Promise.all([
-      supabaseAdmin.from('students').select('*', { count: 'exact', head: true }),
+      supabaseAdmin.from('students').select('*', { count: 'exact', head: true }).eq('is_active', true).eq('user_type', 'INTERNAL'),
       supabaseAdmin.from('teachers').select('*', { count: 'exact', head: true }),
       supabaseAdmin
         .from('classrooms')
@@ -27,9 +28,24 @@ export async function GET() {
         .select('id, attacker_id, played_card_id, status, created_at, cards(name)'),
     ]);
 
-    const validClasses = (rawClassData || []).filter(
-      (c) => c.class_name.includes('ม.1') || c.class_name.includes('ม.2') || c.class_name.includes('ม.3')
+    const filteredClasses = (rawClassData || []).filter(
+      (c) =>
+        (c.class_name.includes('ม.1') || c.class_name.includes('ม.2') || c.class_name.includes('ม.3')) &&
+        !c.class_name.includes('ทดลอง')
     );
+
+    const allActiveStudents = filteredClasses.flatMap((c) =>
+      (c.students || []).filter((s: any) => s.is_active !== false && s.user_type !== 'EXTERNAL')
+    );
+    const enrichedAll = await enrichStudentsWithLiveMetrics(allActiveStudents);
+    const enrichedById = new Map(enrichedAll.map((s) => [s.id, s]));
+
+    const validClasses = filteredClasses.map((c) => ({
+      ...c,
+      students: (c.students || [])
+        .filter((s: any) => s.is_active !== false && s.user_type !== 'EXTERNAL')
+        .map((s: any) => enrichedById.get(s.id) || s),
+    }));
 
     // Build fast student lookup map
     const studentToClass: Record<string, string> = {};
@@ -45,6 +61,7 @@ export async function GET() {
       const count = students.length;
 
       let sumPre = 0, sumPost = 0, sumGain = 0, sumAcc = 0, sumCoins = 0, sumTickets = 0;
+      let preCount = 0, postCount = 0, accCount = 0;
       let p3Count = 0, p2Count = 0, p1Count = 0, p0Count = 0;
       let r3Count = 0, r2Count = 0, r1Count = 0, r0Count = 0;
 
@@ -55,12 +72,12 @@ export async function GET() {
         const pre = stats?.pretest_score || 0;
         const post = stats?.posttest_score || 0;
         const acc = stats?.success_rate || 0;
-        const gain = stats?.normalized_gain || stats?.learning_gain || (post > pre ? ((post - pre) / Math.max(1, 100 - pre)) * 100 : 0);
+        const attempts = stats?.attempt_count || 0;
+        const gain = stats?.normalized_gain || stats?.learning_gain || (post > pre ? ((post - pre) / Math.max(1, 25 - pre)) * 100 : 0);
 
-        sumPre += pre;
-        sumPost += post;
-        sumAcc += acc;
-        sumGain += gain;
+        if (pre > 0) { sumPre += pre; preCount++; }
+        if (post > 0) { sumPost += post; sumGain += gain; postCount++; }
+        if (acc > 0 || attempts > 0) { sumAcc += acc; accCount++; }
         sumCoins += lp?.coins || 0;
         sumTickets += lp?.free_pull_tickets || 0;
 
@@ -72,8 +89,8 @@ export async function GET() {
         else p0Count++;
 
         // P.P.5 Reading auto-estimation
-        if (post >= 60 || acc >= 60) r3Count++;
-        else if (post >= 40 || acc >= 35) r2Count++;
+        if (post >= 15 || acc >= 60) r3Count++;
+        else if (post >= 10 || acc >= 35) r2Count++;
         else if (post > 0 || acc > 0) r1Count++;
         else r0Count++;
       });
@@ -91,10 +108,10 @@ export async function GET() {
       const classLogs = (cardLogsData || []).filter((l) => studentToClass[l.attacker_id] === c.id);
       const totalCardsPlayed = classLogs.length;
 
-      const avgGain = count ? Math.round(sumGain / count) : 0;
-      const avgAcc = count ? Math.round(sumAcc / count) : 0;
-      const avgPre = count ? Math.round(sumPre / count) : 0;
-      const avgPost = count ? Math.round(sumPost / count) : 0;
+      const avgGain = postCount ? Math.round(sumGain / postCount) : 0;
+      const avgAcc = accCount ? Math.round(sumAcc / accCount) : 0;
+      const avgPre = preCount ? Math.round(sumPre / preCount) : 0;
+      const avgPost = postCount ? Math.round(sumPost / postCount) : 0;
       const avgCoins = count ? Math.round(sumCoins / count) : 0;
 
       return {
