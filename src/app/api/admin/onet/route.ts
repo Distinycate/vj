@@ -4,17 +4,32 @@ import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
 import { NATIONAL_BENCHMARKS } from '@/data/onet/onetData';
 
+function cleanClassroomLabel(gradeLevel?: string | null, roomNumber?: string | null): string {
+  if (!gradeLevel && !roomNumber) return 'ม.3/1';
+  const cleanGrade = String(gradeLevel || '3').replace(/^ม\.?/, '').trim();
+  const cleanRoom = String(roomNumber || '1').trim();
+  return `ม.${cleanGrade}/${cleanRoom}`;
+}
+
 export async function GET(request: Request) {
   try {
     assertSameOrigin(request);
     await requireRole(['ADMIN', 'TEACHER']);
 
-    // 1. Fetch internal students
-    const { data: students, error: sErr } = await supabaseAdmin
+    // 1. Fetch internal students for current academic year (default to 2567-T2)
+    const url = new URL(request.url);
+    const targetAcademicYear = url.searchParams.get('academicYear') || '2567-T2';
+
+    let studentQuery = supabaseAdmin
       .from('students')
       .select('id, student_id, student_name, grade_level, room_number, academic_year, is_skull')
-      .eq('user_type', 'INTERNAL')
-      .order('student_id', { ascending: true });
+      .eq('user_type', 'INTERNAL');
+
+    if (targetAcademicYear !== 'ALL') {
+      studentQuery = studentQuery.eq('academic_year', targetAcademicYear);
+    }
+
+    const { data: students, error: sErr } = await studentQuery.order('student_id', { ascending: true });
 
     if (sErr) {
       console.error('Failed to fetch students for ONET admin:', sErr);
@@ -93,14 +108,8 @@ export async function GET(request: Request) {
     // Format classrooms
     const classroomsSet = new Set<string>();
     const formattedStudents = (students || []).map((s) => {
-      let roomLabel = 'ไม่ระบุห้อง';
-      if (s.grade_level && s.room_number) {
-        roomLabel = `ม.${s.grade_level}/${s.room_number}`;
-        classroomsSet.add(roomLabel);
-      } else if (s.academic_year) {
-        roomLabel = `ม.3/1`; // default fallback
-        classroomsSet.add(roomLabel);
-      }
+      const roomLabel = cleanClassroomLabel(s.grade_level, s.room_number);
+      classroomsSet.add(roomLabel);
 
       return {
         id: s.id,
@@ -113,7 +122,9 @@ export async function GET(request: Request) {
       };
     });
 
-    const classrooms = Array.from(classroomsSet).sort();
+    const classrooms = Array.from(classroomsSet).sort((a, b) =>
+      a.localeCompare(b, 'th', { numeric: true })
+    );
 
     // 3. Fetch O-NET challenge settings from events table
     const { data: eventRow, error: eErr } = await supabaseAdmin

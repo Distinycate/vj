@@ -11,6 +11,13 @@ const onetSubmitSchema = z.object({
   durationSeconds: z.number().int().min(0).default(0),
 });
 
+function cleanClassroomLabel(gradeLevel?: string | null, roomNumber?: string | null): string {
+  if (!gradeLevel && !roomNumber) return 'ม.3/1';
+  const cleanGrade = String(gradeLevel || '3').replace(/^ม\.?/, '').trim();
+  const cleanRoom = String(roomNumber || '1').trim();
+  return `ม.${cleanGrade}/${cleanRoom}`;
+}
+
 export async function GET(request: Request) {
   try {
     assertSameOrigin(request);
@@ -27,10 +34,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลนักเรียน' }, { status: 404 });
     }
 
-    const studentClassroom =
-      student.grade_level && student.room_number
-        ? `ม.${student.grade_level}/${student.room_number}`
-        : 'ม.3/1';
+    const studentClassroom = cleanClassroomLabel(student.grade_level, student.room_number);
 
     // 2. Fetch O-NET challenge settings
     const { data: eventRow } = await supabaseAdmin
@@ -131,10 +135,7 @@ export async function POST(request: Request) {
       .eq('id', session.subjectId)
       .single();
 
-    const studentClassroom =
-      student?.grade_level && student?.room_number
-        ? `ม.${student.grade_level}/${student.room_number}`
-        : 'ม.3/1';
+    const studentClassroom = cleanClassroomLabel(student?.grade_level, student?.room_number);
 
     const { data: eventRow } = await supabaseAdmin
       .from('events')

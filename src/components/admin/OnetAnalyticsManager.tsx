@@ -68,7 +68,6 @@ interface SubmissionItem {
 
 export default function OnetAnalyticsManager() {
   const [selectedYear, setSelectedYear] = useState<number>(2568);
-  const [selectedClassroom, setSelectedClassroom] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
 
@@ -82,6 +81,11 @@ export default function OnetAnalyticsManager() {
     student: StudentItem;
     sub: SubmissionItem;
   } | null>(null);
+
+  // Accordion state: which classrooms are expanded to view individual students
+  const [expandedRooms, setExpandedRooms] = useState<Record<string, boolean>>({
+    'ม.3/1': true, // Default open the primary target class ม.3/1
+  });
 
   const handleCopyLink = () => {
     if (typeof window === 'undefined') return;
@@ -119,53 +123,136 @@ export default function OnetAnalyticsManager() {
     fetchData();
   }, []);
 
-  // Filter students based on classroom and search
-  const filteredStudents = useMemo(() => {
-    return students.filter((s) => {
-      const matchRoom = selectedClassroom === 'ALL' || s.classroom === selectedClassroom;
-      const matchSearch =
-        !searchQuery ||
-        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.studentId.includes(searchQuery);
-      return matchRoom && matchSearch;
-    });
-  }, [students, selectedClassroom, searchQuery]);
+  // Classrooms list
+  const classroomsList = useMemo(() => {
+    if (classrooms.length > 0) return classrooms;
+    const set = new Set<string>();
+    students.forEach((s) => set.add(s.classroom));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'th', { numeric: true }));
+  }, [classrooms, students]);
 
-  // Handle classroom change: select all students in that room by default
-  const handleClassroomChange = (room: string) => {
-    setSelectedClassroom(room);
-    const inRoom = students.filter((s) => room === 'ALL' || s.classroom === room);
-    const newSelected = new Set<string>();
-    inRoom.forEach((s) => newSelected.add(s.id));
-    setSelectedStudentIds(newSelected);
+  // Group students and calculate room-level stats
+  const classroomData = useMemo(() => {
+    return classroomsList.map((room) => {
+      const roomStudents = students.filter((s) => s.classroom === room);
+      const scoredStudents = roomStudents.filter((s) => submissions[`${s.id}_${selectedYear}`]);
+      const scores = scoredStudents.map((s) => submissions[`${s.id}_${selectedYear}`].score100);
+      const mean =
+        scores.length > 0
+          ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2))
+          : 0;
+      const passedCount = scores.filter((score) => score >= 50).length;
+      const passRate =
+        scores.length > 0 ? Number(((passedCount / scores.length) * 100).toFixed(1)) : 0;
+
+      const selectedInRoomCount = roomStudents.filter((s) => selectedStudentIds.has(s.id)).length;
+      const allSelected = roomStudents.length > 0 && selectedInRoomCount === roomStudents.length;
+      const someSelected = selectedInRoomCount > 0 && !allSelected;
+
+      // Filtered students in this room if user searched
+      const displayedStudents = roomStudents.filter((s) => {
+        if (!searchQuery) return true;
+        const query = searchQuery.toLowerCase();
+        return s.name.toLowerCase().includes(query) || s.studentId.includes(query);
+      });
+
+      return {
+        room,
+        roomStudents,
+        displayedStudents,
+        totalCount: roomStudents.length,
+        submittedCount: scoredStudents.length,
+        mean,
+        passRate,
+        selectedInRoomCount,
+        allSelected,
+        someSelected,
+      };
+    });
+  }, [classroomsList, students, submissions, selectedYear, selectedStudentIds, searchQuery]);
+
+  // Expand / Collapse controls
+  const toggleExpandRoom = (room: string) => {
+    setExpandedRooms((prev) => ({
+      ...prev,
+      [room]: !prev[room],
+    }));
   };
 
-  // Toggle selection
+  const expandAllRooms = () => {
+    const all: Record<string, boolean> = {};
+    classroomsList.forEach((r) => (all[r] = true));
+    setExpandedRooms(all);
+  };
+
+  const collapseAllRooms = () => {
+    setExpandedRooms({});
+  };
+
+  // Auto-expand rooms on search
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const matches: Record<string, boolean> = {};
+      classroomsList.forEach((room) => {
+        const hasMatch = students.some(
+          (s) =>
+            s.classroom === room &&
+            (s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              s.studentId.includes(searchQuery))
+        );
+        if (hasMatch) matches[room] = true;
+      });
+      setExpandedRooms((prev) => ({ ...prev, ...matches }));
+    }
+  }, [searchQuery, classroomsList, students]);
+
+  // Classroom selection helpers
+  const toggleClassroomSelection = (room: string) => {
+    const targetRoom = classroomData.find((c) => c.room === room);
+    if (!targetRoom) return;
+    const next = new Set(selectedStudentIds);
+    if (targetRoom.allSelected) {
+      targetRoom.roomStudents.forEach((s) => next.delete(s.id));
+    } else {
+      targetRoom.roomStudents.forEach((s) => next.add(s.id));
+    }
+    setSelectedStudentIds(next);
+  };
+
+  const selectRoomOnlySubmitted = (room: string) => {
+    const targetRoom = classroomData.find((c) => c.room === room);
+    if (!targetRoom) return;
+    const next = new Set(selectedStudentIds);
+    targetRoom.roomStudents.forEach((s) => {
+      if (submissions[`${s.id}_${selectedYear}`]) next.add(s.id);
+      else next.delete(s.id);
+    });
+    setSelectedStudentIds(next);
+  };
+
+  const selectAllStudents = () => {
+    const next = new Set<string>();
+    students.forEach((s) => next.add(s.id));
+    setSelectedStudentIds(next);
+  };
+
+  const deselectAllStudents = () => {
+    setSelectedStudentIds(new Set());
+  };
+
+  const selectAllSubmittedStudents = () => {
+    const next = new Set<string>();
+    students.forEach((s) => {
+      if (submissions[`${s.id}_${selectedYear}`]) next.add(s.id);
+    });
+    setSelectedStudentIds(next);
+  };
+
+  // Toggle individual student
   const toggleStudent = (id: string) => {
     const next = new Set(selectedStudentIds);
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    setSelectedStudentIds(next);
-  };
-
-  const selectAllFiltered = () => {
-    const next = new Set(selectedStudentIds);
-    filteredStudents.forEach((s) => next.add(s.id));
-    setSelectedStudentIds(next);
-  };
-
-  const deselectAllFiltered = () => {
-    const next = new Set(selectedStudentIds);
-    filteredStudents.forEach((s) => next.delete(s.id));
-    setSelectedStudentIds(next);
-  };
-
-  const selectOnlySubmitted = () => {
-    const next = new Set<string>();
-    filteredStudents.forEach((s) => {
-      const sub = submissions[`${s.id}_${selectedYear}`];
-      if (sub) next.add(s.id);
-    });
     setSelectedStudentIds(next);
   };
 
@@ -348,42 +435,20 @@ export default function OnetAnalyticsManager() {
           </div>
         </div>
 
-        {/* Classroom Pills & Search */}
+        {/* Quick Room Overview & Search */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/80">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5" /> เลือกห้อง:
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-400">
+              🏫 ห้องเรียนปัจจุบัน (Active):{' '}
+              <strong className="text-cyan-300">
+                {classroomsList.length > 0 ? classroomsList.join(', ') : 'กำลังโหลด...'}
+              </strong>{' '}
+              ({students.length} คน)
             </span>
-            <button
-              onClick={() => handleClassroomChange('ALL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                selectedClassroom === 'ALL'
-                  ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
-                  : 'bg-slate-800/80 text-slate-400 hover:text-white'
-              }`}
-            >
-              ทุกห้องเรียน ({students.length})
-            </button>
-            {classrooms.map((room) => {
-              const countInRoom = students.filter((s) => s.classroom === room).length;
-              return (
-                <button
-                  key={room}
-                  onClick={() => handleClassroomChange(room)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    selectedClassroom === room
-                      ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
-                      : 'bg-slate-800/80 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  {room} ({countInRoom})
-                </button>
-              );
-            })}
           </div>
 
           {/* Search box */}
-          <div className="relative w-full sm:w-56">
+          <div className="relative w-full sm:w-64">
             <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
             <input
               type="text"
@@ -588,212 +653,384 @@ export default function OnetAnalyticsManager() {
         </div>
       </div>
 
-      {/* ── Student Selection Table ─────────────────────────────────── */}
-      <div className="glass-card rounded-3xl border border-slate-800 bg-slate-900/80 overflow-hidden shadow-xl">
-        {/* Table Toolbar */}
-        <div className="p-4 sm:p-5 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {/* ── Classrooms Accordion List (แสดงห้องเรียนก่อน & คลี่ดูรายชื่อ) ────────────────────────── */}
+      <div className="space-y-4">
+        {/* Global Toolbar */}
+        <div className="p-4 sm:p-5 rounded-3xl border border-slate-800 bg-slate-900/80 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-xl">
           <div>
             <h4 className="text-sm font-black text-white flex items-center gap-2">
-              <Users className="w-4 h-4 text-cyan-400" /> รายชื่อนักเรียนและตัวเลือกคำนวณ (Custom Cohort)
+              <Users className="w-4 h-4 text-cyan-400" /> ห้องเรียนและตัวเลือกคำนวณคะแนน (Classroom Cohorts)
             </h4>
             <p className="text-xs text-slate-400 mt-0.5">
-              ติ๊กถูกที่หน้ารายชื่อเพื่อเลือก/ไม่เลือกนักเรียนคนใดมารวมคำนวณค่าเฉลี่ย
+              คลิกติ๊กถูกที่หน้ารายชื่อห้องเพื่อรวมทั้งห้องในการคำนวณ หรือกดปุ่ม <strong className="text-cyan-300">"ดูรายชื่อ"</strong> เพื่อติ๊กเลือกนักเรียนรายคน
             </p>
           </div>
 
-          {/* Quick Selection Buttons */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={selectAllFiltered}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold transition-colors"
+              onClick={selectAllStudents}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors cursor-pointer"
             >
-              ✓ เลือกทั้งหมด ({filteredStudents.length})
+              ✓ เลือกทุกห้อง ({students.length})
             </button>
             <button
-              onClick={selectOnlySubmitted}
-              className="px-3 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 font-bold transition-colors"
+              onClick={selectAllSubmittedStudents}
+              className="px-3 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-xs font-bold transition-colors cursor-pointer"
             >
-              ⭐ เฉพาะที่ส่งแล้ว
+              ⭐ เฉพาะคนที่ส่งแล้ว ({cohortStats.submittedCount})
             </button>
             <button
-              onClick={deselectAllFiltered}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold transition-colors"
+              onClick={deselectAllStudents}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs font-bold transition-colors cursor-pointer"
             >
               ✕ ล้างการเลือก
+            </button>
+            <span className="text-slate-700 hidden sm:inline">|</span>
+            <button
+              onClick={expandAllRooms}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-400 text-xs font-bold transition-colors cursor-pointer"
+            >
+              📂 เปิดทุกห้อง
+            </button>
+            <button
+              onClick={collapseAllRooms}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-400 text-xs font-bold transition-colors cursor-pointer"
+            >
+              📁 ย่อทุกห้อง
             </button>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950/80 text-slate-400 font-bold border-b border-slate-800">
-              <tr>
-                <th className="py-3 px-4 w-12 text-center">เลือก</th>
-                <th className="py-3 px-3">เลขประจำตัว</th>
-                <th className="py-3 px-4">ชื่อ - นามสกุล</th>
-                <th className="py-3 px-3">ห้อง</th>
-                <th className="py-3 px-3 text-center">ครั้งที่สอบ</th>
-                <th className="py-3 px-3 text-right">ครั้งแรก</th>
-                <th className="py-3 px-3 text-right">ล่าสุด</th>
-                <th className="py-3 px-3 text-center">พัฒนาการ</th>
-                <th className="py-3 px-3 text-right">สูงสุด</th>
-                <th className="py-3 px-3 text-center">ผลประเมิน</th>
-                <th className="py-3 px-3 text-center">ประวัติ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {filteredStudents.length === 0 ? (
-                <tr>
-                  <td colSpan={11} className="py-8 text-center text-slate-500">
-                    ไม่พบข้อมูลนักเรียนที่ตรงกับเงื่อนไข
-                  </td>
-                </tr>
-              ) : (
-                filteredStudents.map((s, idx) => {
-                  const isChecked = selectedStudentIds.has(s.id);
-                  const sub = submissions[`${s.id}_${selectedYear}`];
-                  const attemptCount = sub?.attemptCount || (sub ? 1 : 0);
-                  const growthDelta = sub?.growthDelta ?? 0;
+        {/* Classroom Cards */}
+        {classroomData.length === 0 ? (
+          <div className="p-8 rounded-3xl border border-slate-800 bg-slate-900/40 text-center text-slate-500 text-sm">
+            ไม่พบห้องเรียนในภาคเรียนปัจจุบัน
+          </div>
+        ) : (
+          classroomData.map((c) => {
+            const isExpanded = Boolean(expandedRooms[c.room]);
+            return (
+              <div
+                key={c.room}
+                className="rounded-3xl border border-slate-800/90 bg-slate-900/80 overflow-hidden shadow-xl transition-all"
+              >
+                {/* Classroom Summary Header */}
+                <div className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-950/60 hover:bg-slate-900/90 transition-colors">
+                  <div className="flex items-center gap-3.5">
+                    {/* Checkbox for entire room */}
+                    <button
+                      type="button"
+                      onClick={() => toggleClassroomSelection(c.room)}
+                      className="p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer group"
+                      title={c.allSelected ? 'ยกเลิกการเลือกห้องนี้' : 'เลือกห้องนี้คำนวณคะแนน'}
+                    >
+                      <div
+                        className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-all ${
+                          c.allSelected
+                            ? 'bg-cyan-500 border-cyan-400 text-slate-950 font-black'
+                            : c.someSelected
+                            ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-black'
+                            : 'border-slate-700 bg-slate-900 text-transparent group-hover:border-slate-500'
+                        }`}
+                      >
+                        {c.allSelected ? (
+                          <Check className="w-4 h-4 stroke-[3]" />
+                        ) : c.someSelected ? (
+                          <span className="text-xs leading-none font-black">—</span>
+                        ) : null}
+                      </div>
+                    </button>
 
-                  return (
-                    <tr
-                      key={s.id}
-                      onClick={() => toggleStudent(s.id)}
-                      className={`cursor-pointer transition-colors ${
-                        isChecked ? 'bg-indigo-950/20 hover:bg-indigo-950/30' : 'hover:bg-slate-800/40 opacity-60'
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="text-base font-black text-white flex items-center gap-1.5">
+                          🏫 ห้อง {c.room}
+                        </h4>
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                          {c.totalCount} คน
+                        </span>
+                        {c.submittedCount > 0 ? (
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            ส่งสอบแล้ว {c.submittedCount}/{c.totalCount} คน
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-500">
+                            ยังไม่มีคนส่ง
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-slate-400 mt-1">
+                        {c.allSelected
+                          ? `✅ เลือกทั้งห้องนี้ในการคำนวณ (${c.totalCount} คน)`
+                          : c.someSelected
+                          ? `⚡ เลือกบางส่วน: ${c.selectedInRoomCount}/${c.totalCount} คน`
+                          : '⚪ ไม่ได้เลือกห้องนี้ในการคำนวณ'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Room Stats & Expand/Collapse Toggle */}
+                  <div className="flex items-center justify-between md:justify-end gap-5 border-t md:border-t-0 border-slate-800/60 pt-3 md:pt-0">
+                    <div className="flex items-center gap-4 text-xs">
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-500 font-bold block">เฉลี่ยห้องนี้</span>
+                        <strong className="text-sm font-black text-cyan-300 font-mono">
+                          {c.submittedCount > 0 ? `${c.mean}` : '-'}
+                          {c.submittedCount > 0 && <span className="text-[10px] text-slate-500">/100</span>}
+                        </strong>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-500 font-bold block">ผ่านเกณฑ์ (&gt;=50%)</span>
+                        <strong className="text-sm font-black text-indigo-300 font-mono">
+                          {c.submittedCount > 0 ? `${c.passRate}%` : '-'}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleExpandRoom(c.room)}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                        isExpanded
+                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
                       }`}
                     >
-                      {/* Checkbox */}
-                      <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleStudent(s.id)}
-                          className="w-4 h-4 rounded text-cyan-500 bg-slate-950 border-slate-700 focus:ring-cyan-400 focus:ring-offset-slate-900 cursor-pointer"
-                        />
-                      </td>
+                      <span>{isExpanded ? '📁 ซ่อนรายชื่อ' : `👥 ดูรายชื่อ (${c.totalCount})`}</span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                          isExpanded ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
 
-                      {/* Student ID */}
-                      <td className="py-3 px-3 font-mono text-slate-400">
-                        {s.studentId}
-                      </td>
+                {/* Collapsible Student Table */}
+                {isExpanded && (
+                  <div className="border-t border-slate-800/80 p-4 sm:p-5 bg-slate-950/40 space-y-3 animate-in fade-in duration-150">
+                    {/* Room Mini-Toolbar */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/60 text-xs">
+                      <span className="text-slate-400 font-bold">
+                        รายชื่อนักเรียนห้อง {c.room} ({c.displayedStudents.length} คน):
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = new Set(selectedStudentIds);
+                            c.roomStudents.forEach((s) => next.add(s.id));
+                            setSelectedStudentIds(next);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition-colors cursor-pointer text-[11px]"
+                        >
+                          ✓ เลือกทุกคนในห้องนี้
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => selectRoomOnlySubmitted(c.room)}
+                          className="px-2.5 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-bold transition-colors cursor-pointer text-[11px]"
+                        >
+                          ⭐ เฉพาะคนที่ส่งในห้องนี้
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = new Set(selectedStudentIds);
+                            c.roomStudents.forEach((s) => next.delete(s.id));
+                            setSelectedStudentIds(next);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold transition-colors cursor-pointer text-[11px]"
+                        >
+                          ✕ ปลดออกทั้งห้อง
+                        </button>
+                      </div>
+                    </div>
 
-                      {/* Name */}
-                      <td className="py-3 px-4 font-bold text-white flex items-center gap-1.5">
-                        <span>{s.name}</span>
-                        {s.isSkull && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                            💀 พิเศษ
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Classroom */}
-                      <td className="py-3 px-3 text-slate-400 font-mono">
-                        {s.classroom}
-                      </td>
-
-                      {/* Attempt Count Badge */}
-                      <td className="py-3 px-3 text-center">
-                        {attemptCount > 0 ? (
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-black inline-flex items-center gap-1 ${
-                              attemptCount >= 2
-                                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                                : 'bg-slate-800 text-slate-300 border border-slate-700'
-                            }`}
-                          >
-                            {attemptCount} ครั้ง
-                          </span>
-                        ) : (
-                          <span className="text-slate-600 text-[10px]">-</span>
-                        )}
-                      </td>
-
-                      {/* First Score */}
-                      <td className="py-3 px-3 text-right font-mono text-slate-400">
-                        {sub ? sub.firstScore ?? sub.score100 : '-'}
-                      </td>
-
-                      {/* Latest Score */}
-                      <td className="py-3 px-3 text-right font-mono font-black text-sm">
-                        {sub ? (
-                          <span className={sub.score100 >= 50 ? 'text-cyan-400' : 'text-rose-400'}>
-                            {sub.score100}
-                          </span>
-                        ) : (
-                          <span className="text-slate-600">-</span>
-                        )}
-                      </td>
-
-                      {/* Growth Delta */}
-                      <td className="py-3 px-3 text-center font-mono font-bold text-xs">
-                        {attemptCount >= 2 ? (
-                          <span
-                            className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md ${
-                              growthDelta > 0
-                                ? 'text-emerald-400 bg-emerald-500/10'
-                                : growthDelta === 0
-                                ? 'text-slate-400 bg-slate-800'
-                                : 'text-rose-400 bg-rose-500/10'
-                            }`}
-                          >
-                            {growthDelta > 0 ? `+${growthDelta} 📈` : growthDelta === 0 ? '0.0' : `${growthDelta} 📉`}
-                          </span>
-                        ) : (
-                          <span className="text-slate-600 text-[10px]">-</span>
-                        )}
-                      </td>
-
-                      {/* Max Score */}
-                      <td className="py-3 px-3 text-right font-mono text-emerald-400 font-bold">
-                        {sub ? sub.maxScore ?? sub.score100 : '-'}
-                      </td>
-
-                      {/* Result */}
-                      <td className="py-3 px-3 text-center">
-                        {sub ? (
-                          sub.score100 >= 50 ? (
-                            <span className="text-emerald-400 font-bold inline-flex items-center gap-1 text-[11px]">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> ผ่าน
-                            </span>
+                    {/* Table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-950/80 text-slate-400 font-bold border-b border-slate-800">
+                          <tr>
+                            <th className="py-2.5 px-3 w-10 text-center">เลือก</th>
+                            <th className="py-2.5 px-3">เลขประจำตัว</th>
+                            <th className="py-2.5 px-3">ชื่อ - นามสกุล</th>
+                            <th className="py-2.5 px-3 text-center">ครั้งที่สอบ</th>
+                            <th className="py-2.5 px-3 text-right">ครั้งแรก</th>
+                            <th className="py-2.5 px-3 text-right">ล่าสุด</th>
+                            <th className="py-2.5 px-3 text-center">พัฒนาการ</th>
+                            <th className="py-2.5 px-3 text-right">สูงสุด</th>
+                            <th className="py-2.5 px-3 text-center">ผลประเมิน</th>
+                            <th className="py-2.5 px-3 text-center">ประวัติ</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/60">
+                          {c.displayedStudents.length === 0 ? (
+                            <tr>
+                              <td colSpan={10} className="py-6 text-center text-slate-500">
+                                ไม่พบรายชื่อที่ค้นหาในห้องนี้
+                              </td>
+                            </tr>
                           ) : (
-                            <span className="text-rose-400 font-bold inline-flex items-center gap-1 text-[11px]">
-                              <XCircle className="w-3.5 h-3.5" /> ไม่ผ่าน
-                            </span>
-                          )
-                        ) : (
-                          <span className="text-slate-600 text-[10px]">-</span>
-                        )}
-                      </td>
+                            c.displayedStudents.map((s) => {
+                              const isChecked = selectedStudentIds.has(s.id);
+                              const sub = submissions[`${s.id}_${selectedYear}`];
+                              const attemptCount = sub?.attemptCount || (sub ? 1 : 0);
+                              const growthDelta = sub?.growthDelta ?? 0;
 
-                      {/* History Inspection Button */}
-                      <td
-                        className="py-3 px-3 text-center"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {sub ? (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedHistory({ student: s, sub })}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
-                            title="ดูประวัติการสอบทุกครั้ง"
-                          >
-                            <History className="w-3 h-3" />
-                            <span>ดูประวัติ</span>
-                          </button>
-                        ) : (
-                          <span className="text-slate-600 text-[10px]">-</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                              return (
+                                <tr
+                                  key={s.id}
+                                  onClick={() => toggleStudent(s.id)}
+                                  className={`cursor-pointer transition-colors ${
+                                    isChecked
+                                      ? 'bg-indigo-950/20 hover:bg-indigo-950/30'
+                                      : 'hover:bg-slate-800/40 opacity-60'
+                                  }`}
+                                >
+                                  {/* Checkbox */}
+                                  <td
+                                    className="py-2.5 px-3 text-center"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => toggleStudent(s.id)}
+                                      className="w-4 h-4 rounded text-cyan-500 bg-slate-950 border-slate-700 focus:ring-cyan-400 focus:ring-offset-slate-900 cursor-pointer"
+                                    />
+                                  </td>
+
+                                  {/* Student ID */}
+                                  <td className="py-2.5 px-3 font-mono text-slate-400">
+                                    {s.studentId}
+                                  </td>
+
+                                  {/* Name */}
+                                  <td className="py-2.5 px-3 font-bold text-white flex items-center gap-1.5">
+                                    <span>{s.name}</span>
+                                    {s.isSkull && (
+                                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                        💀 พิเศษ
+                                      </span>
+                                    )}
+                                  </td>
+
+                                  {/* Attempt Count Badge */}
+                                  <td className="py-2.5 px-3 text-center">
+                                    {attemptCount > 0 ? (
+                                      <span
+                                        className={`px-2 py-0.5 rounded-full text-[10px] font-black inline-flex items-center gap-1 ${
+                                          attemptCount >= 2
+                                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                                            : 'bg-slate-800 text-slate-300 border border-slate-700'
+                                        }`}
+                                      >
+                                        {attemptCount} ครั้ง
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-600 text-[10px]">-</span>
+                                    )}
+                                  </td>
+
+                                  {/* First Score */}
+                                  <td className="py-2.5 px-3 text-right font-mono text-slate-400">
+                                    {sub ? sub.firstScore ?? sub.score100 : '-'}
+                                  </td>
+
+                                  {/* Latest Score */}
+                                  <td className="py-2.5 px-3 text-right font-mono font-black text-sm">
+                                    {sub ? (
+                                      <span
+                                        className={
+                                          sub.score100 >= 50 ? 'text-cyan-400' : 'text-rose-400'
+                                        }
+                                      >
+                                        {sub.score100}
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-600">-</span>
+                                    )}
+                                  </td>
+
+                                  {/* Growth Delta */}
+                                  <td className="py-2.5 px-3 text-center font-mono font-bold text-xs">
+                                    {attemptCount >= 2 ? (
+                                      <span
+                                        className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md ${
+                                          growthDelta > 0
+                                            ? 'text-emerald-400 bg-emerald-500/10'
+                                            : growthDelta === 0
+                                            ? 'text-slate-400 bg-slate-800'
+                                            : 'text-rose-400 bg-rose-500/10'
+                                        }`}
+                                      >
+                                        {growthDelta > 0
+                                          ? `+${growthDelta} 📈`
+                                          : growthDelta === 0
+                                          ? '0.0'
+                                          : `${growthDelta} 📉`}
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-600 text-[10px]">-</span>
+                                    )}
+                                  </td>
+
+                                  {/* Max Score */}
+                                  <td className="py-2.5 px-3 text-right font-mono text-emerald-400 font-bold">
+                                    {sub ? sub.maxScore ?? sub.score100 : '-'}
+                                  </td>
+
+                                  {/* Result */}
+                                  <td className="py-2.5 px-3 text-center">
+                                    {sub ? (
+                                      sub.score100 >= 50 ? (
+                                        <span className="text-emerald-400 font-bold inline-flex items-center gap-1 text-[11px]">
+                                          <CheckCircle2 className="w-3.5 h-3.5" /> ผ่าน (5 ตั๋ว)
+                                        </span>
+                                      ) : (
+                                        <span className="text-rose-400 font-bold inline-flex items-center gap-1 text-[11px]">
+                                          <XCircle className="w-3.5 h-3.5" /> ต้องพัฒนา
+                                        </span>
+                                      )
+                                    ) : (
+                                      <span className="text-slate-600 text-[10px]">ยังไม่สอบ</span>
+                                    )}
+                                  </td>
+
+                                  {/* History Inspection Button */}
+                                  <td
+                                    className="py-2.5 px-3 text-center"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {sub ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedHistory({ student: s, sub })}
+                                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                                        title="ดูประวัติการสอบทุกครั้ง"
+                                      >
+                                        <History className="w-3 h-3" />
+                                        <span>ดูประวัติ</span>
+                                      </button>
+                                    ) : (
+                                      <span className="text-slate-600 text-[10px]">-</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* ── Student Attempt History Modal (Teacher View Only) ────────── */}
