@@ -19,18 +19,29 @@ import {
 interface YearConfig {
   isOpen: boolean;
   allowedClassrooms: string[];
+  is_open?: boolean;
+  allowed_classrooms?: string[];
 }
 
 const ALL_YEARS = [2568, 2567, 2566, 2565, 2564, 2563, 2562, 2561, 2560, 2559];
 
-export default function OnetYearAccessControl({
-  classrooms = ['ม.3/1', 'ม.2/1', 'ม.1/1'],
-  onUpdated,
-}: {
+interface OnetYearAccessControlProps {
+  selectedYear?: number;
+  onSelectYear?: (year: number) => void;
   classrooms?: string[];
   onUpdated?: () => void;
-}) {
-  const [selectedYear, setSelectedYear] = useState<number>(2568);
+}
+
+export default function OnetYearAccessControl({
+  selectedYear: externalSelectedYear,
+  onSelectYear: externalOnSelectYear,
+  classrooms = ['ม.3/1', 'ม.2/1', 'ม.1/1'],
+  onUpdated,
+}: OnetYearAccessControlProps) {
+  const [internalSelectedYear, setInternalSelectedYear] = useState<number>(2568);
+  const selectedYear = externalSelectedYear ?? internalSelectedYear;
+  const setSelectedYear = externalOnSelectYear ?? setInternalSelectedYear;
+
   const [openYears, setOpenYears] = useState<Record<string, YearConfig>>({
     '2568': { isOpen: true, allowedClassrooms: ['ม.3/1'] },
   });
@@ -49,7 +60,19 @@ export default function OnetYearAccessControl({
       const res = await fetch('/api/admin/onet');
       const data = await res.json();
       if (res.ok && data.success) {
-        if (data.openYears) setOpenYears(data.openYears);
+        if (data.openYears) {
+          const normalized: Record<string, YearConfig> = {};
+          Object.entries(data.openYears).forEach(([y, val]: [string, any]) => {
+            const isOpen = Boolean(val?.isOpen ?? val?.is_open);
+            const allowedClassrooms = Array.isArray(val?.allowedClassrooms)
+              ? val.allowedClassrooms
+              : Array.isArray(val?.allowed_classrooms)
+              ? val.allowed_classrooms
+              : [];
+            normalized[y] = { isOpen, allowedClassrooms };
+          });
+          setOpenYears(normalized);
+        }
         if (data.classrooms && data.classrooms.length > 0) {
           setAvailableClassrooms(data.classrooms);
         }
@@ -65,10 +88,15 @@ export default function OnetYearAccessControl({
     loadConfig();
   }, []);
 
-  // Current year settings
-  const currentConfig: YearConfig = openYears[String(selectedYear)] || {
-    isOpen: false,
-    allowedClassrooms: [],
+  // Current year settings (safe with snake_case and camelCase)
+  const currentRaw = openYears[String(selectedYear)];
+  const currentConfig: YearConfig = {
+    isOpen: Boolean(currentRaw?.isOpen ?? currentRaw?.is_open),
+    allowedClassrooms: Array.isArray(currentRaw?.allowedClassrooms)
+      ? currentRaw.allowedClassrooms
+      : Array.isArray(currentRaw?.allowed_classrooms)
+      ? currentRaw.allowed_classrooms
+      : [],
   };
 
   // Toggle year open/closed

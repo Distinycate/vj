@@ -126,9 +126,25 @@ export async function GET(request: Request) {
       console.warn('Failed to load onet-challenge event settings:', eErr);
     }
 
-    const openYears = eventRow?.settings?.open_years || {
-      '2568': { isOpen: true, allowedClassrooms: ['ม.3/1'] },
+    const rawOpenYears = eventRow?.settings?.open_years || {
+      '2568': { isOpen: true, is_open: true, allowedClassrooms: ['ม.3/1'], allowed_classrooms: ['ม.3/1'] },
     };
+
+    const openYears: Record<string, { isOpen: boolean; is_open: boolean; allowedClassrooms: string[]; allowed_classrooms: string[] }> = {};
+    Object.entries(rawOpenYears).forEach(([y, val]: [string, any]) => {
+      const open = Boolean(val?.isOpen ?? val?.is_open);
+      const rooms = Array.isArray(val?.allowedClassrooms)
+        ? val.allowedClassrooms
+        : Array.isArray(val?.allowed_classrooms)
+        ? val.allowed_classrooms
+        : [];
+      openYears[y] = {
+        isOpen: open,
+        is_open: open,
+        allowedClassrooms: rooms,
+        allowed_classrooms: rooms,
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -173,7 +189,9 @@ export async function POST(request: Request) {
       ...existingOpenYears,
       [String(year)]: {
         isOpen: Boolean(isOpen),
+        is_open: Boolean(isOpen),
         allowedClassrooms: Array.isArray(allowedClassrooms) ? allowedClassrooms : [],
+        allowed_classrooms: Array.isArray(allowedClassrooms) ? allowedClassrooms : [],
       },
     };
 

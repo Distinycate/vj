@@ -3,7 +3,6 @@ import { supabase } from '@/utils/supabase/client';
 import { Sparkles, Users, Play, Pause, Wrench, Trophy, X, Gift } from 'lucide-react';
 import { adjustStudentCoins, adjustStudentTickets } from '@/utils/cardBattle';
 import RemedialEventManager from './RemedialEventManager';
-import OnetYearAccessControl from './OnetYearAccessControl';
 
 export default function EventAnalyticsTab({ teacher }: { teacher: any }) {
   const [events, setEvents] = useState<any[]>([]);
@@ -101,9 +100,6 @@ export default function EventAnalyticsTab({ teacher }: { teacher: any }) {
 
   return (
     <div className="space-y-8">
-      {/* 0. O-NET Challenge Year & Classroom Access Control */}
-      <OnetYearAccessControl onUpdated={loadEvents} />
-
       {/* 1. Remedial Event Run Management Module (Active Spec) */}
       <RemedialEventManager teacher={teacher} />
 

@@ -73,8 +73,12 @@ export async function GET(request: Request) {
 
     allYears.forEach((y) => {
       const cfg = openYears[String(y)];
-      const isOpen = Boolean(cfg?.isOpen);
-      const allowedClassrooms = Array.isArray(cfg?.allowedClassrooms) ? cfg.allowedClassrooms : [];
+      const isOpen = Boolean(cfg?.isOpen ?? cfg?.is_open);
+      const allowedClassrooms = Array.isArray(cfg?.allowedClassrooms)
+        ? cfg.allowedClassrooms
+        : Array.isArray(cfg?.allowed_classrooms)
+        ? cfg.allowed_classrooms
+        : [];
       const isAllowed =
         isOpen &&
         (allowedClassrooms.includes('ALL') || allowedClassrooms.includes(studentClassroom));
@@ -143,8 +147,12 @@ export async function POST(request: Request) {
     };
 
     const yearConfig = openYears[String(year)];
-    const isYearOpen = Boolean(yearConfig?.isOpen);
-    const allowedRooms = Array.isArray(yearConfig?.allowedClassrooms) ? yearConfig.allowedClassrooms : [];
+    const isYearOpen = Boolean(yearConfig?.isOpen ?? yearConfig?.is_open);
+    const allowedRooms = Array.isArray(yearConfig?.allowedClassrooms)
+      ? yearConfig.allowedClassrooms
+      : Array.isArray(yearConfig?.allowed_classrooms)
+      ? yearConfig.allowed_classrooms
+      : [];
     const hasAccess =
       isYearOpen && (allowedRooms.includes('ALL') || allowedRooms.includes(studentClassroom));
 

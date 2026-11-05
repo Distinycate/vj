@@ -308,7 +308,12 @@ export default function OnetAnalyticsManager() {
       </div>
 
       {/* ── Year & Classroom Access Control ───────────────────────── */}
-      <OnetYearAccessControl onUpdated={fetchData} classrooms={classrooms} />
+      <OnetYearAccessControl
+        selectedYear={selectedYear}
+        onSelectYear={setSelectedYear}
+        onUpdated={fetchData}
+        classrooms={classrooms}
+      />
 
       {/* ── Control Bar ─────────────────────────────────────────────── */}
       <div className="glass-card p-5 rounded-3xl border border-slate-800 bg-slate-900/70 space-y-4">
@@ -325,25 +330,17 @@ export default function OnetAnalyticsManager() {
             </p>
           </div>
 
-          {/* Year Selector */}
+          {/* Active Year Badge & Refresh */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-400">ชุดข้อสอบ:</span>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="bg-slate-950 border border-indigo-500/40 rounded-xl px-3.5 py-2 text-xs font-black text-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            >
-              {[2568, 2567, 2566, 2565, 2564, 2563, 2562, 2561, 2560, 2559].map((y) => (
-                <option key={y} value={y}>
-                  ปีการศึกษา {y} (เต็ม 100 คะแนน)
-                </option>
-              ))}
-            </select>
+            <span className="text-xs font-bold text-slate-400">ชุดข้อสอบที่กำลังวิเคราะห์:</span>
+            <div className="px-3.5 py-2 rounded-xl bg-slate-950 border border-indigo-500/40 text-xs font-black text-cyan-300">
+              ปีการศึกษา {selectedYear} (100 คะแนน)
+            </div>
 
             <button
               onClick={fetchData}
               disabled={loading}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
               title="รีเฟรชข้อมูล"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
