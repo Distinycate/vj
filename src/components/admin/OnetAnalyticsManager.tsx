@@ -26,6 +26,7 @@ import {
   Target,
   TrendingUp,
   Trophy,
+  Tv,
   Users,
   X,
   XCircle,
@@ -507,10 +508,21 @@ export default function OnetAnalyticsManager() {
           </div>
 
           <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0">
+            <a
+              href={`/admin/onet/tv?year=${selectedYear}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-3 rounded-xl bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 hover:from-rose-400 hover:to-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-rose-500/25 transition-all cursor-pointer hover:scale-105 active:scale-95 animate-pulse"
+              title="เปิดหน้าต่างถ่ายทอดสดต่อขึ้นจอทีวี/โปรเจกเตอร์ในห้องเรียน (ไม่มีเฉลย)"
+            >
+              <Tv className="w-4 h-4" />
+              <span>📺 เปิดจอ Live TV ต่อขึ้นทีวีห้องเรียน (ไม่มีเฉลย) ↗</span>
+            </a>
+
             <button
               type="button"
               onClick={handleCopyLink}
-              className="px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25 transition-all cursor-pointer hover:scale-105 active:scale-95"
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25 transition-all cursor-pointer hover:scale-105 active:scale-95"
             >
               {copiedLink ? <Check className="w-4 h-4 text-emerald-950" /> : <Copy className="w-4 h-4" />}
               <span>{copiedLink ? 'คัดลอกลิงก์เรียบร้อยแล้ว! (พร้อมส่ง)' : '📋 คัดลอกลิงก์ส่งให้นักเรียน'}</span>
@@ -520,7 +532,7 @@ export default function OnetAnalyticsManager() {
               href="/challenge/onet"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer hover:border-cyan-400"
+              className="px-4 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer hover:border-cyan-400"
             >
               <ExternalLink className="w-4 h-4" />
               <span>👁️ ดูหน้าจอข้อสอบของนักเรียน ↗</span>
@@ -1449,9 +1461,21 @@ export default function OnetAnalyticsManager() {
                                 • ครูเห็นคำตอบนักเรียนทันทีเมื่อเริ่มทำข้อสอบ
                               </p>
                             </div>
-                            <span className="text-[11px] font-mono text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20">
-                              ห้อง {c.room} ({c.studentsWithLive.length} คน)
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-mono text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20">
+                                ห้อง {c.room} ({c.studentsWithLive.length} คน)
+                              </span>
+                              <a
+                                href={`/admin/onet/tv?year=${selectedYear}&classroom=${encodeURIComponent(c.room)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[11px] font-bold text-amber-300 hover:text-white bg-amber-500/20 hover:bg-amber-500/30 px-2.5 py-1 rounded-lg border border-amber-500/40 flex items-center gap-1 transition-colors cursor-pointer"
+                                title="เปิดจอทีวีสำหรับห้องนี้โดยเฉพาะ (ไม่มีเฉลย)"
+                              >
+                                <Tv className="w-3.5 h-3.5" />
+                                <span>📺 ต่อทีวีห้องนี้ (ไม่มีเฉลย) ↗</span>
+                              </a>
+                            </div>
                           </div>
 
                           <div className="overflow-x-auto max-h-96 overflow-y-auto">
