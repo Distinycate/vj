@@ -34,7 +34,7 @@ export default function OnetExamRoomPage({ params }: PageProps) {
 
   // States
   const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [activeTab, setActiveTab] = useState<'both' | 'pdf' | 'sheet'>('both');
+  const [activeTab, setActiveTab] = useState<'pdf' | 'sheet'>('pdf');
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -163,10 +163,15 @@ export default function OnetExamRoomPage({ params }: PageProps) {
   };
 
   const scrollToQuestion = (qNum: number) => {
-    const el = questionRefs.current[qNum];
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (activeTab === 'pdf') {
+      setActiveTab('sheet');
     }
+    setTimeout(() => {
+      const el = questionRefs.current[qNum];
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 60);
   };
 
   const handleSubmit = async () => {
@@ -241,9 +246,9 @@ export default function OnetExamRoomPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="h-screen h-[100dvh] w-full max-w-full overflow-hidden bg-slate-950 text-slate-100 flex flex-col font-sans">
       {/* ── Top Header Bar ─────────────────────────────────────────── */}
-      <header className="h-14 sm:h-16 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 sticky top-0">
+      <header className="h-14 sm:h-16 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 sticky top-0 w-full max-w-full">
         <div className="flex items-center gap-3">
           <Link
             href="/challenge/onet"
@@ -332,10 +337,10 @@ export default function OnetExamRoomPage({ params }: PageProps) {
       </header>
 
       {/* ── Main Split-Screen Workspace ───────────────────────────── */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden w-full max-w-full min-w-0 relative">
         {/* LEFT PANEL: PDF Viewer */}
         <div
-          className={`flex-1 flex flex-col bg-slate-900 border-r border-slate-800 transition-all ${
+          className={`flex-1 min-w-0 max-w-full w-full flex flex-col bg-slate-900 border-r border-slate-800 transition-all ${
             activeTab === 'sheet' ? 'hidden lg:flex' : 'flex'
           }`}
         >
@@ -356,34 +361,47 @@ export default function OnetExamRoomPage({ params }: PageProps) {
           </div>
 
           {/* Embedded Native PDF Viewer */}
-          <div className="flex-1 w-full h-full bg-slate-950 relative">
+          <div className="flex-1 w-full h-full min-w-0 max-w-full bg-slate-950 relative overflow-hidden">
             <iframe
               src={`${config.pdfCleanUrl}#toolbar=0&navpanes=0`}
               title="O-NET Exam PDF"
-              className="w-full h-full border-0"
+              className="w-full h-full border-0 block"
             />
           </div>
 
           {/* ── MOBILE QUICK BUBBLE DOCK (Only visible on mobile when in PDF mode) ── */}
-          <div className="lg:hidden bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 p-3 shadow-2xl shrink-0 z-20 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5">
+          <div className="lg:hidden w-full max-w-full overflow-hidden bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 p-3 shadow-2xl shrink-0 z-20 space-y-2">
+            <div className="flex items-center justify-between gap-2 w-full max-w-full">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => setMobileQNumber(Math.max(1, mobileQNumber - 1))}
                   disabled={mobileQNumber <= 1}
-                  className="w-8 h-8 rounded-xl bg-slate-800 disabled:opacity-30 text-white flex items-center justify-center font-black cursor-pointer text-sm"
+                  className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white flex items-center justify-center font-black cursor-pointer text-sm transition-transform active:scale-95"
+                  aria-label="ข้อก่อนหน้า"
                 >
                   ◀
                 </button>
-                <span className="px-3 py-1 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-black">
-                  ข้อที่ {mobileQNumber} / {totalQuestions}
-                </span>
+                <div className="relative">
+                  <select
+                    value={mobileQNumber}
+                    onChange={(e) => setMobileQNumber(Number(e.target.value))}
+                    className="appearance-none px-2.5 py-1.5 pr-6 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-black cursor-pointer focus:outline-none"
+                  >
+                    {config.questions.map((q) => (
+                      <option key={q.number} value={q.number} className="bg-slate-900 text-white">
+                        ข้อ {q.number}/{totalQuestions} {answers[String(q.number)] ? '✓' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[9px] text-cyan-300">▼</span>
+                </div>
                 <button
                   type="button"
                   onClick={() => setMobileQNumber(Math.min(totalQuestions, mobileQNumber + 1))}
                   disabled={mobileQNumber >= totalQuestions}
-                  className="w-8 h-8 rounded-xl bg-slate-800 disabled:opacity-30 text-white flex items-center justify-center font-black cursor-pointer text-sm"
+                  className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white flex items-center justify-center font-black cursor-pointer text-sm transition-transform active:scale-95"
+                  aria-label="ข้อถัดไป"
                 >
                   ▶
                 </button>
@@ -392,7 +410,7 @@ export default function OnetExamRoomPage({ params }: PageProps) {
               <button
                 type="button"
                 onClick={() => setActiveTab('sheet')}
-                className="text-xs font-black text-indigo-300 hover:text-white flex items-center gap-1.5 bg-indigo-500/20 px-3 py-1.5 rounded-xl border border-indigo-500/30 cursor-pointer"
+                className="text-xs font-black text-indigo-300 hover:text-white flex items-center gap-1.5 bg-indigo-500/20 px-3 py-1.5 rounded-xl border border-indigo-500/30 cursor-pointer shrink-0 transition-transform active:scale-95"
               >
                 <span>ดูแผ่นคำตอบ</span>
                 <span className="text-[10px] bg-indigo-400 text-slate-950 px-1.5 py-0.2 rounded-full font-black">
@@ -403,7 +421,7 @@ export default function OnetExamRoomPage({ params }: PageProps) {
 
             {/* Bubble Buttons for Current Question */}
             {currentMobileQ?.type === 'single' ? (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-2 w-full max-w-full">
                 {(['A', 'B', 'C', 'D'] as const).map((choice, cIdx) => {
                   const isChosen = String(answers[String(mobileQNumber)] || '').toUpperCase() === choice;
                   return (
@@ -413,12 +431,14 @@ export default function OnetExamRoomPage({ params }: PageProps) {
                       onClick={() => {
                         updateAnswer(mobileQNumber, choice);
                         if (mobileQNumber < totalQuestions) {
-                          setMobileQNumber(mobileQNumber + 1);
+                          setTimeout(() => {
+                            setMobileQNumber((prev) => Math.min(totalQuestions, prev + 1));
+                          }, 220);
                         }
                       }}
-                      className={`h-12 rounded-2xl font-black text-base flex flex-col items-center justify-center transition-all cursor-pointer active:scale-90 ${
+                      className={`h-12 w-full rounded-2xl font-black text-base flex flex-col items-center justify-center transition-all cursor-pointer active:scale-95 ${
                         isChosen
-                          ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 shadow-lg shadow-cyan-500/30 ring-2 ring-cyan-300'
+                          ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 shadow-lg shadow-cyan-500/30 ring-2 ring-inset ring-cyan-200'
                           : 'bg-slate-950 border border-slate-700/80 text-white hover:border-slate-500'
                       }`}
                     >
@@ -434,7 +454,7 @@ export default function OnetExamRoomPage({ params }: PageProps) {
               <button
                 type="button"
                 onClick={() => setActiveTab('sheet')}
-                className="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-2xl font-black text-xs shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-2xl font-black text-xs shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-95"
               >
                 <span>ข้อ 10 เป็นข้อเรียงลำดับ A - F › แตะเพื่อไปฝนในแผ่นคำตอบ</span>
               </button>
@@ -444,16 +464,16 @@ export default function OnetExamRoomPage({ params }: PageProps) {
 
         {/* RIGHT PANEL: Digital OMR Answer Sheet */}
         <div
-          className={`w-full lg:w-[480px] xl:w-[520px] flex flex-col bg-slate-950 shrink-0 border-l border-slate-800/80 transition-all ${
+          className={`w-full min-w-0 max-w-full lg:w-[480px] xl:w-[520px] flex flex-col bg-slate-950 shrink-0 border-l border-slate-800/80 transition-all overflow-x-hidden ${
             activeTab === 'pdf' ? 'hidden lg:flex' : 'flex'
           }`}
         >
           {/* Mobile Top Return Bar */}
-          <div className="lg:hidden p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0">
+          <div className="lg:hidden p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0 sticky top-0 z-10">
             <button
               type="button"
               onClick={() => setActiveTab('pdf')}
-              className="px-3.5 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 hover:text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-cyan-500/30"
+              className="px-3.5 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 hover:text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-cyan-500/30 transition-transform active:scale-95"
             >
               <FileText className="w-3.5 h-3.5" /> 📄 กลับไปอ่านข้อสอบ (PDF)
             </button>
@@ -540,16 +560,16 @@ export default function OnetExamRoomPage({ params }: PageProps) {
 
                   {/* Standard 4-choice questions */}
                   {q.type === 'single' && (
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-4 gap-2 w-full max-w-full">
                       {(['A', 'B', 'C', 'D'] as const).map((choice, cIdx) => {
                         const isSelected = currentAns === choice;
                         return (
                           <button
                             key={choice}
                             onClick={() => updateAnswer(q.number, choice)}
-                            className={`py-2.5 rounded-xl font-black text-xs sm:text-sm flex flex-col items-center justify-center transition-all ${
+                            className={`py-2.5 w-full rounded-xl font-black text-xs sm:text-sm flex flex-col items-center justify-center transition-all active:scale-95 ${
                               isSelected
-                                ? 'bg-gradient-to-br from-cyan-400 to-indigo-600 text-slate-950 font-black shadow-lg shadow-cyan-500/20 scale-[1.02] ring-2 ring-cyan-300'
+                                ? 'bg-gradient-to-br from-cyan-400 to-indigo-600 text-slate-950 font-black shadow-lg shadow-cyan-500/20 ring-2 ring-inset ring-cyan-200'
                                 : 'bg-slate-800/80 hover:bg-slate-750 text-slate-300 hover:text-white border border-slate-700/60'
                             }`}
                           >
