@@ -25,7 +25,8 @@ import { NATIONAL_BENCHMARKS } from '@/data/onet/onetData';
 interface StudentInfo {
   id: string;
   studentId: string;
-  studentName: string;
+  name?: string;
+  studentName?: string;
   classroom: string;
 }
 
@@ -51,7 +52,7 @@ function OnetTvScoreboardInner() {
   // Filters & Settings
   const [selectedYear, setSelectedYear] = useState<number>(initialYear);
   const [selectedClassroom, setSelectedClassroom] = useState<string>(initialClassroom);
-  const [sortBy, setSortBy] = useState<'score' | 'progress' | 'code'>('score');
+  const [sortBy, setSortBy] = useState<'score' | 'progress' | 'name'>('score');
   const [searchQuery, setSearchQuery] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -162,9 +163,10 @@ function OnetTvScoreboardInner() {
     // Filter students by classroom if specified
     const filteredStudents = students.filter((s) => {
       if (selectedClassroom !== 'ALL' && s.classroom !== selectedClassroom) return false;
+      const sName = s.name || s.studentName || '';
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        return s.studentName.toLowerCase().includes(q) || s.studentId.toLowerCase().includes(q);
+        return sName.toLowerCase().includes(q) || s.studentId.toLowerCase().includes(q);
       }
       return true;
     });
@@ -175,6 +177,13 @@ function OnetTvScoreboardInner() {
 
       const isSubmitted = Boolean(sub);
       const isLive = Boolean(live && live.status === 'in_progress' && !sub);
+
+      const resolvedStudentName =
+        s.name ||
+        s.studentName ||
+        live?.studentName ||
+        sub?.studentName ||
+        `นักเรียน ${s.studentId}`;
 
       let status: 'completed' | 'in_progress' | 'idle' = 'idle';
       let score100 = 0;
@@ -207,7 +216,7 @@ function OnetTvScoreboardInner() {
       return {
         id: s.id,
         studentCode: s.studentId,
-        studentName: s.studentName,
+        studentName: resolvedStudentName,
         classroom: s.classroom,
         status,
         score100,
@@ -226,13 +235,14 @@ function OnetTvScoreboardInner() {
       if (sortBy === 'score') {
         if (b.score100 !== a.score100) return b.score100 - a.score100;
         if (b.answeredCount !== a.answeredCount) return b.answeredCount - a.answeredCount;
-        return a.studentCode.localeCompare(b.studentCode);
+        return a.studentName.localeCompare(b.studentName, 'th');
       }
       if (sortBy === 'progress') {
         if (b.answeredCount !== a.answeredCount) return b.answeredCount - a.answeredCount;
         return b.score100 - a.score100;
       }
-      return a.studentCode.localeCompare(b.studentCode, undefined, { numeric: true });
+      // Sort alphabetically by Thai student name (ก - ฮ)
+      return a.studentName.localeCompare(b.studentName, 'th');
     });
 
     return records;
@@ -402,12 +412,12 @@ function OnetTvScoreboardInner() {
               </button>
               <button
                 type="button"
-                onClick={() => setSortBy('code')}
+                onClick={() => setSortBy('name')}
                 className={`px-2.5 py-1 rounded-lg font-bold transition-colors ${
-                  sortBy === 'code' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                  sortBy === 'name' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                🔢 เรียงตามเลขที่
+                🔤 เรียงตามชื่อ (ก - ฮ)
               </button>
             </div>
 
@@ -472,22 +482,22 @@ function OnetTvScoreboardInner() {
           <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Rank 2 (Left) */}
             {top3[1] && (
-              <div className="p-4 rounded-3xl bg-slate-900/90 border border-slate-700/80 shadow-xl flex items-center gap-4 relative overflow-hidden order-2 md:order-1">
-                <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-600 flex items-center justify-center text-2xl shadow-inner shrink-0">
+              <div className="p-4 sm:p-5 rounded-3xl bg-slate-900/90 border border-slate-700/80 shadow-xl flex items-center gap-4 relative overflow-hidden order-2 md:order-1">
+                <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-600 flex items-center justify-center text-3xl shadow-inner shrink-0">
                   🥈
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                    <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-600">
                       อันดับ 2
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono">ห้อง {top3[1].classroom}</span>
+                    <span className="text-xs text-slate-300 font-bold font-mono">ห้อง {top3[1].classroom}</span>
                   </div>
-                  <h3 className="text-base font-black text-white truncate mt-0.5">
+                  <h3 className="text-lg sm:text-xl font-black text-white truncate mt-1">
                     {top3[1].studentName}
                   </h3>
                   <div className="flex items-baseline gap-2 mt-1">
-                    <span className="text-xl font-black text-slate-200 font-mono">
+                    <span className="text-2xl font-black text-slate-100 font-mono">
                       {top3[1].score100.toFixed(1)}
                     </span>
                     <span className="text-xs text-slate-400">/ 100 คะแนน ({top3[1].scorePercent}%)</span>
@@ -498,26 +508,26 @@ function OnetTvScoreboardInner() {
 
             {/* Rank 1 Champion (Center - Larger & Glowing) */}
             {top3[0] && (
-              <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-950/40 via-slate-900 to-amber-950/30 border-2 border-amber-400/80 shadow-2xl shadow-amber-500/20 flex items-center gap-4 relative overflow-hidden order-1 md:order-2 ring-4 ring-amber-500/10 scale-[1.02]">
+              <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-amber-950/40 via-slate-900 to-amber-950/30 border-2 border-amber-400 shadow-2xl shadow-amber-500/25 flex items-center gap-4 relative overflow-hidden order-1 md:order-2 ring-4 ring-amber-500/20 scale-[1.02]">
                 <div className="absolute -top-6 -right-6 w-24 h-24 bg-amber-500/10 rounded-full blur-xl pointer-events-none" />
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center text-3xl shadow-lg shrink-0 font-black">
+                <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center text-3xl sm:text-4xl shadow-lg shrink-0 font-black">
                   👑
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-md">
+                    <span className="text-xs font-black px-3 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-md">
                       🥇 อันดับ 1 ชัยชนะ
                     </span>
-                    <span className="text-xs text-amber-300/80 font-mono font-bold">ห้อง {top3[0].classroom}</span>
+                    <span className="text-xs text-amber-300 font-mono font-bold">ห้อง {top3[0].classroom}</span>
                   </div>
-                  <h3 className="text-lg font-black text-white truncate mt-1">
+                  <h3 className="text-xl sm:text-2xl font-black text-white truncate mt-1 drop-shadow-md">
                     {top3[0].studentName}
                   </h3>
                   <div className="flex items-baseline gap-2 mt-1">
-                    <span className="text-2xl font-black text-amber-400 font-mono">
+                    <span className="text-2xl sm:text-3xl font-black text-amber-400 font-mono">
                       {top3[0].score100.toFixed(1)}
                     </span>
-                    <span className="text-xs text-amber-200/70">/ 100 คะแนน ({top3[0].scorePercent}%)</span>
+                    <span className="text-xs text-amber-200/90 font-bold">/ 100 คะแนน ({top3[0].scorePercent}%)</span>
                   </div>
                 </div>
               </div>
@@ -525,22 +535,22 @@ function OnetTvScoreboardInner() {
 
             {/* Rank 3 (Right) */}
             {top3[2] && (
-              <div className="p-4 rounded-3xl bg-slate-900/90 border border-amber-800/40 shadow-xl flex items-center gap-4 relative overflow-hidden order-3">
-                <div className="w-14 h-14 rounded-2xl bg-amber-950/40 border border-amber-700/50 flex items-center justify-center text-2xl shadow-inner shrink-0">
+              <div className="p-4 sm:p-5 rounded-3xl bg-slate-900/90 border border-amber-800/50 shadow-xl flex items-center gap-4 relative overflow-hidden order-3">
+                <div className="w-14 h-14 rounded-2xl bg-amber-950/40 border border-amber-700/60 flex items-center justify-center text-3xl shadow-inner shrink-0">
                   🥉
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-900/40 text-amber-300 border border-amber-700/50">
+                    <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-amber-900/60 text-amber-300 border border-amber-700/60">
                       อันดับ 3
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono">ห้อง {top3[2].classroom}</span>
+                    <span className="text-xs text-slate-300 font-bold font-mono">ห้อง {top3[2].classroom}</span>
                   </div>
-                  <h3 className="text-base font-black text-white truncate mt-0.5">
+                  <h3 className="text-lg sm:text-xl font-black text-white truncate mt-1">
                     {top3[2].studentName}
                   </h3>
                   <div className="flex items-baseline gap-2 mt-1">
-                    <span className="text-xl font-black text-amber-300 font-mono">
+                    <span className="text-2xl font-black text-amber-300 font-mono">
                       {top3[2].score100.toFixed(1)}
                     </span>
                     <span className="text-xs text-slate-400">/ 100 คะแนน ({top3[2].scorePercent}%)</span>
@@ -609,14 +619,17 @@ function OnetTvScoreboardInner() {
                           {rankNumber}
                         </div>
 
-                        <div className="min-w-0">
-                          <h4 className="text-sm font-black text-white truncate leading-tight">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-base sm:text-lg font-black text-white truncate leading-tight drop-shadow-sm">
                             {s.studentName}
                           </h4>
-                          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mt-0.5">
-                            <span>รหัส {s.studentCode}</span>
-                            <span>•</span>
-                            <span className="text-indigo-400 font-bold">{s.classroom}</span>
+                          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mt-1">
+                            <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold text-[11px]">
+                              ห้อง {s.classroom}
+                            </span>
+                            <span className="text-slate-500 font-mono text-[11px]">
+                              เลขที่ {s.studentCode}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -742,3 +755,4 @@ export default function OnetTvScoreboardPage() {
     </Suspense>
   );
 }
+

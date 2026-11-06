@@ -117,6 +117,7 @@ export async function GET(request: Request) {
         id: s.id,
         studentId: s.student_id,
         name: s.student_name,
+        studentName: s.student_name,
         gradeLevel: s.grade_level,
         roomNumber: s.room_number,
         classroom: roomLabel,
