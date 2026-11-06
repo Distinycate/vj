@@ -92,6 +92,15 @@ export async function POST(request: Request) {
     const liveProgress = currentSettings.live_progress || {};
     const yearProgress = liveProgress[String(year)] || {};
 
+    const existing = yearProgress[session.subjectId];
+    if (existing && existing.status === 'submitted') {
+      return NextResponse.json({
+        success: true,
+        alreadySubmitted: true,
+        message: 'Exam already submitted',
+      });
+    }
+
     yearProgress[session.subjectId] = {
       studentId: session.subjectId,
       studentCode: student.student_id,

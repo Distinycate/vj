@@ -48,6 +48,8 @@ export default function OnetExamRoomPage({ params }: PageProps) {
 
   const questionRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const pillRefs = useRef<Record<number, HTMLButtonElement | null>>({});
+  const secondsElapsedRef = useRef(0);
+  secondsElapsedRef.current = secondsElapsed;
 
   // Auto-scroll active question pill into view in mobile dock
   useEffect(() => {
@@ -113,10 +115,26 @@ export default function OnetExamRoomPage({ params }: PageProps) {
     }
   };
 
-  // Debounced live sync to server so teacher can see realtime progress
+  // Initial ping to server so student immediately shows as active in live arena
   useEffect(() => {
     if (examResult) return;
-    if (Object.keys(answers).length === 0) return;
+    const sendInitialPing = () => {
+      fetch('/api/student/onet/live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          year: yearNum,
+          answers: answers || {},
+          durationSeconds: secondsElapsedRef.current,
+        }),
+      }).catch(() => {});
+    };
+    sendInitialPing();
+  }, [yearNum]);
+
+  // Debounced live sync to server so teacher can see realtime progress without clock clearing timeout
+  useEffect(() => {
+    if (examResult) return;
 
     const timer = setTimeout(() => {
       fetch('/api/student/onet/live', {
@@ -125,13 +143,13 @@ export default function OnetExamRoomPage({ params }: PageProps) {
         body: JSON.stringify({
           year: yearNum,
           answers,
-          durationSeconds: secondsElapsed,
+          durationSeconds: secondsElapsedRef.current,
         }),
       }).catch(() => {});
-    }, 1200);
+    }, 400);
 
     return () => clearTimeout(timer);
-  }, [answers, yearNum, secondsElapsed, examResult]);
+  }, [answers, yearNum, examResult]);
 
   const updateOrderingAnswer = (questionNumber: number, stepIndex: number, letter: string) => {
     const current = Array.isArray(answers[String(questionNumber)])

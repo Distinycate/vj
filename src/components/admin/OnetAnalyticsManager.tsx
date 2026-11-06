@@ -165,9 +165,39 @@ export default function OnetAnalyticsManager() {
     const yearLive = liveProgress[String(selectedYear)] || {};
 
     return classroomsList.map((room) => {
-      const roomStudents = students.filter((s) => s.classroom === room);
-      const scoredStudents = roomStudents.filter((s) => submissions[`${s.id}_${selectedYear}`]);
-      const scores = scoredStudents.map((s) => submissions[`${s.id}_${selectedYear}`].score100);
+      const roomStudents = [...students.filter((s) => s.classroom === room)];
+
+      // Union any students present in yearLive for this room
+      const existingStudentIds = new Set(roomStudents.map((st) => st.id));
+      Object.entries(yearLive).forEach(([id, liveEntry]: [string, any]) => {
+        if (!existingStudentIds.has(id)) {
+          if (liveEntry.classroom === room || (!liveEntry.classroom && room === 'ม.3/1')) {
+            roomStudents.push({
+              id,
+              studentId: liveEntry.studentCode || 'STUDENT',
+              name: liveEntry.studentName || 'นักเรียน',
+              gradeLevel: 'ม.3',
+              roomNumber: '1',
+              classroom: room,
+              isSkull: false,
+            });
+            existingStudentIds.add(id);
+          }
+        }
+      });
+
+      const scoredStudents = roomStudents.filter((s) => {
+        const sub = submissions[`${s.id}_${selectedYear}`];
+        const live = yearLive[s.id];
+        return Boolean(sub || live?.status === 'submitted');
+      });
+
+      const scores = scoredStudents.map((s) => {
+        const sub = submissions[`${s.id}_${selectedYear}`];
+        const live = yearLive[s.id];
+        return Number(sub?.score100 ?? live?.score100 ?? 0);
+      });
+
       const mean =
         scores.length > 0
           ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2))
@@ -184,23 +214,28 @@ export default function OnetAnalyticsManager() {
       const studentsWithLive = roomStudents.map((s) => {
         const sub = submissions[`${s.id}_${selectedYear}`];
         const live = yearLive[s.id];
-        const isLive = live && live.status === 'in_progress' && !sub;
+        const isSubmitted = Boolean(sub || live?.status === 'submitted');
+        const isLive = Boolean(live && live.status === 'in_progress' && !isSubmitted);
         const questionResults = sub?.questionResults || live?.questionResults || {};
         const answers = sub?.answers || live?.answers || {};
-        const status: 'submitted' | 'in_progress' | 'idle' = sub
+        const status: 'submitted' | 'in_progress' | 'idle' = isSubmitted
           ? 'submitted'
           : isLive
           ? 'in_progress'
           : 'idle';
 
-        const displayScore = sub
-          ? sub.score100
-          : live
-          ? Number(((live.correctCount / (live.totalQuestions || 32)) * 100).toFixed(1))
+        const displayScore = isSubmitted
+          ? Number(sub?.score100 ?? live?.score100 ?? 0)
+          : isLive
+          ? Number(((Number(live.correctCount || 0) / (live.totalQuestions || 32)) * 100).toFixed(1))
           : null;
 
-        const answeredCount = sub ? sub.totalQuestions : live?.answeredCount || 0;
-        const correctCount = sub ? sub.correctCount : live?.correctCount || 0;
+        const answeredCount = isSubmitted
+          ? (sub?.totalQuestions ?? live?.totalQuestions ?? 32)
+          : live?.answeredCount || 0;
+        const correctCount = isSubmitted
+          ? (sub?.correctCount ?? live?.correctCount ?? 0)
+          : live?.correctCount || 0;
 
         return {
           ...s,

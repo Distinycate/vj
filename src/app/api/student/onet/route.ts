@@ -131,7 +131,7 @@ export async function POST(request: Request) {
     // Check student classroom and year permission
     const { data: student } = await supabaseAdmin
       .from('students')
-      .select('grade_level, room_number')
+      .select('id, student_id, student_name, grade_level, room_number')
       .eq('id', session.subjectId)
       .single();
 
@@ -266,7 +266,8 @@ export async function POST(request: Request) {
 
       yearProgress[session.subjectId] = {
         studentId: session.subjectId,
-        studentCode: student?.grade_level ? studentClassroom : 'STUDENT',
+        studentCode: student?.student_id || 'STUDENT',
+        studentName: student?.student_name || 'นักเรียน',
         classroom: studentClassroom,
         answers,
         questionResults: compactQuestionResults,
@@ -274,6 +275,7 @@ export async function POST(request: Request) {
         correctCount,
         totalQuestions,
         score100,
+        durationSeconds,
         status: 'submitted',
         updatedAt: new Date().toISOString(),
       };

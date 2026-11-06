@@ -52,6 +52,7 @@ function OnetTvScoreboardInner() {
   // Filters & Settings
   const [selectedYear, setSelectedYear] = useState<number>(initialYear);
   const [selectedClassroom, setSelectedClassroom] = useState<string>(initialClassroom);
+  const [filterScope, setFilterScope] = useState<'all' | 'active'>('all');
   const [sortBy, setSortBy] = useState<'score' | 'progress' | 'name'>('score');
   const [searchQuery, setSearchQuery] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -171,12 +172,33 @@ function OnetTvScoreboardInner() {
       return true;
     });
 
-    const records = filteredStudents.map((s) => {
+    // Also union any students present in yearLive who might not be in filteredStudents
+    const studentMap = new Map<string, StudentInfo>();
+    filteredStudents.forEach((st) => studentMap.set(st.id, st));
+
+    Object.entries(yearLive).forEach(([id, liveEntry]: [string, any]) => {
+      if (!studentMap.has(id)) {
+        if (selectedClassroom !== 'ALL' && liveEntry.classroom && liveEntry.classroom !== selectedClassroom) {
+          return;
+        }
+        studentMap.set(id, {
+          id,
+          studentId: liveEntry.studentCode || 'STUDENT',
+          name: liveEntry.studentName || 'นักเรียน',
+          studentName: liveEntry.studentName || 'นักเรียน',
+          classroom: liveEntry.classroom || selectedClassroom || 'ม.3/1',
+        });
+      }
+    });
+
+    const candidateStudents = Array.from(studentMap.values());
+
+    const records = candidateStudents.map((s) => {
       const sub = submissions[`${s.id}_${selectedYear}`];
       const live = yearLive[s.id];
 
-      const isSubmitted = Boolean(sub);
-      const isLive = Boolean(live && live.status === 'in_progress' && !sub);
+      const isSubmitted = Boolean(sub || live?.status === 'submitted');
+      const isLive = Boolean(live && live.status === 'in_progress' && !isSubmitted);
 
       const resolvedStudentName =
         s.name ||
@@ -194,11 +216,11 @@ function OnetTvScoreboardInner() {
 
       if (isSubmitted) {
         status = 'completed';
-        score100 = Number(sub.score100 ?? 0);
-        correctCount = Number(sub.correctCount ?? 0);
-        totalQuestions = Number(sub.totalQuestions ?? 32);
+        score100 = Number(sub?.score100 ?? live?.score100 ?? 0);
+        correctCount = Number(sub?.correctCount ?? live?.correctCount ?? 0);
+        totalQuestions = Number(sub?.totalQuestions ?? live?.totalQuestions ?? 32);
         answeredCount = totalQuestions;
-        durationSeconds = sub.durationSeconds || 0;
+        durationSeconds = sub?.durationSeconds || live?.durationSeconds || 0;
       } else if (isLive) {
         status = 'in_progress';
         correctCount = Number(live.correctCount ?? 0);
@@ -230,8 +252,17 @@ function OnetTvScoreboardInner() {
       };
     });
 
-    // Sorting
-    records.sort((a, b) => {
+    // Optional active-only filter
+    const displayRecords = filterScope === 'active'
+      ? records.filter((r) => r.status !== 'idle')
+      : records;
+
+    // Sorting: prioritize active participants (completed / in_progress) above idle
+    displayRecords.sort((a, b) => {
+      const aActive = a.status !== 'idle' ? 1 : 0;
+      const bActive = b.status !== 'idle' ? 1 : 0;
+      if (aActive !== bActive) return bActive - aActive;
+
       if (sortBy === 'score') {
         if (b.score100 !== a.score100) return b.score100 - a.score100;
         if (b.answeredCount !== a.answeredCount) return b.answeredCount - a.answeredCount;
@@ -245,8 +276,8 @@ function OnetTvScoreboardInner() {
       return a.studentName.localeCompare(b.studentName, 'th');
     });
 
-    return records;
-  }, [students, submissions, liveProgress, selectedYear, selectedClassroom, searchQuery, sortBy]);
+    return displayRecords;
+  }, [students, submissions, liveProgress, selectedYear, selectedClassroom, filterScope, searchQuery, sortBy]);
 
   // High-level statistics
   const stats = useMemo(() => {
@@ -342,6 +373,34 @@ function OnetTvScoreboardInner() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Active Only / All Toggle */}
+            <div className="hidden lg:flex items-center bg-slate-950 p-0.5 rounded-xl border border-slate-800 text-xs">
+              <button
+                type="button"
+                onClick={() => setFilterScope('all')}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-colors ${
+                  filterScope === 'all'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                ทุกคน
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterScope('active')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold transition-colors ${
+                  filterScope === 'active'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-emerald-400 hover:text-emerald-300'
+                }`}
+                title="แสดงเฉพาะผู้ที่กำลังสอบหรือส่งแล้ว"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                เฉพาะคนสอบ ({stats.inProgress + stats.submitted})
+              </button>
             </div>
           </div>
 
