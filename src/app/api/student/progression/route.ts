@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
 import { isStageUnlocked } from '@/lib/progression/unlockRules';
 import { getStageType } from '@/lib/progression/worldHierarchy';
+import { checkGrandmasterEligibility, GRANDMASTER_PASS_ACCURACY } from '@/lib/progression/grandmasterBoss';
 
 /**
  * GET /api/student/progression
@@ -131,6 +132,26 @@ export async function GET(request: Request) {
         }
       }
       const v3Accuracy = accCount > 0 ? Math.round(totalAcc / accCount) : null;
+      const grandmasterEligibility = checkGrandmasterEligibility(stageDetails);
+
+      // Query Grandmaster Typing Boss attempts (mission_level = 99)
+      const { data: gmAttempts } = await supabaseAdmin
+        .from('stage_attempts')
+        .select('score, accuracy, completed_at')
+        .eq('student_id', session.subjectId)
+        .eq('mission_level', 99)
+        .eq('status', 'COMPLETED');
+
+      let gmBestScore = 0;
+      let gmBestAccuracy = 0;
+      let gmCleared = false;
+      for (const gm of gmAttempts || []) {
+        const sc = Number(gm.score ?? 0);
+        const ac = Number(gm.accuracy ?? 0);
+        if (sc > gmBestScore) gmBestScore = sc;
+        if (ac > gmBestAccuracy) gmBestAccuracy = ac;
+        if (ac >= GRANDMASTER_PASS_ACCURACY && sc >= 40) gmCleared = true;
+      }
 
       return NextResponse.json({
         authority: 'V3',
@@ -139,6 +160,12 @@ export async function GET(request: Request) {
         currentStage: legacyCurrentStage, // compatibility pointer only
         campaignCompleted,
         globalAccuracy: v3Accuracy,
+        grandmaster: {
+          ...grandmasterEligibility,
+          cleared: gmCleared,
+          bestScore: gmBestScore,
+          bestAccuracy: gmBestAccuracy,
+        },
       });
     }
 
