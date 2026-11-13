@@ -28,7 +28,9 @@ export function getWorksheetsByGrade(grade: WorksheetGrade): WorksheetUnit[] {
 }
 
 export function getWorksheetUnit(unitId: string): WorksheetUnit | null {
-  const found = ALL_WORKSHEETS.find((u) => u.unitId === unitId);
+  if (!unitId) return null;
+  const target = unitId.trim().toLowerCase();
+  const found = ALL_WORKSHEETS.find((u) => u.unitId.toLowerCase() === target);
   return found || null;
 }
 
