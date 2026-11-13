@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Trophy, Star, LogOut, Award, Compass, Store,
-  Bookmark, Eye, CheckCircle2, BookOpen, Volume2, User, ChevronDown, ChevronUp, BookMarked, Activity, Shuffle, RefreshCw, Mail, CheckSquare, ArrowRight
+  Bookmark, Eye, CheckCircle2, BookOpen, User, ChevronDown, ChevronUp, BookMarked, Activity, Shuffle, RefreshCw, Mail, CheckSquare
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/utils/supabase/client';
@@ -26,6 +26,9 @@ const CardCenterModal = dynamic(() => import('@/components/CardCenterModal'));
 const GrandmasterBossModal = dynamic(() => import('@/components/GrandmasterBossModal'));
 import ProgressStats from '@/components/dashboard/ProgressStats';
 import QuestList from '@/components/dashboard/QuestList';
+import FeaturedEventBanners from '@/components/dashboard/FeaturedEventBanners';
+import SpacedRepetitionTab from '@/components/dashboard/SpacedRepetitionTab';
+import WordCollectionTab from '@/components/dashboard/WordCollectionTab';
 
 const CARD_RARITY_RANK: Record<string, number> = { N: 0, R: 1, SR: 2, SSR: 3, UR: 4 };
 
@@ -959,116 +962,8 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* Word Puzzle Mode 100 Stages Banner */}
-              {!isExternalUser && (
-                <div className="rounded-3xl border border-purple-500/40 bg-gradient-to-r from-purple-950/90 via-slate-900/90 to-indigo-950/90 p-5 shadow-2xl mb-6 relative overflow-hidden group hover:border-purple-400/60 transition-all">
-                  <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/15 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-lg shadow-purple-500/25">
-                        🧩
-                      </div>
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <span className="text-[10px] uppercase tracking-wider font-black px-2 py-0.5 rounded-full bg-purple-400 text-slate-950 shadow-sm">
-                            NEW PUZZLE MODE
-                          </span>
-                          <span className="text-xs font-bold text-amber-300">
-                            ⭐ ปริศนาอักษรไขว้ 100 ด่าน • วงล้อลากคำศัพท์สะกดคำ
-                          </span>
-                        </div>
-                        <h3 className="text-lg sm:text-xl font-black text-white">
-                          Word Connect Puzzle (ปริศนาอักษรไขว้ 100 ด่าน)
-                        </h3>
-                        <p className="text-xs sm:text-sm text-slate-300 mt-0.5">
-                          ลากนิ้วเชื่อมตัวอักษรบนวงล้อ เติมคำศัพท์ A2 ให้เต็มตารางไขว้ ปลดล็อกทีละด่าน รับเหรียญและดาวสะสม!
-                        </p>
-                      </div>
-                    </div>
-                    <Link
-                      href="/challenge/puzzle"
-                      className="w-full md:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-400 to-indigo-500 hover:from-purple-300 hover:to-indigo-400 text-slate-950 font-black text-sm text-center shadow-lg shadow-purple-500/30 transition-all hover:scale-105 active:scale-95 shrink-0 flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <span>เล่น Puzzle 100 ด่าน</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              )}
-
-              {/* Oxford 3000 Worksheets Banner (สพป.บุรีรัมย์ เขต 3) */}
-              {!isExternalUser && (
-                <div className="rounded-3xl border border-violet-500/40 bg-gradient-to-r from-violet-950/90 via-slate-900/90 to-purple-950/90 p-5 shadow-2xl mb-6 relative overflow-hidden group hover:border-violet-400/60 transition-all">
-                  <div className="absolute top-0 right-0 w-80 h-80 bg-violet-500/15 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-gradient-to-br from-violet-400 to-purple-600 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-lg shadow-violet-500/25">
-                        📖
-                      </div>
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <span className="text-[10px] uppercase tracking-wider font-black px-2 py-0.5 rounded-full bg-violet-400 text-slate-950 shadow-sm">
-                            สพป.บุรีรัมย์ เขต 3
-                          </span>
-                          <span className="text-xs font-bold text-amber-300">
-                            📝 แบบฝึกหัด ม.1 - ม.3 • ระบบชิปแตะเติมคำ (Tap-to-Fill)
-                          </span>
-                        </div>
-                        <h3 className="text-lg sm:text-xl font-black text-white">
-                          A2 Vocabulary Worksheets (แบบฝึกหัดคำศัพท์ ม.1 - ม.3)
-                        </h3>
-                        <p className="text-xs sm:text-sm text-slate-300 mt-0.5">
-                          ฝึกทำแบบฝึกหัดคำศัพท์ตามมาตรฐานหลักสูตร แตะชิปคำศัพท์เติมคำสะดวก ไม่ต้องพิมพ์ ปลดล็อกรายบทโดยคุณครู
-                        </p>
-                      </div>
-                    </div>
-                    <Link
-                      href="/challenge/worksheets"
-                      className="w-full md:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-violet-400 to-purple-500 hover:from-violet-300 hover:to-purple-400 text-slate-950 font-black text-sm text-center shadow-lg shadow-violet-500/30 transition-all hover:scale-105 active:scale-95 shrink-0 flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <span>เข้าทำแบบฝึกหัด</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              )}
-
-              {/* O-NET English Challenge Featured Banner */}
-              {!isExternalUser && (
-                <div className="rounded-3xl border border-cyan-500/40 bg-gradient-to-r from-cyan-950/90 via-slate-900/90 to-indigo-950/90 p-5 shadow-2xl mb-6 relative overflow-hidden group hover:border-cyan-400/60 transition-all">
-                  <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-lg shadow-cyan-500/25">
-                        🎯
-                      </div>
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <span className="text-[10px] uppercase tracking-wider font-black px-2 py-0.5 rounded-full bg-cyan-400 text-slate-950 shadow-sm">
-                            NEW EVENT
-                          </span>
-                          <span className="text-xs font-bold text-amber-300">
-                            🎁 สอบได้ &ge; 50% รับทันที 5 ตั๋วสุ่มการ์ดฟรี! 🎟️
-                          </span>
-                        </div>
-                        <h3 className="text-lg sm:text-xl font-black text-white">
-                          O-NET English Challenge (ม.3 ย้อนหลัง 10 ปี)
-                        </h3>
-                        <p className="text-xs sm:text-sm text-slate-300 mt-0.5">
-                          ฝึกทำข้อสอบจริง 2559 - 2568 พร้อมกระดาษคำตอบดิจิทัล ตรวจคำตอบทันที และเทียบเกณฑ์ประเทศ สทศ.
-                        </p>
-                      </div>
-                    </div>
-                    <Link
-                      href="/challenge/onet"
-                      className="w-full md:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-sm text-center shadow-lg shadow-cyan-500/30 transition-all hover:scale-105 active:scale-95 shrink-0 flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <span>เริ่มทำข้อสอบ O-NET</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              )}
+              {/* Featured Event & Challenge Banners (Puzzle, Worksheets, O-NET) */}
+              <FeaturedEventBanners isExternalUser={isExternalUser} />
 
               {/* World roadmap navigation */}
               <div data-demo-guide="stage-map" className="space-y-4">
@@ -1314,132 +1209,19 @@ export default function Dashboard() {
 
           {/* TAB 2: SPACED REPETITION / DUE WORDS */}
           {activeTab === 'review' && (
-            <motion.div 
-              key="review" 
-              initial={{ opacity: 0, y: 10 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              exit={{ opacity: 0, y: -10 }}
-              className="space-y-6 text-left"
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-indigo-500/10 border border-indigo-500/15 p-5 rounded-2xl">
-                  <span className="text-xs text-indigo-300 font-bold">เหรียญรวมทั้งห้อง</span>
-                  <strong className="text-2xl text-white block mt-1">🪙 {classroomStats.totalCoins}</strong>
-                </div>
-                <div className="bg-emerald-500/10 border border-emerald-500/15 p-5 rounded-2xl">
-                  <span className="text-xs text-emerald-300 font-bold">ด่านเฉลี่ยของห้อง</span>
-                  <strong className="text-2xl text-white block mt-1">ด่าน {classroomStats.averageStage}</strong>
-                </div>
-                <div className="bg-amber-500/10 border border-amber-500/15 p-5 rounded-2xl">
-                  <span className="text-xs text-amber-300 font-bold">เลเวลสูงสุด</span>
-                  <strong className="text-2xl text-white block mt-1">Lvl {classroomStats.highestLevel}</strong>
-                </div>
-              </div>
-
-              <div data-demo-guide="review-stage" className="glass-card p-6 sm:p-8 rounded-3xl">
-                <div className="flex items-center gap-3 mb-6">
-                  <Bookmark className="w-8 h-8 text-emerald-400" />
-                  <div>
-                    <h3 className="text-2xl font-black text-white">ระบบทบทวนศัพท์อัจฉริยะ (Spaced Repetition)</h3>
-                    <p className="text-slate-400 text-sm mt-0.5">คัดกรองคำศัพท์ที่มีประวัติตอบผิดบ่อย เพื่อให้ทบทวนซ้ำตามเวลาทิ้งช่วงสมอง</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {reviewWords.map((word) => (
-                    <div key={word.id} className="bg-slate-950 border border-slate-900 p-4 sm:p-5 rounded-2xl flex justify-between items-center transition-colors hover:border-slate-800">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-xl font-bold text-white uppercase notranslate" translate="no">{word.word}</h4>
-                          {word.wrong_count && (
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                              ตอบผิด {word.wrong_count} ครั้ง
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-500 font-mono mt-0.5">{word.phonetic}</p>
-                        <p className="text-slate-200 mt-2 font-semibold">แปลความหมาย: <strong className="text-emerald-400">{word.meaning}</strong></p>
-                        <p className="text-xs text-slate-500 italic mt-1 font-mono">"{word.example_sentence || word.example || ''}"</p>
-                      </div>
-                      
-                      <button 
-                        onClick={() => playWordAudio(word.word)}
-                        className="w-11 h-11 bg-slate-900 border border-slate-800 text-emerald-400 hover:text-emerald-300 rounded-full flex items-center justify-center hover:scale-105 transition-all shadow-md shrink-0"
-                      >
-                        <Volume2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ))}
-
-                  {reviewWords.length === 0 && (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-slate-950 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-900">
-                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                      </div>
-                      <p className="text-slate-300 font-black">คุณทำยอดเยี่ยมมาก! ไม่มีคำศัพท์สะสมเนื่องทบทวน</p>
-                      <p className="text-slate-500 text-xs mt-1 leading-relaxed">คำศัพท์ที่ตอบผิดจะค่อยๆ บันทึกและปรากฏตรงนี้เมื่อสมองเริ่มพร้อมทบทวนซ้ำ</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
+            <SpacedRepetitionTab
+              classroomStats={classroomStats}
+              reviewWords={reviewWords}
+              playWordAudio={playWordAudio}
+            />
           )}
 
           {/* TAB 3: WORD COLLECTION DECK (MASTERY LEVELS) */}
           {activeTab === 'collection' && (
-            <motion.div 
-              key="collection" 
-              initial={{ opacity: 0, y: 10 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              exit={{ opacity: 0, y: -10 }}
-              className="space-y-6 text-left"
-            >
-              <div className="glass-card p-6 sm:p-8 rounded-3xl">
-                <div className="flex items-center gap-3 mb-6">
-                  <BookMarked className="w-8 h-8 text-indigo-400" />
-                  <div>
-                    <h3 className="text-2xl font-black text-white">สมุดคำศัพท์สะสม (Word Collection Deck)</h3>
-                    <p className="text-slate-400 text-sm mt-0.5">ดัชนีรวมคำศัพท์ทั้งหมดที่คุณเคยพบพร้อมสถานะระดับความเชี่ยวชาญสมบูรณ์</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {collectionLoading ? (
-                    <div className="col-span-full text-center py-12 text-slate-400">
-                      <div className="w-8 h-8 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mx-auto mb-3" />
-                      <p className="text-sm">กำลังโหลดสมุดคำศัพท์สะสม...</p>
-                    </div>
-                  ) : wordCollection.length === 0 ? (
-                    <div className="col-span-full text-center py-12 text-slate-500 italic text-sm">
-                      คุณยังไม่มีคำศัพท์ในสมุดสะสม เริ่มต้นลุยด่านผจญภัยเพื่อเปิดพจนานุกรมคำแรกกันเลย!
-                    </div>
-                  ) : (
-                    wordCollection.map((item) => {
-                      const word = item.vocabulary;
-                      const stars = Array.from({ length: 4 }).map((_, i) => i < item.mastery_level ? '⭐' : '☆').join('');
-                      
-                      return (
-                        <div key={item.id} className="bg-slate-950/60 border border-slate-900/60 p-4 rounded-xl flex justify-between items-start">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-lg font-black text-white uppercase notranslate" translate="no">{word.word}</h4>
-                              <span className="text-[9px] px-1.5 py-0.5 bg-slate-900 border border-slate-800 text-slate-400 rounded-md font-mono">{word.difficulty_level || 'normal'}</span>
-                            </div>
-                            <p className="text-xs text-slate-400 font-bold mt-1 text-emerald-400">{word.meaning}</p>
-                            <p className="text-xs text-slate-500 italic font-mono truncate max-w-[200px]">"{word.example_sentence || word.example || ''}"</p>
-                          </div>
-                          
-                          <div className="text-right shrink-0">
-                            <span className="text-xs block text-slate-500 font-bold mb-1">ความจำ</span>
-                            <span className="text-xs font-mono">{stars}</span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            </motion.div>
+            <WordCollectionTab
+              collectionLoading={collectionLoading}
+              wordCollection={wordCollection}
+            />
           )}
 
           {/* TAB 4: RANKING & CLASSROOM COMPETITION */}
