@@ -77,7 +77,7 @@ export default function WorksheetsHubPage() {
         <div className="rounded-3xl bg-gradient-to-r from-emerald-950/80 via-slate-900/90 to-teal-950/80 border border-emerald-500/30 p-5 mb-5 shadow-2xl relative overflow-hidden">
           <div className="relative z-10">
             <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500 text-slate-950">
-              OXFORD 3000 A2 • สพป. บุรีรัมย์ เขต 3
+              OXFORD 3000 A2 • VOCABULARY WORKSHEETS
             </span>
             <h1 className="text-xl sm:text-2xl font-black text-white mt-1">
               📖 แบบฝึกหัดคำศัพท์ภาษาอังกฤษ

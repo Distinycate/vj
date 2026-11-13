@@ -152,7 +152,7 @@ export default function AdminWorksheetsPage() {
                 <ArrowLeft className="w-4 h-4" />
               </Link>
               <h1 className="text-xl sm:text-2xl font-black text-white">
-                ระบบจัดการแบบฝึกหัดคำศัพท์ (สพป. บุรีรัมย์ เขต 3)
+                ระบบจัดการแบบฝึกหัดคำศัพท์ (A2 Oxford 3000)
               </h1>
             </div>
             <p className="text-xs text-slate-400 mt-1">

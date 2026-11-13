@@ -46,7 +46,7 @@ export default function FeaturedEventBanners({ isExternalUser = false }: Feature
         </div>
       </div>
 
-      {/* Oxford 3000 Worksheets Banner (สพป.บุรีรัมย์ เขต 3) */}
+      {/* Oxford 3000 Worksheets Banner */}
       <div className="rounded-3xl border border-violet-500/40 bg-gradient-to-r from-violet-950/90 via-slate-900/90 to-purple-950/90 p-5 shadow-2xl mb-6 relative overflow-hidden group hover:border-violet-400/60 transition-all">
         <div className="absolute top-0 right-0 w-80 h-80 bg-violet-500/15 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -57,7 +57,7 @@ export default function FeaturedEventBanners({ isExternalUser = false }: Feature
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="text-[10px] uppercase tracking-wider font-black px-2 py-0.5 rounded-full bg-violet-400 text-slate-950 shadow-sm">
-                  สพป.บุรีรัมย์ เขต 3
+                  Oxford 3000 A2
                 </span>
                 <span className="text-xs font-bold text-amber-300">
                   📝 แบบฝึกหัด ม.1 - ม.3 • ระบบชิปแตะเติมคำ (Tap-to-Fill)

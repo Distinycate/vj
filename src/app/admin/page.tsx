@@ -819,7 +819,7 @@ export default function AdminPage() {
                     href="/admin/worksheets"
                     className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 text-violet-300 hover:bg-violet-500/20 border border-violet-500/30 transition-all whitespace-nowrap cursor-pointer"
                   >
-                    <BookOpen className="w-3.5 h-3.5 text-violet-400" /> 📖 จัดการแบบฝึกหัด สพป.บร.3 (ม.1 - ม.3) ↗
+                    <BookOpen className="w-3.5 h-3.5 text-violet-400" /> 📖 จัดการแบบฝึกหัดคำศัพท์ (ม.1 - ม.3) ↗
                   </Link>
                 </>
               )}
@@ -859,7 +859,7 @@ export default function AdminPage() {
                     href="/admin/worksheets"
                     className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 text-violet-300 hover:bg-violet-500/20 border border-violet-500/30 transition-all whitespace-nowrap cursor-pointer"
                   >
-                    <BookOpen className="w-3.5 h-3.5 text-violet-400" /> 📖 จัดการแบบฝึกหัด สพป.บร.3 ↗
+                    <BookOpen className="w-3.5 h-3.5 text-violet-400" /> 📖 จัดการแบบฝึกหัดคำศัพท์ ↗
                   </Link>
                 </>
               )}
@@ -1063,74 +1063,73 @@ export default function AdminPage() {
           {activeTab === 'students' && (
             <motion.div key="students" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0}} className="space-y-4">
               
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-2">
-                <div>
-                  <h2 className="text-lg font-black text-white">รายชื่อนักเรียน / ไอดี แยกตามห้อง</h2>
-                  <p className="text-sm text-slate-400">เลือกห้องเพื่อดูรหัสนักเรียน, Username และสถานะบัญชีแบบอ่านง่าย</p>
-                </div>
-                <button 
-                  onClick={handlePurgeUnverified}
-                  disabled={isPurging || !selectedClassroom}
-                  className="w-full sm:w-auto min-h-11 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-                >
-                  <AlertTriangle className="w-4 h-4" />
-                  {isPurging ? 'กำลังลบข้อมูล...' : 'ล้างบัญชีขยะ (ยังไม่ยืนยัน)'}
-                </button>
-              </div>
+              {/* Compact Desktop Control Strip */}
+              <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg backdrop-blur-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base sm:text-lg font-black text-white">รายชื่อนักเรียน / ไอดี แยกตามห้อง</h2>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        ห้อง {classrooms.find((r) => r.id === selectedClassroom)?.class_name || '-'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      นักเรียนทั้งหมด <strong className="text-emerald-400 font-bold">{studentsList.length}</strong> คน
+                      {studentsList.filter(s => !s.is_verified).length > 0 ? (
+                        <span className="text-amber-400 font-bold ml-2">• ยังไม่ยืนยัน {studentsList.filter(s => !s.is_verified).length} คน</span>
+                      ) : (
+                        <span className="text-slate-500 ml-2">• ยืนยันครบทุกบัญชีแล้ว</span>
+                      )}
+                    </p>
+                  </div>
 
-              <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-4">
-                <div className="flex items-center gap-2 text-slate-300 text-sm font-bold mb-3">
-                  <Filter className="w-4 h-4 text-indigo-400" />
-                  เลือกห้องเรียน
-                </div>
-                {Object.entries(groupedClassrooms).length === 0 ? (
-                  <div className="text-sm text-slate-500">ยังไม่มีข้อมูลห้องเรียนในระบบ</div>
-                ) : (
-                  <div className="space-y-3">
-                    {Object.entries(groupedClassrooms).map(([grade, rooms]) => (
-                      <div key={grade}>
-                        <div className="text-[11px] uppercase tracking-wider text-slate-500 font-black mb-2">{grade}</div>
-                        <div className="flex flex-wrap gap-2">
-                          {(rooms as any[]).map((room) => (
-                            <button
-                              key={room.id}
-                              type="button"
-                              onClick={() => setSelectedClassroom(room.id)}
-                              className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${
-                                selectedClassroom === room.id
-                                  ? 'bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20'
-                                  : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-indigo-500/50 hover:text-white'
-                              }`}
-                            >
-                              ห้อง {room.class_name}
-                              <span className={`ml-2 text-xs ${selectedClassroom === room.id ? 'text-indigo-100' : 'text-slate-500'}`}>
-                                {classroomStudentCounts[room.id] || 0} คน
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={handlePurgeUnverified}
+                      disabled={isPurging || !selectedClassroom || studentsList.filter(s => !s.is_verified).length === 0}
+                      className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all disabled:opacity-40"
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      {isPurging ? 'กำลังลบข้อมูล...' : 'ล้างบัญชีขยะ (ยังไม่ยืนยัน)'}
+                    </button>
                   </div>
-                )}
-              </div>
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
-                  <div className="text-xs text-slate-500 font-bold">ห้องที่เลือก</div>
-                  <div className="text-xl font-black text-white mt-1">
-                    {classrooms.find((room) => room.id === selectedClassroom)?.class_name || '-'}
+                {/* Horizontal Segmented Room Tabs */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+                  <div className="text-xs text-slate-400 font-bold flex items-center gap-1 mr-1 shrink-0">
+                    <Filter className="w-3.5 h-3.5 text-indigo-400" />
+                    เลือกห้องเรียน:
                   </div>
-                </div>
-                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
-                  <div className="text-xs text-slate-500 font-bold">จำนวนนักเรียนในห้อง</div>
-                  <div className="text-xl font-black text-emerald-400 mt-1">{studentsList.length} คน</div>
-                </div>
-                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
-                  <div className="text-xs text-slate-500 font-bold">ยังไม่ยืนยันตัวตน</div>
-                  <div className="text-xl font-black text-amber-400 mt-1">
-                    {studentsList.filter((studentItem) => !studentItem.is_verified).length} คน
-                  </div>
+                  {Object.entries(groupedClassrooms).length === 0 ? (
+                    <div className="text-xs text-slate-500">ยังไม่มีข้อมูลห้องเรียนในระบบ</div>
+                  ) : (
+                    Object.entries(groupedClassrooms).flatMap(([grade, rooms]) =>
+                      (rooms as any[]).map((room) => {
+                        const isSelected = selectedClassroom === room.id;
+                        const count = classroomStudentCounts[room.id] || 0;
+                        return (
+                          <button
+                            key={room.id}
+                            type="button"
+                            onClick={() => setSelectedClassroom(room.id)}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border cursor-pointer ${
+                              isSelected
+                                ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30 font-black'
+                                : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
+                            }`}
+                          >
+                            <span>ห้อง {room.class_name}</span>
+                            <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold ${
+                              isSelected ? 'bg-indigo-800 text-white' : 'bg-slate-800 text-slate-400'
+                            }`}>
+                              {count} คน
+                            </span>
+                          </button>
+                        );
+                      })
+                    )
+                  )}
                 </div>
               </div>
 
@@ -1184,62 +1183,65 @@ export default function AdminPage() {
                   <table className="w-full min-w-[860px] text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-950 border-b border-slate-900 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                        <th className="p-4">นักเรียน</th>
-                        <th className="p-4">ห้อง</th>
-                        <th className="p-4">รหัสนักเรียน</th>
-                        <th className="p-4">Username</th>
-                        <th className="p-4 text-center">ด่าน</th>
-                        <th className="p-4 text-center">Acc</th>
-                        <th className="p-4 text-center">Risk</th>
-                        <th className="p-4"></th>
+                        <th className="py-2.5 px-3">นักเรียน</th>
+                        <th className="py-2.5 px-3">ห้อง</th>
+                        <th className="py-2.5 px-3">รหัสนักเรียน</th>
+                        <th className="py-2.5 px-3">Username</th>
+                        <th className="py-2.5 px-3 text-center">ด่าน / Rank</th>
+                        <th className="py-2.5 px-3 text-center">Acc</th>
+                        <th className="py-2.5 px-3 text-center">Risk</th>
+                        <th className="py-2.5 px-3"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-900/50 text-sm text-slate-200">
                       {(classroomMetrics?.students || []).map(s => (
                         <tr key={s.id} className="hover:bg-slate-900/35 transition-colors">
-                          <td className="p-4">
-                            <div className="font-bold text-white flex items-center gap-2">
+                          <td className="py-2.5 px-3">
+                            <div className="font-bold text-white flex items-center gap-1.5">
                               {s.student_name}
                               {s.is_verified && (
                                 <span title="ยืนยันตัวตนแล้ว" className="text-emerald-400">
-                                  <CheckCircle2 className="w-4 h-4" />
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
                                 </span>
                               )}
                               {s.is_skull && (
-                                <span title="รหัสหัวกะโหลก: เด็กพิเศษ (ข้อสอบปรนัยล้วน 100%)" className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-black flex items-center gap-1">
-                                  💀 เด็กพิเศษ
+                                <span title="รหัสหัวกะโหลก: เด็กพิเศษ (ข้อสอบปรนัยล้วน 100%)" className="px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-black flex items-center gap-0.5">
+                                  💀 พิเศษ
                                 </span>
                               )}
                             </div>
-                            <div className="text-xs text-slate-500">{s.first_name} {s.last_name}</div>
+                            <div className="text-[11px] text-slate-500">{s.first_name} {s.last_name}</div>
                           </td>
-                          <td className="p-4 text-slate-300 font-bold">
+                          <td className="py-2.5 px-3 text-slate-300 font-bold text-xs">
                             {s.classrooms?.class_name || `${s.grade_level || '-'}${s.room_number ? `/${s.room_number}` : ''}`}
                           </td>
-                          <td className="p-4">
-                            <span className="font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-slate-300">
+                          <td className="py-2.5 px-3">
+                            <span className="font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg px-2 py-0.5 text-slate-300">
                               {s.student_id || '-'}
                             </span>
                           </td>
-                          <td className="p-4">
-                            <span className="font-mono text-xs bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-2 py-1 text-indigo-300">
+                          <td className="py-2.5 px-3">
+                            <span className="font-mono text-xs bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-2 py-0.5 text-indigo-300">
                               {s.username || '-'}
                             </span>
                           </td>
-                          <td className="p-4 text-center font-bold text-indigo-400">{(Array.isArray(s.learning_paths) ? s.learning_paths[0] : s.learning_paths)?.current_stage || 1}</td>
-                          <td className="p-4 text-center font-bold">{Math.round(s.acc)}%</td>
-                          <td className="p-4 text-center">
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                          <td className="py-2.5 px-3 text-center">
+                            <div className="font-bold text-indigo-400">{(Array.isArray(s.learning_paths) ? s.learning_paths[0] : s.learning_paths)?.current_stage || 1}</div>
+                            <div className="text-[10px] text-slate-500 font-bold">R{((Array.isArray(s.learning_paths) ? s.learning_paths[0] : s.learning_paths)?.current_rank || 1)}</div>
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-bold">{Math.round(s.acc)}%</td>
+                          <td className="py-2.5 px-3 text-center">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                               s.riskLevel === 'Critical' || s.riskLevel === 'High' ? 'text-rose-400 bg-rose-500/10 border border-rose-500/20' : 
                               s.riskLevel === 'Medium' ? 'text-amber-400 bg-amber-500/10 border border-amber-500/20' : 
                               'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
                             }`}>{s.riskLevel}</span>
                           </td>
-                          <td className="p-4 text-right">
-                            <div className="flex justify-end gap-2 items-center">
+                          <td className="py-2.5 px-3 text-right">
+                            <div className="flex justify-end gap-1.5 items-center">
                             <button
                               onClick={() => handleToggleSkull(s.id, s.student_name, Boolean(s.is_skull))}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 shadow-sm ${
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border flex items-center gap-1 shadow-sm ${
                                 s.is_skull
                                   ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/40'
                                   : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700'
@@ -1247,20 +1249,20 @@ export default function AdminPage() {
                               title={s.is_skull ? 'คลิกเพื่อปิดโหมดเด็กพิเศษ' : 'คลิกเพื่อตั้งรหัสหัวกะโหลก (เด็กพิเศษ: ปรนัยล้วน 100%)'}
                             >
                               <span>💀</span>
-                              <span>{s.is_skull ? 'เด็กพิเศษ (เปิด)' : 'ตั้งเด็กพิเศษ'}</span>
+                              <span>{s.is_skull ? 'พิเศษ (เปิด)' : 'พิเศษ'}</span>
                             </button>
-                            <button onClick={() => setEditingStudent(s)} className="px-3.5 py-1.5 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all shadow-sm">
+                            <button onClick={() => setEditingStudent(s)} className="px-2.5 py-1 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded-lg text-xs font-bold transition-all shadow-sm">
                               แก้ไข
                             </button>
-                            <button onClick={() => setSelectedStudent(s)} className="px-3.5 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all shadow-sm">
+                            <button onClick={() => setSelectedStudent(s)} className="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-lg text-xs font-bold transition-all shadow-sm">
                               ดูข้อมูล
                             </button>
                             {!s.is_verified && (
-                              <button onClick={() => handleVerifyStudent(s.id, s.student_name)} className="px-3.5 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all shadow-sm">
+                              <button onClick={() => handleVerifyStudent(s.id, s.student_name)} className="px-2.5 py-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold transition-all shadow-sm">
                                 ยืนยัน
                               </button>
                             )}
-                            <button onClick={() => handleDeleteStudent(s.id, s.student_name)} className="px-3.5 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all shadow-sm">
+                            <button onClick={() => handleDeleteStudent(s.id, s.student_name)} className="px-2.5 py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold transition-all shadow-sm">
                               ลบ
                             </button>
                             </div>
@@ -1310,47 +1312,55 @@ export default function AdminPage() {
                 <OnetAnalyticsManager />
               ) : (
                 <>
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-2">
-                <div>
-                  <h2 className="text-lg font-black text-white flex items-center gap-2">
-                    <Target className="w-5 h-5 text-indigo-400" /> ตารางพัฒนาการ (Pre-test vs Post-test)
-                  </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">เปรียบเทียบคะแนนก่อนเรียนและหลังเรียนแยกตามห้อง</p>
-                </div>
-              </div>
-
-              <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-4 mb-4">
-                <div className="flex items-center gap-2 text-slate-300 text-sm font-bold mb-3">
-                  <Filter className="w-4 h-4 text-indigo-400" />
-                  เลือกห้องเรียน
-                </div>
-                {Object.entries(groupedClassrooms).length === 0 ? (
-                  <div className="text-sm text-slate-500">ยังไม่มีข้อมูลห้องเรียนในระบบ</div>
-                ) : (
-                  <div className="space-y-3">
-                    {Object.entries(groupedClassrooms).map(([grade, rooms]) => (
-                      <div key={grade}>
-                        <div className="text-[11px] uppercase tracking-wider text-slate-500 font-black mb-2">{grade}</div>
-                        <div className="flex flex-wrap gap-2">
-                          {(rooms as any[]).map((room) => (
-                            <button
-                              key={room.id}
-                              type="button"
-                              onClick={() => setSelectedClassroom(room.id)}
-                              className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${
-                                selectedClassroom === room.id
-                                  ? 'bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20'
-                                  : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-indigo-500/50 hover:text-white'
-                              }`}
-                            >
-                              ห้อง {room.class_name}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+              {/* Compact Desktop Control Strip for Pre/Post */}
+              <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-3 sm:p-4 mb-4 shadow-lg backdrop-blur-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                  <div>
+                    <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                      <Target className="w-5 h-5 text-indigo-400" /> ตารางพัฒนาการ (Pre-test vs Post-test)
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      เปรียบเทียบคะแนนก่อนเรียนและหลังเรียน • กำลังแสดงห้อง <strong className="text-emerald-400">{classrooms.find(r => r.id === selectedClassroom)?.class_name || '-'}</strong>
+                    </p>
                   </div>
-                )}
+                </div>
+
+                {/* Horizontal Segmented Room Tabs */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+                  <div className="text-xs text-slate-400 font-bold flex items-center gap-1 mr-1 shrink-0">
+                    <Filter className="w-3.5 h-3.5 text-indigo-400" />
+                    เลือกห้องเรียน:
+                  </div>
+                  {Object.entries(groupedClassrooms).length === 0 ? (
+                    <div className="text-xs text-slate-500">ยังไม่มีข้อมูลห้องเรียนในระบบ</div>
+                  ) : (
+                    Object.entries(groupedClassrooms).flatMap(([grade, rooms]) =>
+                      (rooms as any[]).map((room) => {
+                        const isSelected = selectedClassroom === room.id;
+                        const count = classroomStudentCounts[room.id] || 0;
+                        return (
+                          <button
+                            key={room.id}
+                            type="button"
+                            onClick={() => setSelectedClassroom(room.id)}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border cursor-pointer ${
+                              isSelected
+                                ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30 font-black'
+                                : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
+                            }`}
+                          >
+                            <span>ห้อง {room.class_name}</span>
+                            <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold ${
+                              isSelected ? 'bg-indigo-800 text-white' : 'bg-slate-800 text-slate-400'
+                            }`}>
+                              {count} คน
+                            </span>
+                          </button>
+                        );
+                      })
+                    )
+                  )}
+                </div>
               </div>
 
               <IndividualComparisonTable studentsList={classroomMetrics?.students || []} />

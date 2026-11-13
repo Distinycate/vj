@@ -152,7 +152,7 @@ export async function POST(request: Request) {
     } else {
       await supabaseAdmin.from('events').insert({
         slug: 'a2-oxford-worksheets',
-        title: 'แบบฝึกหัดคำศัพท์ สพป. บุรีรัมย์ เขต 3 (A2 Oxford 3000)',
+        title: 'แบบฝึกหัดคำศัพท์ (A2 Oxford 3000)',
         description: 'ใบงานแบบฝึกหัดคำศัพท์ ม.1 - ม.3 สำหรับฝึกทักษะและเก็บคะแนน',
         event_type: 'worksheet',
         status: 'active',
