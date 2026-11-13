@@ -49,7 +49,9 @@ export default function OnetExamRoomPage({ params }: PageProps) {
   const questionRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const pillRefs = useRef<Record<number, HTMLButtonElement | null>>({});
   const secondsElapsedRef = useRef(0);
-  secondsElapsedRef.current = secondsElapsed;
+  useEffect(() => {
+    secondsElapsedRef.current = secondsElapsed;
+  }, [secondsElapsed]);
 
   // Auto-scroll active question pill into view in mobile dock
   useEffect(() => {
