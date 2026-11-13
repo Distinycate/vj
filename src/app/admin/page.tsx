@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import { 
@@ -608,6 +609,13 @@ export default function AdminPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs">
+            <a
+              href="/admin/teach"
+              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold flex items-center gap-1.5 shadow-lg shadow-amber-500/20 transition-all"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              🎓 เปิดโหมดสอนแกรมม่า &amp; O-NET (Presentation)
+            </a>
             <span className="px-2.5 py-1 rounded-lg bg-slate-950/80 border border-slate-800/80 text-slate-300 font-mono font-bold">
               👥 รายงานนักเรียน
             </span>
@@ -807,6 +815,12 @@ export default function AdminPage() {
                   >
                     <Target className="w-3.5 h-3.5 text-cyan-400" /> 🎯 O-NET Challenge (10 ปี)
                   </button>
+                  <Link
+                    href="/admin/worksheets"
+                    className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 text-violet-300 hover:bg-violet-500/20 border border-violet-500/30 transition-all whitespace-nowrap cursor-pointer"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-violet-400" /> 📖 จัดการแบบฝึกหัด สพป.บร.3 (ม.1 - ม.3) ↗
+                  </Link>
                 </>
               )}
 
@@ -841,6 +855,12 @@ export default function AdminPage() {
                   >
                     <BookOpen className="w-3.5 h-3.5" /> 📋 ตาราง ปพ.5 สมจริง & คัดลอกลง Excel ↗
                   </button>
+                  <Link
+                    href="/admin/worksheets"
+                    className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 text-violet-300 hover:bg-violet-500/20 border border-violet-500/30 transition-all whitespace-nowrap cursor-pointer"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-violet-400" /> 📖 จัดการแบบฝึกหัด สพป.บร.3 ↗
+                  </Link>
                 </>
               )}
 
