@@ -709,6 +709,9 @@ export function useGameEngine(): UseGameEngineReturn {
             }
 
             if (progress) {
+              const updatedRank = compData.currentRank !== undefined
+                ? Math.max(progress.current_rank || 1, compData.currentRank)
+                : progress.current_rank;
               setProgress({
                 ...progress,
                 coins: compData.newCoins !== undefined ? compData.newCoins : progress.coins,
@@ -716,6 +719,7 @@ export function useGameEngine(): UseGameEngineReturn {
                 current_stage: (compData.passed && compData.currentStage !== undefined)
                   ? Math.max(progress.current_stage, compData.currentStage)
                   : progress.current_stage,
+                current_rank: updatedRank,
                 campaign_completed_at: compData.campaignCompleted ? new Date().toISOString() : progress.campaign_completed_at,
               });
             }

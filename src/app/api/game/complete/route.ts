@@ -4,6 +4,7 @@ import { requireRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
 import { normalizeAnswer, parseAcceptableAnswers } from '@/lib/quizUtils';
+import { calculateRankFromStage, getPassScoreForStage } from '@/utils/adaptiveConfig';
 
 /**
  * POST /api/game/complete
@@ -183,20 +184,25 @@ export async function POST(request: Request) {
     if (attempt.status === 'COMPLETED') {
       const { data: pathData } = await supabaseAdmin
         .from('learning_paths')
-        .select('coins, total_exp, current_stage, campaign_completed_at')
+        .select('coins, total_exp, current_stage, current_rank, campaign_completed_at')
         .eq('student_id', session.subjectId)
         .maybeSingle();
+
+      const requiredPassScore = getPassScoreForStage(attempt.stage_number);
+      const isPassed = (attempt.accuracy || 0) >= requiredPassScore && (attempt.score || 0) > 0;
+      const effectiveRank = pathData?.current_rank || calculateRankFromStage(pathData?.current_stage || attempt.stage_number);
 
       return NextResponse.json({
         success: true,
         alreadyCompleted: true,
-        passed: (attempt.accuracy || 0) >= 60 && (attempt.score || 0) > 0,
+        passed: isPassed,
         score: attempt.score,
         accuracy: attempt.accuracy,
         stars: attempt.stars ?? 0,
         earnedCoins: attempt.coins_awarded || 0,
         earnedExp: attempt.exp_awarded || 0,
         currentStage: pathData?.current_stage || attempt.stage_number,
+        currentRank: effectiveRank,
         campaignCompleted: pathData?.campaign_completed_at != null,
       });
     }
@@ -306,7 +312,37 @@ export async function POST(request: Request) {
     if (!v3Err) {
       // ── V3 success path ────────────────────────────────────────────────────
       const correctCount = wordAttempts.filter(w => w.is_correct).length;
-      const isActuallyPassed = Boolean(v3Data.passed) && correctCount > 0 && (v3Data.accuracy || 0) >= 60;
+      const requiredPassScore = getPassScoreForStage(attempt.stage_number);
+      const isActuallyPassed = Boolean(v3Data.passed) && correctCount > 0 && (v3Data.accuracy || 0) >= requiredPassScore;
+
+      // Auto-promote rank in learning_paths if stage advanced
+      const nextStage = v3Data.current_stage || attempt.stage_number;
+      const calculatedRank = calculateRankFromStage(nextStage);
+      let updatedRank = calculatedRank;
+
+      try {
+        const { data: curLp } = await supabaseAdmin
+          .from('learning_paths')
+          .select('current_rank')
+          .eq('student_id', session.subjectId)
+          .maybeSingle();
+
+        const curRank = curLp?.current_rank || 1;
+        if (calculatedRank > curRank) {
+          await supabaseAdmin
+            .from('learning_paths')
+            .update({
+              current_rank: calculatedRank,
+              rank_updated_at: new Date().toISOString(),
+            })
+            .eq('student_id', session.subjectId);
+          updatedRank = calculatedRank;
+        } else {
+          updatedRank = curRank;
+        }
+      } catch (rankErr) {
+        console.warn('Failed to auto-update current_rank:', rankErr);
+      }
 
       if (isActuallyPassed && !isExternalStudent) {
         await recordTeamScoreForCompletion(
@@ -328,6 +364,7 @@ export async function POST(request: Request) {
         newCoins: isExternalStudent ? 0 : v3Data.new_coins,
         newTotalExp: isExternalStudent ? 0 : v3Data.new_total_exp,
         currentStage: v3Data.current_stage,
+        currentRank: updatedRank,
         primaryReason: v3Data.primary_reason,
         bonusFlags: v3Data.bonus_flags ?? [],
         bossDefeated: v3Data.boss_defeated ?? false,
@@ -362,7 +399,8 @@ export async function POST(request: Request) {
     const correctCount = wordAttempts.filter(w => w.is_correct).length;
     const totalQuestions = originalQuestions.length || 1;
     const accuracy = Math.round((correctCount / totalQuestions) * 100);
-    const passed = accuracy >= 60 && correctCount > 0;
+    const requiredPassScore = getPassScoreForStage(attempt.stage_number);
+    const passed = accuracy >= requiredPassScore && correctCount > 0;
     const avgResponseTime =
       responseTimeList.length > 0
         ? Math.round(responseTimeList.reduce((a, b) => a + b, 0) / responseTimeList.length)
@@ -415,6 +453,7 @@ export async function POST(request: Request) {
       newCoins: isExternalStudent ? 0 : v2Data.new_coins,
       newTotalExp: isExternalStudent ? 0 : v2Data.new_total_exp,
       currentStage: v2Data.current_stage,
+      currentRank: calculateRankFromStage(v2Data.current_stage || attempt.stage_number),
       primaryReason: null,
       bonusFlags: [],
       bossDefeated: false,

@@ -4,6 +4,7 @@ import { requireSession } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
 import { loadAssessmentProgress } from '@/lib/server/assessmentProgress';
+import { calculateRankFromStage } from '@/utils/adaptiveConfig';
 
 const assessmentSchema = z.object({
   type: z.enum(['PRE_TEST', 'POST_TEST']),
@@ -101,7 +102,7 @@ export async function POST(request: Request) {
         preScore,
         postScore: null,
         newStage: lp?.current_stage || 1,
-        newRank: lp?.current_rank || 1,
+        newRank: Math.max(lp?.current_rank || 1, calculateRankFromStage(lp?.current_stage || 1)),
       });
     } else {
       // POST_TEST
@@ -154,7 +155,7 @@ export async function POST(request: Request) {
         normalizedGain,
         absoluteGain: gain,
         newStage: lp?.current_stage || 1,
-        newRank: lp?.current_rank || 1,
+        newRank: Math.max(lp?.current_rank || 1, calculateRankFromStage(lp?.current_stage || 1)),
       });
     }
   } catch (error: any) {

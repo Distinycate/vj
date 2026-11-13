@@ -41,7 +41,7 @@ export const ADAPTIVE_RANK_CONFIG: Record<number, RankConfig> = {
     questionTypes: ['meaning_mc', 'word_mc', 'listening_mc', 'context_mc'],
     questionCount: 15,
     timeLimit: 18,
-    passScore: 75,
+    passScore: 80,
     hintMode: 'limited'
   },
   4: {
@@ -50,7 +50,7 @@ export const ADAPTIVE_RANK_CONFIG: Record<number, RankConfig> = {
     questionTypes: ['meaning_mc', 'word_mc', 'listening_mc', 'context_mc', 'spelling'],
     questionCount: 18,
     timeLimit: 15,
-    passScore: 80,
+    passScore: 90,
     hintMode: 'limited'
   },
   5: {
@@ -59,10 +59,52 @@ export const ADAPTIVE_RANK_CONFIG: Record<number, RankConfig> = {
     questionTypes: ['meaning_mc', 'word_mc', 'listening_mc', 'context_mc', 'spelling', 'mixed_challenge'],
     questionCount: 20,
     timeLimit: 12,
-    passScore: 90,
+    passScore: 100,
     hintMode: 'none'
   }
 };
+
+/**
+ * Calculates student rank based on campaign stage (Option A: 20 stages per rank).
+ * Stage 1–20   => Rank 1 (Bronze)
+ * Stage 21–40  => Rank 2 (Silver)
+ * Stage 41–60  => Rank 3 (Gold)
+ * Stage 61–80  => Rank 4 (Platinum)
+ * Stage 81–100 => Rank 5 (Diamond)
+ */
+export function calculateRankFromStage(stageNumber: number): number {
+  const stage = Math.max(1, Math.min(100, stageNumber));
+  if (stage >= 81) return 5;
+  if (stage >= 61) return 4;
+  if (stage >= 41) return 3;
+  if (stage >= 21) return 2;
+  return 1;
+}
+
+/**
+ * Returns required pass score percentage for a given rank.
+ * Rank 5 (Diamond)  => 100%
+ * Rank 4 (Platinum) => 90%
+ * Rank 3 (Gold)     => 80%
+ * Rank 2 (Silver)   => 70%
+ * Rank 1 (Bronze)   => 60%
+ */
+export function getPassScoreForRank(rank: number): number {
+  switch (rank) {
+    case 5: return 100;
+    case 4: return 90;
+    case 3: return 80;
+    case 2: return 70;
+    default: return 60;
+  }
+}
+
+/**
+ * Returns required pass score percentage for a given stage number.
+ */
+export function getPassScoreForStage(stageNumber: number): number {
+  return getPassScoreForRank(calculateRankFromStage(stageNumber));
+}
 
 // 10 Worlds & Theme definitions for Story Mode
 export interface WorldInfo {
