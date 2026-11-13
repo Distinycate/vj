@@ -582,7 +582,11 @@ export function useGameEngine(): UseGameEngineReturn {
               .from('user_review_words')
               .update({ 
                 mastery_level: 4, 
-                next_review_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() 
+                mastery_status: 'MASTERED',
+                wrong_count: 0,
+                consecutive_correct: 3,
+                last_correct_at: new Date().toISOString(),
+                next_review_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() 
               })
               .eq('user_id', student.id)
               .in('word_id', correctWordIds);

@@ -9,12 +9,23 @@ export const studentService = {
       .from('user_review_words')
       .select('*, vocabulary:word_id(*)')
       .eq('user_id', studentId)
+      .gt('wrong_count', 0)
       .lt('mastery_level', 4)
       .lte('next_review_at', new Date().toISOString())
-      .order('next_review_at', { ascending: true });
+      .order('wrong_count', { ascending: false })
+      .order('next_review_at', { ascending: true })
+      .limit(30);
 
     if (error) throw error;
-    return data?.map((r: any) => r.vocabulary).filter(Boolean) || [];
+    return data?.map((r: any) => {
+      const vocab = Array.isArray(r.vocabulary) ? r.vocabulary[0] : r.vocabulary;
+      if (!vocab) return null;
+      return {
+        ...vocab,
+        wrong_count: r.wrong_count || 1,
+        last_wrong_at: r.last_wrong_at,
+      };
+    }).filter(Boolean) || [];
   },
 
   /**

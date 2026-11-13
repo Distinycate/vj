@@ -23,6 +23,7 @@ import CoopGoals from '@/components/CoopGoals';
 const StudentVerificationModal = dynamic(() => import('@/components/StudentVerificationModal'));
 const ShopModal = dynamic(() => import('@/components/ShopModal'));
 const CardCenterModal = dynamic(() => import('@/components/CardCenterModal'));
+const GrandmasterBossModal = dynamic(() => import('@/components/GrandmasterBossModal'));
 import ProgressStats from '@/components/dashboard/ProgressStats';
 import QuestList from '@/components/dashboard/QuestList';
 
@@ -53,6 +54,18 @@ export default function Dashboard() {
   const [aiTeacherMessage, setAiTeacherMessage] = useState('');
   const [showShop, setShowShop] = useState(false);
   const [showCardCenter, setShowCardCenter] = useState(false);
+  const [showGrandmasterBoss, setShowGrandmasterBoss] = useState(false);
+  const [grandmasterInfo, setGrandmasterInfo] = useState<{
+    unlocked: boolean;
+    totalStars: number;
+    requiredStars: number;
+    completedCount: number;
+    threeStarStagesCount: number;
+    missingThreeStarStages: number[];
+    cleared: boolean;
+    bestScore: number;
+    bestAccuracy: number;
+  } | null>(null);
   const [myTeams, setMyTeams] = useState<any[]>([]);
   const [teamScores, setTeamScores] = useState<Record<string, any>>({});
   const [teamError, setTeamError] = useState('');
@@ -138,6 +151,9 @@ export default function Dashboard() {
         });
         setStageStars(prev => ({ ...prev, ...starsByStage }));
         setRealAccuracy(progData.globalAccuracy ?? null);
+        if (progData.grandmaster) {
+          setGrandmasterInfo(progData.grandmaster);
+        }
       } else if (progRes.status === 503) {
         setV3Progression(prev => ({
           ...prev,
@@ -204,12 +220,27 @@ export default function Dashboard() {
         .from('user_review_words')
         .select('*, vocabulary:word_id(*)')
         .eq('user_id', student.id)
+        .gt('wrong_count', 0)
         .lt('mastery_level', 4)
         .lte('next_review_at', new Date().toISOString())
-        .order('next_review_at', { ascending: true });
+        .order('wrong_count', { ascending: false })
+        .order('next_review_at', { ascending: true })
+        .limit(20);
       
       if (repData) {
-        setReviewWords(repData.map(r => r.vocabulary).filter(Boolean));
+        setReviewWords(
+          repData
+            .map((r: any) => {
+              const vocab = Array.isArray(r.vocabulary) ? r.vocabulary[0] : r.vocabulary;
+              if (!vocab) return null;
+              return {
+                ...vocab,
+                wrong_count: r.wrong_count || 1,
+                last_wrong_at: r.last_wrong_at,
+              };
+            })
+            .filter(Boolean)
+        );
       }
     } catch (e) {
       console.warn('Failed to fetch review words:', e);
@@ -847,7 +878,7 @@ export default function Dashboard() {
                     <div>
                       <h3 className="text-xl font-black text-rose-300">บอสล้างตา (Weakness Boss Mode)</h3>
                       <p className="text-sm text-rose-200/80 mt-1">
-                        พบคำศัพท์ที่น้องยังจำไม่ได้ {reviewWords.length} คำ! ท้าทายบอสเพื่อทบทวนคำศัพท์เหล่านี้และรับโบนัส EXP พิเศษ
+                        พบคำศัพท์ที่น้องตอบผิดสะสม {reviewWords.length} คำ! ท้าทายบอสเพื่อทบทวน 10 คำสำคัญและรับโบนัส EXP พิเศษ
                       </p>
                     </div>
                   </div>
@@ -863,6 +894,142 @@ export default function Dashboard() {
                   >
                     ⚔️ ท้าทายบอส
                   </button>
+                </div>
+              )}
+
+              {/* Grandmaster Typing Boss (Stage 100 + 300 Stars) */}
+              {!isExternalUser && grandmasterInfo && (grandmasterInfo.completedCount >= 80 || grandmasterInfo.unlocked || v3Progression.campaignCompleted) && (
+                <div className="rounded-3xl border border-amber-500/50 bg-gradient-to-r from-amber-950/80 via-slate-900/95 to-rose-950/80 p-5 sm:p-6 shadow-[0_0_35px_rgba(245,158,11,0.15)] mb-6 relative overflow-hidden">
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-start sm:items-center gap-4">
+                      <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-rose-600 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-lg shadow-amber-500/30">
+                        👑
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="text-[10px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950">
+                            GRANDMASTER BOSS • 300 STARS
+                          </span>
+                          <span className="text-xs font-black text-amber-300">
+                            ⭐ ดาวสะสม: {grandmasterInfo.totalStars} / {grandmasterInfo.requiredStars} ดาว ({grandmasterInfo.threeStarStagesCount}/100 ด่านที่ได้ 3 ดาว)
+                          </span>
+                          {grandmasterInfo.cleared && (
+                            <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                              🏆 พิชิตแล้ว (สถิติสูงสุด {grandmasterInfo.bestScore}/50 ข้อ)
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-lg sm:text-xl font-black text-white">
+                          ด่านบอสราชันย์คำศัพท์ (ข้อสอบพิมพ์สะกดคำล้วน 50 ข้อ จาก 100 ด่าน)
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-300 mt-0.5">
+                          {grandmasterInfo.unlocked
+                            ? 'ปลดล็อกสำเร็จ! ทดสอบความจำแท้จริงด้วยข้อสอบพิมพ์สะกดคำ 50 ข้อ (เวลา 8–12 วินาที/ข้อ ห้ามใช้ตัวช่วย)'
+                            : `ต้องผ่านครบ 100 ด่าน และได้ 3 ดาวครบทุกด่านจึงจะท้าทายบอสนี้ได้ (ยังขาด 3 ดาวอีก ${grandmasterInfo.missingThreeStarStages.length} ด่าน)`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      {grandmasterInfo.unlocked ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowGrandmasterBoss(true)}
+                          className="w-full md:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 hover:from-amber-300 hover:to-rose-400 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/30 transition-all hover:scale-105 cursor-pointer"
+                        >
+                          ⚔️ ท้าทายบอส 50 ข้อ (พิมพ์ล้วน)
+                        </button>
+                      ) : grandmasterInfo.missingThreeStarStages.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextMissingStage = grandmasterInfo.missingThreeStarStages[0];
+                            setMissionLevel(3);
+                            useAppStore.getState().setBossMode(nextMissingStage % 5 === 0);
+                            setSelectedStageNumber(nextMissingStage);
+                            setScreen('game');
+                          }}
+                          className="w-full md:w-auto px-5 py-3 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 font-black text-xs sm:text-sm transition-all cursor-pointer"
+                        >
+                          ⭐ ไปเก็บ 3 ดาวที่ด่าน {grandmasterInfo.missingThreeStarStages[0]}
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Word Puzzle Mode 100 Stages Banner */}
+              {!isExternalUser && (
+                <div className="rounded-3xl border border-purple-500/40 bg-gradient-to-r from-purple-950/90 via-slate-900/90 to-indigo-950/90 p-5 shadow-2xl mb-6 relative overflow-hidden group hover:border-purple-400/60 transition-all">
+                  <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/15 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-lg shadow-purple-500/25">
+                        🧩
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="text-[10px] uppercase tracking-wider font-black px-2 py-0.5 rounded-full bg-purple-400 text-slate-950 shadow-sm">
+                            NEW PUZZLE MODE
+                          </span>
+                          <span className="text-xs font-bold text-amber-300">
+                            ⭐ ปริศนาอักษรไขว้ 100 ด่าน • วงล้อลากคำศัพท์สะกดคำ
+                          </span>
+                        </div>
+                        <h3 className="text-lg sm:text-xl font-black text-white">
+                          Word Connect Puzzle (ปริศนาอักษรไขว้ 100 ด่าน)
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-300 mt-0.5">
+                          ลากนิ้วเชื่อมตัวอักษรบนวงล้อ เติมคำศัพท์ A2 ให้เต็มตารางไขว้ ปลดล็อกทีละด่าน รับเหรียญและดาวสะสม!
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/challenge/puzzle"
+                      className="w-full md:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-400 to-indigo-500 hover:from-purple-300 hover:to-indigo-400 text-slate-950 font-black text-sm text-center shadow-lg shadow-purple-500/30 transition-all hover:scale-105 active:scale-95 shrink-0 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>เล่น Puzzle 100 ด่าน</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* Oxford 3000 Worksheets Banner (สพป.บุรีรัมย์ เขต 3) */}
+              {!isExternalUser && (
+                <div className="rounded-3xl border border-violet-500/40 bg-gradient-to-r from-violet-950/90 via-slate-900/90 to-purple-950/90 p-5 shadow-2xl mb-6 relative overflow-hidden group hover:border-violet-400/60 transition-all">
+                  <div className="absolute top-0 right-0 w-80 h-80 bg-violet-500/15 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-gradient-to-br from-violet-400 to-purple-600 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-lg shadow-violet-500/25">
+                        📖
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="text-[10px] uppercase tracking-wider font-black px-2 py-0.5 rounded-full bg-violet-400 text-slate-950 shadow-sm">
+                            สพป.บุรีรัมย์ เขต 3
+                          </span>
+                          <span className="text-xs font-bold text-amber-300">
+                            📝 แบบฝึกหัด ม.1 - ม.3 • ระบบชิปแตะเติมคำ (Tap-to-Fill)
+                          </span>
+                        </div>
+                        <h3 className="text-lg sm:text-xl font-black text-white">
+                          A2 Vocabulary Worksheets (แบบฝึกหัดคำศัพท์ ม.1 - ม.3)
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-300 mt-0.5">
+                          ฝึกทำแบบฝึกหัดคำศัพท์ตามมาตรฐานหลักสูตร แตะชิปคำศัพท์เติมคำสะดวก ไม่ต้องพิมพ์ ปลดล็อกรายบทโดยคุณครู
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/challenge/worksheets"
+                      className="w-full md:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-violet-400 to-purple-500 hover:from-violet-300 hover:to-purple-400 text-slate-950 font-black text-sm text-center shadow-lg shadow-violet-500/30 transition-all hover:scale-105 active:scale-95 shrink-0 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>เข้าทำแบบฝึกหัด</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
                 </div>
               )}
 
@@ -1182,7 +1349,14 @@ export default function Dashboard() {
                   {reviewWords.map((word) => (
                     <div key={word.id} className="bg-slate-950 border border-slate-900 p-4 sm:p-5 rounded-2xl flex justify-between items-center transition-colors hover:border-slate-800">
                       <div>
-                        <h4 className="text-xl font-bold text-white uppercase notranslate" translate="no">{word.word}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xl font-bold text-white uppercase notranslate" translate="no">{word.word}</h4>
+                          {word.wrong_count && (
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                              ตอบผิด {word.wrong_count} ครั้ง
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-slate-500 font-mono mt-0.5">{word.phonetic}</p>
                         <p className="text-slate-200 mt-2 font-semibold">แปลความหมาย: <strong className="text-emerald-400">{word.meaning}</strong></p>
                         <p className="text-xs text-slate-500 italic mt-1 font-mono">"{word.example_sentence || word.example || ''}"</p>
@@ -1595,6 +1769,11 @@ export default function Dashboard() {
       <StudentVerificationModal />
       {showShop && !isExternalUser && <ShopModal onClose={() => setShowShop(false)} />}
       {showCardCenter && !isExternalUser && <CardCenterModal onClose={() => setShowCardCenter(false)} />}
+      <GrandmasterBossModal
+        isOpen={showGrandmasterBoss}
+        onClose={() => setShowGrandmasterBoss(false)}
+        onSuccessRefresh={loadDashboardData}
+      />
 
 
     </div>

@@ -232,12 +232,14 @@ export async function generateStageQuestions(studentId: string, stageNumber: num
 
 export async function generateWeaknessBossQuestions(studentId: string, limit: number = 20) {
   try {
-    // Fetch user's weakest words (mastery < 3, ordered by mastery ascending or next_review_at)
+    // Fetch user's weakest words (wrong_count > 0, ordered by error count descending)
     const { data: weakWordsData, error } = await supabase
       .from('user_review_words')
       .select('*, vocabulary:word_id(*)')
       .eq('user_id', studentId)
+      .gt('wrong_count', 0)
       .lt('mastery_level', 4)
+      .order('wrong_count', { ascending: false })
       .order('mastery_level', { ascending: true })
       .limit(limit);
 
