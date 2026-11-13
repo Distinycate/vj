@@ -68,3 +68,4 @@ export default function WordCollectionTab({
     </motion.div>
   );
 }
+
