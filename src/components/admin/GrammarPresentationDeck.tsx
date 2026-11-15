@@ -251,11 +251,10 @@ export default function GrammarPresentationDeck({
             <button
               type="button"
               onClick={() => setShowTopicHub((v) => !v)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
-                showTopicHub
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${showTopicHub
                   ? 'bg-amber-400 text-slate-950 border-amber-300'
                   : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'
-              }`}
+                }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
               {showTopicHub ? 'ปิดสารบัญ' : `สารบัญ (${GRAMMAR_TEACHING_UNITS.length})`}
@@ -265,7 +264,7 @@ export default function GrammarPresentationDeck({
               aria-label="เลือกบทเรียน"
               value={unitNumber}
               onChange={(e) => selectUnit(Number(e.target.value))}
-              className="bg-slate-950 border border-slate-700 text-slate-100 text-xs sm:text-sm font-semibold rounded-lg px-3 py-1.5 max-w-[300px] focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full sm:w-auto bg-slate-950 border border-slate-700 text-slate-100 text-xs sm:text-sm font-semibold rounded-lg px-3 py-1.5 max-w-full sm:max-w-[340px] focus:outline-none focus:ring-2 focus:ring-amber-400"
             >
               {(filteredUnits.length > 0 ? filteredUnits : GRAMMAR_TEACHING_UNITS).map((u) => (
                 <option key={u.id} value={u.unitNumber}>
@@ -283,11 +282,10 @@ export default function GrammarPresentationDeck({
                 setShowTopicHub(false);
                 selectStage('concept');
               }}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
-                !showTopicHub && stage === 'concept'
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition ${!showTopicHub && stage === 'concept'
                   ? 'bg-sky-400 text-slate-950'
                   : 'text-slate-300 hover:bg-slate-800'
-              }`}
+                }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
               บรรยาย ({currentUnit.conceptSlides.length})
@@ -298,11 +296,10 @@ export default function GrammarPresentationDeck({
                 setShowTopicHub(false);
                 selectStage('practice');
               }}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
-                !showTopicHub && stage === 'practice'
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition ${!showTopicHub && stage === 'practice'
                   ? 'bg-emerald-400 text-slate-950'
                   : 'text-slate-300 hover:bg-slate-800'
-              }`}
+                }`}
             >
               <HelpCircle className="w-3.5 h-3.5" />
               ฝึกทำ ({currentUnit.practiceQuestions.length})
@@ -313,11 +310,10 @@ export default function GrammarPresentationDeck({
                 setShowTopicHub(false);
                 selectStage('onet');
               }}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
-                !showTopicHub && stage === 'onet'
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition ${!showTopicHub && stage === 'onet'
                   ? 'bg-amber-400 text-slate-950'
                   : 'text-slate-300 hover:bg-slate-800'
-              }`}
+                }`}
             >
               <Trophy className="w-3.5 h-3.5" />
               O-NET ({currentUnit.realOnetQuestions.length})
@@ -347,11 +343,10 @@ export default function GrammarPresentationDeck({
             <button
               type="button"
               onClick={() => setShowTeacherScript((v) => !v)}
-              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                showTeacherScript
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition ${showTeacherScript
                   ? 'bg-indigo-500/20 text-indigo-200 border-indigo-400/40'
                   : 'bg-slate-800 text-slate-400 border-slate-700'
-              }`}
+                }`}
               title="เปิด/ซ่อนบทพูดแนะนำสำหรับครู"
             >
               {showTeacherScript ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -380,11 +375,10 @@ export default function GrammarPresentationDeck({
                       key={tab.key}
                       type="button"
                       onClick={() => setSelectedGrade(tab.key)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                        isSelected
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${isSelected
                           ? 'bg-amber-400 text-slate-950'
                           : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                      }`}
+                        }`}
                     >
                       {tab.label}
                     </button>
@@ -412,11 +406,10 @@ export default function GrammarPresentationDeck({
                     key={cat.key}
                     type="button"
                     onClick={() => setSelectedCategory(cat.key)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                      isSelected
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${isSelected
                         ? 'bg-sky-400 text-slate-950'
                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                    }`}
+                      }`}
                   >
                     {cat.icon} {cat.label}
                   </button>
@@ -519,11 +512,10 @@ export default function GrammarPresentationDeck({
                 return (
                   <div
                     key={u.id}
-                    className={`rounded-2xl border p-4 md:p-5 space-y-3 transition ${
-                      isCurrent
+                    className={`rounded-2xl border p-4 md:p-5 space-y-3 transition ${isCurrent
                         ? 'bg-slate-900 border-amber-400 ring-2 ring-amber-400/30'
                         : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
-                    }`}
+                      }`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -600,7 +592,7 @@ export default function GrammarPresentationDeck({
             </div>
           </div>
         ) : (
-        <div className="max-w-5xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto w-full space-y-6">
           {/* Quick Sub-Slide / Question Jump Bar */}
           <div className="flex flex-wrap items-center gap-1.5 bg-slate-900/80 border border-slate-800 rounded-xl p-2">
             <span className="text-xs font-bold text-slate-400 px-2">
@@ -646,302 +638,298 @@ export default function GrammarPresentationDeck({
               ))}
           </div>
 
-          {/* STAGE 1: CONCEPT & TRICK SLIDES */}
-          {stage === 'concept' && currentConcept && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between gap-4">
-                <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-                  {currentConcept.slideTitle}
-                </h2>
-                <span className="px-3 py-1 rounded-full bg-sky-500/20 border border-sky-400/30 text-sky-200 text-xs font-bold shrink-0">
-                  สไลด์ {slideIndex + 1} / {slidesCount}
-                </span>
-              </div>
-
-              {/* Key Formula Highlight */}
-              <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-sky-500/15 to-indigo-500/15 border border-sky-400/30">
-                <div className="text-xs uppercase tracking-wider text-sky-300 font-bold mb-1">
-                  สูตรจำไว (Key Formula)
+            {/* STAGE 1: CONCEPT & TRICK SLIDES */}
+            {stage === 'concept' && currentConcept && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                    {currentConcept.slideTitle}
+                  </h2>
+                  <span className="px-3 py-1 rounded-full bg-sky-500/20 border border-sky-400/30 text-sky-200 text-xs font-bold shrink-0">
+                    สไลด์ {slideIndex + 1} / {slidesCount}
+                  </span>
                 </div>
-                <div className="text-lg md:text-xl font-bold text-white">
-                  {currentConcept.keyFormula}
-                </div>
-              </div>
 
-              {/* Bullet Points */}
-              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
-                <div className="text-sm font-bold text-slate-300">ประเด็นสำคัญที่ต้องเน้นหน้าห้อง:</div>
-                <ul className="space-y-2.5">
-                  {currentConcept.bulletPoints.map((point, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-base md:text-lg text-slate-100 leading-relaxed">
-                      <span className="mt-1 w-6 h-6 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 text-xs font-bold flex items-center justify-center shrink-0">
-                        {idx + 1}
-                      </span>
-                      <span>{point}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Signal Table */}
-              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden">
-                <div className="px-5 py-3 bg-slate-800/70 border-b border-slate-700 text-sm font-bold text-amber-300">
-                  ตารางจับจุดสังเกต (Signal Words & Examples)
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-800 text-xs uppercase text-slate-400">
-                        <th className="py-3 px-4">คำสังเกต (Signal)</th>
-                        <th className="py-3 px-4">กติกา / ความหมาย</th>
-                        <th className="py-3 px-4">ตัวอย่างประโยค (กด 🔊 เพื่อฟังเสียง)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/80 text-sm md:text-base">
-                      {currentConcept.signalTable.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-slate-800/40">
-                          <td className="py-3 px-4 font-bold text-sky-300 align-top">{row.signal}</td>
-                          <td className="py-3 px-4 text-slate-200 align-top">{row.ruleOrMeaning}</td>
-                          <td className="py-3 px-4 align-top">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <div className="font-semibold text-white">{row.example}</div>
-                                <div className="text-xs md:text-sm text-slate-400 mt-0.5">{row.exampleTranslation}</div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => speakWithWebSpeech(row.example)}
-                                className="p-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 shrink-0 transition cursor-pointer"
-                                title="ฟังเสียงประโยคตัวอย่าง"
-                              >
-                                <Volume2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Common O-NET Trap */}
-              <div className="rounded-2xl bg-rose-500/10 border border-rose-500/30 p-5 space-y-2">
-                <div className="flex items-center gap-2 text-rose-300 font-bold text-sm">
-                  <AlertTriangle className="w-4 h-4" />
-                  กับดักที่เด็กมักพลาดในข้อสอบ O-NET
-                </div>
-                <p className="text-slate-100 text-base">
-                  <span className="font-semibold text-rose-200">จุดหลอก:</span> {currentConcept.commonTrap.trap}
-                </p>
-                <p className="text-emerald-200 text-base">
-                  <span className="font-semibold text-emerald-300">วิธีแก้:</span> {currentConcept.commonTrap.howToFix}
-                </p>
-              </div>
-
-              {/* Teacher Script */}
-              {showTeacherScript && (
-                <div className="rounded-2xl bg-indigo-500/10 border border-indigo-400/30 p-4 flex items-start gap-3">
-                  <Mic className="w-5 h-5 text-indigo-300 shrink-0 mt-0.5" />
-                  <div className="text-sm md:text-base text-indigo-100">
-                    <span className="font-bold text-indigo-300 mr-2">สคริปต์แนะนำครู:</span>
-                    {currentConcept.teacherScript}
+                {/* Key Formula Highlight */}
+                <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-sky-500/15 to-indigo-500/15 border border-sky-400/30">
+                  <div className="text-xs uppercase tracking-wider text-sky-300 font-bold mb-1">
+                    สูตรจำไว (Key Formula)
+                  </div>
+                  <div className="text-lg md:text-xl font-bold text-white">
+                    {currentConcept.keyFormula}
                   </div>
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* STAGE 2 & 3: PRACTICE & REAL O-NET QUESTION SLIDES */}
-          {(stage === 'practice' || stage === 'onet') && currentQuestion && (
-            <div className="space-y-6">
-              {/* Header badge row */}
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-extrabold ${
-                      stage === 'onet'
-                        ? 'bg-amber-400 text-slate-950'
-                        : 'bg-emerald-500 text-slate-950'
-                    }`}
-                  >
-                    {stage === 'onet' ? 'แนวข้อสอบจริง O-NET' : 'แบบฝึกหัดซ้อมมือ'} ข้อที่{' '}
-                    {currentQuestion.questionNumber} / {slidesCount}
-                  </span>
-                  {currentQuestion.sourceTag && (
-                    <span className="text-xs text-slate-400 font-medium">
-                      {currentQuestion.sourceTag}
+                {/* Bullet Points */}
+                <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
+                  <div className="text-sm font-bold text-slate-300">ประเด็นสำคัญที่ต้องเน้นหน้าห้อง:</div>
+                  <ul className="space-y-2.5">
+                    {currentConcept.bulletPoints.map((point, idx) => (
+                      <li key={idx} className="flex items-start gap-3 text-base md:text-lg text-slate-100 leading-relaxed">
+                        <span className="mt-1 w-6 h-6 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 text-xs font-bold flex items-center justify-center shrink-0">
+                          {idx + 1}
+                        </span>
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Signal Table */}
+                <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden">
+                  <div className="px-5 py-3 bg-slate-800/70 border-b border-slate-700 text-sm font-bold text-amber-300">
+                    ตารางจับจุดสังเกต (Signal Words & Examples)
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-xs uppercase text-slate-400">
+                          <th className="py-3 px-4">คำสังเกต (Signal)</th>
+                          <th className="py-3 px-4">กติกา / ความหมาย</th>
+                          <th className="py-3 px-4">ตัวอย่างประโยค (กด 🔊 เพื่อฟังเสียง)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/80 text-sm md:text-base">
+                        {currentConcept.signalTable.map((row, idx) => (
+                          <tr key={idx} className="hover:bg-slate-800/40">
+                            <td className="py-3 px-4 font-bold text-sky-300 align-top">{row.signal}</td>
+                            <td className="py-3 px-4 text-slate-200 align-top">{row.ruleOrMeaning}</td>
+                            <td className="py-3 px-4 align-top">
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <div className="font-semibold text-white">{row.example}</div>
+                                  <div className="text-xs md:text-sm text-slate-400 mt-0.5">{row.exampleTranslation}</div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => speakWithWebSpeech(row.example)}
+                                  className="p-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 shrink-0 transition cursor-pointer"
+                                  title="ฟังเสียงประโยคตัวอย่าง"
+                                >
+                                  <Volume2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Common O-NET Trap */}
+                <div className="rounded-2xl bg-rose-500/10 border border-rose-500/30 p-5 space-y-2">
+                  <div className="flex items-center gap-2 text-rose-300 font-bold text-sm">
+                    <AlertTriangle className="w-4 h-4" />
+                    กับดักที่เด็กมักพลาดในข้อสอบ O-NET
+                  </div>
+                  <p className="text-slate-100 text-base">
+                    <span className="font-semibold text-rose-200">จุดหลอก:</span> {currentConcept.commonTrap.trap}
+                  </p>
+                  <p className="text-emerald-200 text-base">
+                    <span className="font-semibold text-emerald-300">วิธีแก้:</span> {currentConcept.commonTrap.howToFix}
+                  </p>
+                </div>
+
+                {/* Teacher Script */}
+                {showTeacherScript && (
+                  <div className="rounded-2xl bg-indigo-500/10 border border-indigo-400/30 p-4 flex items-start gap-3">
+                    <Mic className="w-5 h-5 text-indigo-300 shrink-0 mt-0.5" />
+                    <div className="text-sm md:text-base text-indigo-100">
+                      <span className="font-bold text-indigo-300 mr-2">สคริปต์แนะนำครู:</span>
+                      {currentConcept.teacherScript}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STAGE 2 & 3: PRACTICE & REAL O-NET QUESTION SLIDES */}
+            {(stage === 'practice' || stage === 'onet') && currentQuestion && (
+              <div className="space-y-6">
+                {/* Header badge row */}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-extrabold ${stage === 'onet'
+                          ? 'bg-amber-400 text-slate-950'
+                          : 'bg-emerald-500 text-slate-950'
+                        }`}
+                    >
+                      {stage === 'onet' ? 'แนวข้อสอบจริง O-NET' : 'แบบฝึกหัดซ้อมมือ'} ข้อที่{' '}
+                      {currentQuestion.questionNumber} / {slidesCount}
                     </span>
+                    {currentQuestion.sourceTag && (
+                      <span className="text-xs text-slate-400 font-medium">
+                        {currentQuestion.sourceTag}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        speakWithWebSpeech(currentQuestion.prompt.replace(/_+/g, ' blank '))
+                      }
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-500/40 transition cursor-pointer"
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                      ฟังเสียงโจทย์
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowTranslation((v) => !v)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+                    >
+                      {showTranslation ? 'ซ่อนคำแปลโจทย์' : 'แปลโจทย์เป็นไทย'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetQuestionReveals}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      รีเซ็ตข้อนี้
+                    </button>
+                  </div>
+                </div>
+
+                {/* Prompt Card */}
+                <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 md:p-7 space-y-3 shadow-lg">
+                  <p className="text-xl md:text-2xl font-semibold text-white whitespace-pre-line leading-relaxed">
+                    {currentQuestion.prompt}
+                  </p>
+                  {showTranslation && (
+                    <p className="text-base md:text-lg text-sky-200 border-t border-slate-800 pt-3 whitespace-pre-line">
+                      คำแปล: {currentQuestion.promptTranslation}
+                    </p>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Interactive Teacher Action Controls */}
+                <div className="flex flex-wrap items-center gap-3">
                   <button
                     type="button"
-                    onClick={() =>
-                      speakWithWebSpeech(currentQuestion.prompt.replace(/_+/g, ' blank '))
-                    }
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-500/40 transition cursor-pointer"
+                    onClick={() => setShowClue((v) => !v)}
+                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border transition ${showClue
+                        ? 'bg-amber-500 text-slate-950 border-amber-400'
+                        : 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-amber-500/40'
+                      }`}
                   >
-                    <Volume2 className="w-3.5 h-3.5" />
-                    ฟังเสียงโจทย์
+                    <Lightbulb className="w-4 h-4" />
+                    {showClue ? 'ซ่อนคำใบ้' : 'ชี้คำใบ้ (Show Clue)'}
                   </button>
+
                   <button
                     type="button"
-                    onClick={() => setShowTranslation((v) => !v)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+                    onClick={() => setShowEliminated((v) => !v)}
+                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border transition ${showEliminated
+                        ? 'bg-rose-500 text-white border-rose-400'
+                        : 'bg-slate-900 hover:bg-slate-800 text-rose-300 border-rose-500/40'
+                      }`}
                   >
-                    {showTranslation ? 'ซ่อนคำแปลโจทย์' : 'แปลโจทย์เป็นไทย'}
+                    <Scissors className="w-4 h-4" />
+                    {showEliminated ? 'ยกเลิกตัดช้อยส์' : 'ตัดช้อยส์หลอก 2 ข้อ'}
                   </button>
+
                   <button
                     type="button"
-                    onClick={resetQuestionReveals}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+                    onClick={() => setShowAnswer((v) => !v)}
+                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border transition ${showAnswer
+                        ? 'bg-emerald-500 text-slate-950 border-emerald-400'
+                        : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border-emerald-500/50'
+                      }`}
                   >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    รีเซ็ตข้อนี้
+                    <CheckCircle2 className="w-4 h-4" />
+                    {showAnswer ? 'ซ่อนเฉลย' : 'เปิดเฉลย + คำอธิบายละเอียด'}
                   </button>
                 </div>
-              </div>
 
-              {/* Prompt Card */}
-              <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 md:p-7 space-y-3 shadow-lg">
-                <p className="text-xl md:text-2xl font-semibold text-white whitespace-pre-line leading-relaxed">
-                  {currentQuestion.prompt}
-                </p>
-                {showTranslation && (
-                  <p className="text-base md:text-lg text-sky-200 border-t border-slate-800 pt-3 whitespace-pre-line">
-                    คำแปล: {currentQuestion.promptTranslation}
-                  </p>
+                {/* Clue Banner */}
+                {showClue && (
+                  <div className="rounded-xl bg-amber-500/15 border border-amber-400/40 px-5 py-3.5 text-amber-100 text-base">
+                    <span className="font-extrabold text-amber-300 mr-2">🔍 จุดสังเกต (Clue):</span>
+                    {currentQuestion.clueText}
+                  </div>
+                )}
+
+                {/* Elimination Reason Banner */}
+                {showEliminated && (
+                  <div className="rounded-xl bg-rose-500/15 border border-rose-400/40 px-5 py-3.5 text-rose-100 text-base">
+                    <span className="font-extrabold text-rose-300 mr-2">✂️ เหตุผลที่ตัดช้อยส์:</span>
+                    {currentQuestion.eliminationReason}
+                  </div>
+                )}
+
+                {/* 4 Choices Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {currentQuestion.choices.map((choice, idx) => {
+                    const isCorrect = idx === currentQuestion.correctIndex;
+                    const isEliminated = showEliminated && currentQuestion.eliminatedIndices.includes(idx);
+                    const isSelected = selectedChoice === idx;
+
+                    let cardClass =
+                      'bg-slate-900 border-slate-700 hover:border-sky-400/70 text-slate-100';
+                    if (showAnswer && isCorrect) {
+                      cardClass =
+                        'bg-emerald-500/20 border-emerald-400 text-emerald-100 ring-2 ring-emerald-400/50';
+                    } else if (showAnswer && isSelected && !isCorrect) {
+                      cardClass = 'bg-rose-500/20 border-rose-400 text-rose-200';
+                    } else if (isEliminated) {
+                      cardClass = 'bg-slate-900/40 border-slate-800 text-slate-500 line-through opacity-55';
+                    } else if (isSelected) {
+                      cardClass = 'bg-sky-500/20 border-sky-400 text-white ring-2 ring-sky-400/40';
+                    }
+
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelectedChoice(idx)}
+                        className={`text-left p-4 md:p-5 rounded-2xl border transition flex items-start gap-3.5 ${cardClass}`}
+                      >
+                        <span className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-extrabold text-sm shrink-0">
+                          {CHOICE_LABELS[idx]}
+                        </span>
+                        <div className="space-y-1.5 flex-1">
+                          <div className="text-lg md:text-xl font-semibold">{choice}</div>
+                          {showAnswer && (
+                            <div className="text-sm text-slate-200/90 leading-snug pt-1 border-t border-slate-700/60">
+                              {currentQuestion.choiceBreakdowns[idx]}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Full Answer Explanation */}
+                {showAnswer && (
+                  <div className="rounded-2xl bg-emerald-500/15 border border-emerald-400/40 p-5 space-y-2">
+                    <div className="text-sm font-extrabold text-emerald-300">
+                      ✅ สรุปเฉลยข้อ {CHOICE_LABELS[currentQuestion.correctIndex]}
+                    </div>
+                    <p className="text-base md:text-lg text-white leading-relaxed">
+                      {currentQuestion.explanation}
+                    </p>
+                  </div>
+                )}
+
+                {/* Teacher Script */}
+                {showTeacherScript && (
+                  <div className="rounded-2xl bg-indigo-500/10 border border-indigo-400/30 p-4 flex items-start gap-3">
+                    <Mic className="w-5 h-5 text-indigo-300 shrink-0 mt-0.5" />
+                    <div className="text-sm md:text-base text-indigo-100">
+                      <span className="font-bold text-indigo-300 mr-2">สคริปต์แนะนำครู:</span>
+                      {currentQuestion.teacherScript}
+                    </div>
+                  </div>
                 )}
               </div>
-
-              {/* Interactive Teacher Action Controls */}
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowClue((v) => !v)}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border transition ${
-                    showClue
-                      ? 'bg-amber-500 text-slate-950 border-amber-400'
-                      : 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-amber-500/40'
-                  }`}
-                >
-                  <Lightbulb className="w-4 h-4" />
-                  {showClue ? 'ซ่อนคำใบ้' : 'ชี้คำใบ้ (Show Clue)'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowEliminated((v) => !v)}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border transition ${
-                    showEliminated
-                      ? 'bg-rose-500 text-white border-rose-400'
-                      : 'bg-slate-900 hover:bg-slate-800 text-rose-300 border-rose-500/40'
-                  }`}
-                >
-                  <Scissors className="w-4 h-4" />
-                  {showEliminated ? 'ยกเลิกตัดช้อยส์' : 'ตัดช้อยส์หลอก 2 ข้อ'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowAnswer((v) => !v)}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border transition ${
-                    showAnswer
-                      ? 'bg-emerald-500 text-slate-950 border-emerald-400'
-                      : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border-emerald-500/50'
-                  }`}
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  {showAnswer ? 'ซ่อนเฉลย' : 'เปิดเฉลย + คำอธิบายละเอียด'}
-                </button>
-              </div>
-
-              {/* Clue Banner */}
-              {showClue && (
-                <div className="rounded-xl bg-amber-500/15 border border-amber-400/40 px-5 py-3.5 text-amber-100 text-base">
-                  <span className="font-extrabold text-amber-300 mr-2">🔍 จุดสังเกต (Clue):</span>
-                  {currentQuestion.clueText}
-                </div>
-              )}
-
-              {/* Elimination Reason Banner */}
-              {showEliminated && (
-                <div className="rounded-xl bg-rose-500/15 border border-rose-400/40 px-5 py-3.5 text-rose-100 text-base">
-                  <span className="font-extrabold text-rose-300 mr-2">✂️ เหตุผลที่ตัดช้อยส์:</span>
-                  {currentQuestion.eliminationReason}
-                </div>
-              )}
-
-              {/* 4 Choices Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                {currentQuestion.choices.map((choice, idx) => {
-                  const isCorrect = idx === currentQuestion.correctIndex;
-                  const isEliminated = showEliminated && currentQuestion.eliminatedIndices.includes(idx);
-                  const isSelected = selectedChoice === idx;
-
-                  let cardClass =
-                    'bg-slate-900 border-slate-700 hover:border-sky-400/70 text-slate-100';
-                  if (showAnswer && isCorrect) {
-                    cardClass =
-                      'bg-emerald-500/20 border-emerald-400 text-emerald-100 ring-2 ring-emerald-400/50';
-                  } else if (showAnswer && isSelected && !isCorrect) {
-                    cardClass = 'bg-rose-500/20 border-rose-400 text-rose-200';
-                  } else if (isEliminated) {
-                    cardClass = 'bg-slate-900/40 border-slate-800 text-slate-500 line-through opacity-55';
-                  } else if (isSelected) {
-                    cardClass = 'bg-sky-500/20 border-sky-400 text-white ring-2 ring-sky-400/40';
-                  }
-
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setSelectedChoice(idx)}
-                      className={`text-left p-4 md:p-5 rounded-2xl border transition flex items-start gap-3.5 ${cardClass}`}
-                    >
-                      <span className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-extrabold text-sm shrink-0">
-                        {CHOICE_LABELS[idx]}
-                      </span>
-                      <div className="space-y-1.5 flex-1">
-                        <div className="text-lg md:text-xl font-semibold">{choice}</div>
-                        {showAnswer && (
-                          <div className="text-sm text-slate-200/90 leading-snug pt-1 border-t border-slate-700/60">
-                            {currentQuestion.choiceBreakdowns[idx]}
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Full Answer Explanation */}
-              {showAnswer && (
-                <div className="rounded-2xl bg-emerald-500/15 border border-emerald-400/40 p-5 space-y-2">
-                  <div className="text-sm font-extrabold text-emerald-300">
-                    ✅ สรุปเฉลยข้อ {CHOICE_LABELS[currentQuestion.correctIndex]}
-                  </div>
-                  <p className="text-base md:text-lg text-white leading-relaxed">
-                    {currentQuestion.explanation}
-                  </p>
-                </div>
-              )}
-
-              {/* Teacher Script */}
-              {showTeacherScript && (
-                <div className="rounded-2xl bg-indigo-500/10 border border-indigo-400/30 p-4 flex items-start gap-3">
-                  <Mic className="w-5 h-5 text-indigo-300 shrink-0 mt-0.5" />
-                  <div className="text-sm md:text-base text-indigo-100">
-                    <span className="font-bold text-indigo-300 mr-2">สคริปต์แนะนำครู:</span>
-                    {currentQuestion.teacherScript}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         )}
       </main>
 
@@ -966,11 +954,10 @@ export default function GrammarPresentationDeck({
                 setSlideIndex(idx);
                 resetQuestionReveals();
               }}
-              className={`h-2.5 rounded-full transition-all ${
-                idx === slideIndex
+              className={`h-2.5 rounded-full transition-all ${idx === slideIndex
                   ? 'w-8 bg-amber-400'
                   : 'w-2.5 bg-slate-700 hover:bg-slate-500'
-              }`}
+                }`}
               aria-label={`ไปยังสไลด์ ${idx + 1}`}
             />
           ))}

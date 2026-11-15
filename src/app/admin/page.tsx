@@ -574,7 +574,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 mt-5 sm:mt-6">
+      <div className="max-w-[1600px] mx-auto w-full px-3 sm:px-6 mt-5 sm:mt-6">
         
         {/* Term Switcher Bar (Elevation 1) */}
         <div className="bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-slate-900/90 border border-slate-800/90 rounded-2xl p-2.5 sm:p-3 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-xl backdrop-blur-md">

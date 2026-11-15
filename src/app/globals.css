@@ -33,6 +33,11 @@
   --color-accent: #8b5cf6;
 }
 
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 body {
   background-color: var(--background);
   background-image: 

@@ -672,8 +672,8 @@ export default function Dashboard() {
   }, [loadDashboardData, activeTab, loadCollectionData, loadLeaderboardData, loadTeamsData, loadMessagesData, loadQuestsData]);
 
   return (
-    <div data-demo-guide="student-dashboard" className="min-h-screen bg-slate-950 text-slate-100 font-sans p-3 sm:p-4 md:p-6 safe-bottom">
-      <div className="max-w-4xl mx-auto space-y-5">
+    <div data-demo-guide="student-dashboard" className="min-h-screen w-full overflow-x-hidden bg-slate-950 text-slate-100 font-sans p-3 sm:p-5 lg:p-8 safe-bottom">
+      <div className="max-w-7xl mx-auto w-full space-y-5">
         <StudentHero
           student={student}
           progress={progress}

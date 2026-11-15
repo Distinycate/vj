@@ -275,15 +275,51 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 safe-bottom">
+    <div className="min-h-screen w-full overflow-x-hidden bg-slate-950 grid grid-cols-1 lg:grid-cols-2 safe-bottom">
+      {/* Left Brand Panel (PC/Desktop only — hidden on mobile so login stays instant) */}
+      <div className="hidden lg:flex flex-col justify-center px-12 xl:px-20 bg-slate-900/40 border-r border-slate-800/80">
+        <div className="max-w-lg space-y-6">
+          <div className="inline-flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xl">
+              VJ
+            </div>
+            <div>
+              <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Ban Khok Yang School</p>
+              <h2 className="text-2xl font-black text-white">Vocab Journey</h2>
+            </div>
+          </div>
 
-      <motion.div
-        id="login-panel"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        className="w-full max-w-md bg-slate-900/95 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl"
-      >
+          <h1 className="text-3xl xl:text-4xl font-black text-white leading-tight">
+            ฝึกคำศัพท์ &amp; ไวยากรณ์
+            <span className="block text-emerald-400 mt-1">เตรียมสอบ O-NET อย่างเป็นระบบ</span>
+          </h1>
+
+          <ul className="space-y-3 text-sm xl:text-base text-slate-300">
+            <li className="flex items-center gap-2.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+              <span>ด่านฝึกคำศัพท์ปรับระดับอัตโนมัติ (Adaptive)</span>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
+              <span>ทบทวนคำศัพท์แม่นยำด้วยระบบ SRS และใบงาน</span>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+              <span>รองรับทั้งคอมพิวเตอร์ แท็บเล็ต และมือถือ</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Right Login Column */}
+      <div className="flex flex-col items-center justify-center p-4 sm:p-6 lg:p-10 w-full">
+        <motion.div
+          id="login-panel"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="w-full max-w-md bg-slate-900/95 border border-slate-800 rounded-3xl p-5 sm:p-8 shadow-2xl"
+        >
         <div className="text-center mb-6">
           <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xl">
             VJ
@@ -547,6 +583,7 @@ export default function Home() {
           </div>
         </div>
       </motion.div>
+      </div>
 
       {/* Progressive Disclosure Modal for Academic & Innovator Info */}
       <AnimatePresence>
