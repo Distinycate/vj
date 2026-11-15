@@ -275,91 +275,142 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-slate-950 grid grid-cols-1 lg:grid-cols-2 safe-bottom">
-      {/* Left Brand Panel (PC/Desktop only — hidden on mobile so login stays instant) */}
-      <div className="hidden lg:flex flex-col justify-center px-12 xl:px-20 bg-slate-900/40 border-r border-slate-800/80">
-        <div className="max-w-lg space-y-6">
-          <div className="inline-flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xl">
+    <div className="min-h-screen w-full overflow-x-hidden bg-slate-950 text-slate-100 flex flex-col bg-[radial-gradient(ellipse_at_top_left,_rgba(16,185,129,0.09),transparent_50%),radial-gradient(ellipse_at_bottom_right,_rgba(56,189,248,0.07),transparent_50%)] safe-bottom">
+      {/* World-Class Minimalist Top Navbar */}
+      <header className="w-full border-b border-white/[0.06] bg-slate-950/80 backdrop-blur-md sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-sm shrink-0">
               VJ
             </div>
-            <div>
-              <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Ban Khok Yang School</p>
-              <h2 className="text-2xl font-black text-white">Vocab Journey</h2>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-black text-white text-base sm:text-lg tracking-tight truncate">Vocab Journey</span>
+              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md bg-white/[0.05] border border-white/[0.08] text-[11px] font-medium text-slate-400">
+                โรงเรียนบ้านโคกยาง
+              </span>
             </div>
           </div>
 
-          <h1 className="text-3xl xl:text-4xl font-black text-white leading-tight">
-            ฝึกคำศัพท์ &amp; ไวยากรณ์
-            <span className="block text-emerald-400 mt-1">เตรียมสอบ O-NET อย่างเป็นระบบ</span>
-          </h1>
-
-          <ul className="space-y-3 text-sm xl:text-base text-slate-300">
-            <li className="flex items-center gap-2.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-              <span>ด่านฝึกคำศัพท์ปรับระดับอัตโนมัติ (Adaptive)</span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
-              <span>ทบทวนคำศัพท์แม่นยำด้วยระบบ SRS และใบงาน</span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-              <span>รองรับทั้งคอมพิวเตอร์ แท็บเล็ต และมือถือ</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Right Login Column */}
-      <div className="flex flex-col items-center justify-center p-4 sm:p-6 lg:p-10 w-full">
-        <motion.div
-          id="login-panel"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="w-full max-w-md bg-slate-900/95 border border-slate-800 rounded-3xl p-5 sm:p-8 shadow-2xl"
-        >
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xl">
-            VJ
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Vocab Journey
-          </h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-1">
-            โรงเรียนบ้านโคกยาง • ฝึกคำศัพท์ &amp; เตรียมสอบ O-NET
-          </p>
-        </div>
-
-        {/* Mode Switcher */}
-        {isRegistrationOpen ? (
-          <div className="grid grid-cols-2 gap-1.5 bg-slate-950 border border-slate-800 rounded-2xl p-1 mb-5">
+          <nav className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => { setMode('login'); setError(''); }}
-              className={`min-h-[44px] py-2.5 px-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
-                mode === 'login'
-                  ? 'bg-emerald-500 text-slate-950 font-black'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              onClick={() => router.push('/network')}
+              className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors inline-flex items-center gap-1.5"
             >
-              <LogIn className="w-4 h-4 shrink-0" />
-              <span>เข้าสู่ระบบ</span>
+              <Globe2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+              <span className="hidden min-[420px]:inline">โรงเรียนเครือข่าย</span>
+              <span className="min-[420px]:hidden">VJ Lite</span>
             </button>
             <button
               type="button"
-              onClick={() => { setMode('register'); setError(''); }}
-              className={`min-h-[44px] py-2.5 px-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
-                mode === 'register'
-                  ? 'bg-emerald-500 text-slate-950 font-black'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              onClick={() => router.push('/demo')}
+              className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-amber-300 hover:bg-white/[0.06] transition-colors"
             >
-              <UserPlus className="w-4 h-4 shrink-0" />
-              <span>สมัครสมาชิก</span>
+              โหมดทดลอง
             </button>
-          </div>
+            <button
+              type="button"
+              onClick={() => setShowAboutModal(true)}
+              className="p-2 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-emerald-300 hover:bg-white/[0.06] transition-colors inline-flex items-center gap-1.5"
+              title="เกี่ยวกับนวัตกรรมและผู้พัฒนา"
+            >
+              <Info className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="hidden md:inline">เกี่ยวกับระบบ</span>
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      {/* Main Split Workspace */}
+      <main className="flex-1 flex items-center justify-center w-full">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 py-6 sm:py-10 lg:py-14 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
+          {/* Left Editorial Showcase (PC/Desktop only) */}
+          <section className="hidden lg:flex lg:col-span-7 flex-col justify-center space-y-8 pr-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-semibold w-fit">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Active Learning Platform • O-NET English</span>
+            </div>
+
+            <div className="space-y-4">
+              <h1 className="text-4xl xl:text-5xl font-black text-white tracking-tight leading-[1.15]">
+                ฝึกคำศัพท์และไวยากรณ์
+                <span className="block text-emerald-400 mt-1.5">
+                  เพื่อความมั่นใจในสนามสอบ O-NET
+                </span>
+              </h1>
+              <p className="text-slate-400 text-base xl:text-lg max-w-xl leading-relaxed">
+                แพลตฟอร์มการเรียนภาษาอังกฤษที่ออกแบบมาเพื่อนักเรียนและครู ปรับระดับตามความสามารถอัตโนมัติ พร้อมระบบทบทวนและใบงานในที่เดียว
+              </p>
+            </div>
+
+            {/* 3 Minimalist Bento Highlights */}
+            <div className="grid grid-cols-3 gap-4 max-w-2xl pt-2">
+              <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4">
+                <p className="text-2xl font-black text-white">100+</p>
+                <p className="text-xs font-semibold text-emerald-400 mt-1">ด่านผจญภัย</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">ปรับระดับอัตโนมัติ</p>
+              </div>
+              <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4">
+                <p className="text-2xl font-black text-white">25 บท</p>
+                <p className="text-xs font-semibold text-sky-400 mt-1">ไวยากรณ์ &amp; ทริค</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">พร้อมข้อสอบจริง</p>
+              </div>
+              <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4">
+                <p className="text-2xl font-black text-white">SRS</p>
+                <p className="text-xs font-semibold text-amber-400 mt-1">ทบทวนแม่นยำ</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">จำระยะยาวรายบุคคล</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Right Auth Card */}
+          <section className="lg:col-span-5 flex justify-center lg:justify-end w-full">
+            <motion.div
+              id="login-panel"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-[430px] bg-slate-900/90 backdrop-blur-xl border border-white/[0.08] rounded-3xl p-6 sm:p-8 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.75)]"
+            >
+              <div className="mb-6">
+                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  {mode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิกใหม่'}
+                </h2>
+                <p className="text-slate-400 text-xs sm:text-sm mt-1">
+                  {mode === 'login'
+                    ? 'เลือกบทบาทและกรอกข้อมูลเพื่อเริ่มต้นใช้งาน'
+                    : 'กรอกข้อมูลนักเรียนเพื่อสร้างบัญชีการเรียนรู้'}
+                </p>
+              </div>
+
+              {/* Mode Switcher */}
+              {isRegistrationOpen ? (
+                <div className="grid grid-cols-2 gap-1 bg-slate-950/90 border border-slate-800 rounded-xl p-1 mb-5">
+                  <button
+                    type="button"
+                    onClick={() => { setMode('login'); setError(''); }}
+                    className={`min-h-[40px] py-2 px-3 rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 ${
+                      mode === 'login'
+                        ? 'bg-emerald-500 text-slate-950 font-black'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <LogIn className="w-4 h-4 shrink-0" />
+                    <span>เข้าสู่ระบบ</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setMode('register'); setError(''); }}
+                    className={`min-h-[40px] py-2 px-3 rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 ${
+                      mode === 'register'
+                        ? 'bg-emerald-500 text-slate-950 font-black'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <UserPlus className="w-4 h-4 shrink-0" />
+                    <span>สมัครสมาชิก</span>
+                  </button>
+                </div>
         ) : (
           <p className="text-xs text-slate-400 text-center mb-4">
             ใช้เลขบัตรประชาชน 13 หลัก และรหัสนักเรียน 4 หลัก
@@ -553,37 +604,10 @@ export default function Home() {
           </div>
         ) : null}
 
-        {/* Quiet Secondary Links */}
-        <div className="mt-6 pt-5 border-t border-slate-800 space-y-2.5">
-          <button
-            type="button"
-            onClick={() => router.push('/network')}
-            className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-200 font-bold text-sm transition-colors flex items-center justify-center gap-2 border border-slate-800"
-          >
-            <Globe2 className="w-4 h-4 text-sky-400 shrink-0" />
-            <span>โรงเรียนเครือข่าย (VJ Lite)</span>
-          </button>
-
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => router.push('/demo')}
-              className="text-xs text-slate-400 hover:text-amber-300 py-2 px-3 rounded-lg hover:bg-slate-800/60 transition-colors font-semibold"
-            >
-              โหมดกรรมการ (Demo)
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAboutModal(true)}
-              className="text-xs text-slate-400 hover:text-emerald-300 py-2 px-3 rounded-lg hover:bg-slate-800/60 transition-colors inline-flex items-center gap-1.5 font-semibold"
-            >
-              <Info className="w-3.5 h-3.5" />
-              <span>เกี่ยวกับนวัตกรรม &amp; ผู้พัฒนา</span>
-            </button>
-          </div>
+            </motion.div>
+          </section>
         </div>
-      </motion.div>
-      </div>
+      </main>
 
       {/* Progressive Disclosure Modal for Academic & Innovator Info */}
       <AnimatePresence>
