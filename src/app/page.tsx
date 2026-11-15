@@ -325,144 +325,107 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3 mb-5 text-center shadow-inner">
-            <p className="text-xs font-bold text-emerald-300">
-              🔑 บัญชีนักเรียนได้รับการลงทะเบียนโดยคุณครูเรียบร้อยแล้ว
-            </p>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              ใช้เลขประจำตัวประชาชนเข้าใช้งานได้ทันที
-            </p>
-          </div>
+          <p className="text-xs text-slate-400 text-center mb-4">
+            ใช้เลขบัตรประชาชน 13 หลัก และรหัสนักเรียน 4 หลัก
+          </p>
         )}
 
-        {/* New Season Announcement Banner */}
-        <div className="mb-5 bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-sky-500/15 border-2 border-emerald-500/40 rounded-3xl p-4 text-center shadow-lg">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-black mb-1.5">
-            <span>🚀 ต้อนรับสู่ภาคเรียนใหม่ (Season 2)</span>
-          </div>
-          <h3 className="text-sm sm:text-base font-black text-emerald-200">
-            เปิดระบบ Vocab Journey สำหรับภาคเรียนใหม่แล้ว!
-          </h3>
-          <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
-            เริ่มต้นการผจญภัยคำศัพท์รอบใหม่ไปด้วยกัน ทุกคนเริ่มต้นที่ <strong className="text-emerald-300">ด่าน 1</strong><br />
-            (เหรียญ, คลังการ์ด และไอเทมทั้งหมดยังคงอยู่ครบถ้วน)
-          </p>
-          <div className="mt-2.5 text-[11px] text-slate-300 bg-slate-950/70 rounded-xl py-2 px-3 border border-slate-800/80 space-y-1">
-            <div className="text-amber-300 font-semibold">📝 <strong>นักเรียนที่มีภารกิจแก้ 0/ร:</strong> เข้าสู่ระบบด้วยเลข ปชช. 13 หลัก และรหัส นร. 4 หลัก เพื่อทำภารกิจซ่อมเสริม (ชาเลนจ์) ได้ทันที</div>
-          </div>
-        </div>
-
         {error && (
-          <div className="error-state mb-5 text-xs sm:text-sm p-4 rounded-xl bg-rose-500/15 border-2 border-rose-500/40 text-rose-300 font-bold flex items-center gap-2 shadow-lg">
-            <span>⚠️ {error}</span>
+          <div className="mb-4 text-xs sm:text-sm p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 font-semibold">
+            ⚠️ {error}
           </div>
         )}
 
         {mode === 'login' && (
-          <div className="grid grid-cols-1 min-[390px]:grid-cols-3 gap-2.5 bg-slate-950/90 border-2 border-slate-800/90 rounded-2xl p-2 mb-5">
-            <button 
+          <div className="grid grid-cols-3 gap-1 bg-slate-950 border border-slate-800 rounded-xl p-1 mb-4">
+            <button
               type="button"
               onClick={() => { setLoginRole('student'); setError(''); }}
-              className={`min-h-[54px] py-2 px-1 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 border-2 ${
-                loginRole === 'student' 
-                  ? 'bg-gradient-to-br from-emerald-500/30 via-teal-500/25 to-sky-600/30 text-emerald-200 border-emerald-400 shadow-lg shadow-emerald-500/30 scale-[1.03]' 
-                  : 'text-slate-400 hover:text-emerald-300 hover:bg-slate-900/80 border-slate-800/80'
+              className={`min-h-[42px] py-2 px-2 rounded-lg text-xs sm:text-sm font-bold transition-colors ${
+                loginRole === 'student'
+                  ? 'bg-slate-800 text-emerald-300'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
-              <span className="text-xs sm:text-sm font-black">👩‍🎓 นักเรียน</span>
-              <span className="text-[10px] text-emerald-400 font-bold">เข้าสู่ระบบ</span>
+              นักเรียน
             </button>
-            <button 
+            <button
               type="button"
               onClick={() => { setLoginRole('teacher'); setError(''); }}
-              className={`min-h-[54px] py-2 px-1 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 border-2 ${
-                loginRole === 'teacher' 
-                  ? 'bg-gradient-to-br from-indigo-500/30 via-blue-500/25 to-indigo-600/30 text-indigo-200 border-indigo-400 shadow-lg shadow-indigo-500/30 scale-[1.03]' 
-                  : 'text-slate-400 hover:text-indigo-300 hover:bg-slate-900/80 border-slate-800/80'
+              className={`min-h-[42px] py-2 px-2 rounded-lg text-xs sm:text-sm font-bold transition-colors ${
+                loginRole === 'teacher'
+                  ? 'bg-slate-800 text-sky-300'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
-              <span className="text-xs sm:text-sm font-black">👨‍🏫 ครูผู้สอน</span>
-              <span className="text-[10px] text-indigo-400/90 font-bold">สรุปผล/จัดการ</span>
+              ครูผู้สอน
             </button>
-            <button 
+            <button
               type="button"
               onClick={() => { setLoginRole('executive'); setError(''); }}
-              className={`min-h-[54px] py-2 px-1 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 border-2 ${
-                loginRole === 'executive' 
-                  ? 'bg-gradient-to-br from-purple-500/30 via-fuchsia-500/25 to-purple-600/30 text-purple-200 border-purple-400 shadow-lg shadow-purple-500/30 scale-[1.03]' 
-                  : 'text-slate-400 hover:text-purple-300 hover:bg-slate-900/80 border-slate-800/80'
+              className={`min-h-[42px] py-2 px-2 rounded-lg text-xs sm:text-sm font-bold transition-colors ${
+                loginRole === 'executive'
+                  ? 'bg-slate-800 text-amber-300'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
-              <span className="text-xs sm:text-sm font-black">📊 ผู้บริหาร</span>
-              <span className="text-[10px] text-purple-400/90 font-bold">สรุปรายงาน</span>
+              ผู้บริหาร
             </button>
           </div>
         )}
 
         {mode === 'login' ? (
-          <div className="flex flex-col gap-4" onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(e); }}>
+          <div className="flex flex-col gap-3.5" onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(e); }}>
             <div className="space-y-1.5">
-              <label className="text-slate-200 text-xs sm:text-sm font-black flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <User className={`w-4 h-4 ${loginRole === 'student' ? 'text-emerald-400' : 'text-indigo-400'}`} />
-                  <span>{loginRole === 'student' ? 'เลขประจำตัวประชาชน 13 หลัก' : 'Username (ชื่อผู้ใช้งาน)'}</span>
-                </span>
+              <label className="text-slate-300 text-xs sm:text-sm font-bold flex items-center gap-1.5">
+                <User className="w-4 h-4 text-slate-400 shrink-0" />
+                <span>{loginRole === 'student' ? 'เลขประจำตัวประชาชน 13 หลัก' : 'ชื่อผู้ใช้งาน (Username)'}</span>
               </label>
-              <input 
-                type="text" 
-                autoComplete="off" 
-                value={loginUsername} 
-                onChange={(e) => setLoginUsername(e.target.value)} 
-                className={`w-full bg-slate-950/90 border-2 border-slate-800 rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all placeholder:text-slate-500 shadow-inner ${
-                  loginRole === 'student'
-                    ? 'focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/25'
-                    : 'focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/25'
-                }`}
-                placeholder={loginRole === 'student' ? 'กรอกเลขประจำตัวประชาชน 13 หลัก' : 'กรอกชื่อผู้ใช้งานครูหรือผู้บริหาร'} 
+              <input
+                type="text"
+                autoComplete="off"
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                className="w-full min-h-[48px] bg-slate-950 border border-slate-800 focus:border-emerald-400 rounded-xl px-3.5 py-2.5 text-white text-base sm:text-sm outline-none transition-colors placeholder:text-slate-600"
+                placeholder={loginRole === 'student' ? 'เลขประจำตัวประชาชน 13 หลัก' : 'Username'}
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-slate-200 text-xs sm:text-sm font-black flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <Lock className={`w-4 h-4 ${loginRole === 'student' ? 'text-emerald-400' : 'text-indigo-400'}`} />
-                  <span>{loginRole === 'student' ? 'รหัสผ่าน (รหัสนักเรียน 4 หลัก)' : 'Password (รหัสผ่าน)'}</span>
-                </span>
+              <label className="text-slate-300 text-xs sm:text-sm font-bold flex items-center gap-1.5">
+                <Lock className="w-4 h-4 text-slate-400 shrink-0" />
+                <span>{loginRole === 'student' ? 'รหัสนักเรียน 4 หลัก' : 'รหัสผ่าน (Password)'}</span>
               </label>
-              <input 
-                type="password" 
-                autoComplete="new-password" 
-                value={loginPassword} 
-                onChange={(e) => setLoginPassword(e.target.value)} 
-                className={`w-full bg-slate-950/90 border-2 border-slate-800 rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all placeholder:text-slate-500 shadow-inner ${
-                  loginRole === 'student'
-                    ? 'focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/25'
-                    : 'focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/25'
-                }`}
-                placeholder={loginRole === 'student' ? 'กรอกรหัสนักเรียน 4 หลัก' : 'กรอกรหัสผ่าน'} 
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                className="w-full min-h-[48px] bg-slate-950 border border-slate-800 focus:border-emerald-400 rounded-xl px-3.5 py-2.5 text-white text-base sm:text-sm outline-none transition-colors placeholder:text-slate-600"
+                placeholder={loginRole === 'student' ? 'รหัสนักเรียน 4 หลัก' : 'Password'}
               />
             </div>
-            <label className="flex items-center gap-2 cursor-pointer mt-1">
-              <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-slate-900" />
-              <span className="text-slate-300 text-xs sm:text-sm font-medium hover:text-white transition-colors">จดจำรหัสผ่าน</span>
+            <label className="flex items-center gap-2 cursor-pointer py-1">
+              <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-emerald-500" />
+              <span className="text-slate-400 text-xs sm:text-sm hover:text-white transition-colors">จดจำรหัสผ่าน</span>
             </label>
 
             {/* Primary Action Button */}
-            <button 
-              type="button" 
-              onClick={handleLogin} 
-              disabled={isLoading} 
-              className="w-full min-h-[62px] py-4 px-6 rounded-2xl bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-600 hover:from-indigo-400 hover:to-blue-400 text-white font-black text-base sm:text-lg transition-all shadow-2xl shadow-indigo-500/40 hover:shadow-indigo-400/60 flex items-center justify-center gap-3 mt-2 disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] border-2 border-indigo-300/50"
+            <button
+              type="button"
+              onClick={handleLogin}
+              disabled={isLoading}
+              className="w-full min-h-[48px] py-3 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm sm:text-base transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isLoading ? (
-                <div className="w-6 h-6 border-3 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" />
               ) : (
                 <>
                   <span>
                     {loginRole === 'student'
-                      ? 'เข้าสู่ระบบผจญภัยคำศัพท์ 🎮'
+                      ? 'เข้าสู่ระบบ'
                       : loginRole === 'teacher'
-                        ? 'เข้าสู่ระบบจัดการเรียนรู้ 👨‍🏫'
-                        : 'เข้าสู่ระบบรายงานผู้บริหาร 📊'}
+                        ? 'เข้าสู่ระบบครู'
+                        : 'เข้าสู่ระบบผู้บริหาร'}
                   </span>
                   <ArrowRight className="w-5 h-5 shrink-0" />
                 </>
