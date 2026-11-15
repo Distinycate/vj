@@ -233,136 +233,64 @@ export default function GrammarPresentationDeck({
       ref={deckRef}
       className="flex flex-col min-h-[calc(100vh-2rem)] bg-slate-950 text-slate-100 rounded-2xl border border-slate-800 shadow-2xl overflow-hidden"
     >
-      {/* Top Presentation Toolbar */}
-      <header className="bg-slate-900/95 border-b border-slate-800 px-4 py-3 space-y-2.5">
-        {/* Grade & Category Filter Row */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 mr-1">
-              ระดับชั้น:
-            </span>
-            {GRAMMAR_GRADE_TABS.map((tab) => {
-              const isSelected = selectedGrade === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setSelectedGrade(tab.key)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-extrabold transition cursor-pointer ${
-                    isSelected
-                      ? 'bg-amber-400 text-slate-950 shadow'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+      {/* Compact Presentation Toolbar */}
+      <header className="bg-slate-900 border-b border-slate-800 px-4 py-2.5 space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* Left: Back, Topic Hub, Unit Selector */}
+          <div className="flex items-center gap-2 min-w-0 flex-wrap">
+            {onExit && (
+              <button
+                type="button"
+                onClick={onExit}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+              >
+                ← กลับ
+              </button>
+            )}
 
-          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={() => setShowTopicHub((v) => !v)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border transition cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
                 showTopicHub
-                  ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-lg'
-                  : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border-amber-400/50'
+                  ? 'bg-amber-400 text-slate-950 border-amber-300'
+                  : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              {showTopicHub
-                ? '✕ ปิดสารบัญ (กลับหน้าสไลด์)'
-                : `🗂️ สารบัญ ${GRAMMAR_TEACHING_UNITS.length} เรื่อง (เลือกสอนเรื่องไหนก่อนก็ได้)`}
+              {showTopicHub ? 'ปิดสารบัญ' : `สารบัญ (${GRAMMAR_TEACHING_UNITS.length})`}
             </button>
-
-            {currentUnit.categoryLabel && (
-              <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-sky-500/15 text-sky-300 border border-sky-500/30">
-                🧩 {currentUnit.categoryLabel}
-              </span>
-            )}
-            {currentUnit.gradeLabel && (
-              <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                📚 {currentUnit.gradeLabel}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Category Filter Pills Row */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 mr-1">
-              หมวดเนื้อหา:
-            </span>
-            {TEACHING_CATEGORY_TABS.map((cat) => {
-              const isSelected = selectedCategory === cat.key;
-              return (
-                <button
-                  key={cat.key}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat.key)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    isSelected
-                      ? 'bg-sky-400 text-slate-950 shadow'
-                      : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700'
-                  }`}
-                >
-                  {cat.icon} {cat.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="relative min-w-[210px]">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ค้นหาเรื่องที่ต้องการสอน..."
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-8 pr-3 py-1 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-400"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold shrink-0">
-              <Sparkles className="w-3.5 h-3.5" />
-              โหมดครูผู้สอน
-            </span>
 
             <select
               aria-label="เลือกบทเรียน"
               value={unitNumber}
               onChange={(e) => selectUnit(Number(e.target.value))}
-              className="bg-slate-800 border border-slate-700 text-slate-100 text-sm font-semibold rounded-lg px-3 py-1.5 max-w-[380px] focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="bg-slate-950 border border-slate-700 text-slate-100 text-xs sm:text-sm font-semibold rounded-lg px-3 py-1.5 max-w-[300px] focus:outline-none focus:ring-2 focus:ring-amber-400"
             >
               {(filteredUnits.length > 0 ? filteredUnits : GRAMMAR_TEACHING_UNITS).map((u) => (
                 <option key={u.id} value={u.unitNumber}>
-                  [{u.gradeLevel || 'ALL'} • {u.categoryLabel || 'ทั่วไป'}] {u.title}
+                  [{u.gradeLevel || 'ALL'}] {u.title}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Mode Switcher */}
-          <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          {/* Center: 3-Stage Mode Switcher */}
+          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
             <button
               type="button"
               onClick={() => {
                 setShowTopicHub(false);
                 selectStage('concept');
               }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
                 !showTopicHub && stage === 'concept'
-                  ? 'bg-sky-500 text-slate-950 shadow'
+                  ? 'bg-sky-400 text-slate-950'
                   : 'text-slate-300 hover:bg-slate-800'
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              1. บรรยาย & ทริค ({currentUnit.conceptSlides.length})
+              บรรยาย ({currentUnit.conceptSlides.length})
             </button>
             <button
               type="button"
@@ -370,14 +298,14 @@ export default function GrammarPresentationDeck({
                 setShowTopicHub(false);
                 selectStage('practice');
               }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
                 !showTopicHub && stage === 'practice'
-                  ? 'bg-emerald-500 text-slate-950 shadow'
+                  ? 'bg-emerald-400 text-slate-950'
                   : 'text-slate-300 hover:bg-slate-800'
               }`}
             >
               <HelpCircle className="w-3.5 h-3.5" />
-              2. แบบฝึกหัด ({currentUnit.practiceQuestions.length})
+              ฝึกทำ ({currentUnit.practiceQuestions.length})
             </button>
             <button
               type="button"
@@ -385,43 +313,41 @@ export default function GrammarPresentationDeck({
                 setShowTopicHub(false);
                 selectStage('onet');
               }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
                 !showTopicHub && stage === 'onet'
-                  ? 'bg-amber-400 text-slate-950 shadow'
+                  ? 'bg-amber-400 text-slate-950'
                   : 'text-slate-300 hover:bg-slate-800'
               }`}
             >
               <Trophy className="w-3.5 h-3.5" />
-              3. ข้อสอบจริง O-NET ({currentUnit.realOnetQuestions.length})
+              O-NET ({currentUnit.realOnetQuestions.length})
             </button>
           </div>
 
-          {/* Right Controls */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Right: Compact Utility Controls */}
+          <div className="flex items-center gap-1.5 flex-wrap">
             <a
               href="/challenge/grammar"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 transition"
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
               title="เปิดหน้าคัมภีร์สูตรลัดสำหรับนักเรียน"
             >
-              ⚡ หน้าทบทวนนักเรียน
+              หน้านักเรียน
             </a>
-
             <a
               href="/admin/worksheets"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition"
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
               title="เปิดระบบสั่งการบ้านใบงานคำศัพท์"
             >
-              📖 สั่งใบงานท้ายคาบ
+              สั่งใบงาน
             </a>
-
             <button
               type="button"
               onClick={() => setShowTeacherScript((v) => !v)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition ${
                 showTeacherScript
                   ? 'bg-indigo-500/20 text-indigo-200 border-indigo-400/40'
                   : 'bg-slate-800 text-slate-400 border-slate-700'
@@ -429,36 +355,80 @@ export default function GrammarPresentationDeck({
               title="เปิด/ซ่อนบทพูดแนะนำสำหรับครู"
             >
               {showTeacherScript ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-              บทพูดครู
+              บทพูด
             </button>
-
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+              title={isFullscreen ? 'ย่อจอ' : 'เต็มจอ'}
             >
               {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-              {isFullscreen ? 'ย่อจอ' : 'เต็มจอ'}
             </button>
-
-            {onExit && (
-              <button
-                type="button"
-                onClick={onExit}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 transition"
-              >
-                กลับหน้าจัดการ
-              </button>
-            )}
           </div>
         </div>
 
-        {/* Live Classroom Tools Row: Pen, Eraser, Clear, Wheel, Print/LINE */}
+        {/* Grade, Category & Search Filters (Shown only when browsing Topic Hub) */}
+        {showTopicHub && (
+          <div className="pt-2 border-t border-slate-800/80 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {GRAMMAR_GRADE_TABS.map((tab) => {
+                  const isSelected = selectedGrade === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setSelectedGrade(tab.key)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        isSelected
+                          ? 'bg-amber-400 text-slate-950'
+                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="relative min-w-[210px]">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="ค้นหาเรื่องที่ต้องการสอน..."
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-8 pr-3 py-1 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-400"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {TEACHING_CATEGORY_TABS.map((cat) => {
+                const isSelected = selectedCategory === cat.key;
+                return (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat.key)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-sky-400 text-slate-950'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    {cat.icon} {cat.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Compact Live Classroom Tools Row */}
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-              เครื่องมือสอนสด:
-            </span>
             <TeacherLiveToolsBar
               tool={annotationTool}
               penColor={penColor}
@@ -470,27 +440,27 @@ export default function GrammarPresentationDeck({
             />
           </div>
           {annotationTool !== 'none' && (
-            <span className="text-[11px] font-bold text-amber-300 animate-pulse">
+            <span className="text-[11px] font-bold text-amber-300">
               {annotationTool === 'pen'
-                ? '✏️ โหมดปากกาเปิดอยู่ — ลากเส้นบนสไลด์ได้เลย (กด "ปากกา" อีกครั้งเพื่อคลิกปุ่มต่างๆ)'
-                : '🧹 โหมดยางลบเปิดอยู่ — ลากทับเส้นเพื่อลบเฉพาะจุด'}
+                ? '✏️ โหมดปากกาเปิดอยู่ — กด "ปากกา" อีกครั้งเพื่อคลิกปุ่มปกติ'
+                : '🧹 โหมดยางลบเปิดอยู่'}
             </span>
           )}
         </div>
       </header>
 
-      {/* Unit Golden Trick & Linked Worksheets Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border-b border-slate-800 px-6 py-2.5 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-xs md:text-sm">
-          <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-extrabold shrink-0">
-            GOLDEN TRICK
+      {/* Quiet Golden Trick Strip */}
+      <div className="bg-slate-900/60 border-b border-slate-800 px-4 py-1.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="flex items-center gap-2">
+          <span className="px-1.5 py-0.5 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30 font-bold shrink-0">
+            TRICK
           </span>
-          <span className="text-amber-100 font-medium">{currentUnit.goldenTrick}</span>
+          <span className="text-slate-200 font-medium">{currentUnit.goldenTrick}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {currentUnit.durationMinutes && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
-              <Clock className="w-3 h-3 text-amber-300" />~{currentUnit.durationMinutes} นาที/คาบ
+            <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+              <Clock className="w-3 h-3" />~{currentUnit.durationMinutes} นาที
             </span>
           )}
           {currentUnit.recommendedWorksheets &&

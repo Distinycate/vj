@@ -611,23 +611,19 @@ export default function AdminPage() {
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <a
               href="/admin/teach"
-              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold flex items-center gap-1.5 shadow-lg shadow-amber-500/20 transition-all"
+              className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black flex items-center gap-1.5 transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              🎓 เปิดโหมดสอนแกรมม่า &amp; O-NET (Presentation)
+              โหมดสอนแกรมม่า &amp; O-NET
             </a>
-            <span className="px-2.5 py-1 rounded-lg bg-slate-950/80 border border-slate-800/80 text-slate-300 font-mono font-bold">
-              👥 รายงานนักเรียน
+            <span className={`px-2.5 py-1.5 rounded-lg border font-bold flex items-center gap-1.5 ${
+              activeTab === 'term-archive'
+                ? 'bg-slate-900 border-cyan-500/30 text-cyan-300'
+                : 'bg-slate-900 border-slate-800 text-emerald-300'
+            }`}>
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              {activeTab === 'term-archive' ? 'ประวัติย้อนหลัง (Archive)' : 'Season 2 (ปัจจุบัน)'}
             </span>
-            {activeTab === 'term-archive' ? (
-              <span className="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-bold flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5" /> ประวัติย้อนหลัง (Archive)
-              </span>
-            ) : (
-              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" /> ฤดูกาลใช้งานจริง Season 2
-              </span>
-            )}
           </div>
         </div>
 
@@ -643,10 +639,10 @@ export default function AdminPage() {
                   icon: <Users className="w-4 h-4" />,
                   themeColor: 'indigo',
                   isActive: ['students', 'overview', 'school-overview', 'weak-words', 'risks'].includes(activeTab),
-                  activeClasses: 'bg-gradient-to-b from-indigo-950/70 via-slate-900/90 to-slate-950 border-indigo-500/60 ring-1 ring-indigo-500/40 shadow-lg shadow-indigo-500/15',
+                  activeClasses: 'bg-slate-900 border-indigo-400/70 text-white',
                   accentBar: 'bg-indigo-400',
                   iconBg: 'bg-indigo-500 text-white',
-                  inactiveIconBg: 'bg-indigo-500/10 text-indigo-400',
+                  inactiveIconBg: 'bg-slate-800 text-slate-400',
                   onClick: () => {
                     if (!['students', 'overview', 'school-overview', 'weak-words', 'risks'].includes(activeTab)) {
                       setActiveTab('students');
@@ -660,10 +656,10 @@ export default function AdminPage() {
                   icon: <Trophy className="w-4 h-4" />,
                   themeColor: 'amber',
                   isActive: ['teams', 'events'].includes(activeTab),
-                  activeClasses: 'bg-gradient-to-b from-amber-950/70 via-slate-900/90 to-slate-950 border-amber-500/60 ring-1 ring-amber-500/40 shadow-lg shadow-amber-500/15',
+                  activeClasses: 'bg-slate-900 border-amber-400/70 text-white',
                   accentBar: 'bg-amber-400',
-                  iconBg: 'bg-amber-500 text-slate-950 font-black',
-                  inactiveIconBg: 'bg-amber-500/10 text-amber-400',
+                  iconBg: 'bg-amber-400 text-slate-950',
+                  inactiveIconBg: 'bg-slate-800 text-slate-400',
                   onClick: () => {
                     if (!['teams', 'events'].includes(activeTab)) {
                       setActiveTab('teams');
@@ -677,10 +673,10 @@ export default function AdminPage() {
                   icon: <Target className="w-4 h-4" />,
                   themeColor: 'cyan',
                   isActive: ['assessments'].includes(activeTab),
-                  activeClasses: 'bg-gradient-to-b from-cyan-950/70 via-slate-900/90 to-slate-950 border-cyan-500/60 ring-1 ring-cyan-500/40 shadow-lg shadow-cyan-500/15',
+                  activeClasses: 'bg-slate-900 border-cyan-400/70 text-white',
                   accentBar: 'bg-cyan-400',
-                  iconBg: 'bg-cyan-500 text-slate-950 font-black',
-                  inactiveIconBg: 'bg-cyan-500/10 text-cyan-400',
+                  iconBg: 'bg-cyan-400 text-slate-950',
+                  inactiveIconBg: 'bg-slate-800 text-slate-400',
                   onClick: () => {
                     setActiveTab('assessments');
                     setAssessmentSubTab('onet');
@@ -693,10 +689,10 @@ export default function AdminPage() {
                   icon: <Settings className="w-4 h-4" />,
                   themeColor: 'fuchsia',
                   isActive: ['settings'].includes(activeTab),
-                  activeClasses: 'bg-gradient-to-b from-fuchsia-950/70 via-slate-900/90 to-slate-950 border-fuchsia-500/60 ring-1 ring-fuchsia-500/40 shadow-lg shadow-fuchsia-500/15',
-                  accentBar: 'bg-fuchsia-400',
-                  iconBg: 'bg-fuchsia-500 text-white',
-                  inactiveIconBg: 'bg-fuchsia-500/10 text-fuchsia-400',
+                  activeClasses: 'bg-slate-900 border-emerald-400/70 text-white',
+                  accentBar: 'bg-emerald-400',
+                  iconBg: 'bg-emerald-400 text-slate-950',
+                  inactiveIconBg: 'bg-slate-800 text-slate-400',
                   onClick: () => setActiveTab('settings')
                 },
               ].map(pillar => (

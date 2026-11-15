@@ -672,192 +672,231 @@ export default function Dashboard() {
   }, [loadDashboardData, activeTab, loadCollectionData, loadLeaderboardData, loadTeamsData, loadMessagesData, loadQuestsData]);
 
   return (
-    <div data-demo-guide="student-dashboard" className="min-h-screen bg-transparent text-slate-100 font-sans p-3 sm:p-4 md:p-8 safe-bottom relative">
-      {/* Ambient backgrounds */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 glow-orb"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-secondary/20 glow-orb"></div>
+    <div data-demo-guide="student-dashboard" className="min-h-screen bg-slate-950 text-slate-100 font-sans p-3 sm:p-4 md:p-6 safe-bottom">
+      <div className="max-w-4xl mx-auto space-y-5">
+        <StudentHero
+          student={student}
+          progress={progress}
+          stats={stats}
+          rankConfig={rankConfig}
+          setShowShop={setShowShop}
+          setShowCardCenter={setShowCardCenter}
+          logout={logout}
+        />
 
-      <div className="max-w-4xl mx-auto relative z-10">
-        <motion.div
-          animate={{ y: [0, -3, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <StudentHero 
-            student={student} 
-            progress={progress} 
-            stats={stats} 
-            rankConfig={rankConfig} 
-            setShowShop={setShowShop} 
-            setShowCardCenter={setShowCardCenter}
-            logout={logout} 
-          />
-        </motion.div>
-
-        {/* AI Mascot Bubble */}
-        <div className="glass-card p-4 rounded-2xl flex items-center gap-3.5 mb-6 hover-lift bg-gradient-to-r from-emerald-500/10 to-transparent">
-          <div className="w-10 h-10 bg-emerald-500/20 border border-emerald-500/30 rounded-xl flex items-center justify-center text-xl shrink-0">
-            🤖
+        {/* Compact AI Teacher Tip */}
+        {aiTeacherMessage && (
+          <div className="bg-slate-900/80 border border-slate-800 px-4 py-3 rounded-2xl flex items-center gap-3">
+            <span className="text-lg shrink-0" aria-hidden="true">🤖</span>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed text-left">
+              <span className="font-bold text-emerald-400 mr-1.5">ครูพี่โอม:</span>
+              {aiTeacherMessage}
+            </p>
           </div>
-          <div className="text-left">
-            <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest block mb-0.5">ครูพี่โอม AI Teacher</span>
-            <p className="text-sm text-slate-200 font-medium leading-relaxed">{aiTeacherMessage}</p>
-          </div>
-        </div>
+        )}
 
         {/* Quick Stats */}
-        <ProgressStats 
+        <ProgressStats
           realAccuracy={realAccuracy}
           level={stats.level}
           xp={stats.xp}
           reviewWordsCount={reviewWords.length}
         />
 
-        {/* Team Card (if assigned) */}
         {teamError && (
-          <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-300 text-sm">
+          <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-300 text-xs sm:text-sm">
             ระบบทีมยังไม่พร้อม: {teamError}
           </div>
         )}
-        {myTeams.length > 0 && !isExternalUser && (
-          <div className="mb-6">
-            <StudentTeamCard team={myTeams[0]} scoreData={teamScores[myTeams[0].id]} />
+
+        {/* Primary 4-Pillar Navigation */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1 grid grid-cols-4 bg-slate-900 border border-slate-800 rounded-2xl p-1 gap-1">
+            <button
+              onClick={() => setActiveTab('roadmap')}
+              className={`min-h-12 py-2 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                activeTab === 'roadmap'
+                  ? 'bg-emerald-500 text-slate-950 font-black'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Compass className="w-4 h-4 shrink-0" />
+              <span className="text-[11px] sm:text-xs">ผจญภัย</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab(activeTab === 'collection' ? 'collection' : 'review')}
+              className={`min-h-12 py-2 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                activeTab === 'review' || activeTab === 'collection'
+                  ? 'bg-emerald-500 text-slate-950 font-black'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Bookmark className="w-4 h-4 shrink-0" />
+              <span className="text-[11px] sm:text-xs">ทบทวน ({reviewWords.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab(['quests', 'teams', 'stats'].includes(activeTab) ? activeTab : 'quests')}
+              className={`min-h-12 py-2 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-colors relative cursor-pointer ${
+                ['quests', 'teams', 'stats'].includes(activeTab)
+                  ? 'bg-emerald-500 text-slate-950 font-black'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Trophy className="w-4 h-4 shrink-0" />
+              <span className="text-[11px] sm:text-xs">ภารกิจ &amp; ทีม</span>
+              {dailyQuests.some(q => q.progress >= q.target_value && !q.claimed) && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full" />
+              )}
+            </button>
+
+            <button
+              onClick={() => {
+                if (activeTab !== 'profile') {
+                  setActiveTab('inbox');
+                  markMessagesAsRead();
+                }
+              }}
+              className={`min-h-12 py-2 rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-colors relative cursor-pointer ${
+                activeTab === 'inbox' || activeTab === 'profile'
+                  ? 'bg-emerald-500 text-slate-950 font-black'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <User className="w-4 h-4 shrink-0" />
+              <span className="text-[11px] sm:text-xs">โปรไฟล์</span>
+              {messages.filter(m => !m.is_read).length > 0 && (
+                <span className="absolute top-1.5 right-1.5 min-w-4 h-4 px-1 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center">
+                  {messages.filter(m => !m.is_read).length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <button
+            onClick={handleManualRefresh}
+            title="รีเฟรชข้อมูล"
+            aria-label="รีเฟรชข้อมูล"
+            className="min-h-12 w-12 shrink-0 flex items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Contextual Sub-Navigation (Progressive Disclosure) */}
+        {(activeTab === 'review' || activeTab === 'collection') && (
+          <div className="flex items-center gap-2 bg-slate-900/60 border border-slate-800 rounded-xl p-1 w-fit">
+            <button
+              onClick={() => setActiveTab('review')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                activeTab === 'review' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              คำที่ต้องทบทวน ({reviewWords.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('collection')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                activeTab === 'collection' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              คลังศัพท์ทั้งหมด
+            </button>
           </div>
         )}
 
-        {/* Mini Leaderboard on top if in roadmap */}
-        {activeTab === 'roadmap' && !isExternalUser && (
-          <div data-demo-guide="leaderboard" className="mb-8">
+        {['quests', 'teams', 'stats'].includes(activeTab) && (
+          <div className="flex flex-wrap items-center gap-2 bg-slate-900/60 border border-slate-800 rounded-xl p-1 w-fit">
+            <button
+              onClick={() => setActiveTab('quests')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                activeTab === 'quests' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              ภารกิจรายวัน
+            </button>
+            {!isExternalUser && (
+              <button
+                onClick={() => setActiveTab('teams')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                  activeTab === 'teams' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                ทีมของฉัน
+              </button>
+            )}
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                activeTab === 'stats' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              แรงกิ้ง &amp; อันดับ
+            </button>
+          </div>
+        )}
+
+        {(activeTab === 'inbox' || activeTab === 'profile') && (
+          <div className="flex items-center gap-2 bg-slate-900/60 border border-slate-800 rounded-xl p-1 w-fit">
+            <button
+              onClick={() => { setActiveTab('inbox'); markMessagesAsRead(); }}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                activeTab === 'inbox' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              กล่องจดหมาย
+            </button>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                activeTab === 'profile' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              โปรไฟล์ส่วนตัว
+            </button>
+          </div>
+        )}
+
+        {/* Team Card & Leaderboard moved cleanly into their own tabs */}
+        {activeTab === 'teams' && myTeams.length > 0 && !isExternalUser && (
+          <StudentTeamCard team={myTeams[0]} scoreData={teamScores[myTeams[0].id]} />
+        )}
+        {activeTab === 'stats' && !isExternalUser && (
+          <div data-demo-guide="leaderboard">
             <TeamLeaderboard scope="class" classroomId={student?.classroom_id} />
           </div>
         )}
 
-        {/* Tab Links */}
-        <div className="flex flex-col min-[420px]:flex-row min-[420px]:justify-between min-[420px]:items-end gap-2 mb-2">
-          <div className="text-slate-400 text-sm font-bold flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>เมนูการเดินทาง</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {!isExternalUser && (
-              <>
-                <Link 
-                  href="/challenge/worksheets" 
-                  className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-emerald-300 hover:text-emerald-200 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm font-bold"
-                >
-                  📖 ใบงานคำศัพท์
-                </Link>
-                <Link 
-                  href="/challenge/grammar" 
-                  className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-sky-300 hover:text-sky-200 bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm font-bold"
-                >
-                  ⚡ สูตรลัดไวยากรณ์
-                </Link>
-                <Link 
-                  href="/challenge/onet" 
-                  className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-cyan-300 hover:text-cyan-200 bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm font-bold"
-                >
-                  🎯 O-NET Challenge
-                </Link>
-                <Link 
-                  href="/events" 
-                  className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm font-bold"
-                >
-                  ⭐ กิจกรรมซ่อมเสริม / Events
-                </Link>
-              </>
-            )}
-            <button onClick={handleManualRefresh} className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm">
-              <RefreshCw className="w-3 h-3" /> รีเฟรชข้อมูล
-            </button>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 min-[420px]:grid-cols-4 md:grid-cols-8 glass-card rounded-2xl p-1.5 mb-8 gap-1.5 border border-slate-800/80 bg-slate-950/50 backdrop-blur-xl shadow-xl">
-          <button 
-            onClick={() => setActiveTab('roadmap')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeTab === 'roadmap' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-            }`}
-          >
-            <Compass className="w-5 h-5 shrink-0" />
-            <span className="text-[10px] sm:text-xs font-black">ผจญภัย</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('review')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeTab === 'review' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-            }`}
-          >
-            <Bookmark className="w-5 h-5 shrink-0" />
-            <span className="text-[10px] sm:text-xs font-black">ทบทวน ({reviewWords.length})</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('collection')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeTab === 'collection' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-            }`}
-          >
-            <BookMarked className="w-5 h-5 shrink-0" />
-            <span className="text-[10px] sm:text-xs font-black">คลังศัพท์</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('quests')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all relative cursor-pointer ${
-              activeTab === 'quests' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-            }`}
-          >
-            <CheckSquare className="w-5 h-5 shrink-0" />
-            <span className="text-[10px] sm:text-xs font-black">ภารกิจ</span>
-            {dailyQuests.some(q => q.progress >= q.target_value && !q.claimed) && (
-              <div className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full animate-ping" />
-            )}
-            {dailyQuests.some(q => q.progress >= q.target_value && !q.claimed) && (
-              <div className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full" />
-            )}
-          </button>
-          <button 
-            onClick={() => setActiveTab('stats')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeTab === 'stats' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-            }`}
-          >
-            <Trophy className="w-5 h-5 shrink-0" />
-            <span className="text-[10px] sm:text-xs font-black">แรงกิ้ง</span>
-          </button>
-          {!isExternalUser && (
-            <button 
-              onClick={() => setActiveTab('teams')} 
-              className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'teams' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-              }`}
+        {/* Quick Study Links inside Roadmap only */}
+        {activeTab === 'roadmap' && !isExternalUser && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <Link
+              href="/challenge/worksheets"
+              className="min-h-11 flex items-center justify-center gap-1.5 text-xs text-slate-200 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 px-3 py-2 rounded-xl transition-colors font-bold"
             >
-              <Users className="w-5 h-5 shrink-0" />
-              <span className="text-[10px] sm:text-xs font-black">ทีมของฉัน</span>
-            </button>
-          )}
-          <button 
-            onClick={() => { setActiveTab('inbox'); markMessagesAsRead(); }} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all relative cursor-pointer ${
-              activeTab === 'inbox' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-            }`}
-          >
-            <Mail className="w-5 h-5 shrink-0" />
-            <span className="text-[10px] sm:text-xs font-black">จดหมาย</span>
-            {messages.filter(m => !m.is_read).length > 0 && (
-              <div className="absolute top-2 right-2 flex items-center justify-center w-4 h-4 bg-rose-500 text-white text-[10px] font-black rounded-full shadow-lg">
-                {messages.filter(m => !m.is_read).length}
-              </div>
-            )}
-          </button>
-          <button 
-            onClick={() => setActiveTab('profile')} 
-            className={`min-h-14 py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeTab === 'profile' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-            }`}
-          >
-            <User className="w-5 h-5 shrink-0" />
-            <span className="text-[10px] sm:text-xs font-black">โปรไฟล์</span>
-          </button>
-        </div>
+              <span>📖 ใบงานคำศัพท์</span>
+            </Link>
+            <Link
+              href="/challenge/grammar"
+              className="min-h-11 flex items-center justify-center gap-1.5 text-xs text-slate-200 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 px-3 py-2 rounded-xl transition-colors font-bold"
+            >
+              <span>⚡ สูตรลัดไวยากรณ์</span>
+            </Link>
+            <Link
+              href="/challenge/onet"
+              className="min-h-11 flex items-center justify-center gap-1.5 text-xs text-slate-200 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 px-3 py-2 rounded-xl transition-colors font-bold"
+            >
+              <span>🎯 O-NET Challenge</span>
+            </Link>
+            <Link
+              href="/events"
+              className="min-h-11 flex items-center justify-center gap-1.5 text-xs text-slate-200 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 px-3 py-2 rounded-xl transition-colors font-bold"
+            >
+              <span>⭐ กิจกรรม / ซ่อมเสริม</span>
+            </Link>
+          </div>
+        )}
 
         {/* Panels */}
         <AnimatePresence mode="wait">

@@ -11,7 +11,7 @@ const StudyCamp = dynamic(() => import('@/components/StudyCamp'));
 const Game = dynamic(() => import('@/components/Game'));
 const PreTest = dynamic(() => import('@/components/PreTest'));
 const PostTest = dynamic(() => import('@/components/PostTest'));
-import { Globe2, School, User, Lock, Sparkles, LogIn, UserPlus, ArrowRight } from 'lucide-react';
+import { Globe2, School, User, Lock, Sparkles, LogIn, UserPlus, ArrowRight, Info, X } from 'lucide-react';
 import { saveStudentSession } from '@/utils/studentSession';
 import { useDemoStore } from '@/store/useDemoStore';
 
@@ -88,6 +88,7 @@ export default function Home() {
   const [regYear, setRegYear] = useState(new Date().getFullYear().toString());
 
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
+  const [showAboutModal, setShowAboutModal] = useState(false);
 
   useEffect(() => {
     async function checkRegistration() {
@@ -274,204 +275,49 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent flex items-start xl:items-center justify-center p-3 sm:p-4 safe-bottom relative overflow-x-hidden overflow-y-auto">
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 safe-bottom">
 
-
-      {/* Ambient orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/20 glow-orb"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-sky-500/20 glow-orb"></div>
-
-      <div className="relative z-10 w-full max-w-7xl grid grid-cols-1 xl:grid-cols-[1.35fr_0.65fr] gap-4 sm:gap-6 items-start">
-        <motion.section
-          initial={{ opacity: 0, x: -24 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="order-2 xl:order-1 glass-card p-5 sm:p-8 xl:max-h-[95vh] xl:overflow-y-auto mobile-scroll-panel"
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-black tracking-widest uppercase mb-5">
-            🌟 Active Learning Innovation
-          </div>
-          <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-4 break-words">
-            Vocab Journey: ก้าวข้ามขีดจำกัดการท่องจำ
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-300 to-blue-300">
-              สู่นวัตกรรมการเรียนรู้แห่งศตวรรษที่ 21
-            </span>
-          </h1>
-          <div className="space-y-4 text-slate-300 leading-relaxed text-sm sm:text-base">
-            <p>
-              ภาษาอังกฤษคือหน้าต่างสู่โอกาสที่ไร้ขีดจำกัด แต่อุปสรรคสำคัญที่ทำให้นักเรียนหลายคนไปไม่ถึงเป้าหมาย
-              คือข้อจำกัดด้าน “คลังคำศัพท์” การท่องจำจากหน้ากระดาษแบบเดิมมักทำให้เกิดความเบื่อหน่ายและลืมเลือนอย่างรวดเร็ว
-            </p>
-            <p>
-              <strong className="text-white">Vocab Journey</strong> จึงไม่ได้เป็นเพียงแพลตฟอร์มเกมออนไลน์ แต่คือ
-              <strong className="text-emerald-300"> นวัตกรรมการจัดการเรียนรู้เชิงรุก (Active Learning)</strong>
-              ที่สร้างขึ้นเพื่อยกระดับทักษะภาษาอังกฤษของนักเรียนโรงเรียนบ้านโคกยาง และเตรียมความพร้อมสู่การทดสอบระดับชาติ (O-NET)
-              อย่างเป็นระบบ
-            </p>
-            <p>
-              ทุกฟังก์ชันถูกออกแบบบนฐานจิตวิทยาการศึกษาและทฤษฎีการเรียนรู้ เพื่อให้ “ทุกนาทีแห่งความสนุก”
-              เป็นทุกนาทีแห่งการพัฒนาศักยภาพอย่างแท้จริง
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-7">
-            <div className="glass-card p-5 hover-lift border-2 border-emerald-500/30 hover:border-emerald-400/60 transition-all bg-gradient-to-br from-emerald-950/20 via-slate-900/40 to-slate-950/60 shadow-lg">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-black mb-2.5">
-                Vygotsky's ZPD • Flow Theory
-              </div>
-              <h2 className="text-lg font-black text-emerald-300 mb-2">🎯 เรียนรู้ในจังหวะของตัวเอง</h2>
-              <p className="text-slate-300 text-sm leading-relaxed">
-                ระบบ Adaptive Rank อิงแนวคิด ZPD ช่วยปรับความยากให้พอดีกับผู้เรียน ไม่ยากจนท้อ และไม่ง่ายจนน่าเบื่อ
-                เพื่อพาเข้าสู่สภาวะ Flow State ที่พร้อมเรียนรู้อย่างมีสมาธิ
-              </p>
-            </div>
-            <div className="glass-card p-5 hover-lift border-2 border-blue-500/30 hover:border-blue-400/60 transition-all bg-gradient-to-br from-blue-950/20 via-slate-900/40 to-slate-950/60 shadow-lg">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-500/20 border border-blue-500/30 text-blue-300 text-[11px] font-black mb-2.5">
-                Ebbinghaus SRS Memory Curve
-              </div>
-              <h2 className="text-lg font-black text-blue-300 mb-2">🧠 จำระยะยาวด้วย SRS</h2>
-              <p className="text-slate-300 text-sm leading-relaxed">
-                คำที่ตอบผิดไม่ใช่ความล้มเหลว แต่คือข้อมูลเรียนรู้ ระบบจะบันทึกคำที่ควรทบทวน
-                และดึงกลับมาในจังหวะที่เหมาะสมตามแนวคิด Ebbinghaus Forgetting Curve
-              </p>
-            </div>
-            <div className="glass-card p-5 hover-lift border-2 border-purple-500/30 hover:border-purple-400/60 transition-all bg-gradient-to-br from-purple-950/20 via-slate-900/40 to-slate-950/60 shadow-lg">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-500/20 border border-purple-500/30 text-purple-300 text-[11px] font-black mb-2.5">
-                21st Century Skills • 4Cs Framework
-              </div>
-              <h2 className="text-lg font-black text-purple-300 mb-2">🌍 ทักษะแห่งศตวรรษที่ 21</h2>
-              <p className="text-slate-300 text-sm leading-relaxed">
-                Context MC ฝึก Critical Thinking, Team Battle ฝึก Collaboration และ Dashboard ช่วยสะท้อนข้อมูลให้ผู้เรียนกำกับตนเอง
-                แบบ Self-Directed Learning
-              </p>
-            </div>
-            <div className="glass-card p-5 hover-lift border-2 border-amber-500/30 hover:border-amber-400/60 transition-all bg-gradient-to-br from-amber-950/20 via-slate-900/40 to-slate-950/60 shadow-lg">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[11px] font-black mb-2.5">
-                Gamification • Self-Determination Theory (SDT)
-              </div>
-              <h2 className="text-lg font-black text-amber-300 mb-2">⚔️ เปลี่ยนการท่องจำเป็นการผจญภัย</h2>
-              <p className="text-slate-300 text-sm leading-relaxed">
-                คลังคำศัพท์ มินิเกม ด่านบอส ระบบดาว ทีม และการ์ดเวทมนตร์ ช่วยเปลี่ยนการฝึกคำศัพท์ O-NET
-                ให้เป็นประสบการณ์ที่สนุก วัดผลได้ และต่อเนื่อง
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-7 bg-indigo-500/10 border border-indigo-500/20 rounded-3xl p-4 sm:p-5">
-            <h2 className="text-xl font-black text-white mb-3">👨‍🏫 ประวัติและข้อมูลผู้จัดทำนวัตกรรม</h2>
-            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div>
-                  <p className="text-xs font-black text-indigo-300 uppercase tracking-widest">Innovator Profile</p>
-                  <h3 className="text-2xl font-black text-white mt-2">นายณัฐภัทร พรมปรุ</h3>
-                  <p className="text-slate-400 text-sm mt-1">Mr. Nattapat Prompru</p>
-                </div>
-                <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 text-sm text-emerald-200 font-bold">
-                  ตำแหน่ง: ครู
-                </div>
-              </div>
-              <div className="mt-4 text-sm text-slate-300 leading-relaxed">
-                <span className="font-bold text-white">สถานที่ทำงาน:</span> โรงเรียนบ้านโคกยาง สังกัดสำนักงานเขตพื้นที่การศึกษาประถมศึกษาบุรีรัมย์ เขต 3
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-              <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
-                <h3 className="font-black text-white mb-3">🎓 ประวัติการศึกษา (Education)</h3>
-                <div className="space-y-3 text-sm text-slate-400 leading-relaxed">
-                  <p><span className="font-bold text-indigo-300">ปริญญาโท:</span> ศึกษาศาสตรมหาบัณฑิต สาขาวิชาการบริหารการศึกษา มหาวิทยาลัยวงษ์ชวลิตกุล</p>
-                  <p><span className="font-bold text-indigo-300">ปริญญาโท:</span> ศิลปศาสตรมหาบัณฑิต สาขาวิชาภาษาอังกฤษ มหาวิทยาลัยราชภัฏบุรีรัมย์</p>
-                  <p><span className="font-bold text-indigo-300">ปริญญาตรี:</span> ครุศาสตรบัณฑิต สาขาวิชาภาษาอังกฤษ มหาวิทยาลัยราชภัฏบุรีรัมย์</p>
-                </div>
-              </div>
-
-              <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
-                <h3 className="font-black text-white mb-3">📌 บทบาทและหน้าที่รับผิดชอบ</h3>
-                <div className="space-y-3 text-sm text-slate-400 leading-relaxed">
-                  <p><span className="font-bold text-emerald-300">ด้านการจัดการเรียนรู้:</span> ผู้สอนกลุ่มสาระการเรียนรู้ภาษาต่างประเทศ (ภาษาอังกฤษ) และผู้รับผิดชอบการออกแบบแผนขับเคลื่อนเพื่อยกระดับผลสัมฤทธิ์ทางการทดสอบระดับชาติ (O-NET) สำหรับนักเรียนระดับชั้นมัธยมศึกษาตอนต้น</p>
-                  <p><span className="font-bold text-emerald-300">ด้านการบริหารจัดการ:</span> ปฏิบัติหน้าที่หัวหน้างานบริหารงานบุคคล (Head of Personnel Administration) โรงเรียนบ้านโคกยาง</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
-              <h3 className="font-black text-white mb-3">💡 ความสนใจทางวิชาการ (Academic Interests)</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 text-slate-400 leading-relaxed">
-                  การออกแบบการจัดการเรียนรู้เชิงรุก (Active Learning) และการจัดการเรียนรู้โดยใช้โครงงานเป็นฐาน (Project-Based Learning - PBL)
-                </div>
-                <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 text-slate-400 leading-relaxed">
-                  การประยุกต์ใช้จิตวิทยาการศึกษาและเทคโนโลยีเกมมิฟิเคชัน (Gamification & EdTech) เพื่อพัฒนาผลสัมฤทธิ์ของผู้เรียน
-                </div>
-                <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 text-slate-400 leading-relaxed">
-                  การบริหารการศึกษาและการขับเคลื่อนคุณภาพสถานศึกษาด้วยวงจรคุณภาพ (PDCA)
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-7 text-center bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-3xl p-5">
-            <p className="text-white font-black text-lg">พร้อมหรือยัง... ที่จะเปลี่ยนการท่องจำให้เป็นการผจญภัย?</p>
-            <p className="text-slate-400 text-sm mt-2">
-              คลิกปุ่ม “สมัครสมาชิก/เข้าสู่ระบบ” ด้านบนเพื่อเริ่มต้นการเดินทาง และก้าวสู่การเป็นผู้พิชิตโอเน็ต (O-NET Conqueror) ไปด้วยกัน
-            </p>
-            <button 
-              onClick={() => {
-                const loginPanel = document.getElementById('login-panel');
-                if (loginPanel) {
-                  loginPanel.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-              }}
-              className="mt-5 xl:hidden inline-flex items-center justify-center gap-2.5 w-full min-h-[58px] rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-base transition-all shadow-2xl shadow-emerald-500/35 py-4 border-2 border-emerald-200/50 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <span>ขึ้นไปเข้าสู่ระบบ / สมัครสมาชิก 🚀</span>
-              <ArrowRight className="w-5 h-5 shrink-0" />
-            </button>
-          </div>
-        </motion.section>
-
-      <motion.div 
+      <motion.div
         id="login-panel"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="order-1 xl:order-2 glass-card p-5 sm:p-8 w-full max-w-md xl:max-h-[95vh] xl:overflow-y-auto xl:sticky xl:top-4 justify-self-center mobile-scroll-panel border-2 border-slate-800/90 shadow-2xl"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className="w-full max-w-md bg-slate-900/95 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl"
       >
         <div className="text-center mb-6">
-          <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-xl shadow-emerald-500/35 text-slate-950 font-black text-2xl border-2 border-emerald-300/40">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xl">
             VJ
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-300 mb-1">
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
             Vocab Journey
           </h1>
-          <p className="text-slate-400 text-xs sm:text-sm font-medium">ระบบประเมินและฝึกทักษะคำศัพท์อัจฉริยะ</p>
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold mt-2.5 shadow-sm">
-            🏫 โรงเรียนบ้านโคกยาง • Full Mode
-          </div>
+          <p className="text-slate-400 text-xs sm:text-sm mt-1">
+            โรงเรียนบ้านโคกยาง • ฝึกคำศัพท์ &amp; เตรียมสอบ O-NET
+          </p>
         </div>
 
-        {/* Prominent Mode Switcher Pill (hidden when registration is closed) */}
+        {/* Mode Switcher */}
         {isRegistrationOpen ? (
-          <div className="grid grid-cols-2 gap-2 bg-slate-950/95 border-2 border-slate-800 rounded-2xl p-1.5 mb-5 shadow-inner">
-            <button 
+          <div className="grid grid-cols-2 gap-1.5 bg-slate-950 border border-slate-800 rounded-2xl p-1 mb-5">
+            <button
               type="button"
               onClick={() => { setMode('login'); setError(''); }}
-              className={`min-h-[50px] py-3 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 border-2 ${
-                mode === 'login' 
-                  ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 text-slate-950 border-emerald-300 shadow-xl shadow-emerald-500/35 scale-[1.02]' 
-                  : 'text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800/80 border-slate-800/80 hover:border-emerald-500/40'
+              className={`min-h-[44px] py-2.5 px-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
+                mode === 'login'
+                  ? 'bg-emerald-500 text-slate-950 font-black'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               <LogIn className="w-4 h-4 shrink-0" />
               <span>เข้าสู่ระบบ</span>
             </button>
-            <button 
+            <button
               type="button"
               onClick={() => { setMode('register'); setError(''); }}
-              className={`min-h-[50px] py-3 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 border-2 ${
-                mode === 'register' 
-                  ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 text-slate-950 border-emerald-300 shadow-xl shadow-emerald-500/35 scale-[1.02]' 
-                  : 'text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800/80 border-slate-800/80 hover:border-emerald-500/40'
+              className={`min-h-[44px] py-2.5 px-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
+                mode === 'register'
+                  ? 'bg-emerald-500 text-slate-950 font-black'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               <UserPlus className="w-4 h-4 shrink-0" />
@@ -708,39 +554,97 @@ export default function Home() {
           </div>
         ) : null}
 
-        {/* Single Navigation Entry to VJ Lite Homepage */}
-        <div className="mt-6 pt-5 border-t border-slate-800/80">
-          <div className="bg-gradient-to-br from-indigo-950/90 via-slate-900/95 to-sky-950/80 border-2 border-indigo-500/50 hover:border-sky-400/70 rounded-3xl p-5 text-center space-y-3.5 shadow-2xl shadow-indigo-950/60 transition-all">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 text-xs font-black shadow-sm">
-              <Globe2 className="w-4 h-4 text-cyan-400 shrink-0" />
-              <span>โรงเรียนเครือข่ายและพันธมิตร (VJ Lite)</span>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-200 font-medium leading-relaxed">
-              สำหรับนักเรียนโรงเรียนเครือข่าย และ ครูโรงเรียนเครือข่าย เข้าสู่ระบบเพื่อฝึกคำศัพท์หรือจัดการห้องเรียน
-            </p>
+        {/* Quiet Secondary Links */}
+        <div className="mt-6 pt-5 border-t border-slate-800 space-y-2.5">
+          <button
+            type="button"
+            onClick={() => router.push('/network')}
+            className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-200 font-bold text-sm transition-colors flex items-center justify-center gap-2 border border-slate-800"
+          >
+            <Globe2 className="w-4 h-4 text-sky-400 shrink-0" />
+            <span>โรงเรียนเครือข่าย (VJ Lite)</span>
+          </button>
+
+          <div className="flex items-center justify-between gap-2 pt-1">
             <button
               type="button"
-              onClick={() => router.push('/network')}
-              className="w-full min-h-[62px] py-4 px-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-black text-base sm:text-lg transition-all shadow-2xl shadow-indigo-600/50 hover:shadow-cyan-500/50 flex items-center justify-center gap-3 border-2 border-cyan-300/50 hover:scale-[1.02] active:scale-[0.98]"
+              onClick={() => router.push('/demo')}
+              className="text-xs text-slate-400 hover:text-amber-300 py-2 px-3 rounded-lg hover:bg-slate-800/60 transition-colors font-semibold"
             >
-              <Globe2 className="w-5 h-5 shrink-0 text-cyan-200" />
-              <span>🌐 เข้าสู่หน้าหลัก VJ Lite (โรงเรียนเครือข่าย) &rarr;</span>
+              โหมดกรรมการ (Demo)
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAboutModal(true)}
+              className="text-xs text-slate-400 hover:text-emerald-300 py-2 px-3 rounded-lg hover:bg-slate-800/60 transition-colors inline-flex items-center gap-1.5 font-semibold"
+            >
+              <Info className="w-3.5 h-3.5" />
+              <span>เกี่ยวกับนวัตกรรม &amp; ผู้พัฒนา</span>
             </button>
           </div>
         </div>
-
-        {/* Refined and prominent Demo Button at the bottom */}
-        <div className="mt-5 pt-3 border-t border-slate-800/60 text-center">
-          <button 
-            type="button" 
-            onClick={() => router.push('/demo')} 
-            className="text-xs sm:text-sm text-amber-300 hover:text-amber-200 py-2.5 px-5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border-2 border-amber-500/40 hover:border-amber-400/70 transition-all inline-flex items-center gap-2 font-black shadow-lg shadow-amber-500/15 hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <span>👑 เข้าสู่โหมดกรรมการ (Demo Mode)</span>
-          </button>
-        </div>
       </motion.div>
-      </div>
+
+      {/* Progressive Disclosure Modal for Academic & Innovator Info */}
+      <AnimatePresence>
+        {showAboutModal && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              className="w-full max-w-3xl max-h-[85vh] overflow-y-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6"
+            >
+              <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                  <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Active Learning Innovation</p>
+                  <h2 className="text-xl sm:text-2xl font-black text-white mt-1">เกี่ยวกับ Vocab Journey &amp; ผู้พัฒนา</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAboutModal(false)}
+                  aria-label="ปิดหน้าต่าง"
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                  <p className="text-xs font-bold text-emerald-400 mb-1">Vygotsky&apos;s ZPD • Flow Theory</p>
+                  <h3 className="font-bold text-white mb-1">เรียนรู้ในจังหวะของตัวเอง</h3>
+                  <p className="text-slate-400 leading-relaxed">ระบบ Adaptive Rank ปรับความยากให้พอดีกับผู้เรียน ไม่ยากจนท้อ และไม่ง่ายจนน่าเบื่อ</p>
+                </div>
+                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                  <p className="text-xs font-bold text-sky-400 mb-1">Ebbinghaus SRS Memory Curve</p>
+                  <h3 className="font-bold text-white mb-1">จำระยะยาวด้วย SRS</h3>
+                  <p className="text-slate-400 leading-relaxed">บันทึกคำที่ตอบผิดและดึงกลับมาทบทวนในจังหวะที่เหมาะสมตามหลักการทบทวนแบบเว้นระยะ</p>
+                </div>
+                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                  <p className="text-xs font-bold text-violet-400 mb-1">21st Century Skills • 4Cs</p>
+                  <h3 className="font-bold text-white mb-1">ทักษะแห่งศตวรรษที่ 21</h3>
+                  <p className="text-slate-400 leading-relaxed">ฝึกการคิดวิเคราะห์ผ่านบริบทประโยค การทำงานร่วมกันผ่าน Team Battle และกำกับตนเองผ่านสถิติ</p>
+                </div>
+                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                  <p className="text-xs font-bold text-amber-400 mb-1">Gamification • SDT</p>
+                  <h3 className="font-bold text-white mb-1">เปลี่ยนการท่องจำเป็นการผจญภัย</h3>
+                  <p className="text-slate-400 leading-relaxed">คลังคำศัพท์ มินิเกม ด่านบอส และระบบทีม เพื่อการเตรียมสอบ O-NET อย่างต่อเนื่อง</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-2 text-sm">
+                <h3 className="font-black text-white text-base">ผู้จัดทำนวัตกรรม: นายณัฐภัทร พรมปรุ (ครู)</h3>
+                <p className="text-slate-300">โรงเรียนบ้านโคกยาง สพป.บุรีรัมย์ เขต 3</p>
+                <div className="pt-2 text-xs text-slate-400 space-y-1">
+                  <p>• ปริญญาโท: ศษ.ม. การบริหารการศึกษา (ม.วงษ์ชวลิตกุล) / ศศ.ม. ภาษาอังกฤษ (มรภ.บุรีรัมย์)</p>
+                  <p>• ปริญญาตรี: ค.บ. ภาษาอังกฤษ (มรภ.บุรีรัมย์)</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
