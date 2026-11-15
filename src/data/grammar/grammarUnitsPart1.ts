@@ -165,7 +165,7 @@ export const GRAMMAR_UNITS_PART_1: GrammarTeachingUnit[] = [
         explanation:
           'ตอบ C (What time = กี่โมง) เพราะคำตอบระบุจุดเวลาชัดเจนคือ "At 8:30 a.m."',
         choiceBreakdowns: [
-          'ผิด เพราะ How long ถามระยะเวลา (คำตอบต้องเป็น for 3 hours / since सुबह)',
+          'ผิด เพราะ How long ถามระยะเวลา (คำตอบต้องเป็น for 3 hours / since 8 a.m.)',
           'ผิด เพราะ How often ถามความถี่ (คำตอบต้องเป็น every day / twice a week)',
           'ถูกต้อง! What time ถามเวลาตรงกับ At 8:30 a.m.',
           'ผิด เพราะ Where ถามสถานที่',

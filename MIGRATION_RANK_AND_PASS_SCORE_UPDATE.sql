@@ -125,21 +125,19 @@ BEGIN
 
     IF FOUND THEN
         v_stage_id   := v_stage.id;
-        v_stage_type := v_stage.stage_type;
     ELSE
         v_stage_id   := NULL;
-        v_stage_type := CASE
-            WHEN v_stage_number = 100               THEN 'FINAL_BOSS'
-            WHEN v_stage_number % 10 = 0            THEN 'WORLD_BOSS'
-            WHEN v_stage_number % 10 = 5            THEN 'MINI_BOSS'
-            ELSE                                         'NORMAL'
-        END;
     END IF;
 
+    v_stage_type := CASE
+        WHEN v_stage_number = 100               THEN 'FINAL_BOSS'
+        WHEN v_stage_number % 10 = 0            THEN 'WORLD_BOSS'
+        WHEN v_stage_number % 10 = 5            THEN 'MINI_BOSS'
+        ELSE                                         'NORMAL'
+    END;
+
     -- STEP 3.5: Read authoritative hint count
-    SELECT COUNT(*) INTO v_authoritative_hints
-    FROM public.attempt_hint_events
-    WHERE attempt_id = p_attempt_id;
+    SELECT COUNT(*) INTO v_authoritative_hints FROM public.attempt_hint_events WHERE stage_attempt_id = p_attempt_id;
 
     IF v_authoritative_hints = 0 AND v_attempt.hint_count IS NOT NULL THEN
         v_authoritative_hints := v_attempt.hint_count;
@@ -315,7 +313,7 @@ BEGIN
                 v_score, 1,
                 v_authoritative_hints, v_passed,
                 CASE WHEN v_passed THEN p_now ELSE NULL END, p_now,
-                p_attempt_id, 'GAMEPLAY',
+                p_attempt_id, 'DIRECT_COMPLETION',
                 p_now, p_now
             );
         END IF;

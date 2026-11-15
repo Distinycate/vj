@@ -19,6 +19,7 @@ export async function enrichStudentsWithLiveMetrics(students: any[]): Promise<an
     { data: stageAttempts },
     { data: stageProgress },
     { data: legacyAttempts },
+    { data: worksheetTxs },
   ] = await Promise.all([
     supabaseAdmin
       .from('pre_tests')
@@ -42,6 +43,11 @@ export async function enrichStudentsWithLiveMetrics(students: any[]): Promise<an
     supabaseAdmin
       .from('attempts')
       .select('student_id, score, total_questions, time_spent_sec, is_passed, created_at')
+      .in('student_id', studentIds),
+    supabaseAdmin
+      .from('economy_transactions')
+      .select('student_id, metadata, created_at')
+      .eq('source', 'worksheet_submission')
       .in('student_id', studentIds),
   ]);
 
@@ -80,6 +86,21 @@ export async function enrichStudentsWithLiveMetrics(students: any[]): Promise<an
     legacyAttByStudent.set(row.student_id, list);
   }
 
+  const wsBestByStudent = new Map<string, Map<string, number>>();
+  for (const row of worksheetTxs || []) {
+    const sId = row.student_id;
+    const uId = row.metadata?.unitId;
+    const acc = Number(row.metadata?.accuracy || 0);
+    if (!sId || !uId) continue;
+    let unitMap = wsBestByStudent.get(sId);
+    if (!unitMap) {
+      unitMap = new Map<string, number>();
+      wsBestByStudent.set(sId, unitMap);
+    }
+    const prev = unitMap.get(uId) ?? 0;
+    if (acc > prev) unitMap.set(uId, acc);
+  }
+
   const normalizeTo25 = (score: number, total: number) => {
     const t = Number(total) > 0 ? Number(total) : 25;
     return (Number(score || 0) / t) * 25;
@@ -99,6 +120,14 @@ export async function enrichStudentsWithLiveMetrics(students: any[]): Promise<an
     const sCompletedStageAtt = sStageAtt.filter((a) => a.status === 'COMPLETED');
     const sStageProg = stageProgByStudent.get(student.id) || [];
     const sLegacyAtt = legacyAttByStudent.get(student.id) || [];
+    const sWsMap = wsBestByStudent.get(student.id);
+    const worksheetsCompleted = sWsMap ? sWsMap.size : 0;
+    const worksheetAccuracy =
+      sWsMap && sWsMap.size > 0
+        ? Math.round(
+            Array.from(sWsMap.values()).reduce((sum, v) => sum + v, 0) / sWsMap.size
+          )
+        : 0;
 
     // 1. Pre-test score (25-point scale)
     let pretestScore = Number(rawAn?.pretest_score || 0);
@@ -143,6 +172,8 @@ export async function enrichStudentsWithLiveMetrics(students: any[]): Promise<an
       const totalQ = sLegacyAtt.reduce((sum, a) => sum + Number(a.total_questions || 0), 0);
       const totalC = sLegacyAtt.reduce((sum, a) => sum + Number(a.score || 0), 0);
       if (totalQ > 0) successRate = Math.round((totalC / totalQ) * 100);
+    } else if (successRate <= 0 && worksheetAccuracy > 0) {
+      successRate = worksheetAccuracy;
     }
 
     // 5. Learning gain (only when posttestScore > 0)
@@ -208,6 +239,8 @@ export async function enrichStudentsWithLiveMetrics(students: any[]): Promise<an
       learning_gain: learningGain,
       normalized_gain: normalizedGain,
       success_rate: successRate,
+      worksheets_completed: worksheetsCompleted,
+      worksheet_accuracy: worksheetAccuracy,
       attempt_count: attemptCount,
       total_time_on_task_sec: totalTimeSec,
       last_updated_at: lastActiveIso,

@@ -2,11 +2,22 @@
 
 import { useState, use, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, XCircle, Trophy, Star, Send, RotateCcw } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+  Trophy,
+  Star,
+  Send,
+  RotateCcw,
+  Lightbulb,
+  Eye,
+} from 'lucide-react';
 import { getWorksheetUnit } from '@/data/worksheets/index';
 import WordBankChips from '@/components/worksheets/WordBankChips';
-import WorksheetQuestionCard from '@/components/worksheets/WorksheetQuestionCard';
+import WorksheetQuestionCard, {
+  type QuestionReviewResult,
+} from '@/components/worksheets/WorksheetQuestionCard';
 import { puzzleAudio } from '@/lib/puzzle/puzzleAudio';
 
 interface PageProps {
@@ -14,7 +25,6 @@ interface PageProps {
 }
 
 export default function WorksheetRoomPage({ params }: PageProps) {
-  const router = useRouter();
   const resolvedParams = use(params);
   const unitId = resolvedParams.unitId;
 
@@ -23,8 +33,10 @@ export default function WorksheetRoomPage({ params }: PageProps) {
   // States
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [focusedQuestionId, setFocusedQuestionId] = useState<string>('');
+  const [showAllHints, setShowAllHints] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitResult, setSubmitResult] = useState<any | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   // Set initial focus
   useEffect(() => {
@@ -33,11 +45,24 @@ export default function WorksheetRoomPage({ params }: PageProps) {
     }
   }, [unit, focusedQuestionId]);
 
+  const reviewByQuestionId = useMemo(() => {
+    const map: Record<string, QuestionReviewResult> = {};
+    if (submitResult?.results) {
+      for (const r of submitResult.results) {
+        map[r.questionId] = r;
+      }
+    }
+    return map;
+  }, [submitResult]);
+
   if (!unit) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
         <h1 className="text-xl font-black mb-2">ไม่พบแบบฝึกหัดชุดนี้ ({unitId})</h1>
-        <Link href="/challenge/worksheets" className="px-5 py-2.5 bg-indigo-600 rounded-xl font-bold text-xs">
+        <Link
+          href="/challenge/worksheets"
+          className="px-5 py-2.5 bg-indigo-600 rounded-xl font-bold text-xs"
+        >
           กลับหน้ารวมแบบฝึกหัด
         </Link>
       </div>
@@ -53,7 +78,7 @@ export default function WorksheetRoomPage({ params }: PageProps) {
 
   // Handle word selection from the Word Bank
   const handleWordSelect = (word: string) => {
-    if (!focusedQuestionId) return;
+    if (!focusedQuestionId || submitResult) return;
 
     // Fill the word
     const nextAnswers = { ...answers, [focusedQuestionId]: word };
@@ -73,6 +98,7 @@ export default function WorksheetRoomPage({ params }: PageProps) {
   };
 
   const handleClear = (qId: string) => {
+    if (submitResult) return;
     const nextAnswers = { ...answers };
     delete nextAnswers[qId];
     setAnswers(nextAnswers);
@@ -93,6 +119,7 @@ export default function WorksheetRoomPage({ params }: PageProps) {
       const data = await res.json();
       if (data.success) {
         setSubmitResult(data);
+        setIsModalOpen(true);
         if (data.stars >= 2) {
           puzzleAudio.playStageClear();
         } else {
@@ -113,10 +140,10 @@ export default function WorksheetRoomPage({ params }: PageProps) {
   const totalCount = unit.questions.length;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between pb-32">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between pb-36">
       {/* Top Header */}
       <div className="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
+        <div className="max-w-2xl mx-auto flex items-center justify-between gap-2">
           <Link
             href="/challenge/worksheets"
             className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800"
@@ -142,9 +169,23 @@ export default function WorksheetRoomPage({ params }: PageProps) {
 
       {/* Main Questions List */}
       <div className="max-w-2xl mx-auto w-full px-4 pt-4 flex-1 space-y-4">
-        {/* Instructions Card */}
-        <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300">
-          💡 <span className="font-bold text-white">คำสั่ง:</span> {unit.instructions}
+        {/* Instructions & Global Hint Toggle Card */}
+        <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div>
+            💡 <span className="font-bold text-white">คำสั่ง:</span> {unit.instructions}
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAllHints((prev) => !prev)}
+            className={`self-start sm:self-auto shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs border transition-all cursor-pointer ${
+              showAllHints
+                ? 'bg-amber-400/20 text-amber-300 border-amber-400/50'
+                : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+            }`}
+          >
+            <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+            <span>{showAllHints ? 'ซ่อนคำใบ้ทั้งหมด' : 'เปิดคำใบ้ทั้งหมด'}</span>
+          </button>
         </div>
 
         {/* Questions Cards */}
@@ -155,9 +196,12 @@ export default function WorksheetRoomPage({ params }: PageProps) {
             index={idx}
             value={answers[q.id] || ''}
             isActive={focusedQuestionId === q.id}
+            showAllHints={showAllHints}
+            reviewResult={reviewByQuestionId[q.id]}
             onFocus={() => setFocusedQuestionId(q.id)}
             onClear={() => handleClear(q.id)}
             onSelectChoice={(choice) => {
+              if (submitResult) return;
               setAnswers({ ...answers, [q.id]: choice });
               puzzleAudio.playSelect();
             }}
@@ -177,39 +221,69 @@ export default function WorksheetRoomPage({ params }: PageProps) {
             />
           )}
 
-          {/* Submit Action Button */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-xs text-slate-400 font-bold">
-              ความคืบหน้า: {answeredCount} จาก {totalCount} ข้อ ({Math.round((answeredCount / totalCount) * 100)}%)
+          {/* Submit or Review Action Bar */}
+          {submitResult ? (
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs font-bold text-emerald-300">
+                ตรวจแล้ว: ได้ {submitResult.score}/{submitResult.maxScore} คะแนน ({submitResult.accuracy}%)
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  className="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                  <span>สรุปผลคะแนน</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubmitResult(null);
+                    setIsModalOpen(false);
+                    setAnswers({});
+                  }}
+                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black text-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>ทำใหม่อีกครั้ง</span>
+                </button>
+              </div>
             </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs text-slate-400 font-bold">
+                ความคืบหน้า: {answeredCount} จาก {totalCount} ข้อ ({Math.round((answeredCount / totalCount) * 100)}%)
+              </div>
 
-            <button
-              type="button"
-              disabled={isSubmitting || answeredCount === 0}
-              onClick={handleSubmit}
-              className={`px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 transition-all cursor-pointer ${
-                answeredCount === totalCount
-                  ? 'bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/30 active:scale-95'
-                  : answeredCount > 0
-                  ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-              }`}
-            >
-              {isSubmitting ? (
-                <span>กำลังตรวจคำตอบ...</span>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  <span>ส่งแบบฝึกหัด</span>
-                </>
-              )}
-            </button>
-          </div>
+              <button
+                type="button"
+                disabled={isSubmitting || answeredCount === 0}
+                onClick={handleSubmit}
+                className={`px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 transition-all cursor-pointer ${
+                  answeredCount === totalCount
+                    ? 'bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/30 active:scale-95'
+                    : answeredCount > 0
+                    ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md'
+                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                }`}
+              >
+                {isSubmitting ? (
+                  <span>กำลังตรวจคำตอบ...</span>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span>ส่งแบบฝึกหัด</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Results Modal */}
-      {submitResult && (
+      {submitResult && isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
           <div className="max-w-md w-full rounded-3xl bg-slate-900 border-2 border-emerald-500/40 p-6 text-center shadow-2xl my-auto">
             <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mx-auto mb-3">
@@ -257,14 +331,14 @@ export default function WorksheetRoomPage({ params }: PageProps) {
             </div>
 
             {/* Review of Results */}
-            <div className="text-left max-h-48 overflow-y-auto space-y-2 mb-5 p-2 rounded-2xl bg-slate-950/60 border border-slate-800">
+            <div className="text-left max-h-56 overflow-y-auto space-y-2 mb-5 p-2 rounded-2xl bg-slate-950/60 border border-slate-800">
               {submitResult.results.map((r: any, idx: number) => (
-                <div key={idx} className="text-xs p-2 rounded-xl bg-slate-900 border border-slate-800">
+                <div key={idx} className="text-xs p-2.5 rounded-xl bg-slate-900 border border-slate-800">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-slate-300">ข้อที่ {idx + 1}</span>
                     {r.isCorrect ? (
                       <span className="text-emerald-400 font-bold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> ถูกต้อง
+                        <CheckCircle2 className="w-3.5 h-3.5" /> ถูกต้อง ({r.expected})
                       </span>
                     ) : (
                       <span className="text-rose-400 font-bold flex items-center gap-1">
@@ -273,7 +347,12 @@ export default function WorksheetRoomPage({ params }: PageProps) {
                     )}
                   </div>
                   {r.thaiMeaning && (
-                    <div className="text-[11px] text-slate-400 mt-0.5">💡 {r.thaiMeaning}</div>
+                    <div className="text-[11px] text-amber-300/90 mt-1">💡 {r.thaiMeaning}</div>
+                  )}
+                  {r.explanationTh && (
+                    <div className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                      📌 {r.explanationTh}
+                    </div>
                   )}
                 </div>
               ))}
@@ -283,8 +362,18 @@ export default function WorksheetRoomPage({ params }: PageProps) {
             <div className="space-y-2">
               <button
                 type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="w-full py-3 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>ดูเฉลยละเอียดในหน้าใบงาน</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => {
                   setSubmitResult(null);
+                  setIsModalOpen(false);
                   setAnswers({});
                 }}
                 className="w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
@@ -306,4 +395,3 @@ export default function WorksheetRoomPage({ params }: PageProps) {
     </div>
   );
 }
-

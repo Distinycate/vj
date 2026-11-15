@@ -741,6 +741,18 @@ export default function Dashboard() {
             {!isExternalUser && (
               <>
                 <Link 
+                  href="/challenge/worksheets" 
+                  className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-emerald-300 hover:text-emerald-200 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm font-bold"
+                >
+                  📖 ใบงานคำศัพท์
+                </Link>
+                <Link 
+                  href="/challenge/grammar" 
+                  className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-sky-300 hover:text-sky-200 bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm font-bold"
+                >
+                  ⚡ สูตรลัดไวยากรณ์
+                </Link>
+                <Link 
                   href="/challenge/onet" 
                   className="min-h-10 flex items-center justify-center gap-1.5 text-xs text-cyan-300 hover:text-cyan-200 bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm font-bold"
                 >

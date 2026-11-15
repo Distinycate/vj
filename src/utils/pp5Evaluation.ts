@@ -27,6 +27,8 @@ export interface EvaluatableStudent {
   posttestScore?: number;
   accuracy?: number;
   learningGain?: number;
+  worksheetsCompleted?: number;
+  worksheetAccuracy?: number;
 }
 
 export const DESIRABLE_8_TRAITS = [
@@ -58,7 +60,8 @@ export function isStudentTested(student: EvaluatableStudent): boolean {
   const hasAcc = typeof student.accuracy === 'number' && student.accuracy > 0;
   const hasStage = typeof student.currentStage === 'number' && student.currentStage > 1;
   const hasActions = (student.positiveActions || 0) + (student.ticketsAwarded || 0) + (student.coinsAwarded || 0) > 0;
-  return hasPre || hasPost || hasAcc || hasStage || hasActions;
+  const hasWorksheets = typeof student.worksheetsCompleted === 'number' && student.worksheetsCompleted > 0;
+  return hasPre || hasPost || hasAcc || hasStage || hasActions || hasWorksheets;
 }
 
 export function calculateStudentTrait(
@@ -80,8 +83,9 @@ export function calculateStudentTrait(
   const violations = student.ruleViolations || 0;
   const stage = student.currentStage || 1;
   const gain = student.learningGain || 0;
-  const acc = student.accuracy || 0;
+  const acc = Math.max(student.accuracy || 0, student.worksheetAccuracy || 0);
   const coins = student.coins || 0;
+  const wsCount = student.worksheetsCompleted || 0;
 
   switch (traitId) {
     case 't1': // 1. รักชาติ ศาสน์ กษัตริย์: พฤติกรรมพื้นฐาน การเคารพกติกาห้องเรียน
@@ -90,28 +94,28 @@ export function calculateStudentTrait(
       return 1;
 
     case 't2': // 2. ซื่อสัตย์สุจริต: ไม่สแปม ความพยายามทำแบบทดสอบด้วยตนเอง
-      if (deductions === 0 && ((student.positiveActions || 0) > 0 || positive >= 1 || acc >= 40)) return 3;
+      if (deductions === 0 && ((student.positiveActions || 0) > 0 || positive >= 1 || acc >= 40 || wsCount >= 1)) return 3;
       if (deductions <= 1) return 2;
       return 1;
 
-    case 't3': // 3. มีวินัย: ความสม่ำเสมอในการเข้าฝึกด่านและไม่ผิดระเบียบ
-      if (((student.disciplineActions || 0) > 0 || stage >= 5 || acc >= 55) && violations === 0) return 3;
-      if (violations <= 1 && (stage >= 2 || acc >= 30)) return 2;
+    case 't3': // 3. มีวินัย: ความสม่ำเสมอในการเข้าฝึกด่าน/ส่งใบงานและไม่ผิดระเบียบ
+      if (((student.disciplineActions || 0) > 0 || stage >= 5 || wsCount >= 3 || acc >= 55) && violations === 0) return 3;
+      if (violations <= 1 && (stage >= 2 || wsCount >= 1 || acc >= 30)) return 2;
       return 1;
 
-    case 't4': // 4. ใฝ่เรียนรู้: พัฒนาการคำศัพท์ (Learning Gain), จำนวนด่านที่ผ่าน, ความแม่นยำ
-      if (gain >= 20 || stage >= 6 || acc >= 60) return 3;
-      if (gain >= 10 || stage >= 3 || acc >= 35) return 2;
+    case 't4': // 4. ใฝ่เรียนรู้: พัฒนาการคำศัพท์ (Learning Gain), จำนวนด่าน/ใบงานที่ผ่าน, ความแม่นยำ
+      if (gain >= 20 || stage >= 6 || wsCount >= 4 || acc >= 60) return 3;
+      if (gain >= 10 || stage >= 3 || wsCount >= 2 || acc >= 35) return 2;
       return 1;
 
     case 't5': // 5. อยู่อย่างพอเพียง: บริหารจัดการเหรียญและไอเทมในระบบอย่างคุ้มค่า
-      if (coins >= 60) return 3;
-      if (coins >= 20) return 2;
+      if (coins >= 60 || wsCount >= 3) return 3;
+      if (coins >= 20 || wsCount >= 1) return 2;
       return 1;
 
-    case 't6': // 6. มุ่งมั่นในการทำงาน: ความรับผิดชอบ ความพยายามทำคะแนนหลังเรียนหรือผ่านด่านยาก
-      if ((student.responsibilityActions || 0) > 0 || stage >= 6 || (student.posttestScore || 0) >= 50 || gain >= 15) return 3;
-      if (stage >= 3 || (student.posttestScore || 0) >= 25) return 2;
+    case 't6': // 6. มุ่งมั่นในการทำงาน: ความรับผิดชอบ ความพยายามทำคะแนนหลังเรียน/ใบงานหรือผ่านด่านยาก
+      if ((student.responsibilityActions || 0) > 0 || stage >= 6 || wsCount >= 4 || (student.posttestScore || 0) >= 50 || gain >= 15) return 3;
+      if (stage >= 3 || wsCount >= 2 || (student.posttestScore || 0) >= 25) return 2;
       return 1;
 
     case 't7': // 7. รักความเป็นไทย: การให้เกียรติและสื่อสารร่วมมือในห้องเรียน
@@ -145,35 +149,37 @@ export function calculateStudentReading(
     return -1;
   }
 
-  const acc = student.accuracy || 0;
+  const acc = Math.max(student.accuracy || 0, student.worksheetAccuracy || 0);
   const post = student.posttestScore || 0;
   const gain = student.learningGain || 0;
   const stage = student.currentStage || 1;
   const positive = (student.ticketsAwarded || 0) + (student.coinsAwarded || 0);
+  const wsCount = student.worksheetsCompleted || 0;
+  const wsAcc = student.worksheetAccuracy || 0;
 
   switch (indicatorId) {
-    case 'r1': // 1. การจับใจความสำคัญ: วัดจากความถูกต้องของคำศัพท์และความหมาย (Accuracy)
-      if (acc >= 60 || post >= 55) return 3;
-      if (acc >= 35 || post >= 30) return 2;
+    case 'r1': // 1. การจับใจความสำคัญ: วัดจากความถูกต้องของคำศัพท์และความหมาย (Accuracy & Matching Worksheets)
+      if (acc >= 60 || post >= 55 || wsAcc >= 65) return 3;
+      if (acc >= 35 || post >= 30 || wsAcc >= 40) return 2;
       return 1;
 
-    case 'r2': // 2. การระบุรายละเอียดสนับสนุน: วัดจากการผ่านด่านและทำข้อสอบปลายภาค
-      if (stage >= 6 || post >= 60) return 3;
-      if (stage >= 3 || post >= 30) return 2;
+    case 'r2': // 2. การระบุรายละเอียดสนับสนุน: วัดจากการผ่านด่าน การทำใบงานบริบท และทำข้อสอบปลายภาค
+      if (stage >= 6 || post >= 60 || wsCount >= 4) return 3;
+      if (stage >= 3 || post >= 30 || wsCount >= 2) return 2;
       return 1;
 
-    case 'r3': // 3. การวิเคราะห์แยกแยะ/เชื่อมโยง: วัดจากพัฒนาการการเรียนรู้ (Learning Gain)
-      if (gain >= 20) return 3;
-      if (gain >= 10) return 2;
+    case 'r3': // 3. การวิเคราะห์แยกแยะ/เชื่อมโยง: วัดจากพัฒนาการการเรียนรู้ (Learning Gain) และใบงานเติมคำ
+      if (gain >= 20 || (wsCount >= 3 && wsAcc >= 65)) return 3;
+      if (gain >= 10 || (wsCount >= 1 && wsAcc >= 45)) return 2;
       return 1;
 
-    case 'r4': // 4. การแสดงความคิดเห็นและให้เหตุผล: การมีส่วนร่วมและพฤติกรรมเชิงบวก
-      if (positive >= 2 || stage >= 5) return 3;
-      if (positive >= 1 || stage >= 2) return 2;
+    case 'r4': // 4. การแสดงความคิดเห็นและให้เหตุผล: การมีส่วนร่วม พฤติกรรมเชิงบวก และการฝึกใบงาน
+      if (positive >= 2 || stage >= 5 || wsCount >= 3) return 3;
+      if (positive >= 1 || stage >= 2 || wsCount >= 1) return 2;
       return 1;
 
-    case 'r5': // 5. การสรุปความและเขียนถ่ายทอด: ผลรวมความแม่นยำและคะแนนหลังเรียน
-      const composite = (post + acc) / 2;
+    case 'r5': // 5. การสรุปความและเขียนถ่ายทอด: ผลรวมความแม่นยำ คะแนนหลังเรียน และคะแนนใบงาน
+      const composite = wsAcc > 0 ? Math.max((post + acc) / 2, wsAcc) : (post + acc) / 2;
       if (composite >= 50) return 3;
       if (composite >= 25) return 2;
       return 1;
@@ -213,10 +219,15 @@ export function getStudentRationale(student: EvaluatableStudent): string {
   const positive = (student.ticketsAwarded || 0) + (student.coinsAwarded || 0);
   const deductions = (student.ticketsRemoved || 0) + (student.cardsRemoved || 0) + (student.coinsRemoved || 0);
   const gain = student.learningGain || 0;
-  const acc = student.accuracy || 0;
+  const acc = Math.max(student.accuracy || 0, student.worksheetAccuracy || 0);
   const stage = student.currentStage || 1;
   const post = student.posttestScore || 0;
+  const wsCount = student.worksheetsCompleted || 0;
+  const wsAcc = student.worksheetAccuracy || 0;
 
+  if (wsCount >= 3 && wsAcc >= 65) {
+    return `ส่งใบงานคำศัพท์ครบ ${wsCount} บท (ความแม่นยำเฉลี่ย ${Math.round(wsAcc)}%) มีทักษะการอ่านคิดวิเคราะห์ดีเยี่ยม`;
+  }
   if (gain >= 20) {
     return `พัฒนาการคำศัพท์โดดเด่นมาก (Learning Gain +${Math.round(gain)}%) มีความใฝ่รู้และมุ่งมั่น`;
   }

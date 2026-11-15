@@ -58,6 +58,8 @@ export type UseGameEngineReturn = {
   passReport: any;
   cheatWarning: number | null;
   cheatDetected: string | null;
+  submitError?: string;
+  retrySubmit?: () => Promise<void>;
   submitAnswer: (answer: QuizChoice | string) => Promise<void>;
   applyPowerup: (itemCode: string) => Promise<void>;
   handleFinishGame: () => void;
@@ -69,6 +71,7 @@ export function useGameEngine(): UseGameEngineReturn {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [gameState, setGameState] = useState<GameStep>('play');
   const isAnsweringRef = useRef(false);
   const answerLockRef = useRef(false);
@@ -664,6 +667,7 @@ export function useGameEngine(): UseGameEngineReturn {
     if (activeAttemptId) {
       if (isSubmittingRef.current) return;
       isSubmittingRef.current = true;
+      setSubmitError('');
       try {
         const compRes = await fetch('/api/game/complete', {
           method: 'POST',
@@ -729,26 +733,26 @@ export function useGameEngine(): UseGameEngineReturn {
           } else {
             isSubmittingRef.current = false;
             console.error('Server completion failed:', compData.error);
-            setLoadError(compData.error || 'บันทึกผลด่านไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+            setSubmitError(compData.error || 'บันทึกผลด่านไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
             return;
           }
         } else {
           isSubmittingRef.current = false;
           const errJson = await compRes.json().catch(() => ({}));
           console.error('Server completion failed, HTTP:', compRes.status, errJson);
-          setLoadError(errJson.error || 'บันทึกผลด่านไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+          setSubmitError(errJson.error || 'บันทึกผลด่านไม่สำเร็จ กรุณากดลองบันทึกใหม่อีกครั้ง');
           return;
         }
       } catch (serverErr) {
         isSubmittingRef.current = false;
         console.error('Server completion network error:', serverErr);
-        setLoadError('การเชื่อมต่อขัดข้องขณะบันทึกผลด่าน กรุณากลับหน้าแผนที่แล้วลองใหม่');
+        setSubmitError('การเชื่อมต่อขัดข้องขณะบันทึกผลด่าน กรุณากดลองบันทึกใหม่อีกครั้ง');
         return;
       }
     } else {
       isSubmittingRef.current = false;
       console.error('No stageAttemptId available for submission.');
-      setLoadError('เซสชันของด่านนี้หมดอายุหรือเริ่มด่านไม่สมบูรณ์ กรุณากลับหน้าแผนที่เพื่อเริ่มด่านใหม่');
+      setSubmitError('เซสชันของด่านนี้หมดอายุหรือเริ่มด่านไม่สมบูรณ์ กรุณากลับหน้าแผนที่เพื่อเริ่มด่านใหม่');
       return;
     }
   };
@@ -762,7 +766,7 @@ export function useGameEngine(): UseGameEngineReturn {
 
   return {
     student, progress, isBossMode,
-    words, currentIndex, loading, loadError, gameState,
+    words, currentIndex, loading, loadError, submitError, retrySubmit: handleProcessResults, gameState,
     score, showScorePopup, shakeScreen, lives, timeLeft, isAnswered, selectedAnswer, lastAnswerCorrect,
     comboCount, maxCombo, wrongWords, assistedWords, usedHintsCount,
     difficultyConfig, qType, choices, fillAnswer, setFillAnswer, showHint,

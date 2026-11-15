@@ -98,6 +98,18 @@ export default function OnetLobbyPage() {
               <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
                 <Trophy className="w-4 h-4 text-amber-400" /> ผ่านครึ่งรับ 🎟️ 5 ตั๋วสุ่ม + Coins/EXP
               </div>
+              <Link
+                href="/challenge/grammar"
+                className="flex items-center gap-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3.5 py-1.5 rounded-xl border border-amber-500/40 transition"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400" /> อ่านคัมภีร์สูตรลัดไวยากรณ์ 10 บท
+              </Link>
+              <Link
+                href="/challenge/worksheets"
+                className="flex items-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 px-3.5 py-1.5 rounded-xl border border-emerald-500/40 transition"
+              >
+                <BookOpen className="w-4 h-4 text-emerald-400" /> ใบงานคำศัพท์ ม.1-ม.3
+              </Link>
               <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
                 <Clock className="w-4 h-4 text-purple-400" /> ไม่จำกัดเวลาต่อข้อ
               </div>

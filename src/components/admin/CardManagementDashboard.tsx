@@ -204,6 +204,8 @@ export default function CardManagementDashboard({ teacher }: { teacher: any }) {
           posttestScore: stats?.posttest_score || 0,
           accuracy: stats?.success_rate || 0,
           learningGain: stats?.normalized_gain || stats?.learning_gain || 0,
+          worksheetsCompleted: stats?.worksheets_completed || 0,
+          worksheetAccuracy: stats?.worksheet_accuracy || 0,
         };
       }));
       setLoading(false);

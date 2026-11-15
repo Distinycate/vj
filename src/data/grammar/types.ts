@@ -1,3 +1,13 @@
+export type GrammarGradeCategory = 'M1' | 'M2' | 'M3' | 'ONET';
+
+export type TeachingTopicCategory =
+  | 'foundation'
+  | 'tenses'
+  | 'structures'
+  | 'conversation'
+  | 'vocabulary'
+  | 'reading_writing';
+
 export interface SignalRow {
   signal: string;
   ruleOrMeaning: string;
@@ -38,6 +48,12 @@ export interface GrammarTeachingUnit {
   id: string;
   title: string;
   subtitle: string;
+  gradeLevel?: GrammarGradeCategory;
+  gradeLabel?: string;
+  category?: TeachingTopicCategory;
+  categoryLabel?: string;
+  durationMinutes?: number;
+  recommendedWorksheets?: string[];
   onetPartFocus: string;
   goldenTrick: string;
   overview: string;
@@ -45,4 +61,3 @@ export interface GrammarTeachingUnit {
   practiceQuestions: TeachingQuestionSlide[];
   realOnetQuestions: TeachingQuestionSlide[];
 }
-

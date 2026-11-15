@@ -1,9 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GRAMMAR_TEACHING_UNITS } from '../data/grammar/grammarPresentationData.ts';
+import {
+  GRAMMAR_TEACHING_UNITS,
+  getGrammarUnitsByGrade,
+  getGrammarUnitsByCategory,
+} from '../data/grammar/grammarPresentationData.ts';
 
-test('GRAMMAR_TEACHING_UNITS contains 10 sequential units with complete slides, questions, and keys', () => {
-  assert.equal(GRAMMAR_TEACHING_UNITS.length, 10);
+test('GRAMMAR_TEACHING_UNITS contains 25 self-contained units across M1, M2, M3, ONET and 6 topic categories', () => {
+  assert.equal(GRAMMAR_TEACHING_UNITS.length, 25);
+
+  assert.equal(getGrammarUnitsByGrade('ALL').length, 25);
+  assert.equal(getGrammarUnitsByGrade('M1').length, 9);
+  assert.equal(getGrammarUnitsByGrade('M2').length, 7);
+  assert.equal(getGrammarUnitsByGrade('M3').length, 6);
+  assert.equal(getGrammarUnitsByGrade('ONET').length, 3);
+
+  assert.equal(getGrammarUnitsByCategory('ALL').length, 25);
+  assert.equal(getGrammarUnitsByCategory('foundation').length, 6);
+  assert.equal(getGrammarUnitsByCategory('tenses').length, 3);
+  assert.equal(getGrammarUnitsByCategory('structures').length, 7);
+  assert.equal(getGrammarUnitsByCategory('conversation').length, 3);
+  assert.equal(getGrammarUnitsByCategory('vocabulary').length, 3);
+  assert.equal(getGrammarUnitsByCategory('reading_writing').length, 3);
 
   const seenIds = new Set<string>();
   const seenQuestionIds = new Set<string>();
@@ -17,6 +35,15 @@ test('GRAMMAR_TEACHING_UNITS contains 10 sequential units with complete slides, 
 
     assert.ok(unit.title.trim().length > 0);
     assert.ok(unit.goldenTrick.trim().length > 0);
+    assert.ok(unit.gradeLevel, `Unit ${unit.unitNumber} must have a gradeLevel`);
+    assert.ok(unit.gradeLabel, `Unit ${unit.unitNumber} must have a gradeLabel`);
+    assert.ok(unit.category, `Unit ${unit.unitNumber} must have a category`);
+    assert.ok(unit.categoryLabel, `Unit ${unit.unitNumber} must have a categoryLabel`);
+    assert.ok(unit.durationMinutes && unit.durationMinutes > 0, `Unit ${unit.unitNumber} must have durationMinutes`);
+    assert.ok(
+      Array.isArray(unit.recommendedWorksheets) && unit.recommendedWorksheets.length > 0,
+      `Unit ${unit.unitNumber} must have recommendedWorksheets`,
+    );
     assert.ok(unit.conceptSlides.length >= 2, `Unit ${unit.unitNumber} must have at least 2 concept slides`);
 
     for (const slide of unit.conceptSlides) {
@@ -50,4 +77,3 @@ test('GRAMMAR_TEACHING_UNITS contains 10 sequential units with complete slides, 
     }
   }
 });
-

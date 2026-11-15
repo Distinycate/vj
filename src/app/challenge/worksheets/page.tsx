@@ -63,6 +63,12 @@ export default function WorksheetsHubPage() {
               ห้องเรียน: {studentClassroom || 'ทั่วไป'}
             </span>
             <Link
+              href="/challenge/grammar"
+              className="text-[11px] font-bold text-sky-300 hover:text-sky-200 px-2.5 py-1 rounded-lg bg-sky-500/10 border border-sky-500/30"
+            >
+              ⚡ สูตรลัดไวยากรณ์
+            </Link>
+            <Link
               href="/admin/worksheets"
               className="text-[11px] font-bold text-amber-300 hover:text-amber-200 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30"
             >

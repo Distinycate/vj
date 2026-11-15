@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, CheckCircle, XCircle, Trophy, Timer, Volume2, VolumeX,
-  Heart, Sparkles, AlertTriangle, Star, Flame
+  Heart, Sparkles, AlertTriangle, AlertCircle, RefreshCw, Star, Flame
 } from 'lucide-react';
 import { playWordAudio } from '@/utils/audio';
 import { isSoundEnabled, toggleSound } from '@/utils/soundEffects';
@@ -27,7 +27,7 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
 
   const {
     student, progress, isBossMode,
-    words, currentIndex, loading, loadError, gameState,
+    words, currentIndex, loading, loadError, submitError, retrySubmit, gameState,
     score, showScorePopup, shakeScreen, lives, timeLeft, isAnswered, selectedAnswer, lastAnswerCorrect,
     comboCount, maxCombo, wrongWords, assistedWords, usedHintsCount,
     difficultyConfig, qType, choices, fillAnswer, setFillAnswer, showHint,
@@ -53,6 +53,41 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
     );
   }
 
+  // SUBMISSION ERROR (failed while saving results after playing)
+  if (submitError) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="glass-card border-rose-500/20 p-8 w-full max-w-md text-center"
+        >
+          <AlertCircle className="w-14 h-14 text-rose-500 mx-auto mb-4 animate-bounce" />
+          <h2 className="text-2xl font-black text-white mb-2">บันทึกผลการเล่นไม่สำเร็จ</h2>
+          <p className="text-slate-400 text-sm leading-relaxed mb-6">{submitError}</p>
+          <div className="flex flex-col gap-3">
+            {retrySubmit && (
+              <button
+                onClick={() => retrySubmit()}
+                className="w-full py-3.5 premium-btn bg-emerald-600 hover:bg-emerald-500 font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30"
+              >
+                <RefreshCw className="w-4 h-4" />
+                ลองบันทึกใหม่อีกครั้ง
+              </button>
+            )}
+            <button
+              onClick={handleFinishGame}
+              className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl transition-all text-sm"
+            >
+              กลับหน้าแผนที่
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // INITIAL LOAD ERROR (cannot start stage before playing)
   if (loadError || words.length === 0) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">

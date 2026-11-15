@@ -40,6 +40,7 @@ export async function POST(request: Request) {
       expected: string;
       isCorrect: boolean;
       thaiMeaning?: string;
+      explanationTh?: string;
     }> = [];
 
     const wrongWordsToTrack: Array<{ word: string; meaning: string }> = [];
@@ -72,6 +73,7 @@ export async function POST(request: Request) {
         expected: q.answer,
         isCorrect,
         thaiMeaning: q.thaiMeaning,
+        explanationTh: q.explanationTh,
       });
     }
 
