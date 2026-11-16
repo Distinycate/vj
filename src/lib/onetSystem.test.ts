@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   ONET_2568,
+  ONET_2567,
   ONET_YEARS_SUMMARY,
   NATIONAL_BENCHMARKS,
   getOnetYearConfig,
@@ -45,6 +46,27 @@ describe('O-NET Challenge & Assessment System Verification', () => {
     assert.ok(item10);
     assert.equal(item10.type, 'ordering');
     assert.deepEqual(item10.correctAnswer, ['D', 'A', 'B', 'C', 'F', 'E']);
+  });
+
+  it('2b. Year 2567 exam configuration has exactly 32 questions and sums to 100 points', () => {
+    const config = getOnetYearConfig(2567);
+    assert.ok(config);
+    assert.equal(config.questions.length, 32);
+
+    const totalPoints = config.questions.reduce((sum, q) => sum + q.points, 0);
+    assert.equal(Math.round(totalPoints), 100);
+
+    // Verify item 10 is single choice B in 2567 (dishwasher instructions)
+    const item10 = config.questions.find((q) => q.number === 10);
+    assert.ok(item10);
+    assert.equal(item10.type, 'single');
+    assert.equal(item10.correctAnswer, 'B');
+
+    // Verify item 32 is single choice D in 2567 (was nominated)
+    const item32 = config.questions.find((q) => q.number === 32);
+    assert.ok(item32);
+    assert.equal(item32.type, 'single');
+    assert.equal(item32.correctAnswer, 'D');
   });
 
   it('3. Grading engine evaluates answers accurately', () => {
