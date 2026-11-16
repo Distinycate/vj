@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   GRAMMAR_TEACHING_UNITS,
+  ONET_WRITING_BOOSTER_UNITS,
   getGrammarUnitsByGrade,
   getGrammarUnitsByCategory,
 } from '../data/grammar/grammarPresentationData.ts';
@@ -74,6 +75,26 @@ test('GRAMMAR_TEACHING_UNITS contains 25 self-contained units across M1, M2, M3,
       );
       assert.ok(q.explanation.trim().length > 0);
       assert.ok(q.teacherScript.trim().length > 0);
+    }
+  }
+});
+
+test('ONET_WRITING_BOOSTER_UNITS contains 9 units (5 Core Writing Booster + 4 Full-Year 2565-2568 Exams) with 4-dimension deep analysis', () => {
+  assert.equal(ONET_WRITING_BOOSTER_UNITS.length, 9);
+
+  for (const unit of ONET_WRITING_BOOSTER_UNITS) {
+    assert.ok(unit.unitNumber >= 101 && unit.unitNumber <= 109);
+    assert.ok(unit.conceptSlides.length >= 2);
+    assert.equal(unit.practiceQuestions.length, 5);
+    assert.ok(unit.realOnetQuestions.length >= 4);
+
+    for (const q of [...unit.practiceQuestions, ...unit.realOnetQuestions]) {
+      assert.ok(q.clueText.trim().length > 0, `Missing clueText in ${q.id}`);
+      assert.ok(Array.isArray(q.howToApproach) && q.howToApproach.length >= 2, `Missing howToApproach in ${q.id}`);
+      assert.ok(q.mustKnowRule && q.mustKnowRule.trim().length > 0, `Missing mustKnowRule in ${q.id}`);
+      assert.ok(Array.isArray(q.essentialVocab) && q.essentialVocab.length >= 2, `Missing essentialVocab in ${q.id}`);
+      assert.equal(q.choices.length, 4);
+      assert.equal(q.choiceBreakdowns.length, 4);
     }
   }
 });

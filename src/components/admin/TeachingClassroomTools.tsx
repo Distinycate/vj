@@ -4,12 +4,17 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Check,
   Copy,
+  Download,
   Eraser,
+  Pause,
   Pen,
+  Play,
   Printer,
   RotateCcw,
   Sparkles,
+  Square,
   Trash2,
+  Video,
   X,
 } from 'lucide-react';
 import type { GrammarTeachingUnit } from '@/data/grammar/grammarPresentationData';
@@ -589,10 +594,17 @@ interface AnnotationToolbarProps {
   onClear: () => void;
   onOpenWheel: () => void;
   onOpenSummary: () => void;
+  lessonTitle?: string;
+}
+
+function formatRecTime(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
 /**
- * Compact teacher classroom toolbar for Pen, Eraser, Clear, Lucky Wheel, and Print/LINE Summary.
+ * Compact teacher classroom toolbar for Pen, Eraser, Clear, Lucky Wheel, Print/LINE Summary, and Video Recording Studio.
  */
 export function TeacherLiveToolsBar({
   tool,
@@ -602,7 +614,170 @@ export function TeacherLiveToolsBar({
   onClear,
   onOpenWheel,
   onOpenSummary,
+  lessonTitle = 'ONET_Writing_Booster',
 }: AnnotationToolbarProps) {
+  const [recState, setRecState] = useState<'idle' | 'recording' | 'paused'>('idle');
+  const [recSeconds, setRecSeconds] = useState<number>(0);
+  const [lastVideoUrl, setLastVideoUrl] = useState<string | null>(null);
+  const [recError, setRecError] = useState<string | null>(null);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const streamsRef = useRef<MediaStream[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const cleanupStreams = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    streamsRef.current.forEach((st) => {
+      st.getTracks().forEach((t) => t.stop());
+    });
+    streamsRef.current = [];
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      cleanupStreams();
+    };
+  }, [cleanupStreams]);
+
+  const startVideoRecording = async () => {
+    setRecError(null);
+    if (typeof window === 'undefined' || !navigator.mediaDevices?.getDisplayMedia) {
+      setRecError('เบราว์เซอร์นี้ไม่รองรับการอัดหน้าจอโดยตรง');
+      return;
+    }
+
+    try {
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: 30 },
+        audio: true,
+      });
+
+      let micStream: MediaStream | null = null;
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+          },
+          video: false,
+        });
+      } catch {
+        // Teacher may record without microphone or permission declined; continue with display stream
+      }
+
+      const combinedTracks: MediaStreamTrack[] = [...displayStream.getVideoTracks()];
+
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioCtx && (displayStream.getAudioTracks().length > 0 || (micStream && micStream.getAudioTracks().length > 0))) {
+        const audioCtx = new AudioCtx();
+        const dest = audioCtx.createMediaStreamDestination();
+        if (displayStream.getAudioTracks().length > 0) {
+          const sysSource = audioCtx.createMediaStreamSource(displayStream);
+          sysSource.connect(dest);
+        }
+        if (micStream && micStream.getAudioTracks().length > 0) {
+          const micSource = audioCtx.createMediaStreamSource(micStream);
+          micSource.connect(dest);
+        }
+        combinedTracks.push(...dest.stream.getAudioTracks());
+      } else if (micStream && micStream.getAudioTracks().length > 0) {
+        combinedTracks.push(...micStream.getAudioTracks());
+      } else if (displayStream.getAudioTracks().length > 0) {
+        combinedTracks.push(...displayStream.getAudioTracks());
+      }
+
+      const finalStream = new MediaStream(combinedTracks);
+      streamsRef.current = micStream ? [displayStream, micStream, finalStream] : [displayStream, finalStream];
+
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+        ? 'video/webm;codecs=vp9,opus'
+        : MediaRecorder.isTypeSupported('video/webm')
+          ? 'video/webm'
+          : '';
+
+      const recorder = mimeType
+        ? new MediaRecorder(finalStream, { mimeType })
+        : new MediaRecorder(finalStream);
+
+      chunksRef.current = [];
+      recorder.ondataavailable = (ev) => {
+        if (ev.data && ev.data.size > 0) {
+          chunksRef.current.push(ev.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: mimeType || 'video/webm' });
+        if (blob.size > 0) {
+          const url = URL.createObjectURL(blob);
+          setLastVideoUrl(url);
+          const safeName = lessonTitle
+            .replace(/[^a-zA-Z0-9ก-๙_-]+/g, '_')
+            .slice(0, 48);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `VJ_Video_${safeName}_${new Date().toISOString().slice(0, 10)}.webm`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+        cleanupStreams();
+        setRecState('idle');
+      };
+
+      displayStream.getVideoTracks()[0]?.addEventListener('ended', () => {
+        if (recorder.state !== 'inactive') {
+          recorder.stop();
+        }
+      });
+
+      mediaRecorderRef.current = recorder;
+      recorder.start(1000);
+      setRecSeconds(0);
+      setRecState('recording');
+
+      timerRef.current = setInterval(() => {
+        setRecSeconds((s) => s + 1);
+      }, 1000);
+    } catch {
+      cleanupStreams();
+      setRecState('idle');
+    }
+  };
+
+  const togglePauseRecording = () => {
+    const rec = mediaRecorderRef.current;
+    if (!rec) return;
+    if (rec.state === 'recording') {
+      rec.pause();
+      setRecState('paused');
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    } else if (rec.state === 'paused') {
+      rec.resume();
+      setRecState('recording');
+      timerRef.current = setInterval(() => {
+        setRecSeconds((s) => s + 1);
+      }, 1000);
+    }
+  };
+
+  const stopVideoRecording = () => {
+    const rec = mediaRecorderRef.current;
+    if (rec && rec.state !== 'inactive') {
+      rec.stop();
+    } else {
+      cleanupStreams();
+      setRecState('idle');
+    }
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {/* Pen toggle */}
@@ -683,6 +858,68 @@ export function TeacherLiveToolsBar({
       >
         🖨️ พิมพ์ / ส่ง LINE
       </button>
+
+      {/* Built-in Video Recording Controls for Sharing with Other Schools */}
+      {recState === 'idle' ? (
+        <button
+          type="button"
+          onClick={startVideoRecording}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-rose-600 hover:bg-rose-500 text-white border border-rose-400/60 shadow-md shadow-rose-600/25 transition cursor-pointer"
+          title="บันทึกวิดีโอหน้าจอพร้อมเสียงไมค์ครูเพื่อส่งให้นักเรียนโรงเรียนเครือข่ายดู"
+        >
+          <Video className="w-3.5 h-3.5" />
+          🎥 อัดวิดีโอสอน (ส่ง รร.เครือข่าย)
+        </button>
+      ) : (
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-rose-950/90 border border-rose-500/60 text-xs">
+          <span className="inline-flex items-center gap-1 font-black text-rose-300">
+            <span
+              className={`w-2.5 h-2.5 rounded-full bg-rose-500 ${
+                recState === 'recording' ? 'animate-ping' : ''
+              }`}
+            />
+            {recState === 'recording' ? 'REC' : 'PAUSED'} {formatRecTime(recSeconds)}
+          </span>
+          <button
+            type="button"
+            onClick={togglePauseRecording}
+            className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold inline-flex items-center gap-1 cursor-pointer"
+            title={recState === 'recording' ? 'พักการอัดชั่วคราว' : 'อัดต่อ'}
+          >
+            {recState === 'recording' ? (
+              <>
+                <Pause className="w-3 h-3" /> พัก
+              </>
+            ) : (
+              <>
+                <Play className="w-3 h-3" /> อัดต่อ
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={stopVideoRecording}
+            className="px-2.5 py-0.5 rounded bg-rose-500 hover:bg-rose-400 text-white font-extrabold inline-flex items-center gap-1 cursor-pointer"
+            title="หยุดอัดและดาวน์โหลดไฟล์วิดีโอทันที"
+          >
+            <Square className="w-3 h-3" /> หยุด &amp; บันทึกไฟล์
+          </button>
+        </div>
+      )}
+
+      {lastVideoUrl && recState === 'idle' && (
+        <a
+          href={lastVideoUrl}
+          download={`VJ_Lesson_Recording_${new Date().toISOString().slice(0, 10)}.webm`}
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/40 transition"
+          title="ดาวน์โหลดไฟล์วิดีโอที่เพิ่งบันทึกซ้ำอีกครั้ง"
+        >
+          <Download className="w-3.5 h-3.5" />
+          โหลดวิดีโอล่าสุด
+        </a>
+      )}
+
+      {recError && <span className="text-[11px] text-rose-300 font-semibold">{recError}</span>}
     </div>
   );
 }

@@ -9,15 +9,19 @@ import { GRAMMAR_UNITS_PART_2B } from './grammarUnitsPart2B.ts';
 import { GRAMMAR_UNITS_PART_3 } from './grammarUnitsPart3.ts';
 import { GRAMMAR_UNITS_PART_4 } from './grammarUnitsPart4.ts';
 import { GRAMMAR_UNITS_PART_5 } from './grammarUnitsPart5.ts';
+import { ONET_WRITING_BOOSTER_UNITS } from './onetWritingBoosterUnits.ts';
 
 export type {
   GrammarGradeCategory,
   TeachingTopicCategory,
   SignalRow,
   ConceptSlide,
+  EssentialVocabItem,
   TeachingQuestionSlide,
   GrammarTeachingUnit,
 } from './types.ts';
+
+export { ONET_WRITING_BOOSTER_UNITS };
 
 const UNIT_CURRICULUM_META: Record<
   number,
@@ -241,12 +245,17 @@ export const TEACHING_CATEGORY_TABS: Array<{
   { key: 'reading_writing', label: 'การอ่าน & วัฒนธรรม (3)', icon: '📖' },
 ];
 
+export const ALL_TEACHING_UNITS: GrammarTeachingUnit[] = [
+  ...ONET_WRITING_BOOSTER_UNITS,
+  ...GRAMMAR_TEACHING_UNITS,
+];
+
 export function getGrammarUnitById(unitId: string): GrammarTeachingUnit | undefined {
-  return GRAMMAR_TEACHING_UNITS.find((unit) => unit.id === unitId);
+  return ALL_TEACHING_UNITS.find((unit) => unit.id === unitId);
 }
 
 export function getGrammarUnitByNumber(unitNumber: number): GrammarTeachingUnit | undefined {
-  return GRAMMAR_TEACHING_UNITS.find((unit) => unit.unitNumber === unitNumber);
+  return ALL_TEACHING_UNITS.find((unit) => unit.unitNumber === unitNumber);
 }
 
 export function getGrammarUnitsByGrade(

@@ -213,6 +213,37 @@ export default function NetworkHomePage() {
             </div>
 
           </div>
+
+          {/* O-NET M.3 Writing Booster & Video Studio Banner for Network Schools */}
+          <div className="rounded-3xl bg-gradient-to-r from-amber-950/60 via-slate-900 to-indigo-950/60 border-2 border-amber-500/40 p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[11px] font-black">
+                🎬 สื่อการสอนติวเข้ม O-NET ม.3 สำหรับโรงเรียนเครือข่าย
+              </div>
+              <h3 className="text-lg sm:text-xl font-black text-white">
+                O-NET M.3 WRITING BOOSTER + เจาะลึกข้อสอบจริงปี 2565–2568 (ครบทุกข้อ)
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                สรุปเนื้อหาบรรยาย 5 หัวข้อหลัก โจทย์ซ้อมมือ และข้อสอบจริง O-NET พร้อมจุดสังเกต วิธีมองโจทย์ สิ่งที่ควรรู้ และคำศัพท์สำคัญทุกข้อ (เปิดเรียนหรือใช้สอนอัดวิดีโอได้ทันที)
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => router.push('/challenge/grammar')}
+                className="px-4 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm transition shadow-lg cursor-pointer"
+              >
+                📖 นักเรียนเข้าเรียน &amp; ฝึกทำโจทย์ &rarr;
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/admin/teach')}
+                className="px-4 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs sm:text-sm transition shadow-lg cursor-pointer"
+              >
+                🎥 โหมดสไลด์สอน &amp; อัดวิดีโอครู &rarr;
+              </button>
+            </div>
+          </div>
         </section>
 
         {/* USER MANUALS: STUDENT & TEACHER */}

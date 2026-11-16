@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import {
   GRAMMAR_TEACHING_UNITS,
+  ONET_WRITING_BOOSTER_UNITS,
+  ALL_TEACHING_UNITS,
   GRAMMAR_GRADE_TABS,
   TEACHING_CATEGORY_TABS,
   type GrammarGradeCategory,
@@ -34,17 +36,24 @@ type StudyTab = 'summary' | 'practice' | 'onet';
 const CHOICE_LABELS = ['A', 'B', 'C', 'D'] as const;
 
 export default function StudentGrammarPocketGuidePage() {
+  const [programMode, setProgramMode] = useState<'booster' | 'curriculum'>('booster');
   const [selectedGrade, setSelectedGrade] = useState<'ALL' | GrammarGradeCategory>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<'ALL' | TeachingTopicCategory>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedUnitNum, setSelectedUnitNum] = useState<number>(1);
+  const [selectedUnitNum, setSelectedUnitNum] = useState<number>(101);
   const [activeTab, setActiveTab] = useState<StudyTab>('summary');
+
+  const activePool = useMemo(() => {
+    return programMode === 'booster' ? ONET_WRITING_BOOSTER_UNITS : GRAMMAR_TEACHING_UNITS;
+  }, [programMode]);
 
   const filteredUnits = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return GRAMMAR_TEACHING_UNITS.filter((unit) => {
-      if (selectedGrade !== 'ALL' && unit.gradeLevel !== selectedGrade) return false;
-      if (selectedCategory !== 'ALL' && unit.category !== selectedCategory) return false;
+    return activePool.filter((unit) => {
+      if (programMode === 'curriculum') {
+        if (selectedGrade !== 'ALL' && unit.gradeLevel !== selectedGrade) return false;
+        if (selectedCategory !== 'ALL' && unit.category !== selectedCategory) return false;
+      }
       if (!q) return true;
       return (
         unit.title.toLowerCase().includes(q) ||
@@ -53,20 +62,24 @@ export default function StudentGrammarPocketGuidePage() {
         (unit.categoryLabel ?? '').toLowerCase().includes(q)
       );
     });
-  }, [selectedGrade, selectedCategory, searchQuery]);
+  }, [activePool, programMode, selectedGrade, selectedCategory, searchQuery]);
 
   // Interactive Question State (keyed by question id)
   const [selectedChoices, setSelectedChoices] = useState<Record<string, number>>({});
   const [openClues, setOpenClues] = useState<Record<string, boolean>>({});
+  const [openApproaches, setOpenApproaches] = useState<Record<string, boolean>>({});
+  const [openMustKnows, setOpenMustKnows] = useState<Record<string, boolean>>({});
+  const [openVocabs, setOpenVocabs] = useState<Record<string, boolean>>({});
   const [openEliminations, setOpenEliminations] = useState<Record<string, boolean>>({});
   const [openTranslations, setOpenTranslations] = useState<Record<string, boolean>>({});
 
   const currentUnit: GrammarTeachingUnit = useMemo(() => {
     return (
-      GRAMMAR_TEACHING_UNITS.find((u) => u.unitNumber === selectedUnitNum) ??
-      GRAMMAR_TEACHING_UNITS[0]
+      ALL_TEACHING_UNITS.find((u) => u.unitNumber === selectedUnitNum) ??
+      activePool[0] ??
+      ONET_WRITING_BOOSTER_UNITS[0]
     );
-  }, [selectedUnitNum]);
+  }, [selectedUnitNum, activePool]);
 
   const handleSelectChoice = (q: TeachingQuestionSlide, choiceIdx: number) => {
     setSelectedChoices((prev) => ({ ...prev, [q.id]: choiceIdx }));
@@ -120,6 +133,9 @@ export default function StudentGrammarPocketGuidePage() {
           const isAnswered = picked !== undefined;
           const isCorrect = picked === q.correctIndex;
           const clueVisible = Boolean(openClues[q.id]);
+          const approachVisible = Boolean(openApproaches[q.id]);
+          const mustKnowVisible = Boolean(openMustKnows[q.id]);
+          const vocabVisible = Boolean(openVocabs[q.id]);
           const elimVisible = Boolean(openEliminations[q.id]);
           const transVisible = Boolean(openTranslations[q.id]);
 
@@ -177,6 +193,32 @@ export default function StudentGrammarPocketGuidePage() {
                 </div>
               </div>
 
+              {/* Passage Context for Real O-NET Questions */}
+              {q.passageContext && (
+                <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-amber-400/30 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-amber-300">
+                      📄 บทอ่านข้อสอบจริง: {q.passageTitle || q.sourceTag}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => speakWithWebSpeech(q.passageContext || '')}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-400/15 text-amber-200 text-[11px] font-bold cursor-pointer"
+                    >
+                      <Volume2 className="w-3 h-3" /> ฟังบทอ่าน
+                    </button>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                    {q.passageContext}
+                  </p>
+                  {transVisible && q.passageContextTranslation && (
+                    <p className="text-xs text-amber-200/90 border-t border-slate-800 pt-2 leading-relaxed">
+                      🇹🇭 คำแปลบทอ่าน: {q.passageContextTranslation}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Prompt */}
               <div className="space-y-2">
                 <p className="text-base sm:text-lg font-bold text-white whitespace-pre-line leading-relaxed">
@@ -189,7 +231,7 @@ export default function StudentGrammarPocketGuidePage() {
                 )}
               </div>
 
-              {/* Scaffolding Helper Buttons */}
+              {/* 4-Dimension Scaffolding Helper Buttons */}
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
@@ -201,8 +243,54 @@ export default function StudentGrammarPocketGuidePage() {
                   }`}
                 >
                   <Lightbulb className="w-3.5 h-3.5" />
-                  <span>{clueVisible ? 'ซ่อนคำใบ้' : 'ดูคำใบ้ (Clue)'}</span>
+                  <span>1. จุดสังเกต (Clue)</span>
                 </button>
+
+                {q.howToApproach && q.howToApproach.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenApproaches((prev) => ({ ...prev, [q.id]: !prev[q.id] }))
+                    }
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                      approachVisible
+                        ? 'bg-sky-400 text-slate-950 border-sky-300'
+                        : 'bg-slate-800/90 hover:bg-slate-800 text-sky-300 border-sky-500/30'
+                    }`}
+                  >
+                    <span>🧠 2. วิธีการมองโจทย์</span>
+                  </button>
+                )}
+
+                {q.mustKnowRule && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenMustKnows((prev) => ({ ...prev, [q.id]: !prev[q.id] }))
+                    }
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                      mustKnowVisible
+                        ? 'bg-violet-400 text-slate-950 border-violet-300'
+                        : 'bg-slate-800/90 hover:bg-slate-800 text-violet-300 border-violet-500/30'
+                    }`}
+                  >
+                    <span>📌 3. สิ่งที่ควรรู้ในข้อนี้</span>
+                  </button>
+                )}
+
+                {q.essentialVocab && q.essentialVocab.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setOpenVocabs((prev) => ({ ...prev, [q.id]: !prev[q.id] }))}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                      vocabVisible
+                        ? 'bg-teal-400 text-slate-950 border-teal-300'
+                        : 'bg-slate-800/90 hover:bg-slate-800 text-teal-300 border-teal-500/30'
+                    }`}
+                  >
+                    <span>🔤 4. คำศัพท์ &amp; วลีจำเป็น ({q.essentialVocab.length})</span>
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -216,14 +304,81 @@ export default function StudentGrammarPocketGuidePage() {
                   }`}
                 >
                   <Scissors className="w-3.5 h-3.5" />
-                  <span>{elimVisible ? 'ยกเลิกตัดช้อยส์' : 'ตัวช่วยตัด 2 ช้อยส์หลอก'}</span>
+                  <span>✂️ ตัด 2 ช้อยส์หลอก</span>
                 </button>
               </div>
 
               {clueVisible && (
                 <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-400/40 text-xs sm:text-sm text-amber-100">
-                  <span className="font-black text-amber-300 mr-1.5">🔍 จุดสังเกต:</span>
+                  <span className="font-black text-amber-300 mr-1.5">🔍 1. จุดสังเกตคืออะไร:</span>
                   {q.clueText}
+                </div>
+              )}
+
+              {approachVisible && q.howToApproach && q.howToApproach.length > 0 && (
+                <div className="p-3.5 rounded-xl bg-sky-500/15 border border-sky-400/40 space-y-1.5 text-xs sm:text-sm text-sky-100">
+                  <div className="font-black text-sky-300">🧠 2. วิธีการมองโจทย์เป็นแบบไหน:</div>
+                  <ul className="space-y-1.5">
+                    {q.howToApproach.map((st, sIdx) => (
+                      <li key={sIdx} className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded bg-sky-400 text-slate-950 font-black text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                          {sIdx + 1}
+                        </span>
+                        <span>{st}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {mustKnowVisible && q.mustKnowRule && (
+                <div className="p-3 rounded-xl bg-violet-500/15 border border-violet-400/40 text-xs sm:text-sm text-violet-100">
+                  <span className="font-black text-violet-300 mr-1.5">
+                    📌 3. สิ่งที่ควรรู้ในโจทย์ข้อนี้:
+                  </span>
+                  {q.mustKnowRule}
+                </div>
+              )}
+
+              {vocabVisible && q.essentialVocab && q.essentialVocab.length > 0 && (
+                <div className="p-3.5 rounded-xl bg-teal-500/10 border border-teal-400/40 space-y-2">
+                  <div className="text-xs font-black text-teal-300">
+                    🔤 4. วลี และ คำศัพท์ที่จำเป็นในข้อนี้ (กด 🔊 เพื่อฟังเสียง):
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {q.essentialVocab.map((vItem, vIdx) => (
+                      <div
+                        key={vIdx}
+                        className="p-2.5 rounded-xl bg-slate-950/90 border border-teal-500/30 flex items-start justify-between gap-2"
+                      >
+                        <div>
+                          <div className="text-xs sm:text-sm font-black text-teal-200">
+                            {vItem.term}{' '}
+                            {vItem.partOfSpeech && (
+                              <span className="text-[10px] font-bold text-teal-400">
+                                ({vItem.partOfSpeech})
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-white font-semibold">{vItem.meaning}</div>
+                          {vItem.usageNote && (
+                            <div className="text-[11px] text-slate-400">{vItem.usageNote}</div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            speakWithWebSpeech(
+                              vItem.term.replace(/\+.*$/g, '').replace(/→/g, ', ')
+                            )
+                          }
+                          className="p-1.5 rounded-lg bg-teal-500/20 text-teal-200 shrink-0 cursor-pointer"
+                        >
+                          <Volume2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -354,49 +509,101 @@ export default function StudentGrammarPocketGuidePage() {
           </p>
         </div>
 
-        {/* Grade & Topic Category Filters */}
+        {/* Program Mode Switcher & Filters */}
         <div className="space-y-3 bg-slate-900/60 border border-slate-800 rounded-3xl p-4">
-          <div className="flex flex-wrap gap-2">
-            {GRAMMAR_GRADE_TABS.map((tab) => {
-              const isSelected = selectedGrade === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setSelectedGrade(tab.key)}
-                  className={`px-3.5 py-2 rounded-2xl border text-left transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-black shadow-lg shadow-emerald-500/20'
-                      : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 font-bold'
-                  }`}
-                >
-                  <div className="text-xs sm:text-sm">{tab.label}</div>
-                  <div className="text-[10px] opacity-80">{tab.shortDesc}</div>
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap gap-2 pb-2 border-b border-slate-800/80">
+            <button
+              type="button"
+              onClick={() => {
+                setProgramMode('booster');
+                setSelectedUnitNum(ONET_WRITING_BOOSTER_UNITS[0].unitNumber);
+                setActiveTab('summary');
+              }}
+              className={`px-4 py-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                programMode === 'booster'
+                  ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 border-amber-300 font-black shadow-lg shadow-amber-500/20'
+                  : 'bg-slate-900 border-slate-800 text-amber-300 hover:bg-slate-800 font-bold'
+              }`}
+            >
+              <div className="text-xs sm:text-sm">
+                🎯 คอร์สติวเข้ม O-NET ม.3 Writing Booster + ข้อสอบจริงปี 65–68 ({ONET_WRITING_BOOSTER_UNITS.length} บท)
+              </div>
+              <div className="text-[10px] opacity-85">
+                บรรยายปูพื้นฐาน • โจทย์ลองทำ • เจาะลึกข้อสอบจริง O-NET 4 มิติ
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setProgramMode('curriculum');
+                setSelectedUnitNum(GRAMMAR_TEACHING_UNITS[0].unitNumber);
+                setActiveTab('summary');
+              }}
+              className={`px-4 py-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                programMode === 'curriculum'
+                  ? 'bg-sky-400 text-slate-950 border-sky-300 font-black shadow-lg shadow-sky-500/20'
+                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 font-bold'
+              }`}
+            >
+              <div className="text-xs sm:text-sm">
+                📚 คลังหลักสูตรไวยากรณ์ &amp; บทสนทนา ม.1–ม.3 ({GRAMMAR_TEACHING_UNITS.length} เรื่อง)
+              </div>
+              <div className="text-[10px] opacity-85">
+                ปูพื้นฐาน A1–B1 ครบทุกสาระการเรียนรู้
+              </div>
+            </button>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
-            <div className="flex flex-wrap gap-1.5">
-              {TEACHING_CATEGORY_TABS.map((cat) => {
-                const isSelected = selectedCategory === cat.key;
+          {programMode === 'curriculum' && (
+            <div className="flex flex-wrap gap-2">
+              {GRAMMAR_GRADE_TABS.map((tab) => {
+                const isSelected = selectedGrade === tab.key;
                 return (
                   <button
-                    key={cat.key}
+                    key={tab.key}
                     type="button"
-                    onClick={() => setSelectedCategory(cat.key)}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    onClick={() => setSelectedGrade(tab.key)}
+                    className={`px-3.5 py-2 rounded-2xl border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-sky-400 text-slate-950 shadow'
-                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                        ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-black shadow-lg shadow-emerald-500/20'
+                        : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 font-bold'
                     }`}
                   >
-                    {cat.icon} {cat.label}
+                    <div className="text-xs sm:text-sm">{tab.label}</div>
+                    <div className="text-[10px] opacity-80">{tab.shortDesc}</div>
                   </button>
                 );
               })}
             </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            {programMode === 'curriculum' ? (
+              <div className="flex flex-wrap gap-1.5">
+                {TEACHING_CATEGORY_TABS.map((cat) => {
+                  const isSelected = selectedCategory === cat.key;
+                  return (
+                    <button
+                      key={cat.key}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat.key)}
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold transition cursor-pointer ${
+                        isSelected
+                          ? 'bg-sky-400 text-slate-950 shadow'
+                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      {cat.icon} {cat.label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-xs font-bold text-amber-300">
+                ✨ เลือกเรียน 5 หัวข้อหลัก Writing Booster หรือตะลุยข้อสอบจริง O-NET ปี 2565–2568 ด้านล่างได้เลย
+              </div>
+            )}
 
             <div className="relative min-w-[210px]">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -417,7 +624,7 @@ export default function StudentGrammarPocketGuidePage() {
             เลือกหัวข้อที่ต้องการเรียน/ทบทวน ({filteredUnits.length} เรื่อง — เรียนเรื่องไหนก่อนก็ได้)
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 select-none">
-            {(filteredUnits.length > 0 ? filteredUnits : GRAMMAR_TEACHING_UNITS).map((u) => {
+            {(filteredUnits.length > 0 ? filteredUnits : activePool).map((u) => {
               const isSelected = u.unitNumber === selectedUnitNum;
               return (
                 <button
