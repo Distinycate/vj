@@ -1,3 +1,7 @@
+// QUICK GRAMMAR CHEAT SHEETS (คัมภีร์ข้างกาย — แยกหมวดหมู่ชัดเจน อ่านง่าย เปิดดูง่าย)
+
+export type CheatSheetCategory = 'foundation' | 'verbs_tenses' | 'onet_core';
+
 export interface CheatSheetRow {
   label: string;
   rule: string;
@@ -8,6 +12,7 @@ export interface CheatSheetRow {
 
 export interface CheatSheetSection {
   heading: string;
+  color?: 'blue' | 'emerald' | 'amber' | 'purple' | 'rose';
   description?: string;
   rows: CheatSheetRow[];
 }
@@ -20,6 +25,7 @@ export interface CheatSheetTrap {
 
 export interface QuickGrammarCheatSheet {
   id: string;
+  category: CheatSheetCategory;
   title: string;
   shortTitle: string;
   icon: string;
@@ -31,723 +37,994 @@ export interface QuickGrammarCheatSheet {
   relatedUnitNumber?: number;
 }
 
+export const CHEAT_SHEET_CATEGORIES: { key: 'all' | CheatSheetCategory; label: string }[] = [
+  { key: 'all', label: '🌟 ทั้งหมด (14 เรื่อง)' },
+  { key: 'foundation', label: '📘 พื้นฐานคำ & นาม (4)' },
+  { key: 'verbs_tenses', label: '⚡ กริยา • Modals • 12 Tenses (5)' },
+  { key: 'onet_core', label: '🎯 พิชิตข้อสอบ O-NET (5)' },
+];
+
 export const QUICK_GRAMMAR_CHEAT_SHEETS: QuickGrammarCheatSheet[] = [
+  // ═════════════════════════════════════════════════════════════════════════
+  // หมวดที่ 1: พื้นฐานคำ, คำนาม, เอกพจน์-พหูพจน์, สรรพนาม (FOUNDATION)
+  // ═════════════════════════════════════════════════════════════════════════
   {
-    id: 'adjective-order',
-    title: 'การเรียงลำดับคำคุณศัพท์ (Order of Adjectives — OSASCOMP)',
-    shortTitle: 'เรียง Adjective',
-    icon: '🎨',
-    badge: 'สูตรจำ OSASCOMP',
-    summaryFormula:
-      'Determiner (a/an/the/my/two) ➔ Opinion ➔ Size ➔ Age ➔ Shape ➔ Color ➔ Origin ➔ Material ➔ Purpose + NOUN',
-    memoryTip:
-      'จำแม่นใน 5 วิ: “ความเห็น – ขนาด – อายุ – รูปร่าง – สี – สัญชาติ – วัสดุ – วัตถุประสงค์ + คำนามหลักอยู่ท้ายสุดเสมอ!” (ในข้อสอบจริงมักหยิบมาแค่ 3–4 ตัว ให้เช็กตัวหน้าสุดกับคำนามท้ายสุดก่อน)',
-    relatedUnitNumber: 21,
+    id: 'parts-of-speech',
+    category: 'foundation',
+    title: 'Parts of Speech ครบทั้ง 8 ชนิด (หน้าที่ + ตำแหน่ง + คำลงท้าย)',
+    shortTitle: 'Parts of Speech (8 ชนิด)',
+    icon: '🧩',
+    badge: 'พื้นฐาน + O-NET Unit 4',
+    summaryFormula: 'หลัง a/the/adj. = Noun | หน้า Noun หรือหลัง be/feel = Adj. | ขยายกริยา = Adv. (-ly)',
+    memoryTip: 'จำคำลงท้าย (Suffix): -tion/-ment/-ness = Noun | -ful/-ive/-al/-ous = Adj. | -ly = Adv. | คนรู้สึก = -ed / สิ่งของน่า... = -ing',
+    relatedUnitNumber: 104,
     sections: [
       {
-        heading: 'ลำดับการเรียง Adjective 8 ขั้น (จากซ้ายไปขวา ก่อนถึงคำนาม)',
-        description: 'เรียงจาก “ความรู้สึกส่วนตัว” ไปหา “คุณสมบัติแท้จริงของสิ่งของ” และจบด้วยคำนามหลัก (Head Noun)',
+        heading: '1–4. กลุ่มคำหลัก (Content Words: Noun, Pronoun, Verb, Adjective)',
+        color: 'blue',
         rows: [
           {
-            label: '1. Opinion (ความเห็น)',
-            rule: 'สวย ดี น่ารัก แพง น่าสนใจ',
-            example: 'beautiful, nice, cute, expensive, interesting, delicious',
-            translation: 'วางไว้หน้าสุด (หลัง a/an/the/ตัวเลข)',
+            label: '1. Noun (คำนาม — คน สัตว์ สิ่งของ สถานที่ ความคิด)',
+            rule: 'หน้าที่: ประธาน (Subject) หรือ กรรม (Object) • วางหลัง a/an/the/my/of/Adj.\n• Suffix: -tion, -sion, -ment, -ness, -ity, -er/-or',
+            example: 'The spacious library provides great happiness.',
+            translation: 'library (สถานที่) และ happiness (ความสุข) เป็นคำนาม',
           },
           {
-            label: '2. Size (ขนาด)',
-            rule: 'ใหญ่ เล็ก สูง ยาว กว้าง',
-            example: 'big, small, large, little, tall, long, huge, tiny',
-            translation: 'ขนาดมาก่อนอายุและสีเสมอ',
+            label: '2. Pronoun (คำสรรพนาม — ใช้แทนคำนาม)',
+            rule: 'I, you, we, they, he, she, it / me, him, her / my, your / myself',
+            example: 'They asked me to help them.',
+            translation: 'ใช้แทนชื่อคนหรือสิ่งของเพื่อไม่ให้พูดซ้ำ',
           },
           {
-            label: '3. Age (อายุ/ความเก่าใหม่)',
-            rule: 'เก่า ใหม่ หนุ่มสาว โบราณ',
-            example: 'old, new, young, modern, ancient',
-            translation: 'เช่น a big old house (บ้านหลังใหญ่ที่เก่า)',
+            label: '3. Verb (คำกริยา — แสดงการกระทำหรือสถานะ)',
+            rule: 'วางหลังประธาน (Subject) • เปลี่ยนรูปตาม Tense (V.1 / V.2 / V.3)\n• กริยาแท้ (walk, eat) vs กริยาเชื่อม (is/am/are, feel, seem, look)',
+            example: 'The principal walked calmly into the hall.',
+            translation: 'walked เป็นคำกริยาแสดงการกระทำ',
           },
           {
-            label: '4. Shape (รูปร่าง/รูปทรง)',
-            rule: 'กลม เหลี่ยม แบน อ้วน ผอม',
-            example: 'round, square, flat, oval, rectangular',
-            translation: 'เช่น a small round table (โต๊ะกลมตัวเล็ก)',
-          },
-          {
-            label: '5. Color (สี)',
-            rule: 'สีต่างๆ',
-            example: 'red, black, white, brown, dark blue, golden',
-            translation: 'เช่น a cute little white cat',
-          },
-          {
-            label: '6. Origin (สัญชาติ/ที่มา)',
-            rule: 'ประเทศ เชื้อชาติ แหล่งที่มา',
-            example: 'Thai, Japanese, Italian, American, Chinese, Korean',
-            translation: 'ขึ้นต้นด้วยตัวพิมพ์ใหญ่เสมอ',
-          },
-          {
-            label: '7. Material (วัสดุที่ทำ)',
-            rule: 'ทำจากไม้ เหล็ก ผ้าไหม พลาสติก',
-            example: 'wooden, silk, cotton, leather, plastic, glass, metal',
-            translation: 'อยู่ติดหน้าคำนามหรือหน้าคำบอกวัตถุประสงค์',
-          },
-          {
-            label: '8. Purpose + Noun (เพื่อใช้ทำอะไร + นามหลัก)',
-            rule: 'คำขยายบอกการใช้งาน + คำนามหลัก',
-            example: 'running shoes, sleeping bag, dining table, swimming pool',
-            translation: 'คำนามหลักต้องอยู่ขวาสุดเสมอ!',
+            label: '4. Adjective (คำคุณศัพท์ — ขยายคำนาม)',
+            rule: 'วาง "หน้าคำนาม" หรือ "หลัง Linking Verb (be, feel, seem, look)"\n• Suffix: -ful, -less, -ous, -ive, -al, -able, -ic\n• คนรู้สึก = V-ed (excited) | สิ่งของน่า... = V-ing (exciting)',
+            example: 'The documentary was deeply educational.',
+            translation: 'educational (Adj.) วางหลัง was เพื่อบอกลักษณะของสารคดี',
           },
         ],
       },
       {
-        heading: 'ตัวอย่างชุดที่ออกข้อสอบ O-NET บ่อยที่สุด',
+        heading: '5–8. กลุ่มคำขยายและคำเชื่อม (Adverb, Preposition, Conjunction, Interjection)',
+        color: 'emerald',
         rows: [
           {
-            label: 'Opinion + Size + Color + Noun',
-            rule: 'ความเห็น ➔ ขนาด ➔ สี ➔ นาม',
-            example: 'a beautiful big white house',
-            translation: 'บ้านสีขาวหลังใหญ่ที่สวยงาม',
+            label: '5. Adverb (คำกริยาวิเศษณ์ — ขยาย Verb / Adj. / Adv.)',
+            rule: 'บอกอาการ (ลงท้าย -ly: calmly, clearly) • บอกความถี่ (always, rarely) • บอกเวลา/สถานที่',
+            example: 'The teacher explained the rules very clearly.',
+            translation: 'clearly ขยาย explained (อธิบายอย่างชัดเจน) / very ขยาย clearly',
           },
           {
-            label: 'Size + Age + Origin + Noun',
-            rule: 'ขนาด ➔ อายุ ➔ สัญชาติ ➔ นาม',
-            example: 'a small old Japanese car',
-            translation: 'รถยนต์ญี่ปุ่นคันเล็กๆ รุ่นเก่า',
+            label: '6. Preposition (คำบุพบท — บอกตำแหน่ง เวลา ทิศทาง)',
+            rule: 'วางหน้า Noun / V-ing: in, on, at, by, for, with, from, about, to, of',
+            example: 'Worried about spending too much time on running.',
+            translation: 'หลังบุพบท (about, on) ต้องเป็นคำนามหรือ V-ing เสมอ',
           },
           {
-            label: 'Opinion + Color + Material + Noun',
-            rule: 'ความเห็น ➔ สี ➔ วัสดุ ➔ นาม',
-            example: 'an expensive black leather bag',
-            translation: 'กระเป๋าหนังสีดำราคาแพง',
+            label: '7. Conjunction (คำสันธาน — เชื่อมคำหรือประโยค)',
+            rule: 'and, but, or, so, because, although, unless, while, when',
+            example: 'Although he is 61, he runs fast.',
+            translation: 'ใช้เชื่อม 2 อนุประโยคเข้าด้วยกัน',
+          },
+          {
+            label: '8. Interjection (คำอุทาน — แสดงอารมณ์ความรู้สึก)',
+            rule: 'วางต้นประโยค มีเครื่องหมายตกใจ (!) หรือลูกน้ำ (,): Wow!, Oh!, Ouch!, Hurray!',
+            example: 'Wow! That movie was fantastic.',
+            translation: 'ว้าว! หนังเรื่องนั้นยอดเยี่ยมมาก',
           },
         ],
       },
     ],
     examTraps: [
       {
-        wrong: '❌ a leather black expensive bag',
-        right: '✅ an expensive black leather bag',
-        why: 'วัสดุ (leather) ต้องอยู่ใกล้คำนามหลัก (bag) ที่สุด และความเห็น (expensive) ต้องอยู่หน้าสุด',
-      },
-      {
-        wrong: '❌ a wooden round small table',
-        right: '✅ a small round wooden table',
-        why: 'เรียงตามขนาด (small) ➔ รูปร่าง (round) ➔ วัสดุ (wooden) + คำนาม (table)',
+        wrong: '❌ The room is cleanly. / She felt happily.',
+        right: '✅ The room is clean. / She felt happy.',
+        why: 'หลัง Verb to be และ feel/seem/look ต้องเป็น Adjective ห้ามใช้ -ly!',
       },
     ],
   },
+
   {
-    id: 'sentence-structure',
-    title: 'การวางโครงสร้างประโยค & ตำแหน่งคำ (Sentence Structure & Word Order)',
-    shortTitle: 'การวางประโยค',
-    icon: '🧱',
-    badge: 'พื้นฐานสำคัญสุด',
-    summaryFormula:
-      'ประโยคบอกเล่า: Subject (ประธาน) + Verb (กริยา) + Object (กรรม) + Place (สถานที่) + Time (เวลา)',
-    memoryTip:
-      'จำตำแหน่งทอง: 1) Adj ขยายนาม (วางหน้านาม / หลัง V.to be) • 2) Adv (-ly) ขยายกริยา/ขยาย Adj • 3) ประโยคคำถามอ้อม (Indirect Question) ห้ามสลับกริยาช่วยขึ้นหน้าประธาน!',
-    relatedUnitNumber: 105,
+    id: 'nouns-countable',
+    category: 'foundation',
+    title: '1. Countable & Uncountable Nouns (นามนับได้ / นับไม่ได้ & คำบอกปริมาณ)',
+    shortTitle: 'นามนับได้ / ไม่ได้',
+    icon: '🍎',
+    badge: 'พื้นฐานสำคัญ',
+    summaryFormula: 'นับได้ (พหูพจน์): many / a few / few | นับไม่ได้ (เอกพจน์เสมอ): much / a little / little | ใช้ได้ทั้งคู่: some / any / a lot of',
+    memoryTip: 'นามนับไม่ได้ (water, money, information, advice, equipment, homework, news) ห้ามใส่ a/an และห้ามเติม -s เด็ดขาด! ใช้กริยาเอกพจน์ (is/was)',
     sections: [
       {
-        heading: '1. โครงสร้างประโยคพื้นฐาน & ลำดับส่วนขยาย',
+        heading: '1. ความแตกต่างระหว่าง Countable vs Uncountable Nouns',
+        color: 'blue',
         rows: [
           {
-            label: 'โครงสร้างหลัก S + V + O + M + P + T',
-            rule: 'ประธาน + กริยา + กรรม + วิธีทำ (Manner) + สถานที่ (Place) + เวลา (Time)',
-            example: 'She read the book quietly in the library yesterday.',
-            translation: 'สถานที่ (in the library) มาก่อนเวลา (yesterday) เสมอ',
+            label: 'Countable Nouns (คำนามนับได้)',
+            rule: 'นับเป็นชิ้น/อัน/คนได้ • มีทั้งรูปเอกพจน์ (a book) และพหูพจน์ (two books)',
+            example: 'There are three books on the desk.',
+            translation: 'เติม a/an นำหน้าเอกพจน์ได้ และเติม s/es เมื่อมีมากกว่า 1',
           },
           {
-            label: 'ลำดับในกลุ่มคำนาม (Noun Phrase)',
-            rule: 'Article (a/an/the) + Adverb (-ly) + Adjective + Noun',
-            example: 'a very important decision / an extremely difficult test',
-            translation: 'Adv ขยาย Adj และ Adj ขยาย Noun ตัวท้ายสุด',
-          },
-          {
-            label: 'ตำแหน่ง Adverb of Frequency (บอกความถี่)',
-            rule: 'always, usually, often, sometimes, seldom, never ➔ วาง “หน้ากริยาแท้” แต่ “หลัง Verb to be”',
-            example: 'He always wakes up early. / He is always on time.',
-            translation: 'อยู่หน้า wakes (กริยาแท้) แต่อยู่หลัง is (V.to be)',
+            label: 'Uncountable Nouns (คำนามนับไม่ได้)',
+            rule: 'ของเหลว/ผง/มวลสาร/นามธรรม: water, milk, rice, sugar, money, time, information, advice, equipment, news, homework, furniture',
+            example: 'The computer lab has modern equipment. (ห้าม equipments!)',
+            translation: 'เป็นเอกพจน์เสมอ ใช้คู่กับ is / was / has (ห้ามเติม a/an หรือ -s)',
           },
         ],
       },
       {
-        heading: '2. โครงสร้างประโยคคำถามตรง vs คำถามอ้อม (Direct vs Indirect Questions)',
+        heading: '2. Quantifiers (คำบอกปริมาณที่ใช้คู่กัน)',
+        color: 'emerald',
         rows: [
           {
-            label: 'คำถามตรง (Direct Question)',
-            rule: 'WH-Word + กริยาช่วย (do/does/did/is/can/will) + S + V.แท้ ?',
-            example: 'Where does she live? / What time does the train leave?',
-            translation: 'มีกริยาช่วยคั่นหน้าประธาน',
+            label: 'many / a few / few + นามนับได้พหูพจน์',
+            rule: 'many (มาก) | a few (มีบ้างเล็กน้อย พอใช้) | few (น้อยมาก แทบไม่มี)',
+            example: 'There are a few students in the library.',
+            translation: 'students เติม s (นับได้พหูพจน์) จึงใช้ a few / many',
           },
           {
-            label: 'คำถามอ้อมสุภาพ (Indirect Question)',
-            rule: 'Could you tell me / Do you know + WH-Word + S + V (เรียงแบบประโยคบอกเล่า!)',
-            example: 'Could you tell me where she lives? / Do you know what time the train leaves?',
-            translation: 'ห้ามใส่ do/does/did และห้ามสลับ is/am/are ขึ้นหน้าประธาน!',
+            label: 'much / a little / little + นามนับไม่ได้',
+            rule: 'much (มาก) | a little (มีบ้างเล็กน้อย) | little (น้อยมาก แทบไม่มี)',
+            example: 'I do not have much money left.',
+            translation: 'money นับไม่ได้ จึงใช้ much / a little',
           },
           {
-            label: 'คำถามอ้อมแบบ Yes/No',
-            rule: 'Do you know / I wonder + if / whether + S + V',
-            example: 'Do you know if the bank is open today?',
-            translation: 'ใช้ if หรือ whether แปลว่า “...หรือไม่”',
-          },
-        ],
-      },
-      {
-        heading: '3. กริยาเชื่อมประสาทสัมผัส (Linking Verbs)',
-        rows: [
-          {
-            label: 'look, feel, sound, smell, taste, seem, become + Adjective',
-            rule: 'กริยากลุ่มนี้ตามด้วย Adjective เสมอ (ห้ามใช้ Adverb -ly)',
-            example: 'The soup tastes delicious. / Your idea sounds great.',
-            translation: 'ซุปรสชาติอร่อย / ไอเดียของคุณฟังดูยอดเยี่ยม',
+            label: 'some / any / a lot of (ใช้ได้ทั้งนับได้พหูพจน์และนับไม่ได้)',
+            rule: 'some (บอกเล่า/ขอร้อง) | any (ปฏิเสธ/คำถาม) | a lot of (จำนวนมาก)',
+            example: 'Do you have any advice? / Yes, I have some.',
+            translation: 'advice นับไม่ได้ ใช้ any ในคำถาม และ some ในบอกเล่า',
           },
         ],
       },
     ],
     examTraps: [
       {
-        wrong: '❌ Could you tell me where is the restroom?',
-        right: '✅ Could you tell me where the restroom is?',
-        why: 'หลัง where ในประโยคคำถามอ้อม ต้องเรียง S + V (the restroom is) ห้ามเอา is ขึ้นก่อน',
-      },
-      {
-        wrong: '❌ She speaks English very good.',
-        right: '✅ She speaks English very well.',
-        why: 'ขยายกริยาแท้ (speaks) ต้องใช้ Adverb (well) ส่วน good เป็น Adjective ใช้ขยายคำนาม',
+        wrong: '❌ He gave me many advices / an information.',
+        right: '✅ He gave me much advice / some information.',
+        why: 'advice, information, news, equipment, homework เป็นนามนับไม่ได้ ห้ามใส่ a/an และห้ามเติม s',
       },
     ],
   },
+
   {
-    id: 'prepositions',
-    title: 'คำบุพบท เวลา & สถานที่ (Prepositions: in / on / at & คำบุพบทสำคัญ)',
-    shortTitle: 'คำบุพบท (in/on/at)',
-    icon: '📍',
-    badge: 'สามเหลี่ยม IN-ON-AT',
-    summaryFormula:
-      'IN = กว้างใหญ่ (เดือน/ปี/ฤดู/ประเทศ/เมือง) ➔ ON = กลาง/วัน/พื้นผิว (วันทั้ง 7/วันที่/ถนน/ชั้นตึก) ➔ AT = จุดเจาะจง (เวลานาฬิกา/สถานที่เฉพาะจุด)',
-    memoryTip:
-      'จำกฎ “มีวันใช้ ON”: แม้จะมีเดือนหรือปีพ่วงท้าย แต่ถ้าเห็นคำว่า “วัน” หรือ “เลขวันที่” เมื่อไหร่ ให้ตอบ ON ทันที! (เช่น on Monday, on May 5th, on New Year’s Day)',
-    relatedUnitNumber: 13,
+    id: 'nouns-plural',
+    category: 'foundation',
+    title: '2. Singular & Plural Nouns (เอกพจน์ ➔ พหูพจน์ ทั้งปกติและเปลี่ยนรูป)',
+    shortTitle: 'เอกพจน์-พหูพจน์',
+    icon: '📚',
+    badge: 'พื้นฐานสำคัญ',
+    summaryFormula: 'ทั่วไปเติม -s | ลงท้าย s,ss,sh,ch,x,z เติม -es | พยัญชนะ+y เปลี่ยนเป็น -ies | f/fe เปลี่ยนเป็น -ves | เปลี่ยนรูปพิเศษต้องจำ!',
+    memoryTip: 'ระวังคำรูปคงเดิม (Singular = Plural): sheep, deer, fish (โดยทั่วไป), series, species และคำเปลี่ยนรูปที่ออกบ่อย: child ➔ children, person ➔ people',
     sections: [
       {
-        heading: '1. คำบุพบทบอกเวลา (Prepositions of Time)',
+        heading: '1. กฎการเติม s / es / ies / ves (Regular Plurals)',
+        color: 'blue',
         rows: [
           {
-            label: 'IN (ช่วงเวลากว้างๆ)',
-            rule: 'เดือน, ปี, ฤดูกาล, ทศวรรษ, ช่วงของวัน (the morning / afternoon / evening), in + เวลาที่จะเกิดในอนาคต',
-            example: 'in May, in 2026, in summer, in the morning, in 10 minutes',
-            translation: 'ในเดือนพ.ค., ในปี 2026, ในฤดูร้อน, ในอีก 10 นาที',
+            label: 'เติม -s ได้เลย (ทั่วไป)',
+            rule: 'คำนามทั่วไป และคำลงท้ายด้วย สระ (a,e,i,o,u) + y',
+            example: 'book ➔ books  |  day ➔ days  |  boy ➔ boys',
+            translation: 'boy หน้า y เป็นสระ o เติม s ได้เลย',
           },
           {
-            label: 'ON (ระดับวัน & วันที่)',
-            rule: 'วันทั้ง 7, วันที่ (มีตัวเลข), วันสำคัญที่มีคำว่า Day, วัน + ช่วงเวลา (on Friday morning)',
-            example: 'on Monday, on 16th November, on Christmas Day, on my birthday, on weekdays',
-            translation: 'เจอวันหรือเลขวันที่ ตอบ on เสมอ!',
+            label: 'เติม -es (ลงท้าย s, ss, sh, ch, x, z, และ o บางคำ)',
+            rule: 'bus ➔ buses | class ➔ classes | dish ➔ dishes | watch ➔ watches | box ➔ boxes',
+            example: 'tomato ➔ tomatoes  |  potato ➔ potatoes  |  hero ➔ heroes',
+            translation: 'ยกเว้น photo ➔ photos, piano ➔ pianos',
           },
           {
-            label: 'AT (จุดเวลาเจาะจง)',
-            rule: 'เวลาตามนาฬิกา, จุดเวลาสั้นๆ, เทศกาลที่ไม่มีคำว่า Day',
-            example: 'at 8:30 a.m., at noon, at night, at midnight, at the moment, at Christmas',
-            translation: 'ตอน 8 โมงครึ่ง, ตอนเที่ยง, ตอนกลางคืน',
+            label: 'พยัญชนะ + y ➔ ตัด y เติม -ies',
+            rule: 'city ➔ cities | baby ➔ babies | story ➔ stories | country ➔ countries',
+            example: 'Bangkok is one of the largest cities.',
+            translation: 'หลัง one of the... ต้องใช้คำนามพหูพจน์ (cities)',
+          },
+          {
+            label: 'ลงท้าย f / fe ➔ เปลี่ยนเป็น -ves',
+            rule: 'knife ➔ knives | leaf ➔ leaves | wife ➔ wives | life ➔ lives | thief ➔ thieves',
+            example: 'Autumn leaves are falling.',
+            translation: 'ยกเว้น roof ➔ roofs, safe ➔ safes',
           },
         ],
       },
       {
-        heading: '2. คำบุพบทบอกสถานที่ & ยานพาหนะ (Place & Transport)',
+        heading: '2. คำนามเปลี่ยนรูปพิเศษ (Irregular Plurals) — ออกสอบบ่อย!',
+        color: 'amber',
         rows: [
           {
-            label: 'IN (พื้นที่ปิด / ขอบเขตใหญ่)',
-            rule: 'ประเทศ, เมือง, จังหวัด, ในห้อง/กล่อง, ยานพาหนะที่ยืนเดินไม่ได้ (in a car / in a taxi)',
-            example: 'in Thailand, in Bangkok, in the kitchen, in a taxi',
-            translation: 'อยู่ในพื้นที่ล้อมรอบ หรือเมือง/ประเทศ',
+            label: 'เปลี่ยนสระ / เปลี่ยนคำใหม่เลย',
+            rule: 'man ➔ men | woman ➔ women | child ➔ children | person ➔ people | tooth ➔ teeth | foot ➔ feet | mouse ➔ mice',
+            example: 'Many children are playing in the park.',
+            translation: 'ห้ามเติม s เป็น childs หรือ peoples (ยกเว้นชนชาติ)',
           },
           {
-            label: 'ON (บนพื้นผิว / เส้นถนน / ชั้นตึก / รถใหญ่)',
-            rule: 'บนโต๊ะ/ผนัง, ชื่อถนน, ชั้นของตึก, ยานพาหนะที่ยืนเดินได้หรือขี่คร่อม (bus, train, plane, boat, bike, horse) + สื่อออนไลน์',
-            example: 'on the table, on Sukhumvit Road, on the 2nd floor, on the bus, on the internet',
-            translation: 'บนรถบัส/รถไฟ/เครื่องบิน และบนอินเทอร์เน็ตใช้ on',
-          },
-          {
-            label: 'AT (จุดนัดหมาย / บ้านเลขที่)',
-            rule: 'สถานที่เฉพาะจุด, บ้านเลขที่, กิจกรรม/งานเลี้ยง',
-            example: 'at the bus stop, at school, at home, at the airport, at 123 Silom Road',
-            translation: 'ถ้ามีบ้านเลขที่นำหน้าชื่อถนน ใช้ at',
-          },
-          {
-            label: 'BY (วิธีการเดินทาง / สื่อสาร)',
-            rule: 'by + ยานพาหนะล้วนๆ (ห้ามมี a/an/the/my คั่นกลาง!)',
-            example: 'go by bus, travel by train, by plane, pay by credit card',
-            translation: 'ถ้ามี a/the คั่น ต้องเปลี่ยนไปใช้ in a car หรือ on the bus',
-          },
-        ],
-      },
-      {
-        heading: '3. คู่คำบุพบทที่ข้อสอบ O-NET ชอบเอามาหลอก',
-        rows: [
-          {
-            label: 'since vs for vs during',
-            rule: 'since + จุดเริ่มต้นเวลา  |  for + จำนวนระยะเวลา  |  during + คำนามเหตุการณ์',
-            example: 'since 2020 / for 3 years / during the summer holiday',
-            translation: 'ระวัง! during ตามด้วยคำนามชื่อช่วงเวลา ไม่ตามด้วยตัวเลขจำนวนปี',
-          },
-          {
-            label: 'between vs among',
-            rule: 'between A and B (ระหว่าง 2 สิ่ง)  |  among + พหูพจน์ (ท่ามกลาง 3 สิ่งขึ้นไป)',
-            example: 'sit between John and Mary / popular among teenagers',
-            translation: 'เห็น and ข้างหลังช่องว่าง มักตอบ between',
-          },
-          {
-            label: 'until (จนกระทั่ง) vs by (ภายในเวลาไม่เกิน)',
-            rule: 'until = ทำต่อเนื่องไปจนถึงเวลานั้น  |  by = ต้องเสร็จสิ้นก่อนหรือภายในเวลานั้น',
-            example: 'Wait here until 5 p.m. / Please submit your work by Friday.',
-            translation: 'ส่งงานภายในวันศุกร์ (เสร็จก่อนเส้นตาย) ใช้ by',
+            label: 'รูปเอกพจน์และพหูพจน์เหมือนกันเป๊ะ!',
+            rule: 'sheep ➔ sheep | deer ➔ deer | fish ➔ fish | series ➔ series | aircraft ➔ aircraft',
+            example: 'There are ten sheep on the farm.',
+            translation: 'มีแกะ 10 ตัว แต่ sheep ห้ามเติม s',
           },
         ],
       },
     ],
     examTraps: [
       {
-        wrong: '❌ I went to school by a bus.',
-        right: '✅ I went to school by bus. (หรือ on a bus)',
-        why: 'หลัง by บอกวิธีเดินทาง ห้ามมี a/an/the คั่น ถ้ามี a/the ต้องใช้ on a bus หรือ in a car',
-      },
-      {
-        wrong: '❌ We have an exam in Monday morning.',
-        right: '✅ We have an exam on Monday morning.',
-        why: 'แม้จะมีคำว่า morning แต่ถ้ามีชื่อวัน (Monday) นำหน้า ต้องยึดที่ “วัน” จึงต้องใช้ on',
+        wrong: '❌ There are five childs and two mouses.',
+        right: '✅ There are five children and two mice.',
+        why: 'child และ mouse เป็นคำนามเปลี่ยนรูปพิเศษ (Irregular Plural) ห้ามเติม -s',
       },
     ],
   },
+
   {
-    id: 'collocations-phrasals',
-    title: 'คำที่ใช้คู่กัน & กริยาวลี (Collocations, Adj+Prep & Phrasal Verbs)',
-    shortTitle: 'Collocation & กริยาวลี',
-    icon: '🤝',
-    badge: 'พาร์ท Cloze Test ฮิต',
-    summaryFormula:
-      'ฝรั่งบังคับใช้คู่กันตายตัว: Make (สร้าง/ตัดสินใจ) vs Do (งาน/หน้าที่) • Adj + Prep เฉพาะตัว • Phrasal Verb (กริยา + บุพบท = ความหมายใหม่)',
-    memoryTip:
-      'เวลาทำ Cloze Test ให้กวาดตาดู “คำข้างหลังช่องว่าง” ก่อนเสมอ! ถ้าเจอ Preposition (in, on, at, of, for, from, with) หรือคำนามคู่ขา จะตัดช้อยส์ได้ทันที 3 ข้อ!',
-    relatedUnitNumber: 5,
+    id: 'pronouns',
+    category: 'foundation',
+    title: '3. Pronouns ครบทั้ง 5 ช่อง (Subject, Object, Possessive, Reflexive)',
+    shortTitle: 'Pronouns (5 ช่อง)',
+    icon: '👥',
+    badge: 'พื้นฐานสำคัญ',
+    summaryFormula: 'หน้ากริยา = Subject (I, he, she, they) | หลังกริยา/บุพบท = Object (me, him, her, them) | หน้าคำนาม = Possessive Adj. (my, their)',
+    memoryTip: 'หลังคำกริยา (give, ask, tell) และหลังคำบุพบท (about, for, with, to) ต้องใช้ Object Pronoun (me, us, him, her, them) เสมอ!',
     sections: [
       {
-        heading: '1. Collocations ยอดฮิต: MAKE vs DO vs TAKE vs HAVE',
+        heading: '1. ตารางเทียบสรรพนามครบทั้ง 7 ตัว × 5 รูป',
+        color: 'purple',
         rows: [
           {
-            label: 'MAKE (สร้างขึ้นใหม่ / ตัดสินใจ / เสียง / เงิน)',
-            rule: 'ใช้กับการสร้างสรรค์ การพูด หรือการตัดสินใจ',
-            example:
-              'make a decision (ตัดสินใจ), make a mistake (ทำผิดพลาด), make a noise (ส่งเสียงดัง), make money, make friends, make a phone call, make an effort (พยายาม), make progress (ก้าวหน้า)',
-            translation: 'ออกสอบบ่อยสุด: make a decision / make a mistake',
+            label: 'Subject (ประธาน — วางหน้ากริยา)',
+            rule: 'I  |  You  |  We  |  They  |  He  |  She  |  It',
+            example: 'They asked me to study harder.',
+            translation: 'อยู่หน้ากริยา (asked)',
           },
           {
-            label: 'DO (ทำงาน / กิจวัตร / หน้าที่ / วิจัย)',
-            rule: 'ใช้กับภารกิจ การบ้าน งานบ้าน การทดลอง',
-            example:
-              'do homework, do housework, do the dishes, do business, do research (ทำวิจัย), do a favor (ช่วยเหลือ), do your best (ทำดีที่สุด), do exercise',
-            translation: 'ออกสอบบ่อยสุด: do research / do someone a favor',
+            label: 'Object (กรรม — วางหลังกริยา / หลังบุพบท)',
+            rule: 'me  |  you  |  us  |  them  |  him  |  her  |  it',
+            example: 'Parents are worried about me spending time.',
+            translation: 'วางหลังบุพบท about / between / for / with (O-NET 2565)',
           },
           {
-            label: 'TAKE (ใช้เวลา / ถ่ายรูป / กินยา / สอบ / พัก)',
-            rule: 'ใช้คู่กับโอกาส เวลา การเดินทาง การสอบ',
-            example:
-              'take a photo, take medicine (กินยา), take an exam (เข้าสอบ), take a break (พัก), take care of (ดูแล), take part in (= participate in เข้าร่วม), take place (= happen เกิดขึ้น)',
-            translation: 'ออกสอบบ่อยสุด: take part in (เข้าร่วม) / take place (จัดขึ้น)',
+            label: 'Possessive Adjective (แสดงความเป็นเจ้าของ + ต้องมีคำนามตามหลัง)',
+            rule: 'my  |  your  |  our  |  their  |  his  |  her  |  its  (+ Noun)',
+            example: 'I understand their concern.',
+            translation: 'ต้องมีคำนาม (concern) ตามหลังเสมอ',
           },
           {
-            label: 'PAY / KEEP / CATCH / SAVE',
-            rule: 'กลุ่มคำคู่ขาที่ออกข้อสอบ Writing Cloze ทุกปี',
-            example:
-              'pay attention to (ตั้งใจฟัง), keep in touch (ติดต่อกัน), keep a promise (รักษาสัญญา), catch a cold (เป็นหวัด), save money/time/energy',
-            translation: 'จำแม่นๆ: pay attention ต้องคู่กับ to เสมอ!',
-          },
-        ],
-      },
-      {
-        heading: '2. Adjective / Verb + Preposition ที่ออกสอบ O-NET ประจำ',
-        rows: [
-          {
-            label: 'คู่กับ IN',
-            rule: 'สนใจใน... / ประสบความสำเร็จใน... / มีส่วนร่วมใน...',
-            example: 'interested in, succeed in, believe in, participate in (= take part in)',
-            translation: 'หลัง in ถ้าเป็นกริยาต้องเติม -ing เสมอ (เช่น interested in learning)',
+            label: 'Possessive Pronoun (แสดงความเป็นเจ้าของ — อยู่เดี่ยวๆ ไม่ต้องมีคำนาม)',
+            rule: 'mine  |  yours  |  ours  |  theirs  |  his  |  hers  |  —',
+            example: 'This pen is mine. (= my pen)',
+            translation: 'วางท้ายประโยคได้เลย ไม่ต้องมีคำนามตามหลัง',
           },
           {
-            label: 'คู่กับ AT / ON',
-            rule: 'เก่ง/อ่อนวิชา... (AT)  |  พึ่งพา/ขึ้นอยู่กับ... (ON)',
-            example: 'good at, bad at, surprised at/by  |  depend on (= rely on), keen on, focus on, Spend money/time on',
-            translation: 'It depends on you. (มันขึ้นอยู่กับคุณ)',
-          },
-          {
-            label: 'คู่กับ OF / FOR',
-            rule: 'กลัว/ภูมิใจ/เต็มไปด้วย (OF)  |  มีชื่อเสียง/รับผิดชอบ/ขอโทษ (FOR)',
-            example:
-              'afraid of, proud of, full of, tired of, aware of, take care of  |  famous for, responsible for, sorry for, wait for, apply for',
-            translation: 'Thailand is famous for its food. / responsible for (รับผิดชอบต่อ)',
-          },
-          {
-            label: 'คู่กับ FROM / TO / WITH / ABOUT',
-            rule: 'แตกต่างจาก / คล้ายกับ / พอใจกับ / กังวลเกี่ยวกับ',
-            example:
-              'different from, prevent from, suffer from  |  similar to, belong to, listen to, look forward to (+ V.ing!)  |  satisfied with, agree with, angry with  |  worried about, excited about',
-            translation: '⚠️ ดอกจันล้านดวง: look forward to + V.ing (ตั้งตารอคอย)',
-          },
-        ],
-      },
-      {
-        heading: '3. Phrasal Verbs (กริยาวลี) ที่ต้องรู้ก่อนเข้าห้องสอบ',
-        rows: [
-          {
-            label: 'ตระกูล LOOK',
-            rule: 'เปลี่ยนบุพบท ความหมายเปลี่ยนทันที',
-            example:
-              'look after (= take care of ดูแล), look for (มองหา), look up (ค้นคำศัพท์ในพจนานุกรม), look out! (= be careful ระวัง!), look forward to + V.ing (ตั้งตารอ)',
-            translation: 'She looks after her little brother. (เธอดูแลน้องชาย)',
-          },
-          {
-            label: 'ตระกูล GIVE / PUT / TURN / RUN',
-            rule: 'ออกสอบทั้งพาร์ท Conversation และ Cloze Test',
-            example:
-              'give up (ยอมแพ้/เลิกทำ), put off (= postpone เลื่อนออกไป), put out (ดับไฟ), put on (สวมใส่), take off (ถอดออก/เครื่องบินขึ้น), turn on/off (เปิด/ปิดไฟ), turn up/down (เพิ่ม/ลดเสียง), run out of (หมดเกลี้ยง)',
-            translation: 'We ran out of milk. (นมของพวกเราหมดเกลี้ยงแล้ว)',
+            label: 'Reflexive Pronoun (สะท้อนตัวเอง / ทำด้วยตัวเอง)',
+            rule: 'myself | yourself/yourselves | ourselves | themselves | himself | herself | itself',
+            example: 'Yesterday I prepared myself for the charity run.',
+            translation: 'ประธานทำกับตัวเอง (I... myself — O-NET 2565 ข้อ 24)',
           },
         ],
       },
     ],
     examTraps: [
       {
-        wrong: '❌ I look forward to meet you soon.',
-        right: '✅ I look forward to meeting you soon.',
-        why: 'คำว่า to ใน look forward to เป็นคำบุพบท (Preposition) ดังนั้นกริยาที่ตามมาต้องเป็น V.ing เสมอ!',
-      },
-      {
-        wrong: '❌ My culture is different with yours.',
-        right: '✅ My culture is different from yours. (แต่ similar คู่กับ to)',
-        why: 'different ต้องคู่กับ from เสมอ ส่วน similar คู่กับ to',
+        wrong: '❌ Between you and I / This book is my.',
+        right: '✅ Between you and me / This book is mine.',
+        why: 'หลังบุพบท between ต้องใช้กรรม (me) และถ้าไม่มีคำนามตามหลังต้องใช้ mine',
       },
     ],
   },
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // หมวดที่ 2: กริยา, MODALS, 12 TENSES, IRREGULAR VERBS, VOICE (VERBS & TENSES)
+  // ═════════════════════════════════════════════════════════════════════════
   {
-    id: 'tenses-overview',
-    title: 'โครงสร้าง Tenses & คำบอกเวลา (Tenses & Time Signals)',
-    shortTitle: 'โครงสร้าง Tenses',
+    id: 'tenses',
+    category: 'verbs_tenses',
+    title: '12 Tenses ครบทุกโครงสร้าง (บอกเล่า • ปฏิเสธ • คำถาม + คำบอกเวลา)',
+    shortTitle: '12 Tenses (ครบทุกโครงสร้าง)',
     icon: '⏱️',
-    badge: 'เช็กคำบอกเวลา = ตอบได้เลย',
-    summaryFormula:
-      '1. ขีดเส้นใต้คำบอกเวลา (Time Signal) ในโจทย์ ➔ 2. เช็กว่าประธานเป็นเอกพจน์หรือพหูพจน์ ➔ 3. จับคู่โครงสร้างกริยาให้ตรงเวลา',
-    memoryTip:
-      'เห็น yesterday / last / ago / in+ปีอดีต ➔ ตอบ V.2 ทันที! • เห็น since / for / already / yet / just / so far ➔ ตอบ have/has + V.3 ทันที!',
-    relatedUnitNumber: 3,
+    badge: 'ครบทั้ง 12 Tenses',
+    summaryFormula: 'Simple = พื้นฐาน | Continuous = กำลังทำ (be + V-ing) | Perfect = ทำเสร็จแล้ว/ประสบการณ์ (have + V.3) | Perfect Cont. = ทำต่อเนื่อง (have + been + V-ing)',
+    memoryTip: 'จำแกนหลัก: Present (V.1 / is,am,are / has,have) | Past (V.2 / was,were / had) | Future (will + V.inf)',
     sections: [
       {
-        heading: '1. ปัจจุบัน (Present Tenses — ความจริง กิจวัตร และสิ่งที่กำลังทำ)',
+        heading: '1. กลุ่ม PRESENT (ปัจจุบัน — 4 Tenses)',
+        color: 'blue',
         rows: [
           {
-            label: 'Present Simple',
-            rule: 'S + V.1 (ประธานเอกพจน์ เติม s/es)  |  ปฏิเสธ/คำถามใช้ do/does + V.inf',
-            example: 'always, usually, often, every day/week, once a week, ความจริงตามธรรมชาติ (Water boils at 100°C)',
-            translation: 'ใช้กับกิจวัตรประจำวัน ความจริงเสมอ และตารางเวลาเดินรถ/เครื่องบิน',
+            label: '1. Present Simple (กิจวัตร / ความจริง)',
+            rule: 'บอกเล่า: S + V.1 (ประธานเอกพจน์เติม s/es)\nปฏิเสธ: S + do/does not + V.1  |  คำถาม: Do/Does + S + V.1?\nคำใบ้: always, usually, often, every day, these days',
+            example: 'The film stands out. / They do not go.',
+            translation: 'ปัจจุบันทั่วไป กริยาเอกพจน์เติม s',
           },
           {
-            label: 'Present Continuous',
-            rule: 'S + is / am / are + V.ing',
-            example: 'now, right now, at the moment, at present, Look!, Listen!, Be quiet!',
-            translation: 'กำลังเกิดขึ้นเดี๋ยวนี้ในขณะที่พูด (เช่น Look! It is raining.)',
+            label: '2. Present Continuous (กำลังทำอยู่ตอนนี้)',
+            rule: 'บอกเล่า: S + is/am/are + V-ing\nปฏิเสธ: S + is/am/are not + V-ing  |  คำถาม: Is/Am/Are + S + V-ing?\nคำใบ้: now, right now, at the moment, Look!',
+            example: 'I am going to sleep now.',
+            translation: 'กำลังเกิดขึ้น ณ ขณะที่พูด',
           },
           {
-            label: 'Present Perfect',
-            rule: 'S + have / has + V.3',
-            example: 'since (+จุดเริ่ม), for (+ระยะเวลา), just, already, yet (ท้ายประโยคปฏิเสธ/คำถาม), ever, never, recently, so far, many times',
-            translation: 'ทำตั้งแต่อดีตต่อเนื่องมาถึงปัจจุบัน หรือเพิ่งทำเสร็จ/เคยทำ',
+            label: '3. Present Perfect (อดีตถึงปัจจุบัน / ประสบการณ์)',
+            rule: 'บอกเล่า: S + has/have + V.3\nปฏิเสธ: S + has/have not + V.3  |  คำถาม: Has/Have + S + V.3?\nคำใบ้: since, for, just, already, yet, ever, never, the best...',
+            example: 'The best cinematography I have seen. (O-NET 2566)',
+            translation: 'เท่าที่เคยเห็นมาจนถึงปัจจุบัน',
+          },
+          {
+            label: '4. Present Perfect Continuous (ทำต่อเนื่องไม่หยุด)',
+            rule: 'บอกเล่า: S + has/have + been + V-ing\nปฏิเสธ: S + has/have not + been + V-ing\nคำใบ้: for two hours, since morning, all day',
+            example: 'She has been studying English for two hours.',
+            translation: 'เรียนมาต่อเนื่อง 2 ชั่วโมงแล้วและยังเรียนอยู่',
           },
         ],
       },
       {
-        heading: '2. อดีต (Past Tenses — จบไปแล้ว / กำลังทำในอดีตแล้วมีเหตุการณ์แทรก)',
+        heading: '2. กลุ่ม PAST (อดีต — 4 Tenses)',
+        color: 'amber',
         rows: [
           {
-            label: 'Past Simple',
-            rule: 'S + V.2  |  ปฏิเสธ/คำถามใช้ did + V.inf (ระวัง! หลัง did กริยากลับเป็น V.1 เสมอ)',
-            example: 'yesterday, last night/week/year, ...ago (two days ago), in 2022, when I was young',
-            translation: 'เกิดและจบไปแล้วในอดีต มีเวลาอดีตระบุชัดเจน',
+            label: '5. Past Simple (จบไปแล้วในอดีต)',
+            rule: 'บอกเล่า: S + V.2\nปฏิเสธ: S + did not + V.1  |  คำถาม: Did + S + V.1?\nคำใบ้: yesterday, last..., ago, in 2016, from 2011 to 2016',
+            example: 'Smartphone ownership increased from 2011 to 2016.',
+            translation: 'เหตุการณ์ในอดีตที่ระบุเวลาชัดเจน (O-NET 2568)',
           },
           {
-            label: 'Past Continuous คู่กับ Past Simple (เหตุการณ์แทรก!)',
-            rule: 'กำลังทำอยู่ก่อน (ยาว) = was/were + V.ing  |  เข้ามาแทรก (สั้น) = V.2',
-            example: 'While I was sleeping (ยาว), the phone rang (แทรก). / I was walking home when it started to rain.',
-            translation: 'สูตรจำ: หลัง while + was/were V.ing  |  หลัง when + V.2',
+            label: '6. Past Continuous (กำลังทำอยู่ในอดีต ณ เวลานั้น)',
+            rule: 'บอกเล่า: S + was/were + V-ing\nปฏิเสธ: S + was/were not + V-ing  |  คำถาม: Was/Were + S + V-ing?\nคำใบ้: while / when (กำลังทำอยู่ แล้วมีอีกเหตุการณ์ V.2 มาแทรก)',
+            example: 'I was sleeping when the phone rang.',
+            translation: 'กำลังนอนอยู่ (ยาว) ตอนโทรศัพท์ดัง (แทรก)',
           },
           {
-            label: 'Past Perfect (เกิดก่อนอีกเหตุการณ์ในอดีต)',
-            rule: 'เกิดก่อน = had + V.3  |  เกิดทีหลัง = V.2',
-            example: 'The train had left before we arrived at the station.',
-            translation: 'รถไฟออกไปเสร็จก่อนแล้ว (had left) พวกเราถึงเพิ่งมาถึง (arrived)',
+            label: '7. Past Perfect (เกิดก่อนเหตุการณ์อื่นในอดีต)',
+            rule: 'บอกเล่า: S + had + V.3\nปฏิเสธ: S + had not + V.3  |  คำถาม: Had + S + V.3?\nคำใบ้: before, after, by the time (เกิดก่อน = had+V.3 / เกิดหลัง = V.2)',
+            example: 'She stayed home because she had caught a fever.',
+            translation: 'เป็นไข้ก่อน (had caught) แล้วจึงอยู่บ้าน (stayed)',
+          },
+          {
+            label: '8. Past Perfect Continuous (ทำต่อเนื่องมาก่อนอีกเหตุการณ์ในอดีต)',
+            rule: 'บอกเล่า: S + had + been + V-ing\nคำใบ้: for + เวลา + before + เหตุการณ์อดีต (V.2)',
+            example: 'They had been waiting for an hour before the bus arrived.',
+            translation: 'รอมาต่อเนื่อง 1 ชั่วโมงก่อนรถบัสจะมา',
           },
         ],
       },
       {
-        heading: '3. อนาคต (Future Forms)',
+        heading: '3. กลุ่ม FUTURE (อนาคต — 4 Tenses)',
+        color: 'emerald',
         rows: [
           {
-            label: 'Future Simple',
-            rule: 'S + will + V.inf  |  S + is/am/are going to + V.inf (วางแผนไว้แล้ว/มีเค้าลางชัดเจน)',
-            example: 'tomorrow, next week/month/year, soon, in the future, I think / I hope / I promise + will V.inf',
-            translation: 'Look at those dark clouds! It is going to rain. (มีหลักฐานเห็นเมฆดำ)',
+            label: '9. Future Simple (จะเกิดขึ้นในอนาคต)',
+            rule: 'บอกเล่า: S + will + V.1 (หรือ be going to + V.1)\nปฏิเสธ: S + will not (won\'t) + V.1  |  คำถาม: Will + S + V.1?\nคำใบ้: tomorrow, next week, soon, in the future',
+            example: 'The sports complex will be opened next Monday.',
+            translation: 'เหตุการณ์ที่จะเกิดในอนาคต',
+          },
+          {
+            label: '10. Future Continuous (กำลังจะทำอยู่ ณ เวลานั้นในอนาคต)',
+            rule: 'บอกเล่า: S + will + be + V-ing\nคำใบ้: at this time tomorrow, at 8 p.m. tonight',
+            example: 'At 9 a.m. tomorrow, we will be taking the O-NET exam.',
+            translation: 'พรุ่งนี้ตอน 9 โมงเช้า เรากำลังจะสอบอยู่',
+          },
+          {
+            label: '11. Future Perfect (จะทำเสร็จสมบูรณ์ภายในเวลาในอนาคต)',
+            rule: 'บอกเล่า: S + will + have + V.3\nคำใบ้: by + เวลาในอนาคต (by tomorrow, by next year)',
+            example: 'By next month, she will have finished the course.',
+            translation: 'ภายในเดือนหน้า เธอก็จะเรียนจบคอร์สแล้ว',
+          },
+          {
+            label: '12. Future Perfect Continuous (จะทำต่อเนื่องครบเวลาในอนาคต)',
+            rule: 'บอกเล่า: S + will + have + been + V-ing\nคำใบ้: by + เวลาในอนาคต + for + ระยะเวลา',
+            example: 'By 2027, I will have been teaching here for 10 years.',
+            translation: 'ถึงปี 2027 ฉันจะสอนที่นี่ครบ 10 ปีพอดี',
           },
         ],
       },
     ],
     examTraps: [
       {
-        wrong: '❌ She didn’t went to school yesterday.',
-        right: '✅ She didn’t go to school yesterday.',
-        why: 'เมื่อมีกริยาช่วย did / didn’t แล้ว กริยาแท้ข้างหลังต้องกลับเป็นรูปเดิม (V.inf = go) ห้ามใช้ V.2 ซ้ำ!',
-      },
-      {
-        wrong: '❌ I lived here since 2019.',
-        right: '✅ I have lived here since 2019.',
-        why: 'เจอ since + จุดเริ่มต้น หรือ for + ระยะเวลา ที่ยังอยู่ต่อเนื่องถึงปัจจุบัน ต้องใช้ have/has + V.3 เสมอ',
+        wrong: '❌ Did he went home? / She didn\'t went.',
+        right: '✅ Did he go home? / She didn\'t go.',
+        why: 'เมื่อมี Did / didn\'t แล้ว กริยาแท้ต้องกลับเป็นรูป V.1 (ไม่ผัน) เสมอ!',
       },
     ],
   },
+
   {
-    id: 'connectors',
-    title: 'คำเชื่อมประโยค (Connectors & Conjunctions)',
-    shortTitle: 'คำเชื่อม (Connectors)',
-    icon: '🔗',
-    badge: 'ออกสอบทุกปี 100%',
-    summaryFormula:
-      'อ่านใจความ 2 ฝั่ง (เหตุผล / ผลลัพธ์ / ขัดแย้ง) + เช็กโครงสร้างหลังช่องว่างว่าเป็น “ประโยค (S + V)” หรือ “คำนาม (Noun / V.ing)”',
-    memoryTip:
-      'ถ้าหลังช่องว่างมีเครื่องหมาย Comma (,) เช่น “. ____, S + V” ➔ ตอบตระกูล However, / Therefore, / Moreover, ทันที! • ถ้าหลังช่องว่างเป็นแค่กลุ่มคำนาม (ไม่มีกริยา) ➔ ตอบ because of หรือ despite!',
-    relatedUnitNumber: 101,
-    sections: [
-      {
-        heading: 'ตารางเปรียบเทียบคำเชื่อม 4 ตระกูลหลัก',
-        rows: [
-          {
-            label: '1. บอกเหตุผล (เพราะว่า...)',
-            rule: 'because / since / as + ประโยค (S + V)  ↔  because of / due to + คำนาม (Noun / V.ing)',
-            example: 'We stayed inside because it rained heavily. / We stayed inside because of the heavy rain.',
-            translation: 'it rained มีกริยาใช้ because | the heavy rain เป็นคำนามใช้ because of',
-          },
-          {
-            label: '2. บอกความขัดแย้ง (แม้ว่า... / แต่... / อย่างไรก็ตาม)',
-            rule: 'although / even though + S + V  ↔  despite / in spite of + Noun / V.ing  |  . However, + S + V',
-            example: 'Although he was tired, he kept working. / Despite his tiredness, he kept working.',
-            translation: 'ห้ามใช้ despite ตามด้วย S + V และห้ามใส่ but ซ้ำในประโยคที่มี although แล้ว!',
-          },
-          {
-            label: '3. บอกผลลัพธ์ (ดังนั้น...)',
-            rule: ', so + S + V  |  . Therefore, / . As a result, + S + V',
-            example: 'He woke up late, so he missed the bus. / He woke up late. Therefore, he missed the bus.',
-            translation: 'Therefore มักขึ้นต้นประโยคใหม่และมี Comma (,) ตามหลังเสมอ',
-          },
-          {
-            label: '4. บอกการเสริมข้อมูล & เงื่อนไข',
-            rule: 'Moreover, / Furthermore, / In addition, (ยิ่งไปกว่านั้น)  |  unless + S + V (= if...not ถ้าไม่)',
-            example: 'You will fail the test unless you study hard. (= if you don’t study hard)',
-            translation: 'หลัง unless ห้ามใส่ not ซ้ำ เพราะตัวมันแปลว่า “ถ้า...ไม่” อยู่แล้ว',
-          },
-        ],
-      },
-    ],
-    examTraps: [
-      {
-        wrong: '❌ Despite the weather was bad, the flight took off.',
-        right: '✅ Although the weather was bad, ... (หรือ Despite the bad weather, ...)',
-        why: 'the weather was bad มีประธาน+กริยา (was) ต้องใช้ Although ส่วน Despite ตามด้วยคำนามเท่านั้น',
-      },
-    ],
-  },
-  {
-    id: 'core-structures',
-    title: 'โครงสร้างออกสอบทุกปี (Passive Voice, If-Clause, Gerund/Infinitive & การเปรียบเทียบ)',
-    shortTitle: 'Passive • If • เปรียบเทียบ',
+    id: 'modals-sva',
+    category: 'verbs_tenses',
+    title: 'Modal Verbs ครบทุกตัว + กฎ Subject-Verb Agreement',
+    shortTitle: 'Modal Verbs (ครบทุกตัว)',
     icon: '⚙️',
-    badge: '4 หัวใจไวยากรณ์ ม.3',
-    summaryFormula:
-      'Passive = be + V.3 (ถูกกระทำ)  |  If-Clause = จับคู่กริยา 2 ฝั่ง  |  Comparisons = as...as / -er than / the -est',
-    memoryTip:
-      'ประธานเป็นสิ่งของ/อาคาร/หนังสือ (ทำเองไม่ได้) ➔ ตอบ Passive (be + V.3) ทันที! • เจอ than ตอบขั้นกว่า (-er/more) • เจอ the ข้างหน้า + in/of ข้างหลัง ตอบขั้นสุด (-est/most)!',
+    badge: 'ครบทุกตัว + พื้นฐาน',
+    summaryFormula: 'Modal Verb + V.inf (ไม่เติม s, ed, ing, to!) | Modal Passive: Modal + be + V.3',
+    memoryTip: 'กฎเหล็ก 3 ข้อของ Modal: 1) ห้ามเติม -s ที่ Modal (ห้าม cans/musts) 2) ตามด้วย V.1 ไม่ผันเสมอ 3) ทำเป็นประโยคคำถาม/ปฏิเสธได้ด้วยตัวเอง (can\'t, mustn\'t)',
+    sections: [
+      {
+        heading: '1. Modal Verbs แยกตามหน้าที่ (ครบทุกตัวที่ออกสอบ)',
+        color: 'blue',
+        rows: [
+          {
+            label: 'can / could / be able to (ความสามารถ & ขออนุญาต)',
+            rule: 'can = สามารถ (ปัจจุบัน) | could = สามารถ (อดีต) หรือ ขออนุญาตอย่างสุภาพ',
+            example: 'Participants can register from November 1st onward.',
+            translation: 'ผู้เข้าร่วมสามารถลงทะเบียนได้ (can + V.1)',
+          },
+          {
+            label: 'may / might (การขออนุญาต & การคาดเดาความเป็นไปได้)',
+            rule: 'may = อาจจะ / ขออนุญาต (สุภาพ) | might = อาจจะ (มั่นใจน้อยกว่า may)',
+            example: 'It might rain this afternoon, so take an umbrella.',
+            translation: 'บ่ายนี้อาจจะฝนตก (ความเป็นไปได้)',
+          },
+          {
+            label: 'must / have to (ความจำเป็น / ข้อบังคับ)',
+            rule: 'must = ต้อง (บังคับเด็ดขาด) • mustn\'t = ห้ามทำ!\nhave to = จำเป็นต้อง (ปฏิเสธ don\'t have to = ไม่จำเป็นต้อง)',
+            example: 'All forms must be returned. / I have to get up early.',
+            translation: 'must + be + V.3 (Passive) / have to + V.1',
+          },
+          {
+            label: 'should / ought to / had better (คำแนะนำ & เตือน)',
+            rule: 'should / ought to = ควรจะ | had better = ควรจะ...ดีกว่า (เชิงเตือนว่าถ้าไม่ทำอาจเกิดผลเสีย)',
+            example: 'You should review the notes. / You had better hurry.',
+            translation: 'had better แม้หน้าตาเหมือนอดีต แต่ใช้พูดถึงปัจจุบัน/อนาคต + V.1',
+          },
+          {
+            label: 'will / would / would rather (อนาคต / ความต้องการ)',
+            rule: 'will = จะ | would = จะ (สุภาพ/อดีตของ will) | would rather = อยากจะ...มากกว่า (คู่กับ than)',
+            example: 'I would rather stay home than go out.',
+            translation: 'ฉันอยากอยู่บ้านมากกว่าออกไปข้างนอก',
+          },
+          {
+            label: 'used to (เคยทำในอดีต — ปัจจุบันเลิกแล้ว)',
+            rule: 'used to + V.1 = เคยทำในอดีต (ระวัง: be used to + V-ing = คุ้นเคยกับ)',
+            example: 'He used to play games all night.',
+            translation: 'เขาเคยเล่นเกมทั้งคืน (ตอนนี้ไม่เล่นแล้ว)',
+          },
+        ],
+      },
+      {
+        heading: '2. Subject-Verb Agreement (ประธาน-กริยาต้องสอดคล้องกัน)',
+        color: 'emerald',
+        rows: [
+          {
+            label: 'ประธานเอกพจน์ (He, She, It, นามนับไม่ได้, Everyone/Each)',
+            rule: 'ใช้กับ is / was / has / does / V.1 เติม s-es',
+            example: 'Each actor\'s performance is believable. (O-NET 2565)',
+            translation: 'performance เป็นเอกพจน์ จึงใช้ is',
+          },
+          {
+            label: 'ประธานพหูพจน์ (We, They, You, นามเติม s/es, A and B)',
+            rule: 'ใช้กับ are / were / have / do / V.1 ไม่เติม s',
+            example: 'The library windows are cleaned every Friday.',
+            translation: 'windows เติม s (พหูพจน์) จึงใช้ are',
+          },
+        ],
+      },
+    ],
+    examTraps: [
+      {
+        wrong: '❌ You must to go. / She shoulds study.',
+        right: '✅ You must go. / She should study.',
+        why: 'หลัง Modal Verb (must, should, can, will, might) ห้ามใส่ to และห้ามเติม s/ed/ing',
+      },
+    ],
+  },
+
+  {
+    id: 'irregular-verbs',
+    category: 'verbs_tenses',
+    title: '5. Irregular Verbs (กริยา 3 ช่องที่ออกสอบบ่อย — แยกกลุ่มจำง่าย)',
+    shortTitle: 'กริยา 3 ช่อง (Irregular)',
+    icon: '🔤',
+    badge: 'จำเป็นต่อ Tense & Passive',
+    summaryFormula: 'Past Simple ใช้ V.2  |  Present Perfect (has/have) และ Passive Voice (be) ต้องใช้ V.3 เสมอ!',
+    memoryTip: 'อย่าจำสลับ V.2 กับ V.3 เด็ดขาด! เช่น wrote (V.2) vs written (V.3), saw (V.2) vs seen (V.3), went (V.2) vs gone (V.3)',
+    sections: [
+      {
+        heading: 'กลุ่ม 1: รูปเดิมทั้ง 3 ช่อง (A – A – A)',
+        color: 'blue',
+        rows: [
+          {
+            label: 'cut – cut – cut | put – put – put | hit – hit – hit',
+            rule: 'let – let – let (อนุญาต) | set – set – set (ตั้งค่า) | read – read – read (อ่าน — ออกเสียง เรด)',
+            example: 'The movie is set in Chiang Mai. (set = V.3)',
+            translation: 'cost (ราคา), shut (ปิด), hurt (เจ็บ) ก็ใช้รูปเดิมทั้ง 3 ช่อง',
+          },
+        ],
+      },
+      {
+        heading: 'กลุ่ม 2: ช่อง 2 และ ช่อง 3 เหมือนกัน (A – B – B)',
+        color: 'emerald',
+        rows: [
+          {
+            label: 'send – sent – sent | spend – spent – spent | build – built – built',
+            rule: 'catch – caught – caught | teach – taught – taught | buy – bought – bought | bring – brought – brought',
+            example: 'The email was sent yesterday. (Passive ใช้ V.3: sent)',
+            translation: 'feel – felt – felt | keep – kept – kept | leave – left – left | lose – lost – lost',
+          },
+          {
+            label: 'find – found – found | have – had – had | make – made – made',
+            rule: 'pay – paid – paid | say – said – said | tell – told – told | win – won – won | stand – stood – stood',
+            example: 'He has learned many skills.',
+            translation: 'learn สามารถใช้ได้ทั้ง learned และ learnt',
+          },
+        ],
+      },
+      {
+        heading: 'กลุ่ม 3: เปลี่ยนรูปทั้ง 3 ช่อง (A – B – C) — ตัวออกข้อสอบ!',
+        color: 'rose',
+        rows: [
+          {
+            label: 'write – wrote – written | give – gave – given | take – took – taken',
+            rule: 'see – saw – seen | go – went – gone | do – did – done | eat – ate – eaten',
+            example: 'The best film I have seen. / The letter was written.',
+            translation: 'ห้ามใช้ was wrote หรือ have saw เด็ดขาด!',
+          },
+          {
+            label: 'begin – began – begun | speak – spoke – spoken | break – broke – broken',
+            rule: 'know – knew – known | grow – grew – grown | wear – wore – worn | choose – chose – chosen',
+            example: 'English is spoken all over the world.',
+            translation: 'Passive Voice ใช้ช่อง 3: spoken, known, worn, chosen',
+          },
+        ],
+      },
+      {
+        heading: 'กลุ่ม 4: ช่อง 1 และ ช่อง 3 เหมือนกัน (A – B – A)',
+        color: 'purple',
+        rows: [
+          {
+            label: 'come – came – come | become – became – become | run – ran – run',
+            rule: 'จำง่าย: ช่อง 1 กับ 3 หน้าตาเหมือนกัน ต่างแค่ช่อง 2',
+            example: 'The increases came from people aged 45–54. (O-NET 2568)',
+            translation: 'came เป็น V.2 (อดีตในปี 2016)',
+          },
+        ],
+      },
+    ],
+    examTraps: [
+      {
+        wrong: '❌ The letter was wrote. / I have saw it.',
+        right: '✅ The letter was written. / I have seen it.',
+        why: 'หลัง Verb to be (Passive) และหลัง has/have (Perfect) ต้องเป็น V.3 เท่านั้น',
+      },
+    ],
+  },
+
+  {
+    id: 'passive-voice',
+    category: 'verbs_tenses',
+    title: '6. Active & Passive Voice (เทียบโครงสร้างทุก Tense + ลดรูป)',
+    shortTitle: 'Active & Passive Voice',
+    icon: '🛡️',
+    badge: 'Unit 3 • O-NET 100%',
+    summaryFormula: 'Active: ประธานทำเอง (S + V)  |  Passive: ประธานถูกกระทำ (S + be + V.3 + by...)  |  ลดรูปขยายนาม: Noun + V.3',
+    memoryTip: 'ดูประธานก่อน: ถ้าเป็น สิ่งของ / จดหมาย / หนัง / วัด (ทำเองไม่ได้) ➔ เลือกที่มี be + V.3 ทันที!',
     relatedUnitNumber: 103,
     sections: [
       {
-        heading: '1. Passive Voice (ประธานถูกกระทำ: V.to be + V.3)',
+        heading: '1. ตารางเทียบ Active vs Passive Voice แยกตาม Tense',
+        color: 'blue',
         rows: [
           {
-            label: 'Present Passive (ถูกทำในปัจจุบัน/ความจริง)',
-            rule: 'S + is / am / are + V.3 (+ by...)',
-            example: 'English is spoken all over the world. / Rice is grown in Thailand.',
-            translation: 'ภาษาอังกฤษถูกพูด / ข้าวถูกปลูก',
+            label: 'Present Simple (ปัจจุบัน)',
+            rule: 'Active: S + V.1 (s/es)\nPassive: S + is / am / are + V.3',
+            example: 'The windows are cleaned every Friday.',
+            translation: 'หน้าต่าง (พหูพจน์) ถูกทำความสะอาดทุกวันศุกร์',
           },
           {
-            label: 'Past Passive (ถูกสร้าง/ถูกคิดค้น/ถูกเขียนในอดีต)',
-            rule: 'S + was / were + V.3 (+ by... / in + ปีอดีต)',
-            example: 'This temple was built 200 years ago. / The telephone was invented by Bell.',
-            translation: 'ออกสอบ O-NET บ่อยที่สุด! (was/were + V.3)',
+            label: 'Past Simple (อดีต)',
+            rule: 'Active: S + V.2\nPassive: S + was / were + V.3',
+            example: 'The email was sent yesterday morning.',
+            translation: 'อีเมล (เอกพจน์) ถูกส่งเมื่อเช้าวานนี้',
           },
           {
-            label: 'Modal / Present Perfect Passive',
-            rule: 'will / can / should / must + be + V.3  |  have / has + been + V.3',
-            example: 'The rules must be followed. / The car has been repaired.',
-            translation: 'กฎต้องถูกปฏิบัติตาม / รถได้รับการซ่อมแล้ว',
+            label: 'Future Simple & Modal Verbs (อนาคต & กริยาช่วย)',
+            rule: 'Active: S + will / must / can / should + V.1\nPassive: S + will / must / can / should + be + V.3',
+            example: 'Forms must be returned before five o\'clock.',
+            translation: 'แบบฟอร์มต้องถูกส่งคืนก่อน 5 โมง',
+          },
+          {
+            label: 'Present Continuous & Present Perfect',
+            rule: 'Cont. Passive: is/am/are + being + V.3\nPerfect Passive: has/have + been + V.3',
+            example: 'The bridge is being built. / The work has been finished.',
+            translation: 'กำลังถูกสร้าง / ถูกทำเสร็จเรียบร้อยแล้ว',
           },
         ],
       },
       {
-        heading: '2. ประโยคเงื่อนไข If-Clause (ออกสอบ Type 1 & Type 2)',
+        heading: '2. ลดรูป Passive ขยายคำนาม (ออก O-NET 2568 ข้อ 32!)',
+        color: 'purple',
         rows: [
           {
-            label: 'Type 0 (ความจริงทางวิทยาศาสตร์/ธรรมชาติ)',
-            rule: 'If + Present Simple (V.1), Present Simple (V.1)',
-            example: 'If you heat ice, it melts.',
-            translation: 'ถ้าคุณให้ความร้อนน้ำแข็ง มันจะละลาย',
-          },
-          {
-            label: 'Type 1 (เป็นไปได้จริงในปัจจุบัน/อนาคต)',
-            rule: 'If + Present Simple (V.1 เอกพจน์เติม s/es), S + will / can + V.inf (หรือประโยคคำสั่ง)',
-            example: 'If it rains tomorrow, we will stay at home.',
-            translation: 'ห้ามใส่ will ในฝั่งที่มีคำว่า If เด็ดขาด!',
-          },
-          {
-            label: 'Type 2 (สมมติสิ่งที่เป็นไปไม่ได้ในปัจจุบัน)',
-            rule: 'If + Past Simple (V.2 / ใช้ were กับทุกประธาน), S + would / could + V.inf',
-            example: 'If I were you, I would apologize to her. / If I had a lot of money, I would buy a house.',
-            translation: 'ถ้าฉันเป็นคุณ (ซึ่งเป็นไปไม่ได้) ฉันจะขอโทษเธอ',
-          },
-        ],
-      },
-      {
-        heading: '3. การเปรียบเทียบ 3 ระดับ (Comparisons)',
-        rows: [
-          {
-            label: 'ขั้นเท่ากัน (Positive)',
-            rule: 'as + Adj/Adv รูปปกติ (ห้ามเติม -er/-est/more) + as',
-            example: 'John is as tall as Peter. / This box is not as heavy as that one.',
-            translation: 'เห็น as ____ as ต้องเลือกคำคุณศัพท์รูปธรรมดาเสมอ!',
-          },
-          {
-            label: 'ขั้นกว่า (Comparative — เปรียบเทียบ 2 สิ่ง)',
-            rule: 'คำสั้นเติม -er + than  |  คำยาวใช้ more + Adj/Adv + than  |  ขยายให้เข้มขึ้นใช้ much / far / a lot นำหน้าขั้นกว่า',
-            example: 'cheaper than, more expensive than, much better than',
-            translation: 'เปลี่ยนรูปพิเศษ: good/well ➔ better, bad ➔ worse, far ➔ farther/further',
-          },
-          {
-            label: 'ขั้นสุด (Superlative — ที่สุดในกลุ่ม 3+)',
-            rule: 'the + คำสั้นเติม -est  |  the most + คำยาว (มักมี in the world, in class, of all, I have ever seen)',
-            example: 'the tallest boy in the class, the most interesting movie I have ever watched',
-            translation: 'เปลี่ยนรูปพิเศษ: the best, the worst, the farthest/furthest, the least',
-          },
-        ],
-      },
-      {
-        heading: '4. Gerund (V.ing) vs Infinitive (to + V.1 / V.inf)',
-        rows: [
-          {
-            label: 'กริยาที่ตามด้วย V.ing เสมอ',
-            rule: 'enjoy, finish, mind, avoid, keep, practice, suggest, give up, postpose + V.ing (รวมถึงหลังบุพบททุกตัว!)',
-            example: 'I enjoy reading books. / Would you mind opening the window?',
-            translation: 'หลัง mind / enjoy / finish ต้องเป็น V.ing เสมอ',
-          },
-          {
-            label: 'กริยาที่ตามด้วย to + V.1 เสมอ',
-            rule: 'want, decide, hope, plan, promise, agree, refuse, need, learn, offer + to V.1',
-            example: 'She decided to study abroad. / He promised to help me.',
-            translation: 'บอกความต้องการหรือแผนในอนาคต มักใช้ to + V.1',
-          },
-          {
-            label: 'ตามด้วย V.inf (ไม่เติม to และไม่เติม -ing)',
-            rule: 'หลัง Modal Verbs (can, could, will, would, should, must) และหลัง let / make / help + คน + V.inf',
-            example: 'My mom made me clean my room. / Let me help you carry this.',
-            translation: 'หลัง let / make + กรรม ต้องตามด้วยกริยาช่อง 1 ไม่ผัน!',
+            label: 'Noun + V.3 (ตัด who/which + is/was ออก)',
+            rule: 'ถ้าประโยคมีกริยาแท้แล้ว ใช้ V.3 วางหลังคำนามเพื่อแปลว่า "ที่ถูก..." ได้เลย',
+            example: 'This is the best movie released in 2023.',
+            translation: 'นี่คือหนังที่ดีที่สุด ที่ถูกปล่อยออกมาในปี 2023 (O-NET 2568 ข้อ 32)',
           },
         ],
       },
     ],
     examTraps: [
       {
-        wrong: '❌ If it will rain tomorrow, I will stay home.',
-        right: '✅ If it rains tomorrow, I will stay home.',
-        why: 'ในอนุประโยคหลัง If (If-Clause Type 1) ห้ามใช้ will ต้องใช้ Present Simple (rains) แทน',
-      },
-      {
-        wrong: '❌ This exam is more easier than the last one.',
-        right: '✅ This exam is much easier than the last one.',
-        why: 'easier เป็นขั้นกว่าอยู่แล้ว ห้ามใส่ more ซ้ำ! ถ้าจะเน้นว่า “ง่ายกว่ามาก” ให้ใช้ much easier',
+        wrong: '❌ Somchai praised by the teacher.',
+        right: '✅ Somchai was praised by the teacher.',
+        why: 'มี by the teacher (ถูกชม) ต้องมี Verb to be (was) นำหน้า V.3 เสมอ',
       },
     ],
   },
+
   {
-    id: 'quantifiers-agreement',
-    title: 'คำบอกปริมาณ & ความสอดคล้องประธาน-กริยา (Quantifiers & S-V Agreement)',
-    shortTitle: 'คำบอกปริมาณ & S-V',
-    icon: '📏',
-    badge: 'ระวังนามนับไม่ได้!',
-    summaryFormula:
-      'นามนับได้พหูพจน์ = many / a few / fewer (+ V.พหูพจน์)  |  นามนับไม่ได้ = much / a little / less (+ V.เอกพจน์เสมอ!)',
-    memoryTip:
-      'ท่องนามนับไม่ได้ 8 คำปราบเซียน O-NET: “information (ข้อมูล), advice (คำแนะนำ), furniture (เฟอร์นิเจอร์), luggage/baggage (สัมภาระ), equipment (อุปกรณ์), news (ข่าว), homework, money” ➔ ห้ามเติม -s และใช้กริยาเอกพจน์ (is/was/has) เสมอ!',
-    relatedUnitNumber: 22,
+    id: 'gerund-infinitive',
+    category: 'verbs_tenses',
+    title: 'Gerund (V-ing) vs Infinitive (to + V.1)',
+    shortTitle: 'V-ing vs to + V.1',
+    icon: '⚡',
+    badge: 'O-NET 2565–2567',
+    summaryFormula: 'หลัง Preposition (about, in, on, of, for, look forward to) ➔ V-ing เสมอ! | บอกจุดประสงค์ ("เพื่อที่จะ") ➔ to + V.1',
+    memoryTip: 'ดอกจันล้านดวง: look forward to + V-ing (ห้ามตอบ V.1 เด็ดขาด! ออก O-NET 2566 ข้อ 26)',
     sections: [
       {
-        heading: '1. คำบอกปริมาณ (Quantifiers)',
+        heading: '1. กฎบังคับใช้ V-ing (Gerund)',
+        color: 'emerald',
         rows: [
           {
-            label: 'ใช้กับ “นามนับได้พหูพจน์” (Countable Plural)',
-            rule: 'many (มาก), a few (พอมีอยู่บ้าง = เชิงบวก), few (แทบไม่มีเลย = เชิงลบ), fewer (น้อยกว่า), several (หลาย)',
-            example: 'many students, a few friends, fewer cars',
-            translation: 'ตามด้วยคำนามเติม -s หรือพหูพจน์เปลี่ยนรูป (children, people, teeth)',
+            label: 'หลัง Preposition (about, of, in, on, at, for, by)',
+            rule: 'คำบุพบททุกตัว ต้องตามด้วย V-ing',
+            example: 'Parents are worried about me spending so much time.',
+            translation: 'พ่อแม่กังวลเกี่ยวกับการที่ฉันใช้เวลามากเกินไป (O-NET 2565 ข้อ 25)',
           },
           {
-            label: 'ใช้กับ “นามนับไม่ได้” (Uncountable Noun)',
-            rule: 'much (มาก), a little (พอมีอยู่บ้าง), little (แทบไม่มีเลย), less (น้อยกว่า), a great deal of',
-            example: 'much water, a little time, less sugar, a piece of advice',
-            translation: 'ตามด้วยคำนามที่ไม่เติม -s และถือเป็นเอกพจน์เสมอ',
-          },
-          {
-            label: 'ใช้ได้ทั้งคู่ (ทั้งนับได้พหูพจน์ และ นับไม่ได้)',
-            rule: 'some (ประโยคบอกเล่า / ยื่นข้อเสนอ Would you like some...?), any (ประโยคปฏิเสธ / คำถาม), a lot of / lots of, plenty of',
-            example: 'some water / some books  |  Do you have any questions?',
-            translation: 'ข้อยกเว้น: คำถามเชิญชวน (Would you like... / Can I have...) ใช้ some!',
+            label: 'look forward to + V-ing / Noun',
+            rule: 'แปลว่า "ตั้งตารอคอย" (to ตัวนี้เป็น Preposition ต้องตามด้วย V-ing!)',
+            example: 'I\'m really looking forward to going to school tomorrow.',
+            translation: 'ฉันตั้งตารอคอยที่จะไปโรงเรียนพรุ่งนี้มาก (O-NET 2566 ข้อ 26)',
           },
         ],
       },
       {
-        heading: '2. กฎความสอดคล้องระหว่างประธานกับกริยา (Subject-Verb Agreement)',
+        heading: '2. กฎบังคับใช้ to + V.1 (Infinitive)',
+        color: 'amber',
         rows: [
           {
-            label: 'Everyone / Somebody / Nobody / Anything + V.เอกพจน์',
-            rule: 'คำสรรพนามไม่ชี้เฉพาะทุกตัว ถือเป็นเอกพจน์เสมอ!',
-            example: 'Everyone in the room is happy. / Nobody knows the answer.',
-            translation: 'แม้ความหมายจะแปลว่า “ทุกคน” แต่กริยาต้องใช้ is / was / has / V.เติม s',
-          },
-          {
-            label: 'A number of vs The number of',
-            rule: 'A number of + N.พหูพจน์ + V.พหูพจน์ (แปลว่า “จำนวนมาก”)  ↔  The number of + N.พหูพจน์ + V.เอกพจน์ (แปลว่า “ตัวเลขจำนวนของ...”)',
-            example: 'A number of students are absent. / The number of students is 40.',
-            translation: 'จำง่าย: A = พหูพจน์ (are/have)  |  The = เอกพจน์ (is/has)',
-          },
-          {
-            label: 'ประธานที่มีส่วนขยายคั่นกลาง (with / along with / as well as / of)',
-            rule: 'ให้ดูที่ “ประธานตัวหน้าสุด” เสมอ (ตัดส่วนขยายหลัง with / as well as / of ทิ้งก่อนเลือกกริยา)',
-            example: 'The teacher, along with her students, is going to the museum.',
-            translation: 'ประธานที่แท้จริงคือ The teacher (คนเดียว) จึงใช้ is',
+            label: 'บอกวัตถุประสงค์ ("เพื่อที่จะ...") & หลัง want/decide/ask/send',
+            rule: 'Verb + (กรรม) + to + V.1 (รูปไม่ผัน)',
+            example: 'She is sent away to spend some time with her aunt.',
+            translation: 'เธอถูกส่งตัวไปเพื่อใช้เวลากับครอบครัวป้า (O-NET 2567 ข้อ 29)',
           },
         ],
       },
     ],
     examTraps: [
       {
-        wrong: '❌ He gave me many good advices.',
-        right: '✅ He gave me much good advice. (หรือ many good pieces of advice)',
-        why: 'advice เป็นคำนามนับไม่ได้ ห้ามเติม -s และห้ามใช้คู่กับ many',
+        wrong: '❌ I look forward to go to school.',
+        right: '✅ I look forward to going to school.',
+        why: 'ในสำนวน look forward to คำว่า to เป็นคำบุพบท จึงต้องตามด้วย V-ing (going)',
+      },
+    ],
+  },
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // หมวดที่ 3: พิชิตข้อสอบ O-NET WRITING & WORD ORDER (ONET CORE)
+  // ═════════════════════════════════════════════════════════════════════════
+  {
+    id: 'connectors',
+    category: 'onet_core',
+    title: 'Connectors (คำเชื่อม 5 หมวด — คำไหนใช้แบบไหน)',
+    shortTitle: 'Connectors (คำเชื่อม)',
+    icon: '🔗',
+    badge: 'Unit 1 • หน้า 1–2',
+    summaryFormula: 'เช็กหลังช่องว่าง: S + V (ประโยค) หรือ Noun (คำนาม) | เห็น ". ____," ตอบ However, / Therefore,',
+    memoryTip: 'มีจุดหน้า + ลูกน้ำหลัง (. ____,) ➔ ขัดแย้งตอบ However, | เป็นผลลัพธ์ตอบ Therefore,',
+    relatedUnitNumber: 101,
+    sections: [
+      {
+        heading: '1. บอกสาเหตุ (Reason = เพราะว่า)',
+        color: 'blue',
+        rows: [
+          {
+            label: 'because / since / as + S + V',
+            rule: 'ตามด้วย "ประโยค (ประธาน + กริยา)"',
+            example: 'She stayed home because she was sick.',
+            translation: 'อยู่บ้าน เพราะว่า เธอป่วย (she was = S+V)',
+          },
+          {
+            label: 'because of / due to + Noun / V-ing',
+            rule: 'ตามด้วย "คำนาม / วลี" (ห้ามมีกริยาแท้)',
+            example: 'Cancelled because of the blackout.',
+            translation: 'ยกเลิก เพราะ ไฟดับ (the blackout = คำนาม)',
+          },
+        ],
       },
       {
-        wrong: '❌ The news about the accident are shocking.',
-        right: '✅ The news about the accident is shocking.',
-        why: 'news ลงท้ายด้วย s แต่เป็นคำนามนับไม่ได้เอกพจน์เสมอ (เหมือน mathematics, physics, economics)',
+        heading: '2. บอกผลลัพธ์ (Result = ดังนั้น)',
+        color: 'emerald',
+        rows: [
+          {
+            label: ', so + S + V',
+            rule: 'วางหลังลูกน้ำ (,) เชื่อมผลลัพธ์',
+            example: 'It rained heavily, so the match stopped.',
+            translation: 'ฝนตกหนัก ดังนั้น การแข่งจึงหยุด',
+          },
+          {
+            label: '. Therefore, / . As a result, + S + V',
+            rule: 'ขึ้นประโยคใหม่ มีจุด (.) หน้า และลูกน้ำ (,) หลัง',
+            example: 'He studied hard. Therefore, he passed.',
+            translation: 'เขาขยัน ดังนั้น เขาจึงสอบผ่าน',
+          },
+        ],
+      },
+      {
+        heading: '3. บอกความขัดแย้ง (Contrast = แต่ / แม้ว่า)',
+        color: 'amber',
+        rows: [
+          {
+            label: '. However, + S + V',
+            rule: '"อย่างไรก็ตาม" • อยู่หน้าลูกน้ำ (. ____,)',
+            example: 'It rained. However, they went camping.',
+            translation: 'ฝนตก อย่างไรก็ตาม พวกเขายังไปแคมป์ (O-NET 2568)',
+          },
+          {
+            label: 'although / even though + S + V',
+            rule: '"แม้ว่า" + ประโยค S+V (ห้ามมี but ซ้ำ!)',
+            example: 'Although he is 61, he runs fast.',
+            translation: 'แม้ว่าเขาจะอายุ 61 แต่เขาก็วิ่งเร็ว (O-NET 2568)',
+          },
+          {
+            label: 'despite / in spite of + Noun / V-ing',
+            rule: '"แม้ว่า" + คำนาม/วลี (ไม่มี S+V)',
+            example: 'Despite the heavy rain, we went out.',
+            translation: 'แม้ว่าฝนจะตกหนัก พวกเราก็ออกไปข้างนอก',
+          },
+          {
+            label: 'while / whereas + S + V',
+            rule: '"ในขณะที่" • เทียบ 2 สิ่งที่ต่างกัน',
+            example: 'Somchai likes math, while his brother likes art.',
+            translation: 'สมชายชอบเลข ในขณะที่พี่ชายชอบศิลปะ',
+          },
+        ],
+      },
+      {
+        heading: '4. เงื่อนไข & เวลา (Condition & Time)',
+        color: 'purple',
+        rows: [
+          {
+            label: 'unless + S + V (= if ... not)',
+            rule: '"เว้นแต่ว่า / ถ้า...ไม่" (ห้ามซ้อน not)',
+            example: 'You cannot enter unless you wear a coat.',
+            translation: 'เข้าไม่ได้ เว้นแต่จะสวมเสื้อกาวน์',
+          },
+          {
+            label: 'once / as soon as + S + V',
+            rule: '"เมื่อ...แล้ว / ทันทีที่..."',
+            example: 'Once you are registered, you get a link.',
+            translation: 'เมื่อลงทะเบียนแล้ว จะได้รับลิงก์ (O-NET 2567)',
+          },
+        ],
+      },
+    ],
+    examTraps: [
+      {
+        wrong: '❌ Although it rained, but we went out.',
+        right: '✅ Although it rained, we went out.',
+        why: 'มี Although แล้ว ห้ามใส่ but ซ้ำ',
+      },
+    ],
+  },
+
+  {
+    id: 'comparisons',
+    category: 'onet_core',
+    title: 'Comparisons (การเปรียบเทียบ 3 ระดับ + Double Comparative)',
+    shortTitle: 'Comparisons (เปรียบเทียบ)',
+    icon: '📊',
+    badge: 'Unit 2 • หน้า 3–4',
+    summaryFormula: 'as + ปกติ + as  |  -er / more + than  |  the + -est / most  |  The + ขั้นกว่า..., the + ขั้นกว่า...',
+    memoryTip: 'เห็น than = ขั้นกว่า | เห็น as...as = รูปปกติ | เห็น The..., the... = ขั้นกว่าคู่',
+    relatedUnitNumber: 102,
+    sections: [
+      {
+        heading: '1. โครงสร้างเปรียบเทียบ 4 รูปแบบหลัก',
+        color: 'blue',
+        rows: [
+          {
+            label: 'as + Adj./Adv. (รูปปกติ) + as',
+            rule: 'ขั้นเท่ากัน ("เท่ากับ") • ห้ามเติม -er/more',
+            example: 'Riding a bike is not as safe as a train.',
+            translation: 'ปั่นจักรยานไม่ปลอดภัยเท่ากับรถไฟ',
+          },
+          {
+            label: 'Adj.-er / more Adj. + than',
+            rule: 'ขั้นกว่า ("...กว่า") • สังเกตคำว่า than',
+            example: 'This crate is much heavier than the box.',
+            translation: 'ลังนี้หนักกว่ากล่องมาก (heavy ➔ heavier)',
+          },
+          {
+            label: 'the + Adj.-est / the most Adj.',
+            rule: 'ขั้นสุด ("...ที่สุด") • มี in..., of all, one of the...',
+            example: 'One of the most densely populated cities.',
+            translation: 'หนึ่งในเมืองที่หนาแน่นที่สุด',
+          },
+          {
+            label: 'The + ขั้นกว่า ..., the + ขั้นกว่า ...',
+            rule: 'ขั้นคู่ ("ยิ่ง... ก็ยิ่ง...") • ออกสอบ O-NET 2568!',
+            example: 'The younger people were, the more likely they were.',
+            translation: 'ยิ่งอายุน้อย ก็ยิ่งมีแนวโน้มมากขึ้น (O-NET 2568 ข้อ 25)',
+          },
+        ],
+      },
+      {
+        heading: '2. คำขยายขั้นกว่า & คำเปลี่ยนรูปพิเศษ',
+        color: 'emerald',
+        rows: [
+          {
+            label: 'much / far + ขั้นกว่า',
+            rule: 'แปลว่า "...กว่ามาก" (ห้ามใช้ more หรือ very นำหน้าขั้นกว่า!)',
+            example: 'His English is much better now.',
+            translation: 'ภาษาอังกฤษของเขาดีขึ้นกว่าเดิมมาก',
+          },
+          {
+            label: 'good / well ➔ better ➔ best  |  bad ➔ worse ➔ worst',
+            rule: 'ดี ➔ ดีกว่า ➔ ดีที่สุด  |  แย่ ➔ แย่กว่า ➔ แย่สุด  |  little ➔ less ➔ least',
+            example: 'She feels much better today.',
+            translation: 'ห้ามใช้ gooder / badder / littler',
+          },
+        ],
+      },
+    ],
+    examTraps: [
+      {
+        wrong: '❌ more easier / more heavier / more better',
+        right: '✅ much easier / much heavier / much better',
+        why: 'เป็นขั้นกว่าอยู่แล้ว ห้ามใส่ more ซ้ำ! ให้ใช้ much แทน',
+      },
+    ],
+  },
+
+  {
+    id: 'adjective-order',
+    category: 'onet_core',
+    title: '4. Word Order & OSASCOMP (การจัดลำดับคำในประโยค)',
+    shortTitle: 'Word Order & OSASCOMP',
+    icon: '📐',
+    badge: 'Unit 5 • หน้า 9–10',
+    summaryFormula: 'Head Noun (คำนามหลัก) อยู่ขวาสุดเสมอ! | Place (สถานที่) มาก่อน Time (เวลา) | ความถี่อยู่หน้ากริยาแท้',
+    memoryTip: 'หาคำนามหลักให้เจอแล้ววางไว้ท้ายสุด (เช่น scenes, models, bag) ตัดช้อยส์ผิดได้ทันที!',
+    relatedUnitNumber: 105,
+    sections: [
+      {
+        heading: '1. กฎเหล็ก Word Order 4 ข้อที่ออกสอบ O-NET',
+        color: 'emerald',
+        rows: [
+          {
+            label: '1) คำนามหลัก (Head Noun) อยู่ท้ายสุดเสมอ',
+            rule: '[Adjective ความเห็น] + [คำนามขยาย] + [คำนามหลัก]',
+            example: 'tense action scenes  |  latest all-in-one models',
+            translation: 'ฉากแอ็กชันที่ตึงเครียด (O-NET 2568 ข้อ 31) | รุ่นล่าสุด',
+          },
+          {
+            label: '2) สูตรเรียง Adjective: OSASCOMP + Noun',
+            rule: 'Opinion (ความเห็น) ➔ Size ➔ Age ➔ Shape ➔ Color ➔ Origin (สัญชาติ) ➔ Material (วัสดุ) + Noun',
+            example: 'an expensive Italian leather bag',
+            translation: 'กระเป๋า (Noun) หนัง (Material) อิตาลี (Origin) ราคาแพง (Opinion)',
+          },
+          {
+            label: '3) สถานที่ (Place) มาก่อน เวลา (Time)',
+            rule: 'Verb + Place (ที่ไหน) + Time (เมื่อไหร่)',
+            example: 'at the school auditorium last Friday',
+            translation: 'ที่หอประชุมโรงเรียน (Place) เมื่อวันศุกร์ที่แล้ว (Time)',
+          },
+          {
+            label: '4) คำบอกความถี่ (always, often, rarely, never)',
+            rule: 'วาง "หน้ากริยาแท้" (แต่ "หลัง Verb to be")',
+            example: 'He rarely drinks sugary soda.',
+            translation: 'เขานานๆ ครั้งจะดื่มน้ำอัดลม (rarely อยู่หน้า drinks)',
+          },
+        ],
+      },
+    ],
+    examTraps: [
+      {
+        wrong: '❌ action scenes tense / last Friday at the hall',
+        right: '✅ tense action scenes / at the hall last Friday',
+        why: 'คำนามหลัก (scenes) ต้องอยู่ท้ายสุด และ Place ต้องมาก่อน Time เสมอ!',
+      },
+    ],
+  },
+
+  {
+    id: 'relative-pronouns',
+    category: 'onet_core',
+    title: 'Relative Pronouns (who / which / whom / whose / that)',
+    shortTitle: 'who / which / whose',
+    icon: '🏷️',
+    badge: 'O-NET 2565 & 2568',
+    summaryFormula: 'คน + who + V. | คน + whom + S+V | คน + whose + คำนาม | สิ่งของ/สัตว์ + which | หลังบุพบท + which / whom เท่านั้น!',
+    memoryTip: 'ถ้าข้างหน้าช่องว่างมี Preposition (เช่น against ___, in ___, for ___) ห้ามตอบ that เด็ดขาด! ใช้ได้แค่ which (สิ่งของ) หรือ whom (คน)',
+    sections: [
+      {
+        heading: '1. ตารางเลือกใช้ตัวเชื่อมขยายคำนามให้ถูกใน 3 วิ',
+        color: 'purple',
+        rows: [
+          {
+            label: 'who (ใช้กับ "คน" ทำหน้าที่ประธาน)',
+            rule: 'คน + who + กริยา (V.)',
+            example: 'Tom Cruise, who plays Ethan Hunt, is on another mission.',
+            translation: 'ทอม ครูซ ผู้ซึ่งรับบทอีธาน ฮันต์... (O-NET 2568 ข้อ 28)',
+          },
+          {
+            label: 'which (ใช้กับ "สิ่งของ / สัตว์ / ความคิด")',
+            rule: 'สิ่งของ + which (วางหลังบุพบท against/in/on ได้!)',
+            example: 'This is the new standard against which I will judge all films.',
+            translation: 'นี่คือมาตรฐานใหม่ ซึ่งฉันจะใช้ตัดสินหนังทุกเรื่อง (O-NET 2565 ข้อ 29)',
+          },
+          {
+            label: 'whose (แสดงความเป็นเจ้าของ "...ของ...")',
+            rule: 'คน/สิ่งของ + whose + คำนาม (Noun)',
+            example: 'The boy whose bag was lost is crying.',
+            translation: 'เด็กชายที่กระเป๋าของเขาหายกำลังร้องไห้',
+          },
+        ],
+      },
+    ],
+    examTraps: [
+      {
+        wrong: '❌ the standard against that I will judge',
+        right: '✅ the standard against which I will judge',
+        why: 'หลังคำบุพบท (against, in, on, with) ห้ามใช้ that หรือ who ให้ใช้ which (สิ่งของ) หรือ whom (คน) เท่านั้น!',
+      },
+    ],
+  },
+
+  {
+    id: 'prepositions-collocations',
+    category: 'onet_core',
+    title: 'Prepositions & Collocations (คำบุพบท & คำคู่ฮิต O-NET)',
+    shortTitle: 'คำคู่ & บุพบทฮิต',
+    icon: '🎯',
+    badge: 'O-NET 2565–2568',
+    summaryFormula: 'pay attention to | provide ... with | stand out | come from | from ... onward | portrayal ... as',
+    memoryTip: 'เวลาเจอข้อสอบเติมคำกริยาหรือบุพบทสั้นๆ ให้กวาดตาดู "คำข้างหลังช่องว่าง" ว่าเป็นคู่หูกับคำไหน!',
+    sections: [
+      {
+        heading: '1. สำนวน & คำคู่ที่ออกข้อสอบจริง O-NET',
+        color: 'blue',
+        rows: [
+          {
+            label: 'pay attention to + Noun',
+            rule: 'ให้ความสนใจ / ตั้งใจกับ... (O-NET 2565 ข้อ 26)',
+            example: 'They asked me to pay more attention to my studies.',
+            translation: 'พวกเขาขอให้ฉันตั้งใจเรียนให้มากขึ้น',
+          },
+          {
+            label: 'provide [someone] with [something]',
+            rule: 'จัดเตรียม / มอบ...ให้แก่... (O-NET 2567 ข้อ 24)',
+            example: 'The goal is to provide participants with a space to practice.',
+            translation: 'เป้าหมายคือมอบพื้นที่ฝึกฝนให้ผู้เข้าร่วม (สังเกตคำว่า with)',
+          },
+          {
+            label: 'from [time] onward',
+            rule: 'ตั้งแต่...เป็นต้นไป (O-NET 2567 ข้อ 26)',
+            example: 'Participants can register from November 1st onward.',
+            translation: 'ผู้เข้าร่วมลงทะเบียนได้ตั้งแต่วันที่ 1 พ.ย. เป็นต้นไป',
+          },
+          {
+            label: 'stand out (among ...)  |  come from (came from)',
+            rule: 'โดดเด่น (O-NET 2567 ข้อ 31)  |  มาจาก (O-NET 2568 ข้อ 27)',
+            example: 'This film stands out. / Increases came from people aged 45–54.',
+            translation: 'หนังเรื่องนี้โดดเด่น / การเพิ่มขึ้นมาจากกลุ่มอายุ 45–54',
+          },
+          {
+            label: 'portrayal of [A] as [B]',
+            rule: 'การถ่ายทอดบทบาทของ A ในฐานะ B (O-NET 2565 ข้อ 32)',
+            example: 'The portrayal of Bruce Wayne as a troubled character.',
+            translation: 'การถ่ายทอดบทบาทของบรูซ เวย์น ในฐานะตัวละครที่มีปมปัญหา',
+          },
+        ],
+      },
+    ],
+    examTraps: [
+      {
+        wrong: '❌ take attention to / put attention to',
+        right: '✅ pay attention to',
+        why: 'คำนาม attention ต้องใช้คู่กับกริยา pay เสมอ (pay attention to)',
       },
     ],
   },

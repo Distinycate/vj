@@ -5,6 +5,12 @@ import type { NextRequest } from 'next/server';
 // Note: Actual authorization boundary is enforced by requireSession() / requireRole() in Server APIs and Components.
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Allow presenter / teach deck mode directly for convenient screen recording
+  if (pathname.startsWith('/admin/teach')) {
+    return NextResponse.next();
+  }
+
   const protectedPrefixes = ['/admin', '/executive', '/card-teacher/dashboard'];
 
   const isProtected = protectedPrefixes.some((prefix) => pathname.startsWith(prefix));

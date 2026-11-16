@@ -9,10 +9,19 @@ export type TeachingTopicCategory =
   | 'reading_writing';
 
 export interface SignalRow {
+  categoryBadge?: string;
+  colorTheme?: 'blue' | 'emerald' | 'amber' | 'purple' | 'rose';
   signal: string;
   ruleOrMeaning: string;
   example: string;
   exampleTranslation: string;
+}
+
+export interface SpotDifferenceRow {
+  topic: string;
+  summary: string;
+  correct: string;
+  wrong: string;
 }
 
 export interface ConceptSlide {
@@ -20,6 +29,8 @@ export interface ConceptSlide {
   keyFormula: string;
   bulletPoints: string[];
   signalTable: SignalRow[];
+  spotDifferences?: SpotDifferenceRow[];
+  examScanSteps?: string[];
   commonTrap: {
     trap: string;
     howToFix: string;
@@ -39,6 +50,8 @@ export interface TeachingQuestionSlide {
   questionNumber: number;
   sourceTag?: string; // e.g., "แบบฝึกหัดซ้อมมือ" or "ข้อสอบจริง O-NET ม.3 ปี 2568 ข้อ 26"
   passageTitle?: string;
+  passageImage?: string;
+  passageImageCaption?: string;
   passageContext?: string;
   passageContextTranslation?: string;
   prompt: string;
