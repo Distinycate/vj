@@ -237,3 +237,111 @@ export async function GET(
     return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 });
   }
 }
+
+const updateRunSchema = z.object({
+  status: z.enum(['active', 'closed', 'draft', 'upcoming']).optional(),
+  title: z.string().min(1).max(200).optional(),
+});
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ runId: string }> }
+) {
+  try {
+    assertSameOrigin(request);
+    await requireInternalTeacherRole(['TEACHER', 'ADMIN']);
+    const { runId } = await params;
+
+    if (!z.string().uuid().safeParse(runId).success) {
+      return NextResponse.json({ error: 'ID กิจกรรมไม่ถูกต้อง' }, { status: 400 });
+    }
+
+    const body = await request.json().catch(() => null);
+    const parsed = updateRunSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง', details: parsed.error.issues }, { status: 400 });
+    }
+
+    const { status, title } = parsed.data;
+    const updates: Record<string, any> = { updated_at: new Date().toISOString() };
+    if (status) updates.status = status;
+    if (title) updates.title = title.trim();
+
+    const { data: updatedRun, error: updateErr } = await supabaseAdmin
+      .from('event_runs')
+      .update(updates)
+      .eq('id', runId)
+      .select('id, title, status, updated_at')
+      .single();
+
+    if (updateErr) {
+      console.error('Error updating event run:', updateErr);
+      return NextResponse.json({ error: 'อัปเดตสถานะกิจกรรมไม่สำเร็จ' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, run: updatedRun });
+  } catch (error: any) {
+    if (error?.status === 401 || error?.status === 403) {
+      return NextResponse.json({ error: 'ไม่มีสิทธิ์ดำเนินการ' }, { status: error.status });
+    }
+    console.error('PATCH /api/events/runs/[runId] error:', error);
+    return NextResponse.json({ error: error?.message || 'Internal error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ runId: string }> }
+) {
+  try {
+    assertSameOrigin(request);
+    await requireInternalTeacherRole(['TEACHER', 'ADMIN']);
+    const { runId } = await params;
+
+    if (!z.string().uuid().safeParse(runId).success) {
+      return NextResponse.json({ error: 'ID กิจกรรมไม่ถูกต้อง' }, { status: 400 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const participantId = searchParams.get('participantId');
+
+    if (participantId) {
+      // ลบเฉพาะนักเรียนรายบุคคลออกจากรอบนี้
+      if (!z.string().uuid().safeParse(participantId).success) {
+        return NextResponse.json({ error: 'ID ผู้เข้าร่วมไม่ถูกต้อง' }, { status: 400 });
+      }
+
+      const { error: partDelErr } = await supabaseAdmin
+        .from('event_participants')
+        .delete()
+        .eq('id', participantId)
+        .eq('event_run_id', runId);
+
+      if (partDelErr) {
+        console.error('Error deleting event participant:', partDelErr);
+        return NextResponse.json({ error: 'ลบนักเรียนออกจากรอบกิจกรรมไม่สำเร็จ' }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, message: 'ลบนักเรียนออกจากรอบกิจกรรมสำเร็จ' });
+    }
+
+    // ลบรอบกิจกรรมทั้งหมด (CASCADE จะลบ event_participants และ event_progress อัตโนมัติ)
+    const { error: runDelErr } = await supabaseAdmin
+      .from('event_runs')
+      .delete()
+      .eq('id', runId);
+
+    if (runDelErr) {
+      console.error('Error deleting event run:', runDelErr);
+      return NextResponse.json({ error: 'ลบรอบกิจกรรมไม่สำเร็จ' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, message: 'ลบรอบกิจกรรมสำเร็จเรียบร้อย' });
+  } catch (error: any) {
+    if (error?.status === 401 || error?.status === 403) {
+      return NextResponse.json({ error: 'ไม่มีสิทธิ์ดำเนินการ' }, { status: error.status });
+    }
+    console.error('DELETE /api/events/runs/[runId] error:', error);
+    return NextResponse.json({ error: error?.message || 'Internal error' }, { status: 500 });
+  }
+}

@@ -65,6 +65,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const academicYear = searchParams.get('academicYear');
+    const statusParam = searchParams.get('status');
 
     // Teacher / Admin: load all runs with stats
     const { data: runs, error: runsErr } = await supabaseAdmin
@@ -126,9 +127,13 @@ export async function GET(request: Request) {
       };
     });
 
-    const finalRuns = (academicYear && academicYear !== 'all')
+    let finalRuns = (academicYear && academicYear !== 'all')
       ? formattedRuns.filter(r => (r.academicYear || '2567-T2') === academicYear)
       : formattedRuns;
+
+    if (statusParam && statusParam !== 'all') {
+      finalRuns = finalRuns.filter(r => r.status === statusParam);
+    }
 
     return NextResponse.json({
       success: true,

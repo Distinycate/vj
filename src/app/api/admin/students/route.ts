@@ -59,13 +59,15 @@ export async function GET(request: Request) {
       }
       if (userType) {
         rankQuery = rankQuery.eq('user_type', userType);
+      } else {
+        rankQuery = rankQuery.eq('user_type', 'INTERNAL');
       }
       if (academicYear && academicYear !== 'all') {
         rankQuery = rankQuery.eq('academic_year', academicYear);
       }
       if (isActiveParam !== null) {
         rankQuery = rankQuery.eq('is_active', isActiveParam === 'true');
-      } else if (!includeInactive && !academicYear) {
+      } else if (!includeInactive) {
         rankQuery = rankQuery.eq('is_active', true);
       }
 
@@ -85,13 +87,15 @@ export async function GET(request: Request) {
     }
     if (userType) {
       query = query.eq('user_type', userType);
+    } else {
+      query = query.eq('user_type', 'INTERNAL');
     }
     if (academicYear && academicYear !== 'all') {
       query = query.eq('academic_year', academicYear);
     }
     if (isActiveParam !== null) {
       query = query.eq('is_active', isActiveParam === 'true');
-    } else if (!includeInactive && !academicYear) {
+    } else if (!includeInactive) {
       query = query.eq('is_active', true);
     }
 
