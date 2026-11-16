@@ -152,7 +152,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) however = อย่างไรก็ตาม ผิดทั้งความหมายและเครื่องหมายวรรคตอน",
           "❌ (D) therefore = ดังนั้น (บอกผลลัพธ์) ผิดเพราะข้อความหลังช่องว่างเป็นสาเหตุ ไม่ใช่ผลลัพธ์"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 1 กันครับ จุดสังเกตของข้อนี้คือ \"had caught a severe fever (สาเหตุของการตัดสินใจ)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 1 กันครับ จุดสังเกตของข้อนี้คือ \"had caught a severe fever (สาเหตุของการตัดสินใจ)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "เห็นเหตุผล + ตามด้วยประโยค (S+V) ➔ ตอบ because ได้เลย (ห้ามวาง However ถ้าไม่มีจุดหรือลูกน้ำ!)"
       },
       {
         "id": "wb-connectors-prac-2",
@@ -213,7 +214,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) Because = เพราะว่า ผิดทั้งความหมายและโครงสร้างวรรคตอน",
           "❌ (D) Since = เนื่องจาก / ตั้งแต่ ผิดทั้งความหมายและโครงสร้างวรรคตอน"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 2 กันครับ จุดสังเกตของข้อนี้คือ \"เครื่องหมาย . ____, และใจความขัดแย้ง\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 2 กันครับ จุดสังเกตของข้อนี้คือ \"เครื่องหมาย . ____, และใจความขัดแย้ง\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "เห็นโครงสร้าง \". ____, \" แล้วใจความขัดแย้ง ➔ ฟันธง However, ทันที 90% ถูกชัวร์!"
       },
       {
         "id": "wb-connectors-prac-3",
@@ -274,7 +276,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) although ผิดทั้งความหมายและไวยากรณ์ (ต้องตามด้วย S + V)",
           "❌ (D) in spite ผิดไวยากรณ์ เพราะคำที่ถูกคือ in spite of หรือ despite (ไม่ใส่ of)"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 3 กันครับ จุดสังเกตของข้อนี้คือ \"the sudden electrical blackout (เป็นคำนาม ไม่มี S+V)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 3 กันครับ จุดสังเกตของข้อนี้คือ \"the sudden electrical blackout (เป็นคำนาม ไม่มี S+V)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "ข้างหลังเป็น \"คำนามล้วน\" (ไม่มีกริยา) ➔ ต้องใช้ because of (ห้ามใช้ because เดี่ยวๆ!)"
       },
       {
         "id": "wb-connectors-prac-4",
@@ -334,7 +337,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) because = เพราะว่า ผิดความหมาย",
           "❌ (D) so = ดังนั้น ผิดความหมาย"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 4 กันครับ จุดสังเกตของข้อนี้คือ \"will not be allowed ... unless you wear\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 4 กันครับ จุดสังเกตของข้อนี้คือ \"will not be allowed ... unless you wear\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "จำสูตรสั้นๆ: unless = if ... not (แปลว่า \"เว้นแต่ว่า / ถ้าไม่...\")"
       },
       {
         "id": "wb-connectors-prac-5",
@@ -394,7 +398,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) therefore = ดังนั้น ผิดความหมายและโครงสร้างวรรคตอน",
           "❌ (D) unless = เว้นแต่ว่า ผิดความหมาย"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 5 กันครับ จุดสังเกตของข้อนี้คือ \"เปรียบเทียบสองสิ่งที่ต่างกัน (prefers math vs enjoys history)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 5 กันครับ จุดสังเกตของข้อนี้คือ \"เปรียบเทียบสองสิ่งที่ต่างกัน (prefers math vs enjoys history)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "เห็น \"ใจความ 2 คนเทียบกันคนละชอบ\" หลังลูกน้ำ ➔ ใช้ while (\"ในขณะที่...\")"
       }
     ],
     "realOnetQuestions": []
@@ -434,7 +439,7 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           {
             "categoryBadge": "2. Comparative (ขั้นกว่า)",
             "colorTheme": "emerald",
-            "signal": "Adj.-er + than (คำสั้น 1-2 พยางค์)\nmore + Adj. / Adv. + than (คำยาว)",
+            "signal": "Adj.-er + than (1 พยางค์ / 2 พยางค์ลงท้าย -y)\nmore + Adj. / Adv. + than (คำยาว)",
             "ruleOrMeaning": "แปลว่า \"...กว่า...\" (ใช้เปรียบเทียบ 2 สิ่ง)\n• มักมีคำว่า than อยู่หลังช่องว่าง\n• ใช้ much / far วางข้างหน้าเพื่อเน้นว่า \"กว่ามาก\" ได้",
             "example": "This smartphone is more expensive than that one.",
             "exampleTranslation": "สมาร์ตโฟนเครื่องนี้แพงกว่าเครื่องนั้น"
@@ -542,7 +547,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) heaviest เป็นขั้นสุด (ต้องใช้กับ the และไม่มี than)",
           "❌ (D) more heavy ผิดไวยากรณ์ เพราะคำที่ลงท้ายด้วย -y ต้องเปลี่ยนเป็น -ier"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 1 กันครับ จุดสังเกตของข้อนี้คือ \"much _____ than (ต้องเป็นรูปขั้นกว่า)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 1 กันครับ จุดสังเกตของข้อนี้คือ \"much _____ than (ต้องเป็นรูปขั้นกว่า)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "เห็นคำว่า than หลังช่องว่าง ➔ กาขั้นกว่าทันที! (ลงท้าย -y เปลี่ยนเป็น -ier เช่น heavier)"
       },
       {
         "id": "wb-comparisons-prac-2",
@@ -590,7 +596,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) most densely ผิดเพราะขาดคำนำหน้า the ในโครงสร้าง one of the most...",
           "❌ (D) as densely as เป็นขั้นเท่ากัน ไม่เข้ากับโครงสร้างประโยค"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 2 กันครับ จุดสังเกตของข้อนี้คือ \"one of _____ + plural noun\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 2 กันครับ จุดสังเกตของข้อนี้คือ \"one of _____ + plural noun\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "เจอสูตร \"one of the + ขั้นสุด + นามพหูพจน์\" ➔ ต้องมี \"the\" นำหน้าเสมอ (the most...)"
       },
       {
         "id": "wb-comparisons-prac-3",
@@ -638,7 +645,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) very ใช้ขยายขั้นปกติเท่านั้น (very good) ห้ามใช้ very better",
           "❌ (D) many ใช้บอกจำนวนคำนามพหูพจน์ ไม่ใช้ขยายคำคุณศัพท์ขั้นกว่า"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 3 กันครับ จุดสังเกตของข้อนี้คือ \"วางหน้า better (ขั้นกว่า)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 3 กันครับ จุดสังเกตของข้อนี้คือ \"วางหน้า better (ขั้นกว่า)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "ห้ามใช้ more better เด็ดขาด! อยากเน้นว่า \"ดีกว่ามาก\" ให้ใช้ \"much better\""
       },
       {
         "id": "wb-comparisons-prac-4",
@@ -655,7 +663,7 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         "correctIndex": 0,
         "clueText": "The earlier ..., the more ...",
         "howToApproach": [
-          "Step 1 (สแกนโครงสร้างประโยคหน้า): ขึ้นต้นด้วย \"The earlier you start preparing..., \"",
+          "Step 1 (สแกนโครงสร้างประโยคหน้า): ขึ้นต้นด้วย \"The earlier students start preparing..., \"",
           "Step 2 (จำสูตรคู่ขนาน): เห็น \"The + ขั้นกว่า ..., \" หน้าลูกน้ำ หลังลูกน้ำต้องขึ้นต้นด้วย \"the + ขั้นกว่า\" เสมอ (Double Comparative)!",
           "Step 3 (เช็กพยางค์ของ confident): confident มี 3 พยางค์ ขั้นกว่าต้องใช้ more confident เมื่อเข้าสูตรจึงเป็น \"the more confident\""
         ],
@@ -692,7 +700,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) the most ผิดเพราะเป็นขั้นสุด ไม่ใช้ในโครงสร้าง ยิ่ง...ยิ่ง...",
           "❌ (D) most ผิดทั้งขั้นสุดและขาด the"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 4 กันครับ จุดสังเกตของข้อนี้คือ \"The earlier ..., the more ...\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 4 กันครับ จุดสังเกตของข้อนี้คือ \"The earlier ..., the more ...\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "สูตรคู่ขนาน: The + ขั้นกว่า..., the + ขั้นกว่า... (ฝั่งหลังต้องขึ้นต้นด้วย \"the\" เสมอ!)"
       },
       {
         "id": "wb-comparisons-prac-5",
@@ -746,7 +755,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) safest ผิดเพราะเป็นขั้นสุด",
           "❌ (D) more safe ผิดทั้งไวยากรณ์การสะกดคำและผิดโครงสร้าง as ... as"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 5 กันครับ จุดสังเกตของข้อนี้คือ \"as _____ as\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 5 กันครับ จุดสังเกตของข้อนี้คือ \"as _____ as\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "เห็น \"as _____ as\" เมื่อไหร่ ➔ ใช้รูปปกติเท่านั้น ห้ามเติม -er, -est หรือ more เด็ดขาด!"
       }
     ],
     "realOnetQuestions": []
@@ -888,7 +898,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) cleaned เป็น V.2 ขาด Verb to be นำหน้า",
           "❌ (D) was cleaned ผิดทั้งพจน์ (windows เป็นพหูพจน์) และผิดเวลา (every Friday เป็นปัจจุบัน)"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 1 กันครับ จุดสังเกตของข้อนี้คือ \"windows (พหูพจน์) + every Friday (ปัจจุบัน)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 1 กันครับ จุดสังเกตของข้อนี้คือ \"windows (พหูพจน์) + every Friday (ปัจจุบัน)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "สิ่งของพหูพจน์ + every... (ปัจจุบัน) + มี by ➔ ใช้ \"are + V.3\" (are cleaned)"
       },
       {
         "id": "wb-passive-voice-prac-2",
@@ -942,7 +953,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) is sent ผิดเวลา เพราะ yesterday morning เป็นอดีตไปแล้ว",
           "❌ (D) was sending ผิดเพราะเป็น Active (พัสดุกำลังส่งตัวเองไม่ได้)"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 2 กันครับ จุดสังเกตของข้อนี้คือ \"email (ถูกส่ง) + yesterday morning (อดีต)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 2 กันครับ จุดสังเกตของข้อนี้คือ \"email (ถูกส่ง) + yesterday morning (อดีต)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "สิ่งของเอกพจน์ส่งตัวเองไม่ได้ + yesterday (อดีต) ➔ ใช้ \"was + V.3\" (was sent)"
       },
       {
         "id": "wb-passive-voice-prac-3",
@@ -990,7 +1002,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) returned ผิดไวยากรณ์ เพราะหลัง must ต้องเป็นกริยาช่อง 1 (be) เท่านั้น",
           "❌ (D) returning ผิดไวยากรณ์ หลัง must ห้ามตามด้วย V-ing"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 3 กันครับ จุดสังเกตของข้อนี้คือ \"must (modal verb) + be + V.3\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 3 กันครับ จุดสังเกตของข้อนี้คือ \"must (modal verb) + be + V.3\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "เจอ กริยาช่วย (must/should/can/will) + ถูกกระทำ ➔ ต้องเป็น \"Modal + be + V.3\" เสมอ!"
       },
       {
         "id": "wb-passive-voice-prac-4",
@@ -1038,7 +1051,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) visits ผิดเพราะเป็น Active Voice",
           "❌ (D) has visited ผิดเพราะเป็น Active Voice"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 4 กันครับ จุดสังเกตของข้อนี้คือ \"by foreign tourists + every week\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 4 กันครับ จุดสังเกตของข้อนี้คือ \"by foreign tourists + every week\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "สถานที่ทำเองไม่ได้ + by... + every week (ปัจจุบัน) ➔ ใช้ \"is + V.3\" (is visited)"
       },
       {
         "id": "wb-passive-voice-prac-5",
@@ -1092,7 +1106,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) opened เป็นอดีต ขัดแย้งกับ next Monday",
           "❌ (D) is opening เป็น Active (ศูนย์วิทยาศาสตร์เปิดผู้ว่าฯ เองไม่ได้)"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 5 กันครับ จุดสังเกตของข้อนี้คือ \"next Monday (อนาคต) + by the city mayor\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 5 กันครับ จุดสังเกตของข้อนี้คือ \"next Monday (อนาคต) + by the city mayor\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "เห็น next Monday (อนาคต) + ประธานถูกเปิด ➔ ใช้ \"will be + V.3\" (will be opened)"
       }
     ],
     "realOnetQuestions": []
@@ -1125,7 +1140,7 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
             "categoryBadge": "1. Noun (คำนาม)",
             "colorTheme": "blue",
             "signal": "วางหลัง: a / an / the / my / his / her\nวางหลัง: Preposition (of, in, for) หรือ Adjective",
-            "ruleOrMeaning": "ทำหน้าที่เป็นประธาน (Subject) หรือกรรม (Object)\n• มักลงท้ายด้วย: -tion, -sion, -ment, -ness, -ity, -efit(s)",
+            "ruleOrMeaning": "ทำหน้าที่เป็นประธาน (Subject) หรือกรรม (Object)\n• มักลงท้ายด้วย: -tion, -sion, -ment, -ness, -ity, -er/-or (คน)",
             "example": "The spacious library provides great happiness.",
             "exampleTranslation": "ห้องสมุดที่กว้างขวางมอบความสุขอย่างยิ่ง"
           },
@@ -1232,7 +1247,7 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           0,
           3
         ],
-        "eliminationReason": "ตัด A (educate = กริยาช่อง 1) และ D (educationally = Adverb ซ้อน Adverb ไม่ได้ เพราะขาด Adjective หลัก)",
+        "eliminationReason": "ตัด A (educate = กริยา) และ D (educationally = Adverb) เพราะหลัง Linking Verb \"was\" ต้องการ Adjective มาบอกลักษณะของประธาน ไม่ใช่ Adverb",
         "explanation": "หลัง Linking verb \"was\" และ adverb \"deeply\" ต้องการ Adjective เพื่อบอกคุณลักษณะของสารคดี คำลงท้าย -al เป็น Adjective (educational = ซึ่งให้ความรู้)",
         "choiceBreakdowns": [
           "❌ (A) educate เป็นกริยาช่อง 1 (Verb) วางหลัง was deeply ไม่ได้",
@@ -1240,7 +1255,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "✅ (C) educational เป็นคำคุณศัพท์ (Adjective) วางหลัง was deeply เพื่อบอกลักษณะของสารคดีได้ถูกต้อง",
           "❌ (D) educationally เป็น Adverb หากเลือกจะทำให้ขาด Adjective หลัง Verb to be"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 1 กันครับ จุดสังเกตของข้อนี้คือ \"was deeply + [ Adjective ]\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 1 กันครับ จุดสังเกตของข้อนี้คือ \"was deeply + [ Adjective ]\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "หลัง is/am/are/was (+ Adverb) ➔ เติม Adjective เพื่อบอกลักษณะ (-al, -ful, -ive)"
       },
       {
         "id": "wb-parts-of-speech-prac-2",
@@ -1294,7 +1310,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) exciting (adj. -ing) แปลว่า น่าตื่นเต้น ใช้กับสิ่งของหรือเหตุการณ์ ไม่ใช้กับความรู้สึกของคน",
           "❌ (D) excitement เป็นคำนาม (ความตื่นเต้น) วางหลัง Adverb extremely ไม่ได้"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 2 กันครับ จุดสังเกตของข้อนี้คือ \"students (คน) + felt (รู้สึก) -> -ed\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 2 กันครับ จุดสังเกตของข้อนี้คือ \"students (คน) + felt (รู้สึก) -> -ed\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "ท่องให้ขึ้นใจ: \"คนรู้สึก = -ed (excited)\" | \"สิ่งของน่า... = -ing (exciting)\""
       },
       {
         "id": "wb-parts-of-speech-prac-3",
@@ -1342,7 +1359,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) calmness เป็นคำนาม (ความสงบ)",
           "❌ (D) calming เป็น Adjective (ที่ทำให้รู้สึกสงบ)"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 3 กันครับ จุดสังเกตของข้อนี้คือ \"walked (Action Verb) + Adverb (-ly)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 3 กันครับ จุดสังเกตของข้อนี้คือ \"walked (Action Verb) + Adverb (-ly)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "ขยาย \"กริยาแสดงการกระทำ\" (walked) ➔ ต้องใช้ Adverb ลงท้ายด้วย -ly (calmly)"
       },
       {
         "id": "wb-parts-of-speech-prac-4",
@@ -1396,7 +1414,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) beneficially (adv.) = อย่างเป็นประโยชน์ ผิดตำแหน่งคำ",
           "❌ (D) beneficent (adj.) = มีเมตตา/ใจบุญ ผิดทั้งความหมายและชนิดของคำ"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 4 กันครับ จุดสังเกตของข้อนี้คือ \"great health + [ Noun ]\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 4 กันครับ จุดสังเกตของข้อนี้คือ \"great health + [ Noun ]\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "หลัง \"Adjective + คำนามขยาย\" ที่ท้ายกลุ่มคำ ➔ ต้องการ \"คำนามหลัก (Noun)\" เช่น benefits"
       },
       {
         "id": "wb-parts-of-speech-prac-5",
@@ -1450,7 +1469,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "✅ (C) creative เป็นคำคุณศัพท์ (Adjective) วางหลัง was both และขนานกับ and inspiring ได้สมบูรณ์",
           "❌ (D) creatively เป็น Adverb ไม่สามารถเป็นส่วนเติมเต็มหลัง was คู่กับ inspiring ได้"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 5 กันครับ จุดสังเกตของข้อนี้คือ \"and inspiring (adj) storytelling (n.)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 5 กันครับ จุดสังเกตของข้อนี้คือ \"and inspiring (adj) storytelling (n.)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "เห็นคำเชื่อม \"and\" หน้า-หลังต้องเป็นคำชนิดเดียวกัน! หลัง and เป็น Adj. ➔ หน้า and ก็ต้องเป็น Adj."
       }
     ],
     "realOnetQuestions": []
@@ -1598,7 +1618,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) leather Italian expensive bag ผิดเพราะเรียงย้อนศรเอาวัสดุไว้หน้าสุด",
           "❌ (D) expensive leather Italian bag ผิดเพราะเอาวัสดุ (leather) มาไว้หน้าสัญชาติ (Italian)"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 1 กันครับ จุดสังเกตของข้อนี้คือ \"Opinion (expensive) → Origin (Italian) → Material (leather) → Noun (bag)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 1 กันครับ จุดสังเกตของข้อนี้คือ \"Opinion (expensive) → Origin (Italian) → Material (leather) → Noun (bag)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "สูตร OSASCOMP: ความเห็น (expensive) มาก่อนความจริง ➔ สัญชาติ (Italian) ➔ วัสดุ (leather) ➔ นามหลักท้ายสุด (bag)"
       },
       {
         "id": "wb-sentence-organization-prac-2",
@@ -1652,7 +1673,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "✅ (C) latest all-in-one models ถูกต้อง เรียงความใหม่ (latest) → ชนิด (all-in-one) → คำนามหลัก (models)",
           "❌ (D) latest models all-in-one ผิดเพราะเอาคำนามหลัก models ไปวางคั่นตรงกลาง"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 2 กันครับ จุดสังเกตของข้อนี้คือ \"latest (เวลา/ความใหม่) → all-in-one (ลักษณะ) → models (นามหลัก)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 2 กันครับ จุดสังเกตของข้อนี้คือ \"latest (เวลา/ความใหม่) → all-in-one (ลักษณะ) → models (นามหลัก)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "หา \"คำนามหลัก (models)\" ให้เจอก่อนแล้ววางไว้ขวาสุด ➔ ตัดช้อยส์ที่เอา models ไว้หน้า/กลางทิ้งได้ทันที!"
       },
       {
         "id": "wb-sentence-organization-prac-3",
@@ -1706,13 +1728,14 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) at last Friday the school auditorium ผิดไวยากรณ์ (last Friday ไม่ใช้บุพบท at)",
           "❌ (D) the school auditorium at last Friday ผิดไวยากรณ์ ขาดบุพบทหน้าสถานที่"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 3 กันครับ จุดสังเกตของข้อนี้คือ \"Place (ที่ไหน) ก่อน Time (เมื่อไหร่)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 3 กันครับ จุดสังเกตของข้อนี้คือ \"Place (ที่ไหน) ก่อน Time (เมื่อไหร่)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "จำสั้นๆ ท้ายประโยค: \"สถานที่ (Place) มาก่อน เวลา (Time)\" เสมอ! (at school last Friday)"
       },
       {
         "id": "wb-sentence-organization-prac-4",
         "questionNumber": 4,
         "sourceTag": "โจทย์ซ้อมมือ TRY IT — เรื่อง SENTENCE ORGANIZATION (ข้อที่ 4/5)",
-        "prompt": "Danai is very health-conscious; he _____ drinks sugary carbonated soda.",
+        "prompt": "Danai is very health-conscious; he _____ sugary carbonated soda.",
         "promptTranslation": "พี่ชายของฉัน _____ (แทบจะไม่เคยดื่ม) น้ำอัดลมหรือกินอาหารขยะเลยเพราะเขาใส่ใจสุขภาพ",
         "choices": [
           "drinks rarely",
@@ -1723,8 +1746,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         "correctIndex": 1,
         "clueText": "หน้ากริยาแท้: rarely drinks",
         "howToApproach": [
-          "Step 1 (ดูชนิดคำในตัวเลือก): มีคำกริยาแท้ \"drinks\" (ดื่ม) และ Adverb บอกความถี่ \"rarely\" (แทบจะไม่เคย)",
-          "Step 2 (ใช้กฎตำแหน่ง Adverb of Frequency): Adverb บอกความถี่ (always, usually, often, sometimes, rarely, never) ต้องวางไว้ \"หน้ากริยาแท้ (before main verb)\" เสมอ!",
+          "Step 1 (ดูตัวเลือกทั้ง 4 ข้อ): มีคำกริยาแท้ \"drinks\" (ดื่ม) และคำบอกความถี่ \"rarely / never\" (แทบจะไม่ / ไม่เคย)",
+          "Step 2 (ใช้กฎตำแหน่ง Adverb of Frequency): คำบอกความถี่ (always, usually, often, sometimes, rarely, never) ต้องวาง \"หน้ากริยาแท้\" เสมอ! (drinks อยู่ข้างหลัง)",
           "Step 3 (ฟันธงคำตอบ): วาง rarely หน้ากริยาแท้ drinks จึงตอบ (B) rarely drinks"
         ],
         "mustKnowRule": "กฎตำแหน่ง Adverb of Frequency: \"วางหลัง Verb to be แต่วางหน้ากริยาแท้\" (เช่น He is always kind. VS He rarely drinks soft drinks.)",
@@ -1760,7 +1783,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) is rarely drinking ผิด Tense เพราะการบอกนิสัยส่วนตัวต้องใช้ Present Simple",
           "❌ (D) drinks never ผิดตำแหน่ง never ต้องวางหน้ากริยาแท้ (never drinks)"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 4 กันครับ จุดสังเกตของข้อนี้คือ \"หน้ากริยาแท้: rarely drinks\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 4 กันครับ จุดสังเกตของข้อนี้คือ \"หน้ากริยาแท้: rarely drinks\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "ท่องให้ขึ้นใจ: คำบอกความถี่ (always, often, rarely, never) วาง \"หน้ากริยาแท้\" แต่ \"หลัง Verb to be\""
       },
       {
         "id": "wb-sentence-organization-prac-5",
@@ -1814,7 +1838,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "❌ (C) chase dramatic scenes ผิดเพราะเอาชนิดฉาก (chase) ไปไว้หน้าคุณศัพท์ความเห็น (dramatic)",
           "❌ (D) scenes chase dramatic ผิดลำดับทั้งหมด"
         ],
-        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 5 กันครับ จุดสังเกตของข้อนี้คือ \"Opinion (dramatic) → Purpose/Type (chase) → Noun (scenes)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ"
+        "teacherScript": "มาลองทำโจทย์ซ้อมมือข้อที่ 5 กันครับ จุดสังเกตของข้อนี้คือ \"Opinion (dramatic) → Purpose/Type (chase) → Noun (scenes)\" ค่อยๆ มองตาม Step 1 ถึง Step 3 บนหน้าจอ แล้วตัดช้อยส์หลอกออกก่อนเลือกคำตอบครับ",
+        "keyTakeaway": "เจอกลุ่มคำเรียงกัน 3 คำ ➔ เอา \"คำนามหลัก (scenes = ฉาก)\" ไว้ท้ายสุด และ \"ความรู้สึก (tense/dramatic)\" ไว้หน้าสุด!"
       }
     ],
     "realOnetQuestions": []
@@ -2036,7 +2061,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. jogging long light → ❌ ผิด เพราะนำคำนามหลัก jogging มาไว้หน้าคุณศัพท์",
           "4. long jogging light → ❌ ผิด เพราะนำคำนามหลัก jogging มาไว้ตรงกลาง"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"หลังบุพบท of ต้องการกลุ่มคำนาม (Noun Phrase) ที่มีคำนามหลักอยู่ท้ายสุด\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"หลังบุพบท of ต้องการกลุ่มคำนาม (Noun Phrase) ที่มีคำนามหลักอยู่ท้ายสุด\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "คำนามหลัก (jogging) อยู่ท้ายสุดเสมอ! เจอ 2-3 คำเรียงกัน เช็กตัวท้ายสุดก่อนเลย ตัดช้อยส์ได้ทันที"
       },
       {
         "id": "onet-warmup-2565-2",
@@ -2111,7 +2137,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. spending (การใช้ (เวลา) — Gerund (V-ing)) → ✅ ถูกต้อง โครงสร้าง worried about + (someone) + V-ing",
           "4. to have spent (ที่ได้ใช้ไปแล้ว) → ❌ ผิดโครงสร้างไวยากรณ์"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"worried about me ____(25)____ so much time (มีบุพบท about นำหน้า)\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"worried about me ____(25)____ so much time (มีบุพบท about นำหน้า)\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "หลังบุพบททุกตัว (about, in, on, of, for, by) ➔ กริยาต้องเติม -ing เสมอ! (spending)"
       },
       {
         "id": "onet-warmup-2565-3",
@@ -2186,7 +2213,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. take (นำพา / เอา) → ❌ ผิด ไม่ใช้คู่กับ attention (มักใช้ take care of)",
           "4. put (วาง / ใส่) → ❌ ผิด ไม่ใช้คู่กับ attention"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"____(26)____ more attention to my studies\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"____(26)____ more attention to my studies\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "จำสำนวนคู่หู: \"pay attention to\" = ให้ความสนใจ/ตั้งใจกับ... (ห้ามใช้ take/put!)"
       },
       {
         "id": "onet-warmup-2565-4",
@@ -2261,7 +2289,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. although (แม้ว่า) → ❌ ผิด เพราะทั้งสองประโยคคล้อยตามกันเป็นเหตุ-ผล ไม่ได้ขัดแย้งกัน",
           "4. therefore (ดังนั้น / ด้วยเหตุนี้) → ✅ ถูกต้อง เชื่อมผลลัพธ์ และวางระหว่างเครื่องหมาย ; ____, ได้อย่างถูกต้อง"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I understand their concern; ____(27)____, I have decided to focus more...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I understand their concern; ____(27)____, I have decided to focus more...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "เห็นเครื่องหมาย \"; ____, \" เชื่อมเหตุเป็นผล ➔ ตอบ therefore (ดังนั้น) ได้ทันที!"
       },
       {
         "id": "onet-warmup-2565-5",
@@ -2348,7 +2377,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. was pleasantly surprising (น่าประหลาดใจ (-ing)) → ❌ ผิด เพราะประธานเป็น I (คนรู้สึก) ต้องใช้ surprised (-ed) ไม่ใช่ surprising",
           "4. was pleasantly surprised (รู้สึกประหลาดใจอย่างยิ่ง) → ✅ ถูกต้อง ครบโครงสร้าง was + adverb (pleasantly) + adj-ed (surprised)"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I went into this film with low expectations and ____(28)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I went into this film with low expectations and ____(28)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "หลัง and กริยาต้อง Tense เดียวกับข้างหน้า (went อดีต) + \"ฉันถูกทำให้ประหลาดใจ\" (คนรู้สึกใช้ -ed) ➔ was surprised"
       }
     ],
     "realOnetQuestions": [
@@ -2425,7 +2455,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. jogging long light → ❌ ผิด เพราะนำคำนามหลัก jogging มาไว้หน้าคุณศัพท์",
           "4. long jogging light → ❌ ผิด เพราะนำคำนามหลัก jogging มาไว้ตรงกลาง"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"หลังบุพบท of ต้องการกลุ่มคำนาม (Noun Phrase) ที่มีคำนามหลักอยู่ท้ายสุด\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"หลังบุพบท of ต้องการกลุ่มคำนาม (Noun Phrase) ที่มีคำนามหลักอยู่ท้ายสุด\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "คำนามหลัก (jogging) อยู่ท้ายสุดเสมอ! เจอ 2-3 คำเรียงกัน เช็กตัวท้ายสุดก่อนเลย ตัดช้อยส์ได้ทันที"
       },
       {
         "id": "onet-real-2565-item-25",
@@ -2500,7 +2531,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. spending (การใช้ (เวลา) — Gerund (V-ing)) → ✅ ถูกต้อง โครงสร้าง worried about + (someone) + V-ing",
           "4. to have spent (ที่ได้ใช้ไปแล้ว) → ❌ ผิดโครงสร้างไวยากรณ์"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"worried about me ____(25)____ so much time (มีบุพบท about นำหน้า)\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"worried about me ____(25)____ so much time (มีบุพบท about นำหน้า)\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "หลังบุพบททุกตัว (about, in, on, of, for, by) ➔ กริยาต้องเติม -ing เสมอ! (spending)"
       },
       {
         "id": "onet-real-2565-item-26",
@@ -2575,7 +2607,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. take (นำพา / เอา) → ❌ ผิด ไม่ใช้คู่กับ attention (มักใช้ take care of)",
           "4. put (วาง / ใส่) → ❌ ผิด ไม่ใช้คู่กับ attention"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"____(26)____ more attention to my studies\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"____(26)____ more attention to my studies\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "จำสำนวนคู่หู: \"pay attention to\" = ให้ความสนใจ/ตั้งใจกับ... (ห้ามใช้ take/put!)"
       },
       {
         "id": "onet-real-2565-item-27",
@@ -2650,7 +2683,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. although (แม้ว่า) → ❌ ผิด เพราะทั้งสองประโยคคล้อยตามกันเป็นเหตุ-ผล ไม่ได้ขัดแย้งกัน",
           "4. therefore (ดังนั้น / ด้วยเหตุนี้) → ✅ ถูกต้อง เชื่อมผลลัพธ์ และวางระหว่างเครื่องหมาย ; ____, ได้อย่างถูกต้อง"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I understand their concern; ____(27)____, I have decided to focus more...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I understand their concern; ____(27)____, I have decided to focus more...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "เห็นเครื่องหมาย \"; ____, \" เชื่อมเหตุเป็นผล ➔ ตอบ therefore (ดังนั้น) ได้ทันที!"
       },
       {
         "id": "onet-real-2565-item-28",
@@ -2737,7 +2771,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. was pleasantly surprising (น่าประหลาดใจ (-ing)) → ❌ ผิด เพราะประธานเป็น I (คนรู้สึก) ต้องใช้ surprised (-ed) ไม่ใช่ surprising",
           "4. was pleasantly surprised (รู้สึกประหลาดใจอย่างยิ่ง) → ✅ ถูกต้อง ครบโครงสร้าง was + adverb (pleasantly) + adj-ed (surprised)"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I went into this film with low expectations and ____(28)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I went into this film with low expectations and ____(28)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "หลัง and กริยาต้อง Tense เดียวกับข้างหน้า (went อดีต) + \"ฉันถูกทำให้ประหลาดใจ\" (คนรู้สึกใช้ -ed) ➔ was surprised"
       },
       {
         "id": "onet-real-2565-item-29",
@@ -2824,7 +2859,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. whom (ผู้ซึ่ง (ใช้แทนคนที่เป็นกรรม)) → ❌ ผิด เพราะใช้กับคนเท่านั้น",
           "4. that (ที่ / ซึ่ง) → ❌ ผิดกฎไวยากรณ์ เพราะ that ห้ามวางตามหลังคำบุพบท (against that ✗)"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 29 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...the new standard against ____(29)____ I will judge all Batman films.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 29 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...the new standard against ____(29)____ I will judge all Batman films.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "กฎทองหลังบุพบท (against, in, on, with) ➔ ห้ามใช้ that เด็ดขาด! สิ่งของให้ใช้ \"which\""
       },
       {
         "id": "onet-real-2565-item-30",
@@ -2911,7 +2947,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. gothic detective story (เรื่องราวแนวสืบสวนสอบสวนแบบโกธิค) → ✅ ถูกต้อง เรียง ลักษณะ (gothic) + ประเภท (detective) + คำนามหลัก (story)",
           "4. detective story gothic → ❌ ผิด เพราะเอาคุณศัพท์ gothic ไปไว้ท้ายสุดหลังคำนาม"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 30 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"The thriller and ____(30)____ are the strongest aspects.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 30 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"The thriller and ____(30)____ are the strongest aspects.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "คำนามหลักคือ story (เรื่องราว) ➔ วางไว้ท้ายสุด! gothic (สไตล์) + detective (แนว) + story (คำนามหลัก)"
       },
       {
         "id": "onet-real-2565-item-31",
@@ -2998,7 +3035,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. direction (ทิศทาง / การกำกับ) → ❌ ผิด เพราะการกำกับเป็นหน้าที่ของ Director ไม่ใช่ของนักแสดงแต่ละคน (Each actor)",
           "4. performance (การแสดง / ผลงานการแสดง) → ✅ ถูกต้อง การแสดงของนักแสดงแต่ละคนน่าเชื่อถือ"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 31 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Each actor's ____(31)____ is believable...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 31 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Each actor's ____(31)____ is believable...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "หน้าช่องว่างคือคำแสดงความเป็นเจ้าของ (actor's) ➔ ต้องตามด้วยคำนาม (performance = การแสดง)"
       },
       {
         "id": "onet-real-2565-item-32",
@@ -3084,7 +3122,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. like (เหมือนกับ) → ❌ ผิด เพราะ Bruce Wayne คือตัวละครนั้นโดยตรง (ในฐานะ) ไม่ใช่แค่คล้าย",
           "4. between (ระหว่าง) → ❌ ผิดความหมายและโครงสร้าง"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 32 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"The portrayal of Bruce Wayne ____(32)____ a troubled and flawed character...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2565 ข้อที่ 32 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"The portrayal of Bruce Wayne ____(32)____ a troubled and flawed character...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "จำคำคู่: portrayal of [A] as [B] = การถ่ายทอดบทบาทของ A \"ในฐานะ (as)\" B"
       }
     ]
   },
@@ -3271,7 +3310,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. slight (เล็กน้อย / บางเบา) → ❌ ผิดความหมาย",
           "4. spacious (กว้างขวาง / โอ่โถง) → ✅ ถูกต้อง สอดคล้องกับ big และความรู้สึกชื่นชอบของผู้เขียน"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Two things I like... The library is big and ____(24)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Two things I like... The library is big and ____(24)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "อ่านบริบท \"big and ____\" หลังคำว่า like (ชอบ) ➔ คำหลัง and ต้องความหมายบวกคู่กับคำว่า big = spacious (กว้างขวาง)"
       },
       {
         "id": "onet-warmup-2566-2",
@@ -3334,7 +3374,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. latest all-in-one models (รุ่นออลอินวันใหม่ล่าสุด) → ✅ ถูกต้อง เรียง คุณศัพท์บอกความใหม่ (latest) + ชนิด (all-in-one) + คำนามหลัก (models)",
           "4. latest models all-in-one → ❌ ผิด เพราะเอาคำนามหลัก models ไว้ตรงกลาง"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...equipped with the ____(25)____ of computers.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...equipped with the ____(25)____ of computers.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "เจอเรียงคำ ➔ เอาคำนามหลัก (models = รุ่น) ไว้ขวาสุด! แล้วเรียง latest + all-in-one + models"
       },
       {
         "id": "onet-warmup-2566-3",
@@ -3397,7 +3438,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. will be going (จะกำลังไป) → ❌ ผิดโครงสร้างไวยากรณ์",
           "4. have gone (ได้ไปแล้ว) → ❌ ผิดโครงสร้างไวยากรณ์"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I'm really looking forward to ____(26)____ to school tomorrow.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I'm really looking forward to ____(26)____ to school tomorrow.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "ดอกจันล้านดวง: สำนวน \"look forward to\" คำว่า to เป็นบุพบท ➔ ต้องตามด้วย V-ing เท่านั้น! (going)"
       },
       {
         "id": "onet-warmup-2566-4",
@@ -3460,7 +3502,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. so (ดังนั้น (บอกผลลัพธ์)) → ❌ ผิด เพราะประโยคหลังเป็นสาเหตุ ไม่ใช่ผลลัพธ์",
           "4. like (เหมือนกับ (เป็นบุพบท)) → ❌ ผิดทั้งความหมายและหน้าที่คำ"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Now I am going to sleep ____(27)____ I have to get up early...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Now I am going to sleep ____(27)____ I have to get up early...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "เจอเติมคำเชื่อมระหว่างเหตุกับผล: จะไปนอนแล้ว \"เพราะว่า (as)\" ต้องตื่นเช้า (as / since = เพราะว่า)"
       },
       {
         "id": "onet-warmup-2566-5",
@@ -3534,7 +3577,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. record (บันทึก / สถิติ) → ❌ ผิดความหมาย",
           "4. exhibition (นิทรรศการ) → ❌ ผิดความหมาย"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...every shot was a comic book panel but in live ____(28)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...every shot was a comic book panel but in live ____(28)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "จำศัพท์หนัง: \"live action\" = หนังคนแสดงจริง (คู่ตรงข้ามกับ comic book หนังสือการ์ตูน)"
       }
     ],
     "realOnetQuestions": [
@@ -3599,7 +3643,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. slight (เล็กน้อย / บางเบา) → ❌ ผิดความหมาย",
           "4. spacious (กว้างขวาง / โอ่โถง) → ✅ ถูกต้อง สอดคล้องกับ big และความรู้สึกชื่นชอบของผู้เขียน"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Two things I like... The library is big and ____(24)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Two things I like... The library is big and ____(24)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "อ่านบริบท \"big and ____\" หลังคำว่า like (ชอบ) ➔ คำหลัง and ต้องความหมายบวกคู่กับคำว่า big = spacious (กว้างขวาง)"
       },
       {
         "id": "onet-real-2566-item-25",
@@ -3662,7 +3707,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. latest all-in-one models (รุ่นออลอินวันใหม่ล่าสุด) → ✅ ถูกต้อง เรียง คุณศัพท์บอกความใหม่ (latest) + ชนิด (all-in-one) + คำนามหลัก (models)",
           "4. latest models all-in-one → ❌ ผิด เพราะเอาคำนามหลัก models ไว้ตรงกลาง"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...equipped with the ____(25)____ of computers.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...equipped with the ____(25)____ of computers.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "เจอเรียงคำ ➔ เอาคำนามหลัก (models = รุ่น) ไว้ขวาสุด! แล้วเรียง latest + all-in-one + models"
       },
       {
         "id": "onet-real-2566-item-26",
@@ -3725,7 +3771,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. will be going (จะกำลังไป) → ❌ ผิดโครงสร้างไวยากรณ์",
           "4. have gone (ได้ไปแล้ว) → ❌ ผิดโครงสร้างไวยากรณ์"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I'm really looking forward to ____(26)____ to school tomorrow.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I'm really looking forward to ____(26)____ to school tomorrow.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "ดอกจันล้านดวง: สำนวน \"look forward to\" คำว่า to เป็นบุพบท ➔ ต้องตามด้วย V-ing เท่านั้น! (going)"
       },
       {
         "id": "onet-real-2566-item-27",
@@ -3788,7 +3835,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. so (ดังนั้น (บอกผลลัพธ์)) → ❌ ผิด เพราะประโยคหลังเป็นสาเหตุ ไม่ใช่ผลลัพธ์",
           "4. like (เหมือนกับ (เป็นบุพบท)) → ❌ ผิดทั้งความหมายและหน้าที่คำ"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Now I am going to sleep ____(27)____ I have to get up early...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Now I am going to sleep ____(27)____ I have to get up early...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "เจอเติมคำเชื่อมระหว่างเหตุกับผล: จะไปนอนแล้ว \"เพราะว่า (as)\" ต้องตื่นเช้า (as / since = เพราะว่า)"
       },
       {
         "id": "onet-real-2566-item-28",
@@ -3862,7 +3910,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. record (บันทึก / สถิติ) → ❌ ผิดความหมาย",
           "4. exhibition (นิทรรศการ) → ❌ ผิดความหมาย"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...every shot was a comic book panel but in live ____(28)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...every shot was a comic book panel but in live ____(28)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "จำศัพท์หนัง: \"live action\" = หนังคนแสดงจริง (คู่ตรงข้ามกับ comic book หนังสือการ์ตูน)"
       },
       {
         "id": "onet-real-2566-item-29",
@@ -3937,7 +3986,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. interesting (น่าสนใจ (adj. ใช้กับสิ่งของ/เรื่องราว)) → ✅ ถูกต้อง เป็น Adjective ขยาย The plot และขนานกับ dark, gritty",
           "4. was interested (รู้สึกสนใจ) → ❌ ผิดทั้งโครงสร้าง (มี was ซ้ำ) และความหมาย"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 29 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"The plot was dark, gritty and ____(29)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 29 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"The plot was dark, gritty and ____(29)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "สิ่งของ/พล็อตเรื่อง \"น่าสนใจ\" ➔ ใช้ -ing (interesting)! (คนรู้สึกถึงจะใช้ interested)"
       },
       {
         "id": "onet-real-2566-item-30",
@@ -4012,7 +4062,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. whole detective process (กระบวนการสืบสวนสอบสวนทั้งหมด) → ✅ ถูกต้อง เรียง whole + ประเภท (detective) + คำนามหลัก (process)",
           "4. process whole detective → ❌ ผิด เพราะเอาคำนามหลัก process มาไว้หน้าสุด"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 30 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"The ____(30)____ was great to see in a Batman movie.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 30 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"The ____(30)____ was great to see in a Batman movie.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "คำนามหลักคือ process (กระบวนการ) ➔ วางไว้ท้ายสุดเท่านั้น! ตัดข้อที่ process อยู่หน้าทิ้งได้เลย"
       },
       {
         "id": "onet-real-2566-item-31",
@@ -4087,7 +4138,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. will see (จะดู (Future Simple)) → ❌ ผิด เพราะดูหนังเรื่องนี้จบไปแล้วจึงมารีวิว",
           "4. have seen (เคยได้ดูมา (Present Perfect)) → ✅ ถูกต้อง รับกับโครงสร้าง the best ... I have seen"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 31 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...definitely the best cinematography I ____(31)____ in a superhero film.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 31 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...definitely the best cinematography I ____(31)____ in a superhero film.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "เห็นขั้นสุด \"the best...\" + ประสบการณ์ชีวิต (\"เท่าที่เคยเห็นมา\") ➔ ใช้ Present Perfect (have seen)"
       },
       {
         "id": "onet-real-2566-item-32",
@@ -4161,7 +4213,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. unless (เว้นแต่ว่า (บอกเงื่อนไข)) → ❌ ผิดความหมาย",
           "4. although (แม้ว่า (บอกความขัดแย้ง)) → ✅ ถูกต้อง ย่อมาจาก although (it was) not quite perfect"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 32 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"All in all, I'd say this was a great film, ____(32)____ not quite perfect.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2566 ข้อที่ 32 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"All in all, I'd say this was a great film, ____(32)____ not quite perfect.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "หน้าชม (great film) vs หลังติ (not quite perfect) ➔ สวนทางกัน ตอบ although (แม้ว่า)"
       }
     ]
   },
@@ -4353,7 +4406,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. provide (จัดหาให้ / มอบให้) → ✅ ถูกต้อง โครงสร้าง provide someone with something",
           "4. preserve (อนุรักษ์ / รักษาไว้) → ❌ ผิดความหมาย"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...is to ____(24)____ participants from our school with a space...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...is to ____(24)____ participants from our school with a space...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "สแกนคำหลังช่องว่าง: เจอคำว่า \"with\" ➔ ใช้คู่กับ \"provide [คน] with [สิ่งของ]\" (มอบ...ให้แก่...)"
       },
       {
         "id": "onet-warmup-2567-2",
@@ -4422,7 +4476,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. have learned (ได้เรียนรู้มาแล้ว (Present Perfect)) → ✅ ถูกต้อง สื่อถึงความรู้ที่ได้เรียนสะสมมาจนถึงปัจจุบัน",
           "4. had learned (ได้เรียนจบไปก่อนอีกเหตุการณ์ในอดีต (Past Perfect)) → ❌ ผิด เพราะเนื้อหาทั้งประกาศเป็น Present/Future ไม่ใช่อดีต"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...to practice the English language skills they ____(25)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...to practice the English language skills they ____(25)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "ทักษะภาษาที่นักเรียน \"ได้เรียนมาแล้วตั้งแต่อดีตถึงปัจจุบัน\" ➔ ใช้ Present Perfect (have learned)"
       },
       {
         "id": "onet-warmup-2567-3",
@@ -4491,7 +4546,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. from (ตั้งแต่ (from ... onward)) → ✅ ถูกต้อง สำนวน from November 1st onward = ตั้งแต่วันที่ 1 พ.ย. เป็นต้นไป",
           "4. before (ก่อน (ขัดแย้งกับคำว่า onward ที่แปลว่าตั้งแต่นั้นเป็นต้นไป)) → ❌ ผิดความหมาย"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Participants can register ____(26)____ November 1st onward...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Participants can register ____(26)____ November 1st onward...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "สแกนคำหลังช่องว่าง: เจอคำว่า \"onward\" (เป็นต้นไป) ➔ ใช้คู่กับ \"from [วันที่] onward\" เสมอ!"
       },
       {
         "id": "onet-warmup-2567-4",
@@ -4560,7 +4616,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. You are once registered → ❌ ผิด เพราะขาดคำเชื่อมหน้าประโยค ทำให้เชื่อมกับประโยคหลังด้วยลูกน้ำไม่ได้",
           "4. Once registered you are → ❌ ผิด เพราะสลับเอา you are ไปไว้ท้ายสุด"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"____(27)____, you will be emailed a Zoom link...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"____(27)____, you will be emailed a Zoom link...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "คำเชื่อมขึ้นต้นประโยคย่อย \"Once + S + be + V.3,\" = เมื่อคุณลงทะเบียนเรียบร้อยแล้ว..."
       },
       {
         "id": "onet-warmup-2567-5",
@@ -4629,7 +4686,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. rural poor family big → ❌ ผิด เพราะเอาคุณศัพท์ big ไปไว้หลังคำนาม family",
           "4. big poor family rural → ❌ ผิด เพราะเอาคุณศัพท์ rural ไปไว้หลังคำนาม family"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...a withdrawn little girl from a ____(28)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...a withdrawn little girl from a ____(28)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "หาคำนามหลักก่อน: \"ครอบครัว\" (family) ต้องวางท้ายสุด! + เรียง Opinion (poor) มาก่อน (poor big rural family)"
       }
     ],
     "realOnetQuestions": [
@@ -4700,7 +4758,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. provide (จัดหาให้ / มอบให้) → ✅ ถูกต้อง โครงสร้าง provide someone with something",
           "4. preserve (อนุรักษ์ / รักษาไว้) → ❌ ผิดความหมาย"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...is to ____(24)____ participants from our school with a space...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...is to ____(24)____ participants from our school with a space...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "สแกนคำหลังช่องว่าง: เจอคำว่า \"with\" ➔ ใช้คู่กับ \"provide [คน] with [สิ่งของ]\" (มอบ...ให้แก่...)"
       },
       {
         "id": "onet-real-2567-item-25",
@@ -4769,7 +4828,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. have learned (ได้เรียนรู้มาแล้ว (Present Perfect)) → ✅ ถูกต้อง สื่อถึงความรู้ที่ได้เรียนสะสมมาจนถึงปัจจุบัน",
           "4. had learned (ได้เรียนจบไปก่อนอีกเหตุการณ์ในอดีต (Past Perfect)) → ❌ ผิด เพราะเนื้อหาทั้งประกาศเป็น Present/Future ไม่ใช่อดีต"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...to practice the English language skills they ____(25)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...to practice the English language skills they ____(25)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "ทักษะภาษาที่นักเรียน \"ได้เรียนมาแล้วตั้งแต่อดีตถึงปัจจุบัน\" ➔ ใช้ Present Perfect (have learned)"
       },
       {
         "id": "onet-real-2567-item-26",
@@ -4838,7 +4898,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. from (ตั้งแต่ (from ... onward)) → ✅ ถูกต้อง สำนวน from November 1st onward = ตั้งแต่วันที่ 1 พ.ย. เป็นต้นไป",
           "4. before (ก่อน (ขัดแย้งกับคำว่า onward ที่แปลว่าตั้งแต่นั้นเป็นต้นไป)) → ❌ ผิดความหมาย"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Participants can register ____(26)____ November 1st onward...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"Participants can register ____(26)____ November 1st onward...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "สแกนคำหลังช่องว่าง: เจอคำว่า \"onward\" (เป็นต้นไป) ➔ ใช้คู่กับ \"from [วันที่] onward\" เสมอ!"
       },
       {
         "id": "onet-real-2567-item-27",
@@ -4907,7 +4968,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. You are once registered → ❌ ผิด เพราะขาดคำเชื่อมหน้าประโยค ทำให้เชื่อมกับประโยคหลังด้วยลูกน้ำไม่ได้",
           "4. Once registered you are → ❌ ผิด เพราะสลับเอา you are ไปไว้ท้ายสุด"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"____(27)____, you will be emailed a Zoom link...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"____(27)____, you will be emailed a Zoom link...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "คำเชื่อมขึ้นต้นประโยคย่อย \"Once + S + be + V.3,\" = เมื่อคุณลงทะเบียนเรียบร้อยแล้ว..."
       },
       {
         "id": "onet-real-2567-item-28",
@@ -4976,7 +5038,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. rural poor family big → ❌ ผิด เพราะเอาคุณศัพท์ big ไปไว้หลังคำนาม family",
           "4. big poor family rural → ❌ ผิด เพราะเอาคุณศัพท์ rural ไปไว้หลังคำนาม family"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...a withdrawn little girl from a ____(28)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...a withdrawn little girl from a ____(28)____.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "หาคำนามหลักก่อน: \"ครอบครัว\" (family) ต้องวางท้ายสุด! + เรียง Opinion (poor) มาก่อน (poor big rural family)"
       },
       {
         "id": "onet-real-2567-item-29",
@@ -5045,7 +5108,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. spends (ใช้เวลา (V.1 เติม s)) → ❌ ผิด เพราะมีกริยาแท้ is sent อยู่แล้ว",
           "4. to spend (เพื่อที่จะใช้ (เวลา)) → ✅ ถูกต้อง ใช้ to + V.1 บอกวัตถุประสงค์ของการถูกส่งตัวไป"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 29 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...she is sent away ____(29)____ some time with her aunt's family.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 29 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...she is sent away ____(29)____ some time with her aunt's family.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "บอกจุดประสงค์ \"ถูกส่งตัวไป เพื่อที่จะ... (spend)\" ➔ ใช้ to + V.1 (to spend)"
       },
       {
         "id": "onet-real-2567-item-30",
@@ -5114,7 +5178,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. As soon as (ทันทีที่ / เมื่อ) → ✅ ถูกต้อง สื่อลำดับเวลาว่าเมื่อมาถึงบ้านใหม่ก็เริ่มสัมผัสได้ถึงความอบอุ่น",
           "4. On the other hand (ในทางกลับกัน) → ❌ ผิดทั้งความหมายและโครงสร้าง (On the other hand ต้องมี comma คั่น ไม่ได้ตามด้วย S+V แบบอนุประโยค)"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 30 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"____(30)____ Cait arrives at the new home, she begins to discover...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 30 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"____(30)____ Cait arrives at the new home, she begins to discover...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "เห็นประโยคที่เกิดต่อเนื่องกันทันที (\"มาถึงบ้านปุ๊บ ➔ ก็เริ่มค้นพบปั๊บ\") ➔ ใช้ As soon as (ทันทีที่)"
       },
       {
         "id": "onet-real-2567-item-31",
@@ -5183,7 +5248,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. stands (stand out = โดดเด่น) → ✅ ถูกต้อง ภาพยนตร์เรื่องนี้โดดเด่นท่ามกลางหนังทุกเรื่องของปีนี้",
           "4. leaves (leave out = ละเว้น / ทิ้งไว้) → ❌ ผิดความหมาย"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 31 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"This film... surely ____(31)____ out among this year's movies.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 31 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"This film... surely ____(31)____ out among this year's movies.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "เห็นคำว่า \"out\" หลังช่องว่าง ➔ สำนวน \"stand out\" แปลว่า \"โดดเด่น\" (ประธานเอกพจน์เติม s = stands)"
       },
       {
         "id": "onet-real-2567-item-32",
@@ -5252,7 +5318,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "3. was nominating (กำลังเสนอชื่อเอง (Past Continuous Active)) → ❌ ผิด เพราะเป็นรูปกระทำเอง",
           "4. was nominated (ได้รับการเสนอชื่อ (Past Simple Passive)) → ✅ ถูกต้อง โครงสร้าง was + V.3 (nominated) ครบถ้วน"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 32 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"It ____(32)____ for Best International Feature Film at the 2022 Oscars.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2567 ข้อที่ 32 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"It ____(32)____ for Best International Feature Film at the 2022 Oscars.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "It (หนัง) เสนอชื่อตัวเองเข้าชิงออสการ์ไม่ได้ + ปี 2022 (อดีต) ➔ Passive อดีต: was + V.3 (was nominated)"
       }
     ]
   },
@@ -5461,7 +5528,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "(3) increased (ได้เพิ่มขึ้น (Past Simple V.2)) → ✅ ถูกต้อง เหตุการณ์เกิดขึ้นและจบในอดีตช่วงปี 2011–2016",
           "(4) increasing (กำลังเพิ่มขึ้น (V-ing ขาด Verb to be)) → ❌ ผิด เพราะไม่สามารถเป็นกริยาแท้ของประโยคได้"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...from 2011 to 2016. Overall, smartphone ownership ____(24)____ during the six-year period.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...from 2011 to 2016. Overall, smartphone ownership ____(24)____ during the six-year period.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "เห็นช่วงปีอดีตจบแล้ว \"from 2011 to 2016\" ➔ กริยาต้องใช้ Past Simple ช่อง 2 (increased) ทันที!"
       },
       {
         "id": "onet-warmup-2568-2",
@@ -5536,7 +5604,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "(3) they were the more likely → ❌ ผิด เพราะเอา S + V ขึ้นมาไว้หน้า the more likely",
           "(4) likely the more they were → ❌ ผิด เพราะไม่ได้ขึ้นต้นด้วย the + ขั้นกว่า"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"In general, the younger people were, ____(25)____ to own a smartphone.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"In general, the younger people were, ____(25)____ to own a smartphone.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "เจอ \"The younger..., \" ขั้นกว่าหน้าลูกน้ำ ➔ หลังลูกน้ำต้องขึ้นด้วย \"the more likely\" แล้วตามด้วย S+V (they were)!"
       },
       {
         "id": "onet-warmup-2568-3",
@@ -5611,7 +5680,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "(3) However (อย่างไรก็ตาม) → ✅ ถูกต้อง เชื่อมใจความขัดแย้งระหว่างประโยค และมีลูกน้ำ (,) ตามหลังถูกต้อง",
           "(4) Although (แม้ว่า) → ❌ ผิดโครงสร้าง เพราะ Although ต้องตามด้วย S + V ทันที ห้ามมีลูกน้ำคั่นหลัง Although"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"In general, the younger people were... ____(26)____, the most significant increases... people aged 45 to 54... 65 to 74\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"In general, the younger people were... ____(26)____, the most significant increases... people aged 45 to 54... 65 to 74\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "ทริคทอง 3 วิ: เห็นช่องว่างอยู่หน้าลูกน้ำ (____, ) ➔ ตัด Since/Unless/Although ทิ้งหมด แล้วตอบ \"However,\" ได้เลย!"
       },
       {
         "id": "onet-warmup-2568-4",
@@ -5686,7 +5756,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "(3) came by (ได้มา / แวะผ่าน) → ❌ ผิดความหมาย",
           "(4) came from (มาจาก (อดีต)) → ✅ ถูกต้อง สอดคล้องกับเวลา in 2016 และความหมายว่ามาจากกลุ่มอายุ 45–54 ปี"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...the most significant increases in smartphone ownership in 2016 ____(27)____ people aged 45 to 54...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...the most significant increases in smartphone ownership in 2016 ____(27)____ people aged 45 to 54...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "ปี 2016 เป็นอดีตใช้ \"came\" (V.2) + หลังเซมิโคลอนมีคำว่า \"from those...\" ➔ คู่หูคือ \"came from\"!"
       },
       {
         "id": "onet-warmup-2568-5",
@@ -5761,7 +5832,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "(3) whose (ของใคร (ต้องตามด้วยคำนาม)) → ❌ ผิด เพราะหลังช่องว่างเป็นกริยา plays ไม่ใช่คำนาม",
           "(4) which (ซึ่ง (ใช้กับสัตว์/สิ่งของ)) → ❌ ผิด เพราะไม่ใช้ which แทนคน"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"In the movie, Tom Cruise, ____(28)____ plays Ethan Hunt...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"In the movie, Tom Cruise, ____(28)____ plays Ethan Hunt...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "ข้างหน้าเป็นคน (Tom Cruise) + ข้างหลังเป็นกริยา (plays) ➔ ใช้ \"who\" สถานเดียว!"
       }
     ],
     "realOnetQuestions": [
@@ -5793,44 +5865,33 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
             "term": "illustrate",
             "partOfSpeech": "v.",
             "meaning": "แสดงให้เห็น / อธิบายด้วยภาพ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
+            "usageNote": "เจอประจำในประโยคเปิดข้อสอบกราฟ: The chart illustrates..."
           },
           {
             "term": "ownership",
             "partOfSpeech": "n.",
             "meaning": "การเป็นเจ้าของ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
+            "usageNote": "own (เป็นเจ้าของ) + -ship (คำนาม) = การเป็นเจ้าของ"
           },
           {
             "term": "overall",
             "partOfSpeech": "adv.",
-            "meaning": "โดยภาพรวม",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
+            "meaning": "โดยภาพรวมทั้งหมด",
+            "usageNote": "ใช้นำหน้าประโยคเพื่อสรุปแนวโน้มใหญ่ของกราฟ"
           },
           {
-            "term": "in general",
-            "partOfSpeech": "phrase",
-            "meaning": "โดยทั่วไปแล้ว",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
-          },
-          {
-            "term": "significant",
-            "partOfSpeech": "adj.",
-            "meaning": "สำคัญ / มากอย่างมีนัยสำคัญ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
-          },
-          {
-            "term": "category",
-            "partOfSpeech": "n.",
-            "meaning": "หมวดหมู่ / กลุ่ม",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
+            "term": "increase",
+            "partOfSpeech": "v.",
+            "meaning": "เพิ่มขึ้น (ตรงข้ามกับ decrease = ลดลง)",
+            "usageNote": "ช่อง 2 คือ increased (เติม -d) ออกสอบสถิติทุกปี!"
           }
         ],
         "eliminatedIndices": [
           0,
-          1
+          1,
+          3
         ],
-        "eliminationReason": "ตัดตัวเลือกที่ผิดโครงสร้างไวยากรณ์หรือผิดความหมายตามบริบท (ข้อ 1 และ ข้อ 2) ออกก่อน เพื่อบีบให้เหลือคำตอบที่ถูกต้องชัดเจน",
+        "eliminationReason": "ตัด 3 ข้อรวดใน 5 วิ: ช่วงเวลา \"from 2011 to 2016\" เป็นอดีต ➔ ตัดข้อ 1 (increase = ปัจจุบัน) และข้อ 2 (will increase = อนาคต) ทิ้ง! ส่วนข้อ 4 (increasing) ขาด is/was นำหน้า เป็นกริยาแท้ไม่ได้ จึงเหลือข้อ 3 คำเดียว",
         "explanation": "ตัวเลือก (3) — increased — ดูคำบอกเวลาในประโยคก่อนหน้า: \"from 2011 to 2016\" ซึ่งเป็นช่วงเวลาในอดีตที่จบสิ้นไปแล้ว ดังนั้นกริยาแท้ของประโยคนี้ต้องใช้ Past Simple Tense (V.2) คือ increased",
         "choiceBreakdowns": [
           "(1) increase (เพิ่มขึ้น (V.1 พหูพจน์)) → ❌ ผิดทั้งเวลา (ต้องเป็นอดีต) และพจน์ (ownership เป็นเอกพจน์)",
@@ -5840,7 +5901,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         ],
         "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 24 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...from 2011 to 2016. Overall, smartphone ownership ____(24)____ during the six-year period.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
         "passageImage": "/images/onet/onet-2568-chart.jpg",
-        "passageImageCaption": "แผนภูมิข้อสอบจริง O-NET ปี 2568 (Items 24–27): Smartphone ownership by age group: 2011 and 2016"
+        "passageImageCaption": "แผนภูมิข้อสอบจริง O-NET ปี 2568 (Items 24–27): Smartphone ownership by age group: 2011 and 2016",
+        "keyTakeaway": "เห็นช่วงปีอดีตจบแล้ว \"from 2011 to 2016\" ➔ กริยาต้องใช้ Past Simple ช่อง 2 (increased) ทันที!"
       },
       {
         "id": "onet-real-2568-item-25",
@@ -5867,47 +5929,30 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         "mustKnowRule": "โครงสร้างคู่ขนาน Double Comparative: \"The + comparative + S + V, the + comparative + S + V\" (ยิ่ง...ก็ยิ่ง...) ต้องเรียง \"the more likely\" ติดกันก่อน แล้วจึงตามด้วย \"they were\"!",
         "essentialVocab": [
           {
-            "term": "illustrate",
-            "partOfSpeech": "v.",
-            "meaning": "แสดงให้เห็น / อธิบายด้วยภาพ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
-          },
-          {
-            "term": "ownership",
-            "partOfSpeech": "n.",
-            "meaning": "การเป็นเจ้าของ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
-          },
-          {
-            "term": "overall",
-            "partOfSpeech": "adv.",
-            "meaning": "โดยภาพรวม",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
-          },
-          {
             "term": "in general",
             "partOfSpeech": "phrase",
-            "meaning": "โดยทั่วไปแล้ว",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
+            "meaning": "โดยทั่วไป",
+            "usageNote": "วลีขึ้นต้นประโยคเพื่อบอกแนวโน้มส่วนมาก"
           },
           {
-            "term": "significant",
-            "partOfSpeech": "adj.",
-            "meaning": "สำคัญ / มากอย่างมีนัยสำคัญ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
+            "term": "likely to + V.1",
+            "partOfSpeech": "adj. phrase",
+            "meaning": "มีแนวโน้มที่จะ...",
+            "usageNote": "more likely = มีแนวโน้มมากกว่า (ออกสอบทั้ง Reading และ Writing)"
           },
           {
-            "term": "category",
-            "partOfSpeech": "n.",
-            "meaning": "หมวดหมู่ / กลุ่ม",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
+            "term": "own",
+            "partOfSpeech": "v.",
+            "meaning": "เป็นเจ้าของ / ครอบครอง",
+            "usageNote": "own a smartphone = เป็นเจ้าของสมาร์ตโฟน"
           }
         ],
         "eliminatedIndices": [
           0,
-          2
+          2,
+          3
         ],
-        "eliminationReason": "ตัดตัวเลือกที่ผิดโครงสร้างไวยากรณ์หรือผิดความหมายตามบริบท (ข้อ 1 และ ข้อ 3) ออกก่อน เพื่อบีบให้เหลือคำตอบที่ถูกต้องชัดเจน",
+        "eliminationReason": "ใช้สูตรคู่ขนาน \"The + ขั้นกว่า..., the + ขั้นกว่า...\": ข้างหลังลูกน้ำต้องขึ้นต้นด้วย \"the\" ทันที (ตัดข้อ 3 และข้อ 4 ทิ้งได้เลย!) จากนั้นเทียบข้อ 1 กับ 2: คำว่า \"more\" ต้องติดกับ \"likely\" (more likely = มีแนวโน้มมากกว่า) จึงตัดข้อ 1 ทิ้ง ตอบข้อ 2 ทันที!",
         "explanation": "ตัวเลือก (2) — the more likely they were — สังเกตโครงสร้าง \"the younger people were,\" นี่คือโครงสร้างคู่ขนาน Double Comparative (ยิ่ง...ก็ยิ่ง...): The + comparative + S + V, the + comparative + S + V ดังนั้นหลังลูกน้ำต้องขึ้นต้นด้วย \"the more likely\" แล้วตามด้วย S + V คือ \"they were\"",
         "choiceBreakdowns": [
           "(1) the more they likely were → ❌ ผิด เพราะแยก the more ออกจาก likely (more ต้องติดกับ likely)",
@@ -5917,7 +5962,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         ],
         "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 25 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"In general, the younger people were, ____(25)____ to own a smartphone.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
         "passageImage": "/images/onet/onet-2568-chart.jpg",
-        "passageImageCaption": "แผนภูมิข้อสอบจริง O-NET ปี 2568 (Items 24–27): Smartphone ownership by age group: 2011 and 2016"
+        "passageImageCaption": "แผนภูมิข้อสอบจริง O-NET ปี 2568 (Items 24–27): Smartphone ownership by age group: 2011 and 2016",
+        "keyTakeaway": "เจอ \"The younger..., \" ขั้นกว่าหน้าลูกน้ำ ➔ หลังลูกน้ำต้องขึ้นด้วย \"the more likely\" แล้วตามด้วย S+V (they were)!"
       },
       {
         "id": "onet-real-2568-item-26",
@@ -5944,47 +5990,30 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         "mustKnowRule": "การใช้ Adverb Transition เชื่อมความขัดแย้ง: เมื่อขึ้นต้นประโยคใหม่และมีเครื่องหมายลูกน้ำ (,) ตามหลังทันที (\"____, S + V\") ต้องใช้ \"However,\" (ห้ามใช้ Although หน้าลูกน้ำเด็ดขาด!)",
         "essentialVocab": [
           {
-            "term": "illustrate",
-            "partOfSpeech": "v.",
-            "meaning": "แสดงให้เห็น / อธิบายด้วยภาพ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
-          },
-          {
-            "term": "ownership",
-            "partOfSpeech": "n.",
-            "meaning": "การเป็นเจ้าของ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
-          },
-          {
-            "term": "overall",
+            "term": "However,",
             "partOfSpeech": "adv.",
-            "meaning": "โดยภาพรวม",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
-          },
-          {
-            "term": "in general",
-            "partOfSpeech": "phrase",
-            "meaning": "โดยทั่วไปแล้ว",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
+            "meaning": "อย่างไรก็ตาม (ขัดแย้ง)",
+            "usageNote": "มักขึ้นต้นประโยคใหม่และมีลูกน้ำ (,) ตามหลังเสมอ"
           },
           {
             "term": "significant",
             "partOfSpeech": "adj.",
-            "meaning": "สำคัญ / มากอย่างมีนัยสำคัญ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
+            "meaning": "อย่างมีนัยสำคัญ / ชัดเจนมาก",
+            "usageNote": "significant increases = การเพิ่มขึ้นอย่างเห็นได้ชัด"
           },
           {
-            "term": "category",
-            "partOfSpeech": "n.",
-            "meaning": "หมวดหมู่ / กลุ่ม",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
+            "term": "aged 45 to 54",
+            "partOfSpeech": "phrase",
+            "meaning": "ที่มีอายุ 45 ถึง 54 ปี",
+            "usageNote": "ใช้บอกช่วงอายุในข้อสอบกราฟ/สถิติ"
           }
         ],
         "eliminatedIndices": [
           0,
-          1
+          1,
+          3
         ],
-        "eliminationReason": "ตัดตัวเลือกที่ผิดโครงสร้างไวยากรณ์หรือผิดความหมายตามบริบท (ข้อ 1 และ ข้อ 2) ออกก่อน เพื่อบีบให้เหลือคำตอบที่ถูกต้องชัดเจน",
+        "eliminationReason": "ทริคทอง 3 วินาที (แทบไม่ต้องแปลทั้งหมด!): สังเกตหลังช่องว่างมีเครื่องหมายลูกน้ำ (,) คั่นทันที คำเชื่อมตระกูล Since (1), Unless (2), Although (4) ต้องตามด้วยประโยค S+V ทันที ห้ามมีลูกน้ำคั่น! มีแค่ \"However,\" ตัวเดียวที่วางหน้าลูกน้ำได้!",
         "explanation": "ตัวเลือก (3) — However — ดู 2 จุด: 1) ความหมาย: ประโยคหน้าพูดถึง \"คนอายุน้อย\" แต่ประโยคหลังสลับไปพูดถึง \"คนอายุ 45–74 ปีที่มีอัตราเพิ่มขึ้นมากที่สุด\" (ขัดแย้งกัน) 2) โครงสร้าง: อยู่ต้นประโยคและมีเครื่องหมายจุลภาค (,) ตามหลังทันที จึงต้องใช้ Adverb Transition คือ However",
         "choiceBreakdowns": [
           "(1) Since (เนื่องจาก / ตั้งแต่) → ❌ ผิดความหมายและไม่วางเดี่ยวๆ หน้าเครื่องหมายลูกน้ำแบบนี้",
@@ -5994,7 +6023,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         ],
         "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 26 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"In general, the younger people were... ____(26)____, the most significant increases... people aged 45 to 54... 65 to 74\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
         "passageImage": "/images/onet/onet-2568-chart.jpg",
-        "passageImageCaption": "แผนภูมิข้อสอบจริง O-NET ปี 2568 (Items 24–27): Smartphone ownership by age group: 2011 and 2016"
+        "passageImageCaption": "แผนภูมิข้อสอบจริง O-NET ปี 2568 (Items 24–27): Smartphone ownership by age group: 2011 and 2016",
+        "keyTakeaway": "ทริคทอง 3 วิ: เห็นช่องว่างอยู่หน้าลูกน้ำ (____, ) ➔ ตัด Since/Unless/Although ทิ้งหมด แล้วตอบ \"However,\" ได้เลย!"
       },
       {
         "id": "onet-real-2568-item-27",
@@ -6021,47 +6051,30 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         "mustKnowRule": "กริยาวลี (Phrasal Verb) + Past Simple Tense: เหตุการณ์ในปี 2016 (in 2016 = อดีต) ใช้กริยาช่อง 2 และคำว่า \"มาจาก (มีที่มาจากกลุ่ม...)\" คือสำนวน \"came from\"",
         "essentialVocab": [
           {
-            "term": "illustrate",
-            "partOfSpeech": "v.",
-            "meaning": "แสดงให้เห็น / อธิบายด้วยภาพ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
-          },
-          {
-            "term": "ownership",
-            "partOfSpeech": "n.",
-            "meaning": "การเป็นเจ้าของ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
-          },
-          {
-            "term": "overall",
-            "partOfSpeech": "adv.",
-            "meaning": "โดยภาพรวม",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
-          },
-          {
-            "term": "in general",
-            "partOfSpeech": "phrase",
-            "meaning": "โดยทั่วไปแล้ว",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
-          },
-          {
-            "term": "significant",
-            "partOfSpeech": "adj.",
-            "meaning": "สำคัญ / มากอย่างมีนัยสำคัญ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
+            "term": "come from",
+            "partOfSpeech": "phrasal v.",
+            "meaning": "มาจาก / มีที่มาจาก",
+            "usageNote": "ช่อง 2 คือ came from (ใช้กับอดีต in 2016)"
           },
           {
             "term": "category",
             "partOfSpeech": "n.",
             "meaning": "หมวดหมู่ / กลุ่ม",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 1: Cloze Passage with Chart (Items 24–27) (O-NET ปี 2568)"
+            "usageNote": "รูปพหูพจน์เปลี่ยน y เป็น ies ➔ categories"
+          },
+          {
+            "term": "from ... to ...",
+            "partOfSpeech": "prep. phrase",
+            "meaning": "จาก ... ไปยัง ... (บอกช่วงตัวเลข)",
+            "usageNote": "from 46% to 84% = เพิ่มจาก 46% เป็น 84%"
           }
         ],
         "eliminatedIndices": [
           0,
-          1
+          1,
+          2
         ],
-        "eliminationReason": "ตัดตัวเลือกที่ผิดโครงสร้างไวยากรณ์หรือผิดความหมายตามบริบท (ข้อ 1 และ ข้อ 2) ออกก่อน เพื่อบีบให้เหลือคำตอบที่ถูกต้องชัดเจน",
+        "eliminationReason": "ขั้นแรกดูเวลา \"in 2016\" เป็นอดีต ➔ ตัดข้อ 1 (come to) และข้อ 2 (come over) ที่เป็นปัจจุบันทิ้ง! เหลือ 3 กับ 4: กวาดตาดูหลังเซมิโคลอนมีคำซ้ำว่า \"; from those in the 55...\" คู่หูจึงต้องเป็น \"came from\" (ตัดข้อ 3 came by ทิ้ง!)",
         "explanation": "ตัวเลือก (4) — came from — ดูเวลา \"in 2016\" (อดีต → ต้องใช้กริยาช่อง 2 came จึงตัดข้อ 1 และ 2 ทิ้งทันที) และดูความหมาย: การเพิ่มขึ้นอย่างมากนี้ \"มาจาก\" กลุ่มคนอายุ 45–54 ปี คำว่ามาจากคือ \"came from\"",
         "choiceBreakdowns": [
           "(1) come to (มาถึง / รวมเป็น (ปัจจุบัน)) → ❌ ผิดทั้ง Tense และความหมาย",
@@ -6071,7 +6084,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         ],
         "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 27 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...the most significant increases in smartphone ownership in 2016 ____(27)____ people aged 45 to 54...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
         "passageImage": "/images/onet/onet-2568-chart.jpg",
-        "passageImageCaption": "แผนภูมิข้อสอบจริง O-NET ปี 2568 (Items 24–27): Smartphone ownership by age group: 2011 and 2016"
+        "passageImageCaption": "แผนภูมิข้อสอบจริง O-NET ปี 2568 (Items 24–27): Smartphone ownership by age group: 2011 and 2016",
+        "keyTakeaway": "ปี 2016 เป็นอดีตใช้ \"came\" (V.2) + หลังเซมิโคลอนมีคำว่า \"from those...\" ➔ คู่หูคือ \"came from\"!"
       },
       {
         "id": "onet-real-2568-item-28",
@@ -6101,44 +6115,33 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
             "term": "incredible",
             "partOfSpeech": "adj.",
             "meaning": "น่าทึ่ง / ยอดเยี่ยมเหลือเชื่อ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "thoroughly",
-            "partOfSpeech": "adv.",
-            "meaning": "อย่างที่สุด / อย่างครบถ้วน",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
+            "usageNote": "คำชมเชิงบวก (+) เจอบ่อยในรีวิวหนัง/สินค้า"
           },
           {
             "term": "impressed",
             "partOfSpeech": "adj.",
             "meaning": "รู้สึกประทับใจ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
+            "usageNote": "คนรู้สึกใช้ -ed (left me impressed = ทำให้ฉันประทับใจ)"
           },
           {
-            "term": "fantastic",
-            "partOfSpeech": "adj.",
-            "meaning": "ยอดเยี่ยม / มหัศจรรย์",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "frantic",
-            "partOfSpeech": "adj.",
-            "meaning": "เร่งเร้า / ตื่นเต้นระทึกใจ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "release",
+            "term": "play (a role)",
             "partOfSpeech": "v.",
-            "meaning": "เปิดตัว / ออกฉาย (ภาพยนตร์)",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
+            "meaning": "แสดงเป็น / รับบทเป็น",
+            "usageNote": "Tom Cruise, who plays Ethan Hunt = ทอม ครูซ ผู้รับบทอีธาน ฮันต์"
+          },
+          {
+            "term": "against",
+            "partOfSpeech": "prep.",
+            "meaning": "ต่อต้าน / สู้กับ",
+            "usageNote": "this time against AI = ครั้งนี้ต้องสู้กับ AI"
           }
         ],
         "eliminatedIndices": [
           1,
-          2
+          2,
+          3
         ],
-        "eliminationReason": "ตัดตัวเลือกที่ผิดโครงสร้างไวยากรณ์หรือผิดความหมายตามบริบท (ข้อ 2 และ ข้อ 3) ออกก่อน เพื่อบีบให้เหลือคำตอบที่ถูกต้องชัดเจน",
+        "eliminationReason": "ข้างหน้าคือ \"Tom Cruise\" เป็นคน! ตัดข้อ 2 (when = ใช้กับเวลา) และข้อ 4 (which = ใช้กับสิ่งของ) ทิ้งใน 2 วิ! เหลือข้อ 1 (who) กับข้อ 3 (whose): หลังช่องว่างคือ \"plays\" (กริยาแท้ ไม่ใช่คำนาม) จึงตัด whose ทิ้ง ตอบข้อ 1 who!",
         "explanation": "ตัวเลือก (1) — who — ข้างหน้าช่องว่างคือ \"Tom Cruise\" (ชื่อคน) และข้างหลังช่องว่างคือ \"plays\" (กริยาแท้) ดังนั้นช่องว่างต้องการ Relative Pronoun ที่ทำหน้าที่เป็น \"ประธานแทนคน\" นั่นคือ who",
         "choiceBreakdowns": [
           "(1) who (ผู้ซึ่ง (ใช้แทนคน ทำหน้าที่เป็นประธาน)) → ✅ ถูกต้อง ขยาย Tom Cruise และตามด้วยกริยา plays",
@@ -6146,7 +6149,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "(3) whose (ของใคร (ต้องตามด้วยคำนาม)) → ❌ ผิด เพราะหลังช่องว่างเป็นกริยา plays ไม่ใช่คำนาม",
           "(4) which (ซึ่ง (ใช้กับสัตว์/สิ่งของ)) → ❌ ผิด เพราะไม่ใช้ which แทนคน"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"In the movie, Tom Cruise, ____(28)____ plays Ethan Hunt...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 28 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"In the movie, Tom Cruise, ____(28)____ plays Ethan Hunt...\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "ข้างหน้าเป็นคน (Tom Cruise) + ข้างหลังเป็นกริยา (plays) ➔ ใช้ \"who\" สถานเดียว!"
       },
       {
         "id": "onet-real-2568-item-29",
@@ -6173,47 +6177,36 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         "mustKnowRule": "การเลือกคำคุณศัพท์ตามอารมณ์เรื่อง (Positive Context Clue): เมื่อบทวิจารณ์ชื่นชมว่า \"incredible\" และ \"thoroughly impressed\" คำคุณศัพท์ที่ตามมาต้องเป็นความหมายเชิงบวก (+) คือ fantastic (ยอดเยี่ยม)",
         "essentialVocab": [
           {
-            "term": "incredible",
-            "partOfSpeech": "adj.",
-            "meaning": "น่าทึ่ง / ยอดเยี่ยมเหลือเชื่อ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "thoroughly",
-            "partOfSpeech": "adv.",
-            "meaning": "อย่างที่สุด / อย่างครบถ้วน",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "impressed",
-            "partOfSpeech": "adj.",
-            "meaning": "รู้สึกประทับใจ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
             "term": "fantastic",
             "partOfSpeech": "adj.",
-            "meaning": "ยอดเยี่ยม / มหัศจรรย์",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
+            "meaning": "ยอดเยี่ยม / มหัศจรรย์ (+)",
+            "usageNote": "คำชมระดับสูง ความหมายเดียวกับ great / amazing"
           },
           {
-            "term": "frantic",
+            "term": "fearful",
             "partOfSpeech": "adj.",
-            "meaning": "เร่งเร้า / ตื่นเต้นระทึกใจ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
+            "meaning": "หวาดกลัว / น่ากลัว (-)",
+            "usageNote": "fear (ความกลัว) + -ful"
           },
           {
-            "term": "release",
-            "partOfSpeech": "v.",
-            "meaning": "เปิดตัว / ออกฉาย (ภาพยนตร์)",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
+            "term": "faithless",
+            "partOfSpeech": "adj.",
+            "meaning": "ไร้ศรัทธา / ไม่ซื่อสัตย์ (-)",
+            "usageNote": "faith (ศรัทธา) + -less (ปราศจาก)"
+          },
+          {
+            "term": "fortunate",
+            "partOfSpeech": "adj.",
+            "meaning": "โชคดี",
+            "usageNote": "ความหมายบวก แต่ใช้กับเรื่องโชค ไม่ใช่ฝีมือการแสดง"
           }
         ],
         "eliminatedIndices": [
           0,
-          2
+          2,
+          3
         ],
-        "eliminationReason": "ตัดตัวเลือกที่ผิดโครงสร้างไวยากรณ์หรือผิดความหมายตามบริบท (ข้อ 1 และ ข้อ 3) ออกก่อน เพื่อบีบให้เหลือคำตอบที่ถูกต้องชัดเจน",
+        "eliminationReason": "วิธีตัดคำศัพท์จากอารมณ์เรื่อง (+ / -): ประโยคแรกชมว่ายอดเยี่ยม (incredible / impressed = บวก +) ดังนั้นตัดคำความหมายลบคือข้อ 1 (fearful = หวาดกลัว) และข้อ 3 (faithless = ไร้ศรัทธา) ทิ้ง! ส่วนข้อ 4 (fortunate = โชคดี) ไม่เกี่ยวกับการชมฝีมือการแสดง ➔ ตอบข้อ 2 (fantastic = ยอดเยี่ยม)!",
         "explanation": "ตัวเลือก (2) — fantastic — ผู้เขียนกำลังชื่นชม Tom Cruise อย่างมาก (impressed) ดังนั้นคำคุณศัพท์หลัง He is ต้องมีความหมายเชิงบวก (Positive) ใน 4 ตัวเลือกมีเพียง fantastic (ยอดเยี่ยม) คำเดียวที่เป็นความหมายบวกชัดเจนในบริบทการแสดง",
         "choiceBreakdowns": [
           "(1) fearful (หวาดกลัว / น่ากลัว) → ❌ ผิดความหมาย (เป็นเชิงลบ)",
@@ -6221,7 +6214,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "(3) faithless (ไม่ซื่อสัตย์ / ไร้ศรัทธา) → ❌ ผิดความหมาย (เป็นเชิงลบ)",
           "(4) fortunate (โชคดี) → ❌ ผิดบริบท เพราะกำลังชมฝีมือการแสดงและความฟิต ไม่ใช่เรื่องโชค"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 29 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...left me thoroughly impressed... He is ____(29)____ as always.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 29 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"...left me thoroughly impressed... He is ____(29)____ as always.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "ข้อสอบศัพท์ให้อ่านอารมณ์ก่อน: ชมว่า incredible/impressed (+) ➔ ตัดคำลบ (fearful, faithless) ทิ้ง แล้วเลือก fantastic (+)!"
       },
       {
         "id": "onet-real-2568-item-30",
@@ -6248,47 +6242,29 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         "mustKnowRule": "คำเชื่อมความขัดแย้ง Although + S + V: ใช้เชื่อมใจความที่สวนทางกันระหว่าง \"อายุมากถึง 61 ปีแล้ว\" กับ \"ยังวิ่งและกระโดดได้เหมือนชายหนุ่มที่อายุน้อยกว่ามาก\" (ตามกุญแจเฉลยทางการ สทศ.)",
         "essentialVocab": [
           {
-            "term": "incredible",
-            "partOfSpeech": "adj.",
-            "meaning": "น่าทึ่ง / ยอดเยี่ยมเหลือเชื่อ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
+            "term": "although",
+            "partOfSpeech": "conj.",
+            "meaning": "แม้ว่า / ทั้งๆ ที่ (ขัดแย้ง)",
+            "usageNote": "ตามด้วยประโยค S + V เพื่อเชื่อม 2 ฝั่งที่สวนทางกัน"
           },
           {
-            "term": "thoroughly",
-            "partOfSpeech": "adv.",
-            "meaning": "อย่างที่สุด / อย่างครบถ้วน",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
+            "term": "couldn't believe",
+            "partOfSpeech": "v. phrase",
+            "meaning": "ไม่อยากจะเชื่อเลยว่า...",
+            "usageNote": "เป็นอดีตของ can't believe"
           },
           {
-            "term": "impressed",
-            "partOfSpeech": "adj.",
-            "meaning": "รู้สึกประทับใจ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "fantastic",
-            "partOfSpeech": "adj.",
-            "meaning": "ยอดเยี่ยม / มหัศจรรย์",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "frantic",
-            "partOfSpeech": "adj.",
-            "meaning": "เร่งเร้า / ตื่นเต้นระทึกใจ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "release",
-            "partOfSpeech": "v.",
-            "meaning": "เปิดตัว / ออกฉาย (ภาพยนตร์)",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
+            "term": "much younger",
+            "partOfSpeech": "adj. phrase",
+            "meaning": "อายุน้อยกว่ามาก",
+            "usageNote": "much ขยายขั้นกว่า (younger) แปลว่า ...กว่ามาก"
           }
         ],
         "eliminatedIndices": [
           0,
           1
         ],
-        "eliminationReason": "ตัดตัวเลือกที่ผิดโครงสร้างไวยากรณ์หรือผิดความหมายตามบริบท (ข้อ 1 และ ข้อ 2) ออกก่อน เพื่อบีบให้เหลือคำตอบที่ถูกต้องชัดเจน",
+        "eliminationReason": "ตัดข้อ 1 (so = ดังนั้น) และข้อ 2 (before = ก่อนที่) ทิ้งทันที เพราะอายุ 61 ปีกับวิ่งกระโดดเก่งไม่ได้เป็นผลลัพธ์หรือลำดับเวลาก่อน-หลัง แล้วตอบข้อ 4 (although = แม้ว่า) ตามเฉลยทางการ สทศ. เพื่อเน้นความขัดแย้งระหว่างอายุมากกับความคล่องแคล่ว",
         "explanation": "ตัวเลือก (4) — although (ตามเฉลยทางการ สทศ.) — ตามใบเฉลยทางการของ สทศ. ปี 2568 ข้อ 30 เฉลยตัวเลือก (4) although (เชื่อมความขัดแย้งระหว่าง \"อายุ 61 ปีแล้ว\" กับ \"วิ่งและกระโดดได้เหมือนคนหนุ่ม\") *หมายเหตุสำหรับครู: ในเชิงความหมายภาษาอังกฤษระดับใช้งานจริง คำว่า because ก็สามารถสื่อความหมายว่า \"ไม่น่าเชื่อว่าอายุ 61 เพราะเขาวิ่งเหมือนคนหนุ่ม\" ได้เช่นกัน แต่ในเกณฑ์เฉลยทางการ สทศ. กำหนดคำตอบคือ (4) although เนื่องจากต้องการวัดเรื่องความขัดแย้งระหว่างวัย 61 ปีกับความคล่องแคล่วเหมือนคนหนุ่ม*",
         "choiceBreakdowns": [
           "(1) so (ดังนั้น (บอกผลลัพธ์)) → ❌ ผิดความหมาย",
@@ -6296,7 +6272,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "(3) because (เพราะว่า (บอกเหตุผล)) → ⚠️ สื่อความหมายได้ในบางบริบท แต่ไม่ใช่คำตอบตามกุญแจเฉลย สทศ.",
           "(4) although (แม้ว่า / ทั้งๆ ที่ (บอกความขัดแย้ง)) → ✅ ถูกต้องตามเฉลยทางการ สทศ. (ขัดแย้งระหว่างอายุ 61 ปี กับการวิ่งกระโดดเหมือนคนหนุ่ม)"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 30 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I couldn't believe that he is 61 years old ____(30)____ he runs and jumps like a much younger man.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 30 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"I couldn't believe that he is 61 years old ____(30)____ he runs and jumps like a much younger man.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "จำจุดเน้น สทศ.: ขัดแย้งระหว่าง \"อายุ 61 ปีแล้ว\" กับ \"ยังวิ่งเหมือนคนหนุ่ม\" ➔ ตอบ although (แม้ว่า)!"
       },
       {
         "id": "onet-real-2568-item-31",
@@ -6323,47 +6300,29 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         "mustKnowRule": "สูตรลัดเรียงคำนามและส่วนขยาย (Word Order): \"คุณศัพท์บอกความรู้สึก (tense) + คำนามบอกประเภท (action) + คำนามหลัก (scenes)\" คำนามหลักต้องอยู่ท้ายสุดเสมอ!",
         "essentialVocab": [
           {
-            "term": "incredible",
-            "partOfSpeech": "adj.",
-            "meaning": "น่าทึ่ง / ยอดเยี่ยมเหลือเชื่อ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "thoroughly",
-            "partOfSpeech": "adv.",
-            "meaning": "อย่างที่สุด / อย่างครบถ้วน",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "impressed",
-            "partOfSpeech": "adj.",
-            "meaning": "รู้สึกประทับใจ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "fantastic",
-            "partOfSpeech": "adj.",
-            "meaning": "ยอดเยี่ยม / มหัศจรรย์",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "frantic",
-            "partOfSpeech": "adj.",
-            "meaning": "เร่งเร้า / ตื่นเต้นระทึกใจ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "release",
+            "term": "feature",
             "partOfSpeech": "v.",
-            "meaning": "เปิดตัว / ออกฉาย (ภาพยนตร์)",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
+            "meaning": "นำเสนอ / มีจุดเด่นเป็น...",
+            "usageNote": "คำนามคือลักษณะเด่น แต่ในข้อนี้หลัง This movie เป็นกริยาแปลว่า \"มี...ให้ชม\""
+          },
+          {
+            "term": "tense",
+            "partOfSpeech": "adj.",
+            "meaning": "ตึงเครียด / ลุ้นระทึก",
+            "usageNote": "เป็น Opinion Adj. วางหน้าคำนามหลัก (tense action scenes)"
+          },
+          {
+            "term": "stunning / frantic",
+            "partOfSpeech": "adj.",
+            "meaning": "น่าทึ่งสุดๆ / เร่งเร้าตื่นเต้น",
+            "usageNote": "stunning frantic music = ดนตรีประกอบที่เร่งเร้าสุดตระการตา"
           }
         ],
         "eliminatedIndices": [
           0,
-          1
+          2
         ],
-        "eliminationReason": "ตัดตัวเลือกที่ผิดโครงสร้างไวยากรณ์หรือผิดความหมายตามบริบท (ข้อ 1 และ ข้อ 2) ออกก่อน เพื่อบีบให้เหลือคำตอบที่ถูกต้องชัดเจน",
+        "eliminationReason": "ใช้สูตรหา \"คำนามหลัก (Head Noun)\": หนังเรื่องนี้นำเสนอ \"ฉาก\" (scenes) ดังนั้นคำว่า scenes ต้องอยู่ท้ายสุด! แค่มองคำท้ายสุดก็ตัดข้อ 1 (...tense) และข้อ 3 (...action) ทิ้งได้ทันทีใน 2 วินาที!",
         "explanation": "ตัวเลือก (4) — tense action scenes — ใช้สูตรหากินเรื่อง Sentence Organization: หา \"คำนามหลัก (Head Noun)\" ให้เจอ! หนังนำเสนอ \"ฉาก\" (scenes) ดังนั้นคำว่า scenes ต้องอยู่ตัวสุดท้าย! ตัดข้อ 1 และ 3 ทิ้งทันที แล้วเรียงคุณศัพท์บอกความรู้สึก (tense = ตึงเครียด) ไว้หน้าชนิดของฉาก (action = แอ็กชัน)",
         "choiceBreakdowns": [
           "(1) action scenes tense → ❌ ผิด เพราะเอาคุณศัพท์ tense ไปไว้หลังคำนาม scenes",
@@ -6371,7 +6330,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "(3) scenes tense action → ❌ ผิด เพราะเอาคำนามหลัก scenes มาไว้หน้าสุด",
           "(4) tense action scenes (ฉากแอ็กชันที่ตึงเครียดเร้าใจ) → ✅ ถูกต้อง เรียง ลักษณะความรู้สึก (tense) + ประเภทฉาก (action) + คำนามหลัก (scenes)"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 31 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"This movie features ____(31)____ to stunning frantic music.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 31 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"This movie features ____(31)____ to stunning frantic music.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "หาคำนามหลัก: หนังมี \"ฉาก\" (scenes) ➔ คำว่า scenes ต้องอยู่ท้ายสุด! (ตัด 2 ข้อใน 2 วิ แล้วเลือก tense หน้า action scenes)"
       },
       {
         "id": "onet-real-2568-item-32",
@@ -6398,47 +6358,30 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
         "mustKnowRule": "Reduced Relative Clause (Passive Participle): เมื่อประโยคมีกริยาแท้ (is) อยู่แล้ว และต้องการขยายคำนาม (movie) ว่า \"ที่ถูกนำออกฉายในปี 2023\" ให้ใช้กริยาช่อง 3 (V.3 = released) ลดรูปมาจาก \"that was released\"!",
         "essentialVocab": [
           {
-            "term": "incredible",
-            "partOfSpeech": "adj.",
-            "meaning": "น่าทึ่ง / ยอดเยี่ยมเหลือเชื่อ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "thoroughly",
-            "partOfSpeech": "adv.",
-            "meaning": "อย่างที่สุด / อย่างครบถ้วน",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "impressed",
-            "partOfSpeech": "adj.",
-            "meaning": "รู้สึกประทับใจ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "fantastic",
-            "partOfSpeech": "adj.",
-            "meaning": "ยอดเยี่ยม / มหัศจรรย์",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
-            "term": "frantic",
-            "partOfSpeech": "adj.",
-            "meaning": "เร่งเร้า / ตื่นเต้นระทึกใจ",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
-          },
-          {
             "term": "release",
             "partOfSpeech": "v.",
-            "meaning": "เปิดตัว / ออกฉาย (ภาพยนตร์)",
-            "usageNote": "คำศัพท์สำคัญในบทอ่าน Writing 2: A Movie Review — Mission Impossible: Dead Reckoning (Items 28–32) (O-NET ปี 2568)"
+            "meaning": "ปล่อยฉาย / เปิดตัว",
+            "usageNote": "ในข้อนี้ลดรูปจาก (that was) released = ที่ถูกนำออกฉาย"
+          },
+          {
+            "term": "amazing experience",
+            "partOfSpeech": "n. phrase",
+            "meaning": "ประสบการณ์ที่น่าทึ่ง",
+            "usageNote": "amazing (-ing) = สิ่งที่ทำให้รู้สึกทึ่ง"
+          },
+          {
+            "term": "action movie fans",
+            "partOfSpeech": "n. phrase",
+            "meaning": "แฟนหนังแอ็กชัน",
+            "usageNote": "fans ในที่นี้แปลว่าแฟนคลับ/ผู้ชื่นชอบ"
           }
         ],
         "eliminatedIndices": [
           0,
-          2
+          2,
+          3
         ],
-        "eliminationReason": "ตัดตัวเลือกที่ผิดโครงสร้างไวยากรณ์หรือผิดความหมายตามบริบท (ข้อ 1 และ ข้อ 3) ออกก่อน เพื่อบีบให้เหลือคำตอบที่ถูกต้องชัดเจน",
+        "eliminationReason": "เช็กกริยาแท้: ประโยคมี \"is\" อยู่แล้ว ➔ ตัดข้อ 1 (release) ทิ้ง! จากนั้นดูความหมาย: หนัง \"ปล่อยฉายตัวเอง\" ไม่ได้ (ตัดข้อ 3 releasing) และปี 2023 ฉายไปแล้ว (ตัดข้อ 4 to release) ➔ เหลือข้อ 2 released (ถูกปล่อยฉาย = V.3) ข้อเดียว!",
         "explanation": "ตัวเลือก (2) — released — ในประโยคมีกริยาแท้ \"is\" อยู่แล้ว ดังนั้นส่วนที่ขยายคำว่า movie จึงเป็นการลดรูปประโยคขยาย (Reduced Relative Clause) ภาพยนตร์ \"ถูกปล่อยฉาย\" (Passive) ย่อมาจาก \"the best movie (that was) released in 2023\" จึงเหลือเพียง V.3 คือ released",
         "choiceBreakdowns": [
           "(1) release (ปล่อยฉาย (V.1)) → ❌ ผิด เพราะมีกริยาแท้ is อยู่แล้ว และหนังไม่ได้ปล่อยฉายตัวเอง",
@@ -6446,7 +6389,8 @@ export const ONET_WRITING_BOOSTER_UNITS: GrammarTeachingUnit[] = [
           "(3) releasing (ที่กำลังปล่อยฉายเอง (V-ing Active)) → ❌ ผิด เพราะภาพยนตร์เป็นผู้ถูกปล่อยฉาย ไม่ใช่ผู้กระทำเอง",
           "(4) to release (เพื่อที่จะปล่อยฉาย) → ❌ ผิด เพราะปี 2023 เป็นอดีตที่หนังออกฉายไปแล้ว"
         ],
-        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 32 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"This is the best movie ____(32)____ in 2023.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ"
+        "teacherScript": "มาดูข้อสอบจริง O-NET ปี 2568 ข้อที่ 32 กันครับ! จุดสังเกตสำคัญของข้อนี้คือ \"This is the best movie ____(32)____ in 2023.\" ให้มองตามขั้นตอนวิธีคิด (How to Approach) และทบทวนคำศัพท์ประจำบทอ่านด้านล่างได้เลยครับ",
+        "keyTakeaway": "ประโยคมีกริยาแท้ \"is\" แล้ว + หนังถูกปล่อยฉายใน 2023 ➔ ใช้ V.3 ลดรูป (released) = \"ที่ถูกปล่อยฉาย\"!"
       }
     ]
   }

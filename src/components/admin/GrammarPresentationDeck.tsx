@@ -73,6 +73,7 @@ interface GrammarPresentationDeckProps {
 }
 
 const CHOICE_LABELS = ['A', 'B', 'C', 'D'] as const;
+const ONET_CHOICE_LABELS = ['1', '2', '3', '4'] as const;
 
 /**
  * Splits a dense keyFormula string (often separated by `|`) into readable visual lines.
@@ -290,15 +291,25 @@ export default function GrammarPresentationDeck({
     return unitNumber >= 101 ? ONET_WRITING_BOOSTER_UNITS : GRAMMAR_TEACHING_UNITS;
   }, [unitNumber]);
 
-  // Auto-link matching cheat sheet when switching teaching booster units
+  // Auto-link matching cheat sheet per unit and per O-NET question!
   useEffect(() => {
     if (unitNumber === 101) setActiveCheatSheetId('connectors');
     else if (unitNumber === 102) setActiveCheatSheetId('comparisons');
     else if (unitNumber === 103) setActiveCheatSheetId('passive-voice');
     else if (unitNumber === 104) setActiveCheatSheetId('parts-of-speech');
     else if (unitNumber === 105) setActiveCheatSheetId('adjective-order');
-    else if (unitNumber === 109) setActiveCheatSheetId('connectors');
-  }, [unitNumber]);
+    else if (unitNumber === 109 && stage === 'onet') {
+      const qNum = 24 + slideIndex;
+      if (qNum === 24) setActiveCheatSheetId('tenses');
+      else if (qNum === 25) setActiveCheatSheetId('comparisons');
+      else if (qNum === 26 || qNum === 30) setActiveCheatSheetId('connectors');
+      else if (qNum === 27) setActiveCheatSheetId('prepositions-collocations');
+      else if (qNum === 28) setActiveCheatSheetId('relative-pronouns');
+      else if (qNum === 29) setActiveCheatSheetId('parts-of-speech');
+      else if (qNum === 31) setActiveCheatSheetId('adjective-order');
+      else if (qNum === 32) setActiveCheatSheetId('passive-voice');
+    }
+  }, [unitNumber, stage, slideIndex]);
 
   const slidesCount = useMemo(() => {
     if (stage === 'concept') return currentUnit.conceptSlides.length;
@@ -1262,25 +1273,31 @@ export default function GrammarPresentationDeck({
                         </button>
                       ))}
                     {(stage === 'practice' || stage === 'onet') &&
-                      Array.from({ length: slidesCount }).map((_, qIdx) => (
-                        <button
-                          key={qIdx}
-                          type="button"
-                          onClick={() => {
-                            setSlideIndex(qIdx);
-                            resetQuestionReveals();
-                          }}
-                          className={`w-9 h-9 rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center ${
-                            slideIndex === qIdx
-                              ? stage === 'onet'
-                                ? 'bg-amber-400 text-slate-950 shadow'
-                                : 'bg-emerald-400 text-slate-950 shadow'
-                              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                          }`}
-                        >
-                          {qIdx + 1}
-                        </button>
-                      ))}
+                      Array.from({ length: slidesCount }).map((_, qIdx) => {
+                        const pillLabel =
+                          stage === 'onet' && unitNumber >= 106 && unitNumber <= 109
+                            ? 24 + qIdx
+                            : qIdx + 1;
+                        return (
+                          <button
+                            key={qIdx}
+                            type="button"
+                            onClick={() => {
+                              setSlideIndex(qIdx);
+                              resetQuestionReveals();
+                            }}
+                            className={`w-9 h-9 rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center ${
+                              slideIndex === qIdx
+                                ? stage === 'onet'
+                                  ? 'bg-amber-400 text-slate-950 shadow'
+                                  : 'bg-emerald-400 text-slate-950 shadow'
+                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                            }`}
+                          >
+                            {pillLabel}
+                          </button>
+                        );
+                      })}
                   </div>
                 </div>
 
@@ -1558,8 +1575,10 @@ export default function GrammarPresentationDeck({
                             : 'bg-emerald-400 text-slate-950'
                         }`}
                       >
-                        {stage === 'onet' ? '🏆 ข้อสอบจริง O-NET' : '✍️ โจทย์ซ้อมมือ'} ข้อที่{' '}
-                        {currentQuestion.questionNumber} / {slidesCount}
+                        {stage === 'onet' ? '🏆 ข้อสอบจริง O-NET' : '✍️ โจทย์ซ้อมมือ'}{' '}
+                        {stage === 'onet' && unitNumber >= 106 && unitNumber <= 109
+                          ? `ข้อที่ ${24 + slideIndex} (จากข้อ 24–32)`
+                          : `ข้อที่ ${currentQuestion.questionNumber} / ${slidesCount}`}
                       </span>
                       {currentQuestion.sourceTag && (
                         <span className="text-xs sm:text-sm text-slate-300 font-semibold bg-slate-900 px-3 py-1 rounded-xl border border-slate-800">
@@ -1740,7 +1759,7 @@ export default function GrammarPresentationDeck({
                               <span
                                 className={`w-9 h-9 rounded-xl border flex items-center justify-center font-black text-sm shrink-0 transition ${badgeClass}`}
                               >
-                                {CHOICE_LABELS[idx]}
+                                {stage === 'onet' ? ONET_CHOICE_LABELS[idx] : CHOICE_LABELS[idx]}
                               </span>
                               <div className="space-y-2 flex-1 min-w-0">
                                 <div className="text-lg sm:text-xl font-bold leading-snug break-words">
@@ -1992,15 +2011,25 @@ export default function GrammarPresentationDeck({
                           </div>
                         )}
 
-                        {/* 6. Full Answer Explanation */}
+                        {/* 6. Full Answer Explanation + Key Takeaway */}
                         {showAnswer && (
-                          <div className="rounded-2xl bg-emerald-950/35 border border-emerald-400/40 p-5 space-y-2">
+                          <div className="rounded-2xl bg-emerald-950/35 border border-emerald-400/40 p-5 space-y-3.5">
                             <div className="text-sm font-black text-emerald-300">
-                              ✅ สรุปเฉลยข้อ {CHOICE_LABELS[currentQuestion.correctIndex]}
+                              ✅ สรุปเฉลยข้อ {(stage === 'onet' ? ONET_CHOICE_LABELS : CHOICE_LABELS)[currentQuestion.correctIndex]}
                             </div>
                             <p className="text-base sm:text-lg text-white leading-relaxed">
                               {currentQuestion.explanation}
                             </p>
+                            {(currentQuestion.keyTakeaway || currentQuestion.mustKnowRule || currentQuestion.clueText) && (
+                              <div className="p-3.5 rounded-xl bg-amber-400/15 border-2 border-amber-400/50 space-y-1">
+                                <div className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                                  💡 ทริคช่วยจำ (Key Takeaway — จดลงสมุดได้เลย!)
+                                </div>
+                                <p className="text-sm sm:text-base font-extrabold text-amber-100 leading-relaxed">
+                                  {currentQuestion.keyTakeaway || currentQuestion.mustKnowRule || currentQuestion.clueText}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )}
 

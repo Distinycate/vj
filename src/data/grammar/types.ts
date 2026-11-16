@@ -65,6 +65,7 @@ export interface TeachingQuestionSlide {
   eliminatedIndices: number[];
   eliminationReason: string;
   explanation: string;
+  keyTakeaway?: string;
   choiceBreakdowns: [string, string, string, string];
   teacherScript: string;
 }
