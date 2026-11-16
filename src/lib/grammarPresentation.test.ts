@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   GRAMMAR_TEACHING_UNITS,
   ONET_WRITING_BOOSTER_UNITS,
+  QUICK_GRAMMAR_CHEAT_SHEETS,
   getGrammarUnitsByGrade,
   getGrammarUnitsByCategory,
 } from '../data/grammar/grammarPresentationData.ts';
@@ -96,5 +97,33 @@ test('ONET_WRITING_BOOSTER_UNITS contains 9 units (5 Core Writing Booster + 4 Fu
       assert.equal(q.choices.length, 4);
       assert.equal(q.choiceBreakdowns.length, 4);
     }
+  }
+});
+
+test('QUICK_GRAMMAR_CHEAT_SHEETS contains 8 quick-reference topics including Adjective Order, Sentence Structure, Prepositions, Collocations, and Tenses', () => {
+  assert.equal(QUICK_GRAMMAR_CHEAT_SHEETS.length, 8);
+  const ids = QUICK_GRAMMAR_CHEAT_SHEETS.map((s) => s.id);
+  assert.deepEqual(ids, [
+    'adjective-order',
+    'sentence-structure',
+    'prepositions',
+    'collocations-phrasals',
+    'tenses-overview',
+    'connectors',
+    'core-structures',
+    'quantifiers-agreement',
+  ]);
+
+  for (const sheet of QUICK_GRAMMAR_CHEAT_SHEETS) {
+    assert.ok(sheet.title.length > 0);
+    assert.ok(sheet.shortTitle.length > 0);
+    assert.ok(sheet.summaryFormula.length > 0);
+    assert.ok(sheet.memoryTip.length > 0);
+    assert.ok(sheet.sections.length >= 1);
+    for (const sec of sheet.sections) {
+      assert.ok(sec.heading.length > 0);
+      assert.ok(sec.rows.length >= 1);
+    }
+    assert.ok(sheet.examTraps.length >= 1);
   }
 });

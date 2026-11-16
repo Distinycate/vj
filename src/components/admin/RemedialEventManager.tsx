@@ -16,7 +16,7 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
   const [error, setError] = useState('');
 
   // Filters for Main Runs List
-  const [termFilter, setTermFilter] = useState<string>('2567-T2');
+  const [termFilter, setTermFilter] = useState<string>('2568-T2');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('active');
 
   // Selected Run for Inspection
@@ -33,7 +33,7 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
   const [createStep, setCreateStep] = useState<1 | 2 | 3>(1);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('event-01-verb-master-challenge');
   const [runTitle, setRunTitle] = useState('');
-  const [createAcademicYear, setCreateAcademicYear] = useState<string>('2567-T2');
+  const [createAcademicYear, setCreateAcademicYear] = useState<string>('2568-T2');
   const [selectedClassroomId, setSelectedClassroomId] = useState('');
   const [classroomsList, setClassroomsList] = useState<any[]>([]);
   const [studentsList, setStudentsList] = useState<any[]>([]);
@@ -88,14 +88,14 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
   // Load classrooms and students (strictly current active internal students)
   const loadClassroomsAndStudents = async () => {
     try {
-      const response = await fetch('/api/admin/students?academicYear=2567-T2&userType=INTERNAL&isActive=true');
+      const response = await fetch('/api/admin/students?academicYear=2568-T2&userType=INTERNAL&isActive=true');
       if (!response.ok) throw new Error('โหลดรายชื่อนักเรียนไม่สำเร็จ');
       const resStudents = await response.json();
-      // Ensure only internal active students of 2567-T2
+      // Ensure only internal active students of current term (2568-T2)
       const sList = (resStudents.students || []).filter((s: any) =>
         s.user_type === 'INTERNAL' &&
         s.is_active !== false &&
-        (!s.academic_year || s.academic_year === '2567-T2')
+        (!s.academic_year || s.academic_year === '2568-T2' || s.academic_year === '2567-T2')
       );
 
       const classrooms = new Map<string, string>();
@@ -225,7 +225,7 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
     setShowCreateModal(true);
     setCreateStep(1);
     setSelectedTemplateId('event-01-verb-master-challenge');
-    setRunTitle('Verb Master Challenge แก้ 0 ภาคเรียนที่ 2/2567');
+    setRunTitle('Verb Master Challenge แก้ 0 ภาคเรียนที่ 2/2568');
     setSelectedClassroomId('');
     setStudentSearch('');
     setSelectionViewFilter('all');
@@ -398,7 +398,7 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
           templateId: selectedTemplateId,
           title: runTitle.trim(),
           classroomId: selectedClassroomId || null,
-          academicYear: createAcademicYear || '2567-T2',
+          academicYear: createAcademicYear || '2568-T2',
           participants: selectedParticipants,
         }),
       });
@@ -991,7 +991,10 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
               onChange={e => setTermFilter(e.target.value)}
               className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-bold focus:outline-none focus:border-cyan-500"
             >
-              <option value="2567-T2">ภาคเรียนที่ 2/2567 (ปัจจุบัน)</option>
+              <option value="2568-T2">ภาคเรียนที่ 2/2568 (ปัจจุบัน)</option>
+              <option value="2568-T1">ภาคเรียนที่ 1/2568</option>
+              <option value="2567-T2">ภาคเรียนที่ 2/2567</option>
+              <option value="2567-T1">ภาคเรียนที่ 1/2567</option>
               <option value="all">ทุกภาคเรียน (All)</option>
             </select>
           </div>
@@ -1194,7 +1197,7 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
                       type="text"
                       value={runTitle}
                       onChange={e => setRunTitle(e.target.value)}
-                      placeholder="เช่น Verb Master Challenge แก้ 0 ภาคเรียน 2/2567"
+                      placeholder="เช่น Verb Master Challenge แก้ 0 ภาคเรียน 2/2568"
                       className="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
                     />
                   </div>
@@ -1206,7 +1209,10 @@ export default function RemedialEventManager({ teacher }: { teacher: any }) {
                       onChange={e => setCreateAcademicYear(e.target.value)}
                       className="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
                     >
-                      <option value="2567-T2">ภาคเรียนที่ 2/2567 (ปัจจุบัน)</option>
+                      <option value="2568-T2">ภาคเรียนที่ 2/2568 (ปัจจุบัน)</option>
+                      <option value="2568-T1">ภาคเรียนที่ 1/2568</option>
+                      <option value="2567-T2">ภาคเรียนที่ 2/2567</option>
+                      <option value="2567-T1">ภาคเรียนที่ 1/2567</option>
                     </select>
                   </div>
 

@@ -10,6 +10,13 @@ import { GRAMMAR_UNITS_PART_3 } from './grammarUnitsPart3.ts';
 import { GRAMMAR_UNITS_PART_4 } from './grammarUnitsPart4.ts';
 import { GRAMMAR_UNITS_PART_5 } from './grammarUnitsPart5.ts';
 import { ONET_WRITING_BOOSTER_UNITS } from './onetWritingBoosterUnits.ts';
+import {
+  QUICK_GRAMMAR_CHEAT_SHEETS,
+  type QuickGrammarCheatSheet,
+  type CheatSheetSection,
+  type CheatSheetRow,
+  type CheatSheetTrap,
+} from './quickGrammarCheatSheets.ts';
 
 export type {
   GrammarGradeCategory,
@@ -21,7 +28,14 @@ export type {
   GrammarTeachingUnit,
 } from './types.ts';
 
-export { ONET_WRITING_BOOSTER_UNITS };
+export {
+  ONET_WRITING_BOOSTER_UNITS,
+  QUICK_GRAMMAR_CHEAT_SHEETS,
+  type QuickGrammarCheatSheet,
+  type CheatSheetSection,
+  type CheatSheetRow,
+  type CheatSheetTrap,
+};
 
 const UNIT_CURRICULUM_META: Record<
   number,

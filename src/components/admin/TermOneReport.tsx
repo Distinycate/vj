@@ -27,10 +27,10 @@ export default function TermOneReport({ classrooms }: { classrooms: any[] }) {
     return values.length ? number(values.reduce((a, b) => a + b, 0) / values.length) : 'ไม่มีข้อมูล';
   };
   const className = (row: Row) => classrooms.find(c => c.id === row.classroomId)?.class_name || [row.grade, row.room].filter(Boolean).join('/') || 'ไม่ระบุห้อง';
-  return <section className="space-y-4" aria-label="รายงานภาคเรียนที่ 1 ปี 2569">
+  return <section className="space-y-4" aria-label="รายงานภาคเรียนที่ 1 ปี 2568">
     <div className="rounded-2xl border border-indigo-500/30 bg-slate-900 p-5 space-y-2">
-      <h2 className="text-xl font-bold text-white">ผลการเรียนภาคเรียนที่ 1/2569</h2>
-      <p className="text-sm text-slate-300">ข้อมูลจากสำรองวันที่ 3 ตุลาคม 2569 · Pre-test เฉลี่ยไม่เกิน 5 ครั้งล่าสุด · Post-test ครั้งล่าสุด · Learning Gain ตามสูตร Hake</p>
+      <h2 className="text-xl font-bold text-white">ผลการเรียนภาคเรียนที่ 1/2568</h2>
+      <p className="text-sm text-slate-300">ข้อมูลจากสำรองสิ้นภาคเรียนที่ 1/2568 · Pre-test เฉลี่ยไม่เกิน 5 ครั้งล่าสุด · Post-test ครั้งล่าสุด · Learning Gain ตามสูตร Hake</p>
       <p className="text-sm text-slate-400">คำศัพท์ผิดระดับโรงเรียนอ่านจากประวัติรายครั้งที่บันทึกในฐานข้อมูล</p>
     </div>
     <div className="flex flex-wrap gap-3"><label className="text-sm text-slate-200">ค้นหานักเรียน <input value={search} onChange={e => setSearch(e.target.value)} className="ml-2 rounded-lg bg-slate-950 border border-slate-600 p-2 text-white" /></label><label className="text-sm text-slate-200">ห้อง <select value={room} onChange={e => setRoom(e.target.value)} className="ml-2 rounded-lg bg-slate-950 border border-slate-600 p-2 text-white"><option value="">ทุกห้อง</option>{classrooms.map(c => <option key={c.id} value={c.id}>{c.class_name}</option>)}</select></label></div>

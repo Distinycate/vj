@@ -592,7 +592,7 @@ export default function AdminPage() {
                 }`}
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                ข้อมูลปัจจุบัน
+                ภาคเรียนปัจจุบัน (2/2568)
               </button>
               <button
                 onClick={() => setActiveTab('term-archive')}
@@ -603,7 +603,7 @@ export default function AdminPage() {
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
-                📁 คลังข้อมูลเทอมเก่า (1/2569)
+                📁 คลังข้อมูลเทอมเก่า (1/2568 • 2567)
               </button>
             </div>
           </div>
@@ -903,7 +903,7 @@ export default function AdminPage() {
                   </span>
                   <span className="text-xs text-slate-400">โหมดคลังข้อมูลย้อนหลัง</span>
                 </div>
-                <h3 className="font-black text-white text-base mt-0.5">คลังประวัติภาคเรียนที่ 1/2567</h3>
+                <h3 className="font-black text-white text-base mt-0.5">คลังประวัติภาคเรียนย้อนหลัง (1/2568 &amp; ปีการศึกษา 2567)</h3>
                 <p className="text-xs text-slate-400 mt-0.5">ข้อมูลผลสัมฤทธิ์และผลการประเมินเดิมถูกจัดเก็บรักษาไว้อย่างปลอดภัย สามารถค้นหาและตรวจสอบได้ตลอดเวลา</p>
               </div>
             </div>
@@ -911,7 +911,7 @@ export default function AdminPage() {
               onClick={() => setActiveTab('students')}
               className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap active:scale-95"
             >
-              ⬅️ กลับสู่ภาคเรียนปัจจุบัน (2/2567)
+              ⬅️ กลับสู่ภาคเรียนปัจจุบัน (2/2568)
             </button>
           </div>
         )}

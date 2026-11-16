@@ -24,8 +24,8 @@ export default function CampaignArchiveReport() {
   const shown = (rows || []).filter(row => (!room || row.classroom === room) && row.name.includes(search.trim()));
   return <section className="rounded-2xl border border-slate-700 bg-slate-900 p-4 sm:p-6 space-y-4" aria-busy={loading}>
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div><h3 className="font-bold text-lg text-white">ประวัติก่อนเปิดรอบใหม่ 2/2569</h3>
-        <p className="text-sm text-slate-400 mt-1">เปรียบเทียบผลสอบก่อนรีเซ็ตกับรอบปัจจุบัน แยกจากรายงานเทอม 1</p></div>
+      <div><h3 className="font-bold text-lg text-white">ประวัติก่อนเปิดรอบใหม่ 2/2568 (ภาคเรียนปัจจุบัน)</h3>
+        <p className="text-sm text-slate-400 mt-1">เปรียบเทียบผลสอบก่อนรีเซ็ต (1/2568) กับรอบปัจจุบัน (2/2568)</p></div>
       <button onClick={load} disabled={loading} className="min-h-12 rounded-xl bg-indigo-600 px-4 font-bold text-white disabled:opacity-50">{loading ? 'กำลังโหลด…' : rows ? 'อัปเดตข้อมูล' : 'ดูข้อมูลเปรียบเทียบ'}</button>
     </div>
     {error && <p role="alert" className="text-rose-300">{error}</p>}

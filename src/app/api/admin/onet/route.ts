@@ -16,9 +16,9 @@ export async function GET(request: Request) {
     assertSameOrigin(request);
     await requireRole(['ADMIN', 'TEACHER']);
 
-    // 1. Fetch internal students for current academic year (default to 2567-T2)
+    // 1. Fetch internal students for current academic year (default to 2568-T2)
     const url = new URL(request.url);
-    const targetAcademicYear = url.searchParams.get('academicYear') || '2567-T2';
+    const targetAcademicYear = url.searchParams.get('academicYear') || '2568-T2';
 
     let studentQuery = supabaseAdmin
       .from('students')
@@ -26,7 +26,11 @@ export async function GET(request: Request) {
       .eq('user_type', 'INTERNAL');
 
     if (targetAcademicYear !== 'ALL') {
-      studentQuery = studentQuery.eq('academic_year', targetAcademicYear);
+      if (targetAcademicYear === '2568-T2' || targetAcademicYear === '2567-T2') {
+        studentQuery = studentQuery.in('academic_year', ['2568-T2', '2567-T2']);
+      } else {
+        studentQuery = studentQuery.eq('academic_year', targetAcademicYear);
+      }
     }
 
     const { data: students, error: sErr } = await studentQuery.order('student_id', { ascending: true });

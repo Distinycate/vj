@@ -79,7 +79,7 @@ export default function SeasonManager() {
   }
 
   async function handleTermReset() {
-    if (!window.confirm('ยืนยันเปิดรอบเรียนใหม่ 2/2569? ทำเฉพาะช่วงที่นักเรียนหยุดใช้งาน\n- เก็บประวัติ Pre/Post-test และด่านก่อนรีเซ็ต แอดมินย้อนดูได้\n- เฉพาะนักเรียนภายในที่เปิดใช้งาน: ทำ Pre-test ใหม่ 5 รอบ และเริ่มด่าน 1\n- ยกเลิกเกมที่ยังค้างอยู่ และอาจรับรางวัลผ่านด่านครั้งแรกได้อีก\n- ไม่เปลี่ยนเหรียญ ตั๋ว การ์ด Rank หรือ Team Battle\n- บัญชีเก่าที่ปิดและโรงเรียนเครือข่ายไม่เปลี่ยน\n- เปิดรอบนี้ได้ครั้งเดียว กดซ้ำไม่ล้างข้อมูลใหม่\n\nต้องการดำเนินการหรือไม่?')) return;
+    if (!window.confirm('ยืนยันเปิดรอบเรียนใหม่ 2/2568? ทำเฉพาะช่วงที่นักเรียนหยุดใช้งาน\n- เก็บประวัติ Pre/Post-test และด่านก่อนรีเซ็ต แอดมินย้อนดูได้\n- เฉพาะนักเรียนภายในที่เปิดใช้งาน: ทำ Pre-test ใหม่ 5 รอบ และเริ่มด่าน 1\n- ยกเลิกเกมที่ยังค้างอยู่ และอาจรับรางวัลผ่านด่านครั้งแรกได้อีก\n- ไม่เปลี่ยนเหรียญ ตั๋ว การ์ด Rank หรือ Team Battle\n- บัญชีเก่าที่ปิดและโรงเรียนเครือข่ายไม่เปลี่ยน\n- เปิดรอบนี้ได้ครั้งเดียว กดซ้ำไม่ล้างข้อมูลใหม่\n\nต้องการดำเนินการหรือไม่?')) return;
 
     setIsCreating(true);
     setMessage('');
@@ -214,7 +214,7 @@ export default function SeasonManager() {
                 disabled={isCreating}
                 className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm border border-emerald-400/30"
               >
-                <span>เก็บประวัติและเริ่มรอบใหม่ 2/2569</span>
+                <span>เก็บประวัติและเริ่มรอบใหม่ 2/2568</span>
               </button>
 
               <button

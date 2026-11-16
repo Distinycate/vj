@@ -34,7 +34,11 @@ export async function GET(request: Request) {
         countQuery = countQuery.eq('user_type', 'INTERNAL');
       }
       if (academicYear && academicYear !== 'all') {
-        countQuery = countQuery.eq('academic_year', academicYear);
+        if (academicYear === '2568-T2' || academicYear === '2567-T2') {
+          countQuery = countQuery.in('academic_year', ['2568-T2', '2567-T2']);
+        } else {
+          countQuery = countQuery.eq('academic_year', academicYear);
+        }
       }
       if (isActiveParam !== null) {
         countQuery = countQuery.eq('is_active', isActiveParam === 'true');
@@ -63,7 +67,11 @@ export async function GET(request: Request) {
         rankQuery = rankQuery.eq('user_type', 'INTERNAL');
       }
       if (academicYear && academicYear !== 'all') {
-        rankQuery = rankQuery.eq('academic_year', academicYear);
+        if (academicYear === '2568-T2' || academicYear === '2567-T2') {
+          rankQuery = rankQuery.in('academic_year', ['2568-T2', '2567-T2']);
+        } else {
+          rankQuery = rankQuery.eq('academic_year', academicYear);
+        }
       }
       if (isActiveParam !== null) {
         rankQuery = rankQuery.eq('is_active', isActiveParam === 'true');
@@ -91,7 +99,11 @@ export async function GET(request: Request) {
       query = query.eq('user_type', 'INTERNAL');
     }
     if (academicYear && academicYear !== 'all') {
-      query = query.eq('academic_year', academicYear);
+      if (academicYear === '2568-T2' || academicYear === '2567-T2') {
+        query = query.in('academic_year', ['2568-T2', '2567-T2']);
+      } else {
+        query = query.eq('academic_year', academicYear);
+      }
     }
     if (isActiveParam !== null) {
       query = query.eq('is_active', isActiveParam === 'true');

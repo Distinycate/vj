@@ -106,6 +106,10 @@ export async function GET(request: Request) {
 
       const tmpl = getRemedialTemplate(r.template_id);
 
+      const normalizedTerm = (!r.academic_year || r.academic_year === '2567-T2')
+        ? '2568-T2'
+        : r.academic_year;
+
       return {
         id: r.id,
         templateId: r.template_id,
@@ -114,7 +118,7 @@ export async function GET(request: Request) {
         theme: tmpl?.theme || 'General',
         icon: tmpl?.icon || '⭐',
         className: r.classrooms?.class_name || r.grade_level || 'ทั่วไป',
-        academicYear: r.academic_year || '2567-T2',
+        academicYear: normalizedTerm,
         status: r.status,
         createdAt: r.created_at,
         summary: {
@@ -128,7 +132,7 @@ export async function GET(request: Request) {
     });
 
     let finalRuns = (academicYear && academicYear !== 'all')
-      ? formattedRuns.filter(r => (r.academicYear || '2567-T2') === academicYear)
+      ? formattedRuns.filter(r => (r.academicYear || '2568-T2') === academicYear)
       : formattedRuns;
 
     if (statusParam && statusParam !== 'all') {
@@ -200,7 +204,7 @@ export async function POST(request: Request) {
         title,
         classroom_id: classroomId || null,
         grade_level: gradeLevel || null,
-        academic_year: academicYear || '2567-T2',
+        academic_year: academicYear || '2568-T2',
         status: 'active',
         created_by: session.subjectId,
       })

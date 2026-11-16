@@ -27,7 +27,7 @@ interface TermArchiveTabProps {
 export default function TermArchiveTab({ classrooms }: TermArchiveTabProps) {
   const [showTermOne, setShowTermOne] = useState(true);
   // Filters
-  const [selectedTerm, setSelectedTerm] = useState<string>('2567-T1');
+  const [selectedTerm, setSelectedTerm] = useState<string>('2568-T2');
   const [selectedClassroom, setSelectedClassroom] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeSubView, setActiveSubView] = useState<'academic' | 'traits' | 'reading'>('academic');
@@ -267,11 +267,11 @@ export default function TermArchiveTab({ classrooms }: TermArchiveTabProps) {
     link.click();
   };
 
-  if (showTermOne) return <div className="space-y-4"><CampaignArchiveReport /><div className="flex flex-wrap gap-2"><button aria-pressed="true" className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white">ผลการเรียนเทอม 1/2569</button><button onClick={() => setShowTermOne(false)} className="rounded-xl bg-slate-800 px-4 py-3 text-sm font-bold text-white">รายงาน ปพ.5 และคลังเดิม</button></div><TermOneReport classrooms={classrooms} /></div>;
+  if (showTermOne) return <div className="space-y-4"><CampaignArchiveReport /><div className="flex flex-wrap gap-2"><button aria-pressed="true" className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white">ผลการเรียนเทอม 1/2568</button><button onClick={() => setShowTermOne(false)} className="rounded-xl bg-slate-800 px-4 py-3 text-sm font-bold text-white">รายงาน ปพ.5 และคลังรายภาคเรียน</button></div><TermOneReport classrooms={classrooms} /></div>;
 
   return (
     <div className="space-y-6">
-      <button onClick={() => setShowTermOne(true)} className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white">← กลับผลการเรียนเทอม 1/2569</button>
+      <button onClick={() => setShowTermOne(true)} className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white">← กลับผลการเรียนเทอม 1/2568</button>
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 p-6 rounded-3xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -312,8 +312,10 @@ export default function TermArchiveTab({ classrooms }: TermArchiveTabProps) {
               onChange={e => setSelectedTerm(e.target.value)}
               className="bg-slate-950 border border-slate-800 text-white text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500"
             >
+              <option value="2568-T2">ภาคเรียนที่ 2/2568 (ปัจจุบัน - Active)</option>
+              <option value="2568-T1">ภาคเรียนที่ 1/2568 (เทอมที่แล้ว)</option>
+              <option value="2567-T2">ภาคเรียนที่ 2/2567 (ย้อนหลัง)</option>
               <option value="2567-T1">ภาคเรียนที่ 1/2567 (ระยะทดลอง Pilot)</option>
-              <option value="2567-T2">ภาคเรียนที่ 2/2567 (Active ปัจจุบัน)</option>
               <option value="all">ทุกภาคเรียนทั้งหมด (All Terms)</option>
             </select>
           </div>
@@ -375,7 +377,7 @@ export default function TermArchiveTab({ classrooms }: TermArchiveTabProps) {
           </div>
           <div className="text-2xl font-black text-white">{metrics.total} <span className="text-xs font-normal text-slate-400">คน</span></div>
           <div className="text-[10px] text-slate-500 mt-1">
-            {selectedTerm === '2567-T1' ? 'บัญชีทดลอง (Pilot)' : selectedTerm === '2567-T2' ? 'บัญชีทางการ (Active)' : 'รวมทุกเทอม'}
+            {selectedTerm === '2568-T2' ? 'ภาคเรียนปัจจุบัน (2/2568)' : selectedTerm === '2568-T1' ? 'ภาคเรียนที่ 1/2568' : selectedTerm === '2567-T2' ? 'ภาคเรียนที่ 2/2567' : selectedTerm === '2567-T1' ? 'บัญชีทดลอง (1/2567)' : 'รวมทุกเทอม'}
           </div>
         </div>
 
