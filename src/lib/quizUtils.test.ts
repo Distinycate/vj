@@ -6,6 +6,8 @@ import {
   parseAcceptableAnswers,
   QUESTION_ANSWER_CONFIG,
   uniqueChoicesByText,
+  buildCampaignQuestion,
+  isConfiguredAnswerCorrect,
 } from "./quizUtils.ts";
 
 test("question answer languages and fields follow the shared contract", () => {
@@ -133,3 +135,24 @@ test("parseAcceptableAnswers correctly splits and normalizes slashes", () => {
   assert.deepEqual(parseAcceptableAnswers(null), []);
 });
 
+test('campaign Listening and Context resolve English answers despite duplicate spellings', () => {
+  const target = { id: 'a', word: 'ability', meaning_th: 'ความสามารถ', example: 'She has the ability to learn.' };
+  const pool = [
+    { id: 'dupe', word: ' Ability ', meaning_th: 'ความสามารถ' },
+    { id: 'b', word: 'active', meaning_th: 'กระตือรือร้น' },
+    { id: 'c', word: 'afraid', meaning_th: 'กลัว' },
+    { id: 'd', word: 'alone', meaning_th: 'ลำพัง' },
+  ];
+  const listening = buildCampaignQuestion(target, pool, 'listening_mc')!;
+  assert.equal(listening.answer_language, 'en');
+  assert.equal(listening.correct_answer, 'ability');
+  assert.equal(listening.choices.length, 4);
+  assert.equal(listening.choices.filter(c => c.is_correct).length, 1);
+  assert.equal(isConfiguredAnswerCorrect(listening, 'ความสามารถ'), false);
+  assert.equal(isConfiguredAnswerCorrect(listening, 'ability'), true);
+  assert.equal(isConfiguredAnswerCorrect(listening, { word_id: 'dupe', text: 'ability', is_correct: true }), false);
+  const context = buildCampaignQuestion(target, pool, 'context_mc')!;
+  assert.equal(context.prompt, 'She has the _____ to learn.');
+  assert.equal(buildCampaignQuestion({ ...target, example: 'No matching word.' }, pool, 'context_mc'), null);
+  assert.equal(buildCampaignQuestion(target, pool, 'meaning_mc')!.correct_answer, 'ความสามารถ');
+});

@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const { PGlite } = await import(process.env.PGLITE_MODULE || '@electric-sql/pglite');
 const sql = await readFile(new URL('../supabase/migrations/20261104050458_assessment_season_atomic_reset.sql', import.meta.url), 'utf8');
+const checkpointSql = await readFile(new URL('../supabase/migrations/20261123163715_posttest_checkpoint.sql', import.meta.url), 'utf8');
 const id = n => `00000000-0000-0000-0000-${String(n).padStart(12, '0')}`;
 async function fixture() {
   const db = new PGlite();
@@ -76,6 +77,16 @@ try {
   await assert.rejects(submit(21, 21, path.assessment_epoch, 'POST_TEST'), /forced-summary-error/);
   assert.equal((await row('SELECT count(*)::int AS n FROM post_tests WHERE id=$1', [id(21)])).n, 0);
   await db.exec('DROP TRIGGER fail_summary ON analytics_summary');
+  await db.exec(checkpointSql);
+  const checkpoint = (stage, epoch = path.assessment_epoch) => row(
+    'SELECT submit_checkpoint_posttest($1,$2,$3,22,25,10,$4) AS result', [id(1), epoch, id(22), stage]);
+  await assert.rejects(checkpoint(10), /ASSESSMENT_CHECKPOINT_LOCKED/);
+  await db.query('INSERT INTO student_stage_progress VALUES ($1,10,true)', [id(1)]);
+  await assert.rejects(checkpoint(10,oldEpoch), /ASSESSMENT_SEASON_CHANGED/);
+  assert.equal((await checkpoint(10)).result.stageCheckpoint,10);
+  assert.equal((await checkpoint(10)).result.stageCheckpoint,10);
+  assert.equal((await row('SELECT stage_checkpoint FROM post_tests WHERE id=$1', [id(22)])).stage_checkpoint,10);
+  assert.equal((await row('SELECT stage_checkpoint FROM post_tests WHERE id=$1', [id(20)])).stage_checkpoint,null);
   await db.query('UPDATE learning_paths SET current_stage=4 WHERE student_id=$1', [id(1)]);
   assert.equal((await reset()).result.alreadyReset, true);
   assert.equal((await row('SELECT current_stage FROM learning_paths WHERE student_id=$1', [id(1)])).current_stage, 4);

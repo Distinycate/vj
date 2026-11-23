@@ -23,12 +23,10 @@ test('A & B: Pre-test gate strictly gates first-time EXTERNAL students and allow
 });
 
 test('C: EXTERNAL student gameplay generates 100% Multiple Choice across ALL stage types (Skull Mode)', () => {
-  // 1. /api/game/start forces qPattern = i % 2 (MEANING_MC or WORD_MC only) for EXTERNAL students
+  // Both the preferred and fallback types are multiple-choice for EXTERNAL students.
   assert.match(gameStartRoute, /session\.user\.userType === 'EXTERNAL'/);
-  assert.match(gameStartRoute, /isExternalStudent \? \(i % 2\) : \(i % 3\)/);
-  
-  // FILL_BLANK is only accessible to INTERNAL students (qPattern === 2)
-  assert.match(gameStartRoute, /if \(qPattern === 2\)/);
+  assert.match(gameStartRoute, /isExternalStudent \|\| isSkullStudent \? basicType/);
+  assert.match(gameStartRoute, /basicType = i % 2 === 0 \? 'meaning_mc' : 'word_mc'/);
 
   // 2. adaptiveEngine.ts fallback also enforces MCQ only for EXTERNAL students
   assert.match(adaptiveEngine, /user_type === 'EXTERNAL'/);

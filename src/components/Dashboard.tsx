@@ -541,7 +541,7 @@ export default function Dashboard() {
   const currentStage = progress?.current_stage || 1;
   const completedPosttestCheckpoint = v3Progression.authority === 'V3'
     ? Math.max(0, ...Array.from(v3Progression.completedStages.entries()).filter(([stage, details]) => stage % 10 === 0 && details.completed).map(([stage]) => stage))
-    : Math.floor((currentStage - 1) / 10) * 10;
+    : 0;
   const currentRank = progress?.current_rank || 1;
   const rankConfig = ADAPTIVE_RANK_CONFIG[currentRank] || ADAPTIVE_RANK_CONFIG[1];
   const currentWorld = getWorldForStage(currentStage);
@@ -1248,7 +1248,10 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <button 
-                    onClick={() => setScreen('posttest')}
+                    onClick={() => {
+                      setProgress({ ...progress, assessment_checkpoint: completedPosttestCheckpoint });
+                      setScreen('posttest');
+                    }}
                     className="w-full md:w-auto px-8 py-4 font-black rounded-2xl flex items-center justify-center gap-2 transition-all text-sm bg-indigo-500 hover:bg-indigo-400 text-white shadow-lg shadow-indigo-500/20 hover:scale-[1.02]"
                   >
                     📝 เริ่มทำ Post-Test

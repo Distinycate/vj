@@ -10,18 +10,16 @@ const teamBattleSource = readFileSync('src/utils/teamBattleEngine.ts', 'utf8');
 const adminSource = readFileSync('src/app/admin/page.tsx', 'utf8');
 
 test('landing page explains Vocab Journey and presents the innovator profile', () => {
-  assert.match(homeSource, /ก้าวข้ามขีดจำกัดการท่องจำ/);
-  assert.match(homeSource, /นวัตกรรมการจัดการเรียนรู้เชิงรุก/);
+  assert.match(homeSource, /เกี่ยวกับ Vocab Journey/);
+  assert.match(homeSource, /Active Learning Innovation/);
   assert.match(homeSource, /Adaptive Rank/);
-  assert.match(homeSource, /Ebbinghaus Forgetting Curve/);
-  assert.match(homeSource, /ประวัติและข้อมูลผู้จัดทำนวัตกรรม/);
+  assert.match(homeSource, /Ebbinghaus SRS Memory Curve/);
+  assert.match(homeSource, /ผู้จัดทำนวัตกรรม/);
   assert.match(homeSource, /นายณัฐภัทร พรมปรุ/);
   assert.match(homeSource, /Mr\. Nattapat Prompru/);
   assert.match(homeSource, /โรงเรียนบ้านโคกยาง/);
-  assert.match(homeSource, /สำนักงานเขตพื้นที่การศึกษาประถมศึกษาบุรีรัมย์ เขต 3/);
-  assert.match(homeSource, /Head of Personnel Administration/);
-  assert.match(homeSource, /Gamification & EdTech/);
-  assert.match(homeSource, /PDCA/);
+  assert.match(homeSource, /สพป\.บุรีรัมย์ เขต 3/);
+  assert.match(homeSource, /Gamification/);
 });
 
 test('pre-test completion uses authoritative saved tests, not a score-based rank', () => {

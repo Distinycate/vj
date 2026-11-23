@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Home, LogIn } from 'lucide-react';
 import CardManagementDashboard from '@/components/admin/CardManagementDashboard';
 
@@ -38,5 +39,12 @@ export default function CardAdminPage() {
     );
   }
 
-  return <CardManagementDashboard teacher={teacher} />;
+  return <>
+    <div className="bg-slate-950 px-4 pt-4 sm:px-8">
+      <Link href="/admin" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-700 px-3 text-sm font-bold text-slate-200 hover:bg-slate-800">
+        <Home className="size-4" aria-hidden="true" /> กลับศูนย์ครูและแอดมิน
+      </Link>
+    </div>
+    <CardManagementDashboard teacher={teacher} />
+  </>;
 }

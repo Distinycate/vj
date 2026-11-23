@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabaseAdmin';
+import { summarizePretests } from '@/lib/assessmentState';
 
 /**
  * Enriches student records (with learning_paths & analytics_summary relations)
@@ -116,6 +117,12 @@ export async function enrichStudentsWithLiveMetrics(students: any[]): Promise<an
 
     const sPre = preByStudent.get(student.id) || [];
     const sPost = postByStudent.get(student.id) || [];
+    const latestValidPost = sPost.find(row => Number.isFinite(row.score) && row.total_questions > 0 &&
+      row.score >= 0 && row.score <= row.total_questions);
+    const assessmentEvidence = {
+      preScore: summarizePretests(sPre).score,
+      postScore: latestValidPost ? latestValidPost.score / latestValidPost.total_questions * 25 : null,
+    };
     const sStageAtt = stageAttByStudent.get(student.id) || [];
     const sCompletedStageAtt = sStageAtt.filter((a) => a.status === 'COMPLETED');
     const sStageProg = stageProgByStudent.get(student.id) || [];
@@ -260,6 +267,7 @@ export async function enrichStudentsWithLiveMetrics(students: any[]): Promise<an
 
     return {
       ...student,
+      assessmentEvidence,
       analytics_summary: Array.isArray(student.analytics_summary) ? [enrichedAn] : enrichedAn,
       learning_paths: Array.isArray(student.learning_paths) ? [enrichedLp] : enrichedLp,
     };

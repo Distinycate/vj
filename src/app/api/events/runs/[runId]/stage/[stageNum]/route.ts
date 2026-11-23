@@ -3,7 +3,17 @@ import { z } from 'zod';
 import { requireSession } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { assertSameOrigin } from '@/lib/server/security';
-import { getRemedialTemplate, getRemedialStage } from '@/lib/events/remedialEventsRegistry';
+import { getRemedialStage } from '@/lib/events/remedialEventsRegistry';
+
+async function verifyStageAccess(runId: string, studentId: string, stageNum: number, targetStages: number) {
+  if (stageNum > targetStages) return NextResponse.json({ error: 'ด่านนี้อยู่นอกชุดกิจกรรมของนักเรียน' }, { status: 403 });
+  if (stageNum <= 1) return null;
+  const { data, error } = await supabaseAdmin.from('event_progress')
+    .select('passed').eq('event_run_id', runId).eq('student_id', studentId)
+    .eq('stage_number', stageNum - 1).maybeSingle();
+  if (error) throw error;
+  return data?.passed ? null : NextResponse.json({ error: 'กรุณาผ่านด่านก่อนหน้า' }, { status: 403 });
+}
 
 export async function GET(
   request: Request,
@@ -17,8 +27,8 @@ export async function GET(
     }
 
     const { runId, stageNum: stageNumStr } = await params;
-    const stageNum = parseInt(stageNumStr, 10);
-    if (isNaN(stageNum) || stageNum < 1 || stageNum > 15) {
+    const stageNum = Number(stageNumStr);
+    if (!Number.isInteger(stageNum) || stageNum < 1 || stageNum > 15) {
       return NextResponse.json({ error: 'Invalid stage number' }, { status: 400 });
     }
 
@@ -41,24 +51,13 @@ export async function GET(
       .eq('id', runId)
       .maybeSingle();
 
-    if (runErr || !run || run.status === 'closed') {
+    if (runErr || !run || run.status !== 'active') {
       return NextResponse.json({ error: 'Event run is not active' }, { status: 400 });
     }
 
     // 3. Verify unlock status
-    if (stageNum > 1) {
-      const { data: prevProgress } = await supabaseAdmin
-        .from('event_progress')
-        .select('passed')
-        .eq('event_run_id', runId)
-        .eq('student_id', session.subjectId)
-        .eq('stage_number', stageNum - 1)
-        .maybeSingle();
-
-      if (!prevProgress || !prevProgress.passed) {
-        return NextResponse.json({ error: 'Stage is locked. Complete previous stage first.' }, { status: 403 });
-      }
-    }
+    const denied = await verifyStageAccess(runId, session.subjectId, stageNum, participant.target_stages);
+    if (denied) return denied;
 
     // 4. Load stage questions from template
     const stageData = getRemedialStage(run.template_id, stageNum);
@@ -105,8 +104,8 @@ export async function POST(
     }
 
     const { runId, stageNum: stageNumStr } = await params;
-    const stageNum = parseInt(stageNumStr, 10);
-    if (isNaN(stageNum) || stageNum < 1 || stageNum > 15) {
+    const stageNum = Number(stageNumStr);
+    if (!Number.isInteger(stageNum) || stageNum < 1 || stageNum > 15) {
       return NextResponse.json({ error: 'Invalid stage number' }, { status: 400 });
     }
 
@@ -137,9 +136,12 @@ export async function POST(
       .eq('id', runId)
       .maybeSingle();
 
-    if (runErr || !run || run.status === 'closed') {
+    if (runErr || !run || run.status !== 'active') {
       return NextResponse.json({ error: 'Event run is not active' }, { status: 400 });
     }
+
+    const denied = await verifyStageAccess(runId, session.subjectId, stageNum, participant.target_stages);
+    if (denied) return denied;
 
     // 3. Load authoritative stage data
     const stageData = getRemedialStage(run.template_id, stageNum);
@@ -168,19 +170,20 @@ export async function POST(
     const isPassed = correctCount >= 7;
 
     // 5. Update stage progress
-    const { data: existingProg } = await supabaseAdmin
+    const { data: existingProg, error: existingError } = await supabaseAdmin
       .from('event_progress')
       .select('best_score, attempts, passed')
       .eq('event_run_id', runId)
       .eq('student_id', session.subjectId)
       .eq('stage_number', stageNum)
       .maybeSingle();
+    if (existingError) throw existingError;
 
     const newAttempts = (existingProg?.attempts || 0) + 1;
     const newBest = Math.max(existingProg?.best_score || 0, correctCount);
     const hasEverPassed = Boolean(existingProg?.passed || isPassed);
 
-    await supabaseAdmin
+    const { error: progressError } = await supabaseAdmin
       .from('event_progress')
       .upsert({
         event_run_id: runId,
@@ -191,14 +194,16 @@ export async function POST(
         passed: hasEverPassed,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'event_run_id,student_id,stage_number' });
+    if (progressError) throw progressError;
 
     // 6. Recount total passed stages for this student in this run
-    const { data: allPassed } = await supabaseAdmin
+    const { data: allPassed, error: countError } = await supabaseAdmin
       .from('event_progress')
       .select('stage_number')
       .eq('event_run_id', runId)
       .eq('student_id', session.subjectId)
       .eq('passed', true);
+    if (countError) throw countError;
 
     const totalPassedStages = allPassed?.length || 0;
     const isEventFinished = totalPassedStages >= participant.target_stages;
@@ -215,7 +220,7 @@ export async function POST(
       newStatus = 'in_progress';
     }
 
-    await supabaseAdmin
+    const { error: participantError } = await supabaseAdmin
       .from('event_participants')
       .update({
         completed_stages: totalPassedStages,
@@ -226,6 +231,7 @@ export async function POST(
         updated_at: new Date().toISOString(),
       })
       .eq('id', participant.id);
+    if (participantError) throw participantError;
 
     return NextResponse.json({
       success: true,

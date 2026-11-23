@@ -26,7 +26,7 @@ test('student admin tab renders room and id organization even when analytics met
   assert.match(adminSource, /activeTab === 'students'/);
   assert.doesNotMatch(adminSource, /activeTab === 'students' && classroomMetrics/);
   assert.match(adminSource, /รายชื่อนักเรียน \/ ไอดี แยกตามห้อง/);
-  assert.match(adminSource, /classroomStudentCounts/);
+  assert.match(adminSource, /value=\{selectedClassroom\} onChange=\{e => setSelectedClassroom/);
   assert.match(adminSource, />รหัสนักเรียน</);
   assert.match(adminSource, />Username</);
   assert.match(adminSource, /ยังไม่มีนักเรียนในห้องนี้/);

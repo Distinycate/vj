@@ -18,7 +18,7 @@ async function main() {
   console.log('=== VOCAB JOURNEY: SEPARATE TERM 1 & IMPORT TERM 2 ROSTER ===');
   
   // 1. Read exported roster
-  const rosterPath = path.join(__dirname, 'new_students_roster_2567.json');
+  const rosterPath = path.join(__dirname, '..', 'backups', 'private-rosters', 'new_students_roster_2567.json');
   if (!fs.existsSync(rosterPath)) {
     throw new Error('Roster JSON not found at ' + rosterPath);
   }
@@ -26,9 +26,10 @@ async function main() {
   console.log(`Loaded ${roster.length} students from roster JSON.`);
 
   // 2. Backup existing students if not already backed up
-  const backupPath = path.join(__dirname, 'backup_term1_pilot_snapshot.json');
+  const backupPath = path.join(__dirname, '..', 'backups', 'private-rosters', 'backup_term1_pilot_snapshot.json');
   if (!fs.existsSync(backupPath)) {
     console.log('Creating backup snapshot of existing students...');
+    fs.mkdirSync(path.dirname(backupPath), { recursive: true });
     const { data: existingStudents } = await supabase.from('students').select('*');
     fs.writeFileSync(backupPath, JSON.stringify({ timestamp: new Date().toISOString(), existingStudents }, null, 2));
     console.log(`Backup saved to ${backupPath}`);

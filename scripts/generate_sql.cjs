@@ -1,7 +1,7 @@
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
-const students = JSON.parse(fs.readFileSync('src/data/students_season2.json', 'utf-8'));
+const students = JSON.parse(fs.readFileSync('backups/private-rosters/students_season2.json', 'utf-8'));
 
 async function main() {
   const hashes = {};
@@ -74,7 +74,7 @@ END $$;
 `);
   }
 
-  fs.writeFileSync('scripts/import_students_season2.sql', sqlLines.join('\n'), 'utf-8');
+  fs.writeFileSync('backups/private-rosters/import_students_season2.sql', sqlLines.join('\n'), 'utf-8');
   console.log('Successfully generated scripts/import_students_season2.sql');
 }
 

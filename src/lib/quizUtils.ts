@@ -130,3 +130,45 @@ export function shuffleArray<T>(array: T[]): T[] {
   }
   return arr;
 }
+
+export function buildCampaignQuestion(target: any, candidates: any[], type: QuestionType) {
+  const config = QUESTION_ANSWER_CONFIG[type];
+  const toThai = (word: any) => [word.meaning_th, word.meaning].find(value => /[ก-๙]/.test(String(value ?? ''))) || '';
+  const vocabulary = { ...target, meaning_th: toThai(target) };
+  const correct = getVocabularyField(vocabulary, config.answerField);
+  if (!target.id || !(config.answerLanguage === 'en' ? /[a-z]/i : /[ก-๙]/).test(correct)) return null;
+  const labels = { listening_mc: 'LISTENING_MC', word_mc: 'WORD_MC', meaning_mc: 'MEANING_MC', context_mc: 'CONTEXT_MC', spelling: 'FILL_BLANK' };
+  let prompt = type === 'meaning_mc' ? target.word : vocabulary.meaning_th;
+  if (type === 'listening_mc') prompt = 'ฟังเสียงแล้วเลือกคำศัพท์ที่ได้ยิน';
+  if (type === 'context_mc') {
+    const example = String(target.example_sentence || target.example || '').trim();
+    const escaped = Array.from(correct, char => '.^$*+?()[]{}|\\'.includes(char) ? '\\' + char : char).join('');
+    if (!example || !new RegExp('\\b' + escaped + '\\b', 'i').test(example)) return null;
+    prompt = example.replace(new RegExp('\\b' + escaped + '\\b', 'gi'), '_____');
+  }
+  if (!prompt) return null;
+  let choices: QuizChoice[] = [];
+  if (config.choiceField) {
+    const field = config.choiceField;
+    const pool = candidates.map(candidate => ({ ...candidate, meaning_th: toThai(candidate) }))
+      .filter(candidate => candidate.id && (config.answerLanguage === 'en' ? /[a-z]/i : /[ก-๙]/).test(getVocabularyField(candidate, field)));
+    const distractors = filterDistractors({ targetWord: vocabulary, candidates: shuffleArray(pool), answerField: field });
+    choices = shuffleArray(uniqueChoicesByText([{ word_id: target.id, text: correct, is_correct: true },
+      ...distractors.map(candidate => ({ word_id: candidate.id, text: getVocabularyField(candidate, field), is_correct: false }))]));
+    if (choices.length !== 4) return null;
+  }
+  return { id: target.id, word_id: target.id, correct_word_id: target.id,
+    word: target.word, meaning: vocabulary.meaning_th, meaning_th: vocabulary.meaning_th,
+    part_of_speech: target.part_of_speech, audio_url: target.audio_url || null,
+    qType: labels[type], question_type: type, correct_answer: correct, answer_language: config.answerLanguage, prompt, choices };
+}
+
+export function isConfiguredAnswerCorrect(question: { question_type?: string; correct_answer?: string; correct_word_id?: string; choices?: QuizChoice[] }, answer: string | QuizChoice) {
+  const selected = normalizeAnswer(typeof answer === 'string' ? answer : answer.text);
+  if (!selected) return false;
+  const isSpelling = question.question_type === 'spelling';
+  if (isSpelling || !question.choices?.length) return parseAcceptableAnswers(question.correct_answer).includes(selected);
+  const choice = question.choices.find(item => normalizeAnswer(item.text) === selected);
+  return !!choice && choice.word_id === question.correct_word_id &&
+    (typeof answer === 'string' || choice.word_id === answer.word_id);
+}

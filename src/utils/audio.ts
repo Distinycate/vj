@@ -83,14 +83,15 @@ export const speakWithWebSpeech = (text: string, rate: number = 0.9): boolean =>
  * First attempts fast cloud MP3 stream, and seamlessly falls back to Web Speech API
  * if the network stream fails, is blocked by mobile autoplay policies, or takes too long.
  */
-export const playWordAudio = (text: string) => {
+export const playWordAudio = (text: string, recordedUrl?: string | null) => {
   if (!text) return;
   const cleanWord = text.trim();
   if (!cleanWord) return;
 
   try {
     // Youdao US Accent TTS (type=0: US, type=1: UK)
-    const audioUrl = `https://dict.youdao.com/dictvoice?type=0&audio=${encodeURIComponent(cleanWord)}`;
+    const audioUrl = recordedUrl && /^https:\/\//i.test(recordedUrl) ? recordedUrl
+      : `https://dict.youdao.com/dictvoice?type=0&audio=${encodeURIComponent(cleanWord)}`;
     const audio = new Audio(audioUrl);
     
     let hasFallbackRun = false;

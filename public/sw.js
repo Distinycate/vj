@@ -34,7 +34,13 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   // Never return cached sessions/assessment epochs after a season reset (or logout).
-  if (new URL(event.request.url).pathname.startsWith('/api/') || event.request.url.includes('supabase.co') || event.request.url.includes('_next/webpack-hmr')) {
+  const pathname = new URL(event.request.url).pathname;
+  if (pathname === '/students_season2_summary.csv') {
+    // Delete only the retired export; preserve offline assets and existing sessions.
+    event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(async key => (await caches.open(key)).delete(event.request, { ignoreSearch: true })))));
+    return;
+  }
+  if (pathname.startsWith('/api/') || event.request.url.includes('supabase.co') || event.request.url.includes('_next/webpack-hmr')) {
     return;
   }
 

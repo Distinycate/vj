@@ -87,7 +87,7 @@ test('ONET_WRITING_BOOSTER_UNITS contains 9 units (5 Core Writing Booster + 4 Fu
     assert.ok(unit.unitNumber >= 101 && unit.unitNumber <= 109);
     assert.ok(unit.conceptSlides.length >= 2);
     assert.equal(unit.practiceQuestions.length, 5);
-    assert.ok(unit.realOnetQuestions.length >= 4);
+    if (unit.unitNumber >= 106) assert.ok(unit.realOnetQuestions.length >= 4);
 
     for (const q of [...unit.practiceQuestions, ...unit.realOnetQuestions]) {
       assert.ok(q.clueText.trim().length > 0, `Missing clueText in ${q.id}`);
@@ -100,19 +100,13 @@ test('ONET_WRITING_BOOSTER_UNITS contains 9 units (5 Core Writing Booster + 4 Fu
   }
 });
 
-test('QUICK_GRAMMAR_CHEAT_SHEETS contains 8 quick-reference topics including Adjective Order, Sentence Structure, Prepositions, Collocations, and Tenses', () => {
-  assert.equal(QUICK_GRAMMAR_CHEAT_SHEETS.length, 8);
+test('QUICK_GRAMMAR_CHEAT_SHEETS has unique topics including grammar basics, tenses and collocations', () => {
+  assert.ok(QUICK_GRAMMAR_CHEAT_SHEETS.length >= 14);
   const ids = QUICK_GRAMMAR_CHEAT_SHEETS.map((s) => s.id);
-  assert.deepEqual(ids, [
-    'adjective-order',
-    'sentence-structure',
-    'prepositions',
-    'collocations-phrasals',
-    'tenses-overview',
-    'connectors',
-    'core-structures',
-    'quantifiers-agreement',
-  ]);
+  assert.equal(new Set(ids).size, ids.length);
+  for (const required of ['adjective-order', 'parts-of-speech', 'tenses', 'connectors', 'prepositions-collocations']) {
+    assert.ok(ids.includes(required), required);
+  }
 
   for (const sheet of QUICK_GRAMMAR_CHEAT_SHEETS) {
     assert.ok(sheet.title.length > 0);

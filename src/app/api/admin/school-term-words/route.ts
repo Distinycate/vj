@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server';
 import { requireInternalTeacherRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
-
-const periods = {
-  '1': { start: '2026-04-30T17:00:00.000Z', end: '2026-10-31T17:00:00.000Z' },
-  '2': { start: '2026-10-31T17:00:00.000Z', end: '2027-04-30T17:00:00.000Z' },
-} as const;
+import { reportingTerms } from '@/lib/reportingTerms';
 
 export async function GET(request: Request) {
   try {
     await requireInternalTeacherRole(['TEACHER', 'ADMIN', 'EXECUTIVE']);
     const term = new URL(request.url).searchParams.get('term');
     if (term !== '1' && term !== '2') return NextResponse.json({ error: 'กรุณาเลือกภาคเรียน' }, { status: 400 });
-    const { start, end } = periods[term];
+    const { start, end } = reportingTerms[term];
     const counts = new Map<string, { word: string; meaning: string; count: number }>();
     const pageSize = 1000;
     for (let offset = 0; ; offset += pageSize) {

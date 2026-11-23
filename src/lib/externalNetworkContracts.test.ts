@@ -49,7 +49,8 @@ test('team and card utilities protect backend calls from external users', () => 
 });
 
 test('external admin report lists only external users and supports exports', () => {
-  assert.match(admin, /\/admin\/external-network/);
+  assert.match(admin, /<AdminSidebar\b/);
+  assert.match(readFileSync('src/components/admin/AdminSidebar.tsx', 'utf8'), /\/admin\/external-network/);
   assert.match(externalAdmin, /\.eq\('user_type', 'EXTERNAL'\)/);
   assert.match(externalAdmin, /school_name/);
   assert.match(externalAdmin, /current_stage/);

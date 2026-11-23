@@ -2,16 +2,36 @@ import { NextResponse } from 'next/server';
 import { requireInternalTeacherRole } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
 import { enrichStudentsWithLiveMetrics } from '@/lib/server/adminAnalyticsEnricher';
+import { bangkokMonth, reportingTerms, type ReportingTerm } from '@/lib/reportingTerms';
+import { summarizePretests, type AssessmentRecord } from '@/lib/assessmentState';
+import { calculateNormalizedGain } from '@/utils/analyticsUtils';
 
 interface CachedSchoolOverview {
   data: any;
   timestamp: number;
 }
 
-let cache: CachedSchoolOverview | null = null;
+const overviewCache = new Map<ReportingTerm, CachedSchoolOverview>();
 const CACHE_TTL_MS = 30 * 1000; // 30 seconds in-memory cache
 
 const THAI_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+
+async function termTests(table: 'pre_tests' | 'post_tests', term: ReportingTerm) {
+  const { start, end } = reportingTerms[term];
+  const rows: Array<AssessmentRecord & { student_id: string }> = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await supabaseAdmin.from(table)
+      .select('id, student_id, score, total_questions, created_at, students!inner(user_type)')
+      .eq('students.user_type', 'INTERNAL').gte('created_at', start).lt('created_at', end)
+      .order('created_at', { ascending: false }).order('id').range(offset, offset + 999);
+    if (error) throw error;
+    for (const row of data || []) {
+      if (row.total_questions > 0 && row.score >= 0 && row.score <= row.total_questions) rows.push(row);
+    }
+    if (!data || data.length < 1000) break;
+  }
+  return rows;
+}
 
 export async function GET(request: Request) {
   try {
@@ -19,6 +39,9 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
+    const term = searchParams.get('term') ?? '2';
+    if (term !== '1' && term !== '2') return NextResponse.json({ error: 'กรุณาเลือกภาคเรียน' }, { status: 400 });
+    const cache = overviewCache.get(term);
 
     if (!force && cache && Date.now() - cache.timestamp < CACHE_TTL_MS) {
       return NextResponse.json({ success: true, ...cache.data, cached: true });
@@ -35,22 +58,15 @@ export async function GET(request: Request) {
         .select('id, student_name, classroom_id, is_active, user_type, learning_paths(current_rank, rank_score, coins, total_exp, last_active_date), analytics_summary(pretest_score, posttest_score, success_rate, normalized_gain, learning_gain, attempt_count)')
         .eq('is_active', true)
         .eq('user_type', 'INTERNAL'),
-      supabaseAdmin
-        .from('pre_tests')
-        .select('score, total_questions, created_at')
-        .order('created_at', { ascending: true })
-        .limit(2000),
-      supabaseAdmin
-        .from('post_tests')
-        .select('score, total_questions, created_at')
-        .order('created_at', { ascending: true })
-        .limit(2000),
+      termTests('pre_tests', term),
+      termTests('post_tests', term),
       supabaseAdmin
         .from('classrooms')
         .select('id, class_name')
         .order('class_name', { ascending: true }),
     ]);
 
+    if (studentsRes.error || classroomsRes.error) throw studentsRes.error || classroomsRes.error;
     const students = await enrichStudentsWithLiveMetrics(studentsRes.data || []);
     const totalStudents = students.length;
     const validClassrooms = (classroomsRes.data || []).filter(
@@ -61,28 +77,37 @@ export async function GET(request: Request) {
 
     // 1. Calculate School-wide KPI averages
     let sumPre = 0, sumPost = 0, sumGain = 0, sumAcc = 0;
-    let preCount = 0, postCount = 0, accCount = 0;
+    let preCount = 0, postCount = 0, gainCount = 0, accCount = 0;
     const rankCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const preByStudent = new Map<string, AssessmentRecord[]>();
+    const postByStudent = new Map<string, AssessmentRecord>();
+    for (const row of preTestsRes) {
+      const list = preByStudent.get(row.student_id) ?? [];
+      if (list.length < 5) list.push(row);
+      preByStudent.set(row.student_id, list);
+    }
+    for (const row of postTestsRes) if (!postByStudent.has(row.student_id)) postByStudent.set(row.student_id, row);
+    for (const id of new Set([...preByStudent.keys(), ...postByStudent.keys()])) {
+      const pre = summarizePretests(preByStudent.get(id) ?? []).score;
+      const latestPost = postByStudent.get(id);
+      const post = latestPost ? latestPost.score / latestPost.total_questions * 25 : null;
+      const gain = pre !== null && post !== null ? calculateNormalizedGain(pre, post, 25) : null;
 
-    students.forEach((s: any) => {
-      const stats = Array.isArray(s.analytics_summary) ? s.analytics_summary[0] : s.analytics_summary;
-      const lp = Array.isArray(s.learning_paths) ? s.learning_paths[0] : s.learning_paths;
-
-      const pre = Number(stats?.pretest_score || 0);
-      const post = Number(stats?.posttest_score || 0);
-      const acc = Number(stats?.success_rate || 0);
-      const gain = Number(stats?.normalized_gain ?? stats?.learning_gain ?? (post > pre ? post - pre : 0));
-
-      if (pre > 0) {
+      if (pre !== null) {
         sumPre += pre;
         preCount++;
       }
-      if (post > 0) {
+      if (post !== null) {
         sumPost += post;
-        sumGain += gain;
         postCount++;
       }
-      if (acc > 0) {
+      if (gain !== null) { sumGain += gain; gainCount++; }
+    }
+    students.forEach((s: any) => {
+      const stats = Array.isArray(s.analytics_summary) ? s.analytics_summary[0] : s.analytics_summary;
+      const lp = Array.isArray(s.learning_paths) ? s.learning_paths[0] : s.learning_paths;
+      const acc = Number(stats?.success_rate || 0);
+      if (acc > 0 || stats?.attempt_count > 0) {
         sumAcc += acc;
         accCount++;
       }
@@ -91,10 +116,10 @@ export async function GET(request: Request) {
       rankCounts[rank] = (rankCounts[rank] || 0) + 1;
     });
 
-    const avgPre = preCount ? Math.round(sumPre / preCount) : 0;
-    const avgPost = postCount ? Math.round(sumPost / postCount) : 0;
-    const avgGain = postCount ? Math.round(sumGain / postCount) : 0;
-    const avgAcc = accCount ? Math.round(sumAcc / accCount) : 0;
+    const avgPre = preCount ? Math.round(sumPre / preCount) : null;
+    const avgPost = postCount ? Math.round(sumPost / postCount) : null;
+    const avgGain = gainCount ? Math.round(sumGain / gainCount) : null;
+    const avgAcc = accCount ? Math.round(sumAcc / accCount) : null;
 
     // 2. Rank Distribution Summary
     const rankDistribution = [
@@ -113,17 +138,15 @@ export async function GET(request: Request) {
       return (s / t) * 25;
     };
     const monthMap: Record<string, { preSum: number; preCount: number; postSum: number; postCount: number }> = {};
-    (preTestsRes.data || []).forEach((row: any) => {
-      const date = new Date(row.created_at);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    preTestsRes.forEach(row => {
+      const key = bangkokMonth(row.created_at);
       if (!monthMap[key]) monthMap[key] = { preSum: 0, preCount: 0, postSum: 0, postCount: 0 };
       monthMap[key].preSum += normalizeScore25(row.score, row.total_questions);
       monthMap[key].preCount++;
     });
 
-    (postTestsRes.data || []).forEach((row: any) => {
-      const date = new Date(row.created_at);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    postTestsRes.forEach(row => {
+      const key = bangkokMonth(row.created_at);
       if (!monthMap[key]) monthMap[key] = { preSum: 0, preCount: 0, postSum: 0, postCount: 0 };
       monthMap[key].postSum += normalizeScore25(row.score, row.total_questions);
       monthMap[key].postCount++;
@@ -144,7 +167,7 @@ export async function GET(request: Request) {
       });
 
     // PDCA Status (uses Post-test gain when available, or live gameplay accuracy during ongoing term)
-    const pdcaStatus = postCount > 0
+    const pdcaStatus = avgGain !== null
       ? (avgGain >= 15
           ? { label: 'High Growth', status: 'ดีเยี่ยม', color: 'text-emerald-400', badgeBg: 'bg-emerald-500/10 border-emerald-500/30' }
           : avgGain >= 5
@@ -152,9 +175,9 @@ export async function GET(request: Request) {
           : avgGain > 0
           ? { label: 'Progressing', status: 'กำลังพัฒนา', color: 'text-amber-400', badgeBg: 'bg-amber-500/10 border-amber-500/30' }
           : { label: 'Needs Support', status: 'ต้องติดตามใกล้ชิด', color: 'text-rose-400', badgeBg: 'bg-rose-500/10 border-rose-500/30' })
-      : (avgAcc >= 75
+      : ((avgAcc ?? 0) >= 75
           ? { label: 'Active Learning', status: 'กำลังเรียนรู้ดีเยี่ยม', color: 'text-emerald-400', badgeBg: 'bg-emerald-500/10 border-emerald-500/30' }
-          : avgAcc >= 50 || preCount > 0
+          : (avgAcc ?? 0) >= 50 || preCount > 0
           ? { label: 'In Progress', status: 'กำลังดำเนินการตามแผน', color: 'text-indigo-400', badgeBg: 'bg-indigo-500/10 border-indigo-500/30' }
           : { label: 'Starting Term', status: 'เริ่มภาคเรียน', color: 'text-amber-400', badgeBg: 'bg-amber-500/10 border-amber-500/30' });
 
@@ -168,9 +191,10 @@ export async function GET(request: Request) {
       pdcaStatus,
       rankDistribution,
       monthlyTrend,
+      term,
     };
 
-    cache = { data: payload, timestamp: Date.now() };
+    overviewCache.set(term, { data: payload, timestamp: Date.now() });
 
     return NextResponse.json({ success: true, ...payload });
   } catch (error: any) {

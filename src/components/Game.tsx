@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { playWordAudio } from '@/utils/audio';
 import { isSoundEnabled, toggleSound } from '@/utils/soundEffects';
-import { normalizeAnswer, parseAcceptableAnswers, QuizChoice } from '@/lib/quizUtils';
+import { isConfiguredAnswerCorrect, normalizeAnswer, parseAcceptableAnswers, QuizChoice } from '@/lib/quizUtils';
 import { useGameEngine } from '@/hooks/useGameEngine';
 import BossHpBar from '@/components/BossHpBar';
 
@@ -547,7 +547,8 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
               <div className="glass-card p-8 shadow-xl w-full border-none">
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-6">ฟังและเลือกสะกด</span>
                 <button 
-                  onClick={() => playWordAudio(currentWord.word)}
+                  aria-label="เล่นเสียงคำศัพท์"
+                  onClick={() => playWordAudio(currentWord.word, currentWord.audio_url)}
                   className="w-20 h-20 premium-btn bg-primary/10 hover:bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg border-primary/20"
                 >
                   <Volume2 className="w-10 h-10" />
@@ -635,7 +636,8 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
                 const normMeaning = normalizeAnswer(currentWord.meaning_th || currentWord.meaning);
                 const targetWordId = currentWord.correct_word_id || currentWord.id || currentWord.word_id;
 
-                const isThisChoiceCorrect = choice.is_correct === true || 
+                const isThisChoiceCorrect = currentWord.answer_language && currentWord.correct_word_id
+                  ? isConfiguredAnswerCorrect(currentWord, choice) : choice.is_correct === true ||
                   (Boolean(targetWordId) && choice.word_id === targetWordId) ||
                   (Boolean(normCorrect) && normChoice === normCorrect) ||
                   (Boolean(normWord) && normChoice === normWord) ||

@@ -14,6 +14,7 @@ import {
   getWorldStageRange,
 } from '@/lib/progression/worldHierarchy';
 import { isStageUnlocked } from '@/lib/progression/unlockRules';
+import { buildCampaignQuestion } from '@/lib/quizUtils';
 
 const startGameSchema = z.object({
   stageNumber: z.number().int().min(1).max(100),
@@ -279,154 +280,23 @@ export async function POST(request: Request) {
 
     for (let i = 0; i < shuffledTargets.length; i++) {
       const target = shuffledTargets[i];
-      const targetThaiMeaning = (target.meaning_th && /[ก-๙]/.test(target.meaning_th))
-        ? target.meaning_th
-        : (target.meaning && /[ก-๙]/.test(target.meaning))
-          ? target.meaning
-          : (target.meaning_th || target.meaning || '');
-      
       const isSkullStudent = Boolean(studentRes?.data?.is_skull);
-      // For EXTERNAL students (VJ Network Lite) or Skull Mode students (เด็กพิเศษ), enforce 100% Multiple Choice only (no FILL_BLANK/spelling)
-      const basePattern = isExternalStudent ? (i % 2) : (i % 3);
-      const forceMultipleChoice = isExternalStudent || isSkullStudent || missionLevel === 1;
-      const qPattern = forceMultipleChoice
-        ? (i % 2)
-        : (missionLevel === 3 && i % 2 === 1)
-          ? 2
-          : basePattern;
-
-      if (qPattern === 2) {
-        // 1. FILL_BLANK (ข้อเขียน / พิมพ์สะกดคำ) - INTERNAL Full Mode only
-        authoritativeQuestions.push({
-          id: target.id,
-          word_id: target.id,
-          word: target.word,
-          meaning: target.meaning || '',
-          meaning_th: target.meaning_th || '',
-          correct_answer: target.word,
-          correct_word_id: target.id,
-          qType: 'FILL_BLANK',
-          question_type: 'spelling',
-          choices: [],
-        });
-
-        clientQuestions.push({
-          id: target.id,
-          word_id: target.id,
-          word: target.word,
-          meaning: target.meaning || '',
-          meaning_th: target.meaning_th || '',
-          part_of_speech: target.part_of_speech,
-          prompt: targetThaiMeaning,
-          correct_answer: target.word,
-          correct_word_id: target.id,
-          qType: 'FILL_BLANK',
-          question_type: 'spelling',
-          stageType,
-          choices: [],
-        });
-      } else if (qPattern === 1) {
-        // 2. WORD_MC (ดูความหมายภาษาไทย เลือกคำศัพท์ภาษาอังกฤษ)
-        // Prompt MUST be Thai. Choices MUST be English. NO audio button!
-        const distractors = distractorPool
-          .filter((d) => d.id !== target.id && d.word !== target.word && /[a-zA-Z]/.test(d.word || ''))
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 3)
-          .map((d) => ({
-            word_id: d.id,
-            text: d.word || '',
-          }));
-
-        const allChoices = [
-          { word_id: target.id, text: target.word, is_correct: true },
-          ...distractors.map((d) => ({ word_id: d.word_id, text: d.text, is_correct: false })),
-        ].sort(() => Math.random() - 0.5);
-
-        authoritativeQuestions.push({
-          id: target.id,
-          word_id: target.id,
-          word: target.word,
-          meaning: target.meaning || '',
-          meaning_th: target.meaning_th || '',
-          correct_answer: target.word,
-          correct_word_id: target.id,
-          qType: 'WORD_MC',
-          question_type: 'word_mc',
-          choices: allChoices,
-        });
-
-        clientQuestions.push({
-          id: target.id,
-          word_id: target.id,
-          word: target.word,
-          meaning: target.meaning || '',
-          meaning_th: target.meaning_th || '',
-          part_of_speech: target.part_of_speech,
-          prompt: targetThaiMeaning,
-          correct_answer: target.word,
-          correct_word_id: target.id,
-          qType: 'WORD_MC',
-          question_type: 'word_mc',
-          stageType,
-          choices: allChoices.map((c) => ({
-            word_id: c.word_id,
-            text: c.text,
-            is_correct: c.word_id === target.id,
-          })),
-        });
-      } else {
-        // 3. MEANING_MC (ดูคำศัพท์ภาษาอังกฤษ เลือกความหมายภาษาไทย)
-        // Prompt MUST be English. Choices MUST be Thai. Audio button active!
-        const distractors = distractorPool
-          .filter((d) => {
-            const dMeaning = (d.meaning_th && /[ก-๙]/.test(d.meaning_th)) ? d.meaning_th : d.meaning;
-            return d.id !== target.id && dMeaning !== targetThaiMeaning && /[ก-๙]/.test(dMeaning || '');
-          })
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 3)
-          .map((d) => ({
-            word_id: d.id,
-            text: (d.meaning_th && /[ก-๙]/.test(d.meaning_th)) ? d.meaning_th : (d.meaning || ''),
-          }));
-
-        const allChoices = [
-          { word_id: target.id, text: targetThaiMeaning, is_correct: true },
-          ...distractors.map((d) => ({ word_id: d.word_id, text: d.text, is_correct: false })),
-        ].sort(() => Math.random() - 0.5);
-
-        authoritativeQuestions.push({
-          id: target.id,
-          word_id: target.id,
-          word: target.word,
-          meaning: target.meaning || '',
-          meaning_th: target.meaning_th || '',
-          correct_answer: targetThaiMeaning,
-          correct_word_id: target.id,
-          qType: 'MEANING_MC',
-          question_type: 'meaning_mc',
-          choices: allChoices,
-        });
-
-        clientQuestions.push({
-          id: target.id,
-          word_id: target.id,
-          word: target.word,
-          meaning: target.meaning || '',
-          meaning_th: target.meaning_th || '',
-          part_of_speech: target.part_of_speech,
-          prompt: target.word,
-          correct_answer: targetThaiMeaning,
-          correct_word_id: target.id,
-          qType: 'MEANING_MC',
-          question_type: 'meaning_mc',
-          stageType,
-          choices: allChoices.map((c) => ({
-            word_id: c.word_id,
-            text: c.text,
-            is_correct: c.word_id === target.id,
-          })),
-        });
-      }
+      const basicType = i % 2 === 0 ? 'meaning_mc' : 'word_mc';
+      const mixedTypes = ['meaning_mc', 'word_mc', 'spelling', 'listening_mc', 'context_mc'] as const;
+      const preferred = isExternalStudent || isSkullStudent ? basicType
+        : missionLevel === 1 && i % 5 === 2 ? 'listening_mc'
+        : missionLevel === 1 && i % 5 === 4 ? 'context_mc'
+        : missionLevel === 3 && i % 2 === 1 ? 'spelling'
+        : missionLevel === 1 ? basicType : mixedTypes[i % mixedTypes.length];
+      const question = buildCampaignQuestion(target, distractorPool, preferred)
+        ?? buildCampaignQuestion(target, distractorPool, basicType)
+        ?? buildCampaignQuestion(target, distractorPool, basicType === 'word_mc' ? 'meaning_mc' : 'word_mc');
+      if (!question) continue;
+      authoritativeQuestions.push(question);
+      clientQuestions.push({ ...question, stageType });
+    }
+    if (!authoritativeQuestions.length) {
+      return NextResponse.json({ error: 'ยังไม่มีชุดข้อสอบที่สมบูรณ์สำหรับด่านนี้' }, { status: 422 });
     }
 
     // ── Create authoritative ACTIVE attempt ──────────────────────────────────

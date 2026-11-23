@@ -24,7 +24,7 @@ test('demo bottom navigation leaves safe space for Study Camp controls', () => {
   assert.match(demoPage, /max-w-\[calc\(100vw-1rem\)\]/);
   assert.match(studyCamp, /min-h-\[calc\(100vh-var\(--demo-bottom-nav-space,0px\)\)\]/);
   assert.match(studyCamp, /useDemoStore\(\(state\) => state\.isDemoMode\)/);
-  assert.match(studyCamp, /isDemoMode \? 'fixed left-1\/2 bottom-\[calc\(0\.75rem\+var\(--demo-bottom-nav-space,0px\)\)\]/);
+  assert.match(studyCamp, /isDemoMode\s*\? 'fixed left-1\/2 bottom-\[calc\(0\.75rem\+var\(--demo-bottom-nav-space,0px\)\)\]/);
   assert.match(studyCamp, /isDemoMode \? 'absolute top-4 right-4 w-12 h-12' : 'w-16 h-16'/);
   assert.match(studyCamp, /flex-1 min-h-0 flex flex-col/);
 });

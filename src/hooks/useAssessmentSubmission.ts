@@ -7,6 +7,7 @@ interface Submission {
   totalQuestions: number;
   timeSpentSec: number;
   epoch: string;
+  stageCheckpoint?: number;
 }
 
 export function useAssessmentSubmission() {

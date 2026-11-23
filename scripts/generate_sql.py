@@ -1,7 +1,7 @@
 import json
 import bcrypt
 
-with open("src/data/students_season2.json", "r", encoding="utf-8") as f:
+with open("backups/private-rosters/students_season2.json", "r", encoding="utf-8") as f:
     students = json.load(f)
 
 # Pre-hash
@@ -78,7 +78,7 @@ BEGIN
 END $$;
 """)
 
-with open("scripts/import_students_season2.sql", "w", encoding="utf-8") as f:
+with open("backups/private-rosters/import_students_season2.sql", "w", encoding="utf-8") as f:
     f.write("\n".join(sql_lines))
 
 print("Generated scripts/import_students_season2.sql successfully!")

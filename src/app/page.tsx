@@ -102,8 +102,11 @@ export default function Home() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.authenticated && data.role === 'STUDENT' && data.user) {
-          setStudent(data.user);
-          saveStudentSession(data.user);
+          const user = { ...data.user, user_type: data.user.user_type ?? data.user.userType,
+            classroom_id: data.user.classroom_id ?? data.user.classroomId ?? null,
+            school_name: data.user.school_name ?? data.user.schoolName ?? null };
+          setStudent(user);
+          saveStudentSession(user);
           if (data.progress) setProgress(data.progress);
         }
       })
@@ -113,11 +116,15 @@ export default function Home() {
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
-        if (parsed.username) setLoginUsername(parsed.username);
-        if (parsed.password) setLoginPassword(parsed.password);
-        if (parsed.role) setLoginRole(parsed.role);
-        setRememberMe(true);
-      } catch (e) {}
+        const username = typeof parsed?.username === 'string' ? parsed.username : '';
+        const role = ['student', 'teacher', 'executive'].includes(parsed?.role) ? parsed.role : 'student';
+        localStorage.setItem('vj_saved_user', JSON.stringify({ username, role }));
+        setLoginUsername(username);
+        setLoginRole(role);
+        setRememberMe(Boolean(username));
+      } catch {
+        localStorage.removeItem('vj_saved_user');
+      }
     }
   }, []);
 
@@ -163,7 +170,7 @@ export default function Home() {
       if (rememberMe) {
         localStorage.setItem(
           'vj_saved_user',
-          JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim(), role: loginRole })
+          JSON.stringify({ username: loginUsername.trim(), role: loginRole })
         );
       } else {
         localStorage.removeItem('vj_saved_user');
@@ -493,7 +500,7 @@ export default function Home() {
             </div>
             <label className="flex items-center gap-2 cursor-pointer py-1">
               <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-emerald-500" />
-              <span className="text-slate-400 text-xs sm:text-sm hover:text-white transition-colors">จดจำรหัสผ่าน</span>
+              <span className="text-slate-400 text-xs sm:text-sm hover:text-white transition-colors">จดจำชื่อผู้ใช้</span>
             </label>
 
             {/* Primary Action Button */}
@@ -659,6 +666,7 @@ export default function Home() {
 
               <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-2 text-sm">
                 <h3 className="font-black text-white text-base">ผู้จัดทำนวัตกรรม: นายณัฐภัทร พรมปรุ (ครู)</h3>
+                <p className="text-slate-300">Mr. Nattapat Prompru</p>
                 <p className="text-slate-300">โรงเรียนบ้านโคกยาง สพป.บุรีรัมย์ เขต 3</p>
                 <div className="pt-2 text-xs text-slate-400 space-y-1">
                   <p>• ปริญญาโท: ศษ.ม. การบริหารการศึกษา (ม.วงษ์ชวลิตกุล) / ศศ.ม. ภาษาอังกฤษ (มรภ.บุรีรัมย์)</p>

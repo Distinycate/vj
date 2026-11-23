@@ -67,6 +67,7 @@ export default function SeasonManager() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'ปิดฤดูกาลไม่สำเร็จ');
+      if (data.alreadyClosed) { setMessage('ฤดูกาลนี้ปิดแล้ว ไม่แจกรางวัลหรือหักการ์ดซ้ำ'); return; }
 
       const rewardSummary = (data.rewards || []).map((r: any) => `อันดับ ${r.rank}: ทีม ${r.teamName} (${r.ticketsAwarded} ใบ)`).join(', ');
       const penaltySummary = (data.penalties || []).map((p: any) => `ทีม ${p.teamName} (ริบ ${p.penaltyCardsPerMember} ใบ)`).join(', ');
@@ -101,17 +102,27 @@ export default function SeasonManager() {
   }
 
   async function handleImportSeasonStudents() {
-    if (!window.confirm("ยืนยันนำเข้ารหัสนักเรียนทั้ง 71 คน (ม.1 - ม.3) เข้าสู่ระบบหรือไม่?\n- Username: เลข ปชช. 13 หลัก\n- Password: รหัส นร. 4 หลัก\n- ตั้งต้นที่ด่าน 1")) return;
+    if (isCreating || teacher?.role !== 'ADMIN') return;
     setIsCreating(true);
     setMessage('');
     try {
-      const res = await fetch('/api/admin/students/import-season', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'นำเข้าไม่สำเร็จ');
-      setMessage(`🎉 ${data.message}`);
+      async function send(payload: { action: 'preview' | 'apply'; revision?: string }) {
+        const res = await fetch('/api/admin/students/import-season', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'นำเข้าไม่สำเร็จ');
+        return data;
+      }
+      const { preview } = await send({ action: 'preview' });
+      if (preview.conflicts.length) {
+        setMessage(`ยังไม่นำเข้า: รหัสชนกันหรือไม่พบห้องที่ชัดเจนในแถว ${preview.conflicts.join(', ')}`);
+        return;
+      }
+      if (!preview.newCount) { setMessage('ไม่พบรายชื่อใหม่ บัญชีและความคืบหน้าเดิมไม่ถูกแก้ไข'); return; }
+      if (!window.confirm(`เพิ่มบัญชีใหม่ ${preview.newCount} คน และข้ามบัญชีเดิม ${preview.unchanged} คนหรือไม่?\nระบบจะไม่เปลี่ยนรหัสหรือด่านของบัญชีเดิม`)) return;
+      const data = await send({ action: 'apply', revision: preview.revision });
+      setMessage(data.message);
     } catch (err: any) {
       setMessage(err.message || 'เกิดข้อผิดพลาดในการนำเข้า');
     } finally {
@@ -217,14 +228,14 @@ export default function SeasonManager() {
                 <span>เก็บประวัติและเริ่มรอบใหม่ 2/2568</span>
               </button>
 
-              <button
+              {teacher?.role === 'ADMIN' && <button
                 type="button"
                 onClick={handleImportSeasonStudents}
                 disabled={isCreating}
                 className="w-full mt-2 bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm border border-indigo-400/30"
               >
-                <span>📥 นำเข้ารหัสนักเรียน 71 คน (ม.1 - ม.3)</span>
-              </button>
+                <span>ตรวจรายชื่อและเพิ่มเฉพาะบัญชีใหม่</span>
+              </button>}
             </div>
           </div>
         </div>

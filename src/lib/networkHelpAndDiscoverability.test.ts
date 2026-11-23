@@ -8,11 +8,9 @@ const networkStudentLoginPage = readFileSync(new URL('../app/network/login/page.
 const networkTeacherAuthPage = readFileSync(new URL('../app/network/teacher/page.tsx', import.meta.url), 'utf8');
 const teacherDashboardPage = readFileSync(new URL('../app/network/teacher/dashboard/page.tsx', import.meta.url), 'utf8');
 
-test('Part 2: Main landing page should have prominent Card Teacher button, single clean entry button for VJ Lite, and demo button at bottom', () => {
-  // Check for discoverability section for network schools
-  assert.match(landingPage, /โรงเรียนเครือข่ายและพันธมิตร/);
-  assert.match(landingPage, /นักเรียนโรงเรียนเครือข่าย/);
-  assert.match(landingPage, /ครูโรงเรียนเครือข่าย/);
+test('Part 2: Landing exposes the network, teacher cards and demo destinations', () => {
+  assert.match(landingPage, /โรงเรียนเครือข่าย/);
+  assert.match(landingPage, />VJ Lite</);
   
   // Check unified direct router destination to VJ Lite homepage
   assert.match(landingPage, /router\.push\('\/network'\)/);
@@ -21,8 +19,8 @@ test('Part 2: Main landing page should have prominent Card Teacher button, singl
 
   // Check Card Teacher button is prominent under login
   assert.match(landingPage, /ระบบการ์ดคำศัพท์สำหรับคุณครู/);
-  // Check Demo button is present at bottom
-  assert.match(landingPage, /โหมดกรรมการ/);
+  assert.match(landingPage, /router\.push\('\/demo'\)/);
+  assert.match(landingPage, /โหมดทดลอง/);
 });
 
 test('Part 3 & 5: VJ Lite Homepage and Standalone Student Login page should contain self-service guidance and clear steps', () => {

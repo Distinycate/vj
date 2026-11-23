@@ -12,7 +12,7 @@ import {
 } from '@/utils/soundEffects';
 import { useDemoStore } from '@/store/useDemoStore';
 import { generateStageQuestions, getAdaptiveDifficulty, generateWeaknessBossQuestions } from '@/utils/adaptiveEngine';
-import { normalizeAnswer, parseAcceptableAnswers, QuizChoice } from '@/lib/quizUtils';
+import { isConfiguredAnswerCorrect, normalizeAnswer, parseAcceptableAnswers, QuizChoice } from '@/lib/quizUtils';
 import { useAntiCheat } from '@/hooks/useAntiCheat';
 import { incrementMockQuestProgress } from '@/utils/questUtils';
 
@@ -345,7 +345,7 @@ export function useGameEngine(): UseGameEngineReturn {
     setShowHint(false);
 
     if (word.question_type === 'listening_mc' || word.qType === 'LISTENING_MC') {
-      setTimeout(() => playWordAudio(word.word), 300);
+      setTimeout(() => playWordAudio(word.word, word.audio_url), 300);
     }
 
     setFillAnswer('');
@@ -436,6 +436,7 @@ export function useGameEngine(): UseGameEngineReturn {
       isCorrect = isFlagMatch || isIdMatch || isTextMatch;
     }
 
+    if (wordObj.answer_language && wordObj.correct_word_id) isCorrect = isConfiguredAnswerCorrect(wordObj, answer);
     const finalScore = score + (isCorrect ? 1 : 0);
     const finalWrongWords = isCorrect ? wrongWords : [...wrongWords, wordObj.word_id || wordObj.id];
 

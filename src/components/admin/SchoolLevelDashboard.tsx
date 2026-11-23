@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { ReportingTerm } from '@/lib/reportingTerms';
 import SchoolTermWrongWords from './SchoolTermWrongWords';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Legend, Tooltip, ResponsiveContainer 
@@ -29,10 +30,10 @@ interface SchoolLevelDashboardProps {
 interface SchoolOverviewData {
   totalStudents: number;
   classroomsCount: number;
-  avgPre: number;
-  avgPost: number;
-  avgGain: number;
-  avgAcc: number;
+  avgPre: number | null;
+  avgPost: number | null;
+  avgGain: number | null;
+  avgAcc: number | null;
   pdcaStatus: {
     label: string;
     status: string;
@@ -68,14 +69,17 @@ export default function SchoolLevelDashboard({ studentsList, wrongWords }: Schoo
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [term, setTerm] = useState<ReportingTerm>('2');
+  const requestId = useRef(0);
 
   const fetchOverview = useCallback(async (force = false) => {
+    const id = ++requestId.current;
     try {
       if (force) setIsRefreshing(true);
       else setLoading(true);
       setError(null);
 
-      const res = await fetch(`/api/admin/school-overview${force ? '?force=true' : ''}`);
+      const res = await fetch(`/api/admin/school-overview?term=${term}${force ? '&force=true' : ''}`);
       if (!res.ok) {
         throw new Error('ไม่สามารถดึงข้อมูลภาพรวมโรงเรียนได้');
       }
@@ -84,16 +88,17 @@ export default function SchoolLevelDashboard({ studentsList, wrongWords }: Schoo
         throw new Error(json.error || 'เกิดข้อผิดพลาดในการประมวลผลข้อมูล');
       }
 
+      if (id !== requestId.current) return;
       setData(json);
       setLastUpdated(new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }));
     } catch (err: any) {
+      if (id !== requestId.current) return;
       console.error('Failed to load school overview:', err);
       setError(err.message || 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
     } finally {
-      setLoading(false);
-      setIsRefreshing(false);
+      if (id === requestId.current) { setLoading(false); setIsRefreshing(false); }
     }
-  }, []);
+  }, [term]);
 
   useEffect(() => {
     fetchOverview();
@@ -138,10 +143,10 @@ export default function SchoolLevelDashboard({ studentsList, wrongWords }: Schoo
   const {
     totalStudents = 0,
     classroomsCount = 0,
-    avgPre = 0,
-    avgPost = 0,
-    avgGain = 0,
-    avgAcc = 0,
+    avgPre = null,
+    avgPost = null,
+    avgGain = null,
+    avgAcc = null,
     pdcaStatus = { label: 'On Track', status: 'ตามเป้าหมาย', color: 'text-emerald-400', badgeBg: 'bg-emerald-500/10 border-emerald-500/30' },
     rankDistribution = [],
     monthlyTrend = []
@@ -183,7 +188,13 @@ export default function SchoolLevelDashboard({ studentsList, wrongWords }: Schoo
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="text-sm text-slate-300">ภาคเรียนของผลสอบ
+              <select value={term} onChange={e => { requestId.current++; setData(null); setLoading(true); setTerm(e.target.value as ReportingTerm); }}
+                className="ml-2 min-h-11 rounded-lg border border-slate-700 bg-slate-900 px-3 text-white">
+                <option value="2">2/2569</option><option value="1">1/2569</option>
+              </select>
+            </label>
             {lastUpdated && (
               <span className="text-[11px] font-mono text-slate-400 bg-slate-950/60 px-3 py-1.5 rounded-xl border border-slate-800">
                 อัปเดตล่าสุด {lastUpdated} น.
@@ -238,13 +249,12 @@ export default function SchoolLevelDashboard({ studentsList, wrongWords }: Schoo
             </div>
           </div>
           <div className="text-3xl font-black text-emerald-400 tracking-tight flex items-baseline gap-1">
-            <span>+{avgGain}</span>
-            <span className="text-sm font-semibold text-slate-400">คะแนน</span>
+            <span>{avgGain === null ? '—' : (avgGain > 0 ? '+' : '') + avgGain + '%'}</span>
           </div>
           <div className="mt-2 text-[11px] text-slate-400 flex items-center gap-1">
-            <span className="text-slate-500">Pre-test {avgPre}/25</span>
+            <span className="text-slate-400">{avgPre === null ? 'รอ Pre-test' : `Pre-test ${avgPre}/25`}</span>
             <ArrowUpRight className="w-3 h-3 text-emerald-400" />
-            <span className="text-emerald-300 font-bold">{avgPost > 0 ? `Post-test ${avgPost}/25` : 'รอ Post-test'}</span>
+            <span className="text-emerald-300 font-bold">{avgPost !== null ? `Post-test ${avgPost}/25` : 'รอ Post-test'}</span>
           </div>
         </div>
 
@@ -260,10 +270,10 @@ export default function SchoolLevelDashboard({ studentsList, wrongWords }: Schoo
             </div>
           </div>
           <div className="text-3xl font-black text-amber-400 tracking-tight">
-            {avgAcc}%
+            {avgAcc === null ? '—' : avgAcc + '%'}
           </div>
           <div className="mt-2 text-[11px] text-slate-400">
-            อัตราการตอบคำถามถูกเฉลี่ยทั้งโรงเรียน
+            อัตราการตอบถูกสะสมของนักเรียนที่เปิดใช้งาน (ไม่กรองเทอม)
           </div>
         </div>
 
@@ -369,7 +379,7 @@ export default function SchoolLevelDashboard({ studentsList, wrongWords }: Schoo
           
           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
             <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-              <CheckCircle2 className="w-3.5 h-3.5" /> พัฒนาการเฉลี่ยรวม +{avgGain} คะแนน
+              <CheckCircle2 className="w-3.5 h-3.5" /> {avgGain === null ? 'ยังไม่มีคู่ผลสอบสำหรับเปรียบเทียบ' : `Normalized Gain เฉลี่ย ${avgGain}%`}
             </span>
             <span>กลุ่มตัวอย่างผลการทดสอบทั้งหมด</span>
           </div>

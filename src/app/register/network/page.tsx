@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Globe2, Loader2, LogIn, School } from 'lucide-react';
-import { supabase } from '@/utils/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import { saveStudentSession } from '@/utils/studentSession';
 
@@ -29,7 +28,7 @@ const generateExternalStudentId = () => {
 
 export default function NetworkRegisterPage() {
   const router = useRouter();
-  const { setStudent, setProgress } = useAppStore();
+  const { setStudent, setProgress, setScreen } = useAppStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
 
   // Login State
@@ -53,10 +52,13 @@ export default function NetworkRegisterPage() {
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
-        if (parsed.username) setLoginUsername(parsed.username);
-        if (parsed.password) setLoginPassword(parsed.password);
-        setRememberMe(true);
-      } catch (e) {}
+        const username = typeof parsed?.username === 'string' ? parsed.username : '';
+        localStorage.setItem('vj_saved_guest', JSON.stringify({ username }));
+        setLoginUsername(username);
+        setRememberMe(Boolean(username));
+      } catch {
+        localStorage.removeItem('vj_saved_guest');
+      }
     }
   }, []);
 
@@ -71,44 +73,30 @@ export default function NetworkRegisterPage() {
     setMessage('');
 
     try {
-      const { data: studentData, error: studentError } = await supabase
-        .rpc('login_student', {
-          p_username: loginUsername.trim(),
-          p_password: loginPassword.trim()
-        });
-
-      if (!studentError && studentData && studentData.user_type !== 'EXTERNAL') {
-        throw new Error('บัญชีนี้ไม่ใช่บัญชีเครือข่ายภายนอก');
+      const response = await fetch('/api/network/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim() }),
+      });
+      const login = await response.json();
+      if (!response.ok || !login.success) throw new Error(login.error || 'เข้าสู่ระบบไม่สำเร็จ');
+      // Use the authoritative session and the same progress shape as the main login.
+      const meResponse = await fetch('/api/auth/me', { cache: 'no-store' });
+      const me = await meResponse.json();
+      if (!meResponse.ok || me.role !== 'STUDENT' || me.user?.userType !== 'EXTERNAL' || !me.progress) {
+        throw new Error('โหลดข้อมูลเครือข่ายไม่สำเร็จ กรุณาลองใหม่');
       }
-
-      if (studentError || !studentData) {
-        throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือไม่ใช่บัญชีเครือข่ายภายนอก');
-      }
+      const studentData = { ...me.user, user_type: 'EXTERNAL', student_id: login.student.studentId, school_name: me.user.schoolName };
 
       if (rememberMe) {
-        localStorage.setItem('vj_saved_guest', JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim() }));
+        localStorage.setItem('vj_saved_guest', JSON.stringify({ username: loginUsername.trim() }));
       } else {
         localStorage.removeItem('vj_saved_guest');
       }
 
-      let progressData: any = null;
-      try {
-        const profRes = await fetch('/api/student/profile');
-        if (profRes.ok) {
-          const profJson = await profRes.json();
-          progressData = profJson.learningPath;
-        }
-      } catch (e) {
-        console.error("Failed to load profile for guest", e);
-      }
-
-      const guestProgress = {
-        ...progressData,
-        pretest_date: new Date().toISOString(),
-      };
-
       setStudent(studentData);
-      setProgress(guestProgress);
+      setProgress(me.progress);
+      setScreen('dashboard');
       saveStudentSession(studentData);
       setMessage('เข้าสู่ระบบสำเร็จ กำลังเข้าสู่ Dashboard...');
       router.push('/');
@@ -165,7 +153,7 @@ export default function NetworkRegisterPage() {
       };
 
       if (rememberMe) {
-        localStorage.setItem('vj_saved_guest', JSON.stringify({ username: normalizedUsername, password: password.trim() }));
+        localStorage.setItem('vj_saved_guest', JSON.stringify({ username: normalizedUsername }));
       }
 
       setStudent(studentData);
@@ -236,7 +224,7 @@ export default function NetworkRegisterPage() {
               </div>
               <label className="flex items-center gap-2 cursor-pointer mt-1">
                 <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-900" />
-                <span className="text-slate-400 text-sm font-medium hover:text-white transition-colors">จดจำรหัสผ่าน</span>
+                <span className="text-slate-400 text-sm font-medium hover:text-white transition-colors">จดจำชื่อผู้ใช้</span>
               </label>
               <button
                 type="submit"
@@ -290,7 +278,7 @@ export default function NetworkRegisterPage() {
 
               <label className="flex items-center gap-2 cursor-pointer mt-1">
                 <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-900" />
-                <span className="text-slate-400 text-sm font-medium hover:text-white transition-colors">จดจำรหัสผ่านเข้าสู่ระบบในครั้งหน้า</span>
+                <span className="text-slate-400 text-sm font-medium hover:text-white transition-colors">จดจำชื่อผู้ใช้สำหรับครั้งหน้า</span>
               </label>
 
               <button

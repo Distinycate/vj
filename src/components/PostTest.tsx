@@ -199,7 +199,8 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
     }
 
     const result = await submission.submit({ type: 'POST_TEST', score: finalScore,
-      totalQuestions: questions.length, timeSpentSec: duration, epoch });
+      totalQuestions: questions.length, timeSpentSec: duration, epoch,
+      stageCheckpoint: progress?.assessment_checkpoint });
     if (result) acceptSavedResult(result);
   };
 
@@ -294,7 +295,7 @@ export default function PostTest({ onExit, onDashboard }: PostTestProps = {}) {
               <div className="grid grid-cols-2 gap-2 max-h-28 overflow-y-auto pr-1">
                 {previousPosttests.map((p, idx) => (
                   <div key={p.id || idx} className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs">
-                    <span className="text-slate-500">รอบ {idx + 1}:</span>
+                    <span className="text-slate-400">{p.stage_checkpoint ? `หลังด่าน ${p.stage_checkpoint}` : `รอบ ${idx + 1} · ไม่ระบุด่าน`}</span>
                     <span className="text-indigo-400 font-bold">{p.score} / {p.total_questions || POSTTEST_QUESTION_COUNT}</span>
                   </div>
                 ))}

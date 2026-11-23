@@ -6,7 +6,8 @@ import { Settings, CheckCircle2, AlertTriangle } from 'lucide-react';
 const DEFAULT_SCHOOL_ID = '00000000-0000-0000-0000-000000000001';
 
 export default function SettingsTab({ teacher }: { teacher: any }) {
-  const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
   const [schoolId, setSchoolId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -19,24 +20,26 @@ export default function SettingsTab({ teacher }: { teacher: any }) {
         .order('created_at', { ascending: true })
         .limit(1)
         .maybeSingle();
+      setLoading(false);
 
       if (error) {
-        setMessage(`อ่านค่าสถานะลงทะเบียนไม่ได้: ${error.message}`);
+        setMessage('เกิดข้อผิดพลาด: อ่านสถานะลงทะเบียนไม่ได้ กรุณาโหลดหน้าใหม่');
         return;
       }
       
       if (data) {
         setSchoolId(data.id);
-        setIsRegistrationOpen(data.is_registration_open !== false); // default true
+        setIsRegistrationOpen(typeof data.is_registration_open === 'boolean' ? data.is_registration_open : null);
       } else {
         setSchoolId(null);
-        setIsRegistrationOpen(true);
+        setIsRegistrationOpen(null);
       }
     }
     loadSettings();
   }, []);
 
   const handleToggleRegistration = async () => {
+    if (isRegistrationOpen === null || !schoolId) return;
     setIsSaving(true);
     setMessage('');
     
@@ -91,7 +94,9 @@ export default function SettingsTab({ teacher }: { teacher: any }) {
             <div>
               <h3 className="text-white font-bold flex items-center gap-2">
                 สถานะการลงทะเบียนนักเรียนใหม่
-                {isRegistrationOpen ? (
+                {isRegistrationOpen === null ? (
+                  <span className="text-xs text-slate-400">{loading ? 'กำลังตรวจสอบ…' : 'ไม่ทราบสถานะ'}</span>
+                ) : isRegistrationOpen ? (
                   <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">เปิดใช้งาน</span>
                 ) : (
                   <span className="text-[10px] bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded-full border border-rose-500/30">ปิดการใช้งาน</span>
@@ -104,14 +109,14 @@ export default function SettingsTab({ teacher }: { teacher: any }) {
             
             <button
               onClick={handleToggleRegistration}
-              disabled={isSaving}
+              disabled={isSaving || isRegistrationOpen === null || !schoolId}
               className={`px-6 py-3 rounded-xl font-bold text-sm shadow-lg transition-all min-w-[140px] ${
                 isRegistrationOpen 
                   ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20' 
                   : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-emerald-500/20'
               } disabled:opacity-50`}
             >
-              {isSaving ? 'กำลังบันทึก...' : isRegistrationOpen ? 'ปิดรับลงทะเบียน' : 'เปิดรับลงทะเบียน'}
+              {isSaving ? 'กำลังบันทึก...' : isRegistrationOpen === null ? 'ยังเปลี่ยนสถานะไม่ได้' : isRegistrationOpen ? 'ปิดรับลงทะเบียน' : 'เปิดรับลงทะเบียน'}
             </button>
           </div>
           
