@@ -178,7 +178,7 @@ export default function AdminPage() {
   };
 
   const handleRandomizeTeams = async () => {
-    if (!teacher) return;
+    if (teacher?.role !== 'ADMIN') return;
     
     if (!confirm('คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการสุ่มทีมระดับโรงเรียนและห้องเรียนใหม่ทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
       return;
@@ -192,8 +192,13 @@ export default function AdminPage() {
 
     setIsRandomizingTeams(true);
     try {
-      const { error: rpcError } = await supabase.rpc('randomize_all_teams');
-      if (rpcError) throw rpcError;
+      const res = await fetch('/api/admin/seasons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'shuffle_teams', confirmation: userInput }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'สุ่มทีมไม่สำเร็จ');
       
       alert('สุ่มทีมใหม่ทั้งหมดสำเร็จแล้ว');
       window.location.reload();

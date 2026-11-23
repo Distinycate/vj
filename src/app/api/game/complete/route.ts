@@ -38,58 +38,6 @@ const completeGameSchema = z.object({
 });
 
 
-/**
- * Record Team Battle score events when an internal student passes a stage.
- * Non-fatal so that issues with team season or scoring never block game progression.
- */
-async function recordTeamScoreForCompletion(
-  studentId: string,
-  stageNumber: number,
-  accuracy: number,
-  attemptId: string
-) {
-  try {
-    const isBoss = stageNumber % 10 === 0;
-    const baseEventType = isBoss ? 'boss_completed' : 'stage_completed';
-    const basePoints = isBoss ? 30 : 10;
-
-    const { error: baseError } = await supabaseAdmin.rpc('record_team_score_event', {
-      p_student_id: studentId,
-      p_event_type: baseEventType,
-      p_points: basePoints,
-      p_metadata: { stageNumber, accuracy, attemptId },
-    });
-    if (baseError) throw baseError;
-
-    let bonusEventType: string | null = null;
-    let bonusPoints = 0;
-    if (accuracy >= 100) {
-      bonusEventType = 'perfect_bonus';
-      bonusPoints = 25;
-    } else if (accuracy >= 90) {
-      bonusEventType = 'accuracy_bonus';
-      bonusPoints = 15;
-    } else if (accuracy >= 80) {
-      bonusEventType = 'accuracy_bonus';
-      bonusPoints = 10;
-    } else if (accuracy >= 70) {
-      bonusEventType = 'accuracy_bonus';
-      bonusPoints = 5;
-    }
-
-    if (bonusEventType && bonusPoints > 0) {
-      const { error: bonusError } = await supabaseAdmin.rpc('record_team_score_event', {
-        p_student_id: studentId,
-        p_event_type: bonusEventType,
-        p_points: bonusPoints,
-        p_metadata: { stageNumber, accuracy, attemptId },
-      });
-      if (bonusError) throw bonusError;
-    }
-  } catch (teamErr) {
-    console.error('[TeamScore] Failed to record team score event:', teamErr);
-  }
-}
 
 export async function POST(request: Request) {
   try {
@@ -313,14 +261,7 @@ export async function POST(request: Request) {
         console.warn('Failed to auto-update current_rank:', rankErr);
       }
 
-      if (isActuallyPassed && !isExternalStudent && !v3Data.already_completed) {
-        await recordTeamScoreForCompletion(
-          session.subjectId,
-          attempt.stage_number,
-          v3Data.accuracy || 0,
-          attempt.id
-        );
-      }
+      // The completion transaction records Team Battle points with the attempt.
 
       return NextResponse.json({
         success: true,

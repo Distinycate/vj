@@ -10,6 +10,7 @@
 - Pre-test 5 รอบ รองรับคะแนน 0 และค่าเฉลี่ยทศนิยม; Post-test เลือกทำได้ทุก 10 ด่านที่ผ่าน; RPC ป้องกันการส่งซ้ำและการส่งข้ามรอบการเรียน ปุ่มนำเข้าบัญชีใช้ preview และไม่เปลี่ยนรหัสบัญชีเดิม
 - Campaign: Listening ใช้คำศัพท์อังกฤษ, Meaning ใช้คำแปลไทย, ตัวเลือกไม่อิง index, เฉลยและการจบด่านอยู่ที่เซิร์ฟเวอร์ นักเรียนเครือข่ายยังเล่นและเก็บความก้าวหน้าได้ แต่ไม่สะสมเหรียญ/EXP จากจบด่านหลังติดตั้ง guard ยอดเดิมไม่ถูกหัก ไม่เปลี่ยน Demo/Review, Grandmaster หรือ Puzzle
 - แก้ 0/ร: บันทึกผลรายด่านและยอดผู้เรียนพร้อมกัน, กันส่งซ้ำจากหน้าใหม่, ปิดกิจกรรมแล้วปฏิเสธผลใหม่, คำตอบว่างไม่ถูกนับเป็นตัวเลือกแรก และเวลา/ป้ายแจ้งเตือนครูไม่เปลี่ยนเมื่อเล่นย้อนหลัง
+- Team Battle: ฤดูกาลโรงเรียนและห้องแยกกัน กระดาน/ตัวอย่างรางวัล/การปิดฤดูกาลใช้คะแนนสุทธิจาก SQL เดียวกัน ทีมที่ไม่มีคะแนนไม่รับรางวัลหรือถูกริบการ์ด การยืนยันจะถูกปฏิเสธหากคะแนนหรือสมาชิกเปลี่ยน และเก็บตารางอันดับเมื่อปิดเพื่อไม่ให้เปลี่ยนตามสมาชิกในภายหลัง
 
 ## ก่อนอนุมัติปล่อย
 
@@ -29,16 +30,17 @@
 2. `20261123160536_import_new_students_without_reset.sql`, `20261123163451_atomic_team_season.sql`, `20261123163715_posttest_checkpoint.sql`
 3. `20261123165742_private_live_game_answers.sql`: หลัง V3/Hint RPC
 4. `20261124120000_atomic_remedial_stage.sql` และ `20261124121500_campaign_guest_reward_guard.sql`: หลังมีตารางแก้ 0/ร และ V3 แบบ Rank แล้ว หาก guard ปฏิเสธ body ให้หยุดและเทียบ definition; อย่าตัดเงื่อนไข guard ทิ้ง
+5. `20261124130000_team_season_standings.sql`: หลังมี V3 completion, Team Battle, ระบบการ์ด, `ensure_student_team_memberships` ที่กันนักเรียนเครือข่าย และ `randomize_all_teams` เดิมจาก `MIGRATION_VOCAB_JOURNEY_V5.sql` ติดตั้งก่อน release build ในช่วงที่กำหนด: SQL ใหม่นับคะแนนจากผลจบด่านโดยตรง และปิดสิทธิ์ RPC จ่ายรางวัล/สุ่มทีมรุ่นเก่ากับการอ่านตารางทีมจาก browser หน้า Team Battle ใน deployment เดิมอาจโหลดไม่ได้ในช่วงสั้น ๆ ระหว่างติดตั้ง SQL กับสลับโค้ด จึงควรสลับพร้อมกันและให้ผู้ใช้รีเฟรชแท็บเดิม
 
-Rollback: เก็บ last-known-good ที่ไม่เปิดไฟล์ส่วนตัว; เมื่อต้องย้อน Campaign ให้หยุดเริ่ม attempt ใหม่และรอ attempt รุ่นที่เก็บเฉลยใน DB จบ/หมดเวลาก่อนย้อนโค้ดที่ยังอ่าน ledger ไม่ได้ อย่าเปิดสิทธิ์อ่านข้อมูลรายบุคคลคืนเพื่อแก้หน้าโหลด และอย่าย้อนด้วยการกู้ backup ทับผลใหม่ทั้งหมด
+Rollback: เก็บ last-known-good ที่ไม่เปิดไฟล์ส่วนตัว; เมื่อต้องย้อน Campaign ให้หยุดเริ่ม attempt ใหม่และรอ attempt รุ่นที่เก็บเฉลยใน DB จบ/หมดเวลาก่อนย้อนโค้ดที่ยังอ่าน ledger ไม่ได้ อย่าเปิดสิทธิ์อ่านข้อมูลรายบุคคลคืนเพื่อแก้หน้าโหลด และอย่าย้อนด้วยการกู้ backup ทับผลใหม่ทั้งหมด หากตัว migration ทีมกระทบการบันทึกด่าน ให้หยุดปล่อยและตรวจ PostgreSQL logs; ใช้ hotfix แบบพา endpoint รุ่นใหม่ติดไปด้วย ไม่เปิด RPC จ่ายรุ่นเก่าให้ browser
 
 ### งานที่ยังค้างและเกณฑ์ตรวจรับ
 
-- **Team Battle — ห้ามกดจ่ายรางวัลจริงจนกว่าจะแก้:** `src/components/TeamLeaderboard.tsx` อ่านฤดูกาลโรงเรียนแม้เป็น scope ห้อง และคิดคะแนนแบบถ่วงน้ำหนักใน `src/utils/teamBattleEngine.ts`; `close_team_season_v2` ปิดตาม scope แต่จัดอันดับจากผลรวมดิบ คนละชุดคะแนน/สูตรกับกระดาน นอกจากนี้การบันทึกคะแนน Campaign ใน `src/app/api/game/complete/route.ts` เป็นสองคำสั่งหลังจบด่านและไม่ซ่อมคะแนนเมื่อ retry ข้ามคำสั่งที่ล้มเหลว ให้ตกลงสูตรกลางและ tie-break จากผลที่ผู้ใช้เห็น, ผูกคะแนนฐาน/โบนัสกับ attempt และ season scope แบบกันซ้ำ, ทดสอบห้องที่มีคะแนนตัวอย่าง 2 ห้องและโรงเรียน 1 ฤดูกาล และเปรียบเทียบอันดับ UI กับ preview/ผลจริงก่อนอนุมัติ ห้ามแก้ยอดหรือย้ายคะแนนประวัติด้วยค่า default
+- **Team Battle:** เทียบอันดับกระดาน/ตัวอย่าง/หลังปิดบน staging ที่มีห้อง 2 ห้องและฤดูกาลโรงเรียน 1 ฤดูกาล ตรวจ latency จบด่านเมื่อหลายคนเล่นพร้อมกัน และตรวจฤดูกาลเก่าที่อาจเคยจ่ายบางส่วนก่อนกดปิด คะแนนรายห้องเดิมที่ระบบเก่าฝากไว้ในฤดูกาลโรงเรียนไม่ถูกย้ายหรือคำนวณย้อนหลัง ห้องที่ยังไม่มีฤดูกาลให้แสดงสถานะตามจริง เมื่อคะแนนเสมอเรียงด้วยรหัสทีมคงที่เหมือนกันทุกหน้า โหมดโรงเรียนได้ตั๋ว 10/7/5 และรายห้อง 3/2/1 ต่อคน ตามกติกาเดิม
 - ยืนยัน source ของ legacy term mapping, ประสิทธิภาพและความครบถ้วนของรายงานบนฐานที่ได้รับอนุญาต รวมถึง UX หน้า Demo/Study Camp, O-NET, การ์ด, แก้ 0/ร และเครือข่ายบนอุปกรณ์จริง งานท้องถิ่นยังไม่ยืนยันข้อมูลรายบุคคลหรือเวลาโหลดใน production
 
 ### การทดสอบ
 
-ใช้ `npm run check`, `npm run build`, `git diff --check` และ `scripts/test-{assessment-season,safe-roster-import,atomic-team-season,private-live-game,remedial-stage-transaction,guest-campaign-reward}.mjs` เมื่อมี PGlite (รองรับ `PGLITE_MODULE` สำหรับ path ภายในเครื่อง) ชุด Guest เรียก V3 แบบ Rank จริงของ repo บนฐาน fixture ไม่ใช่การยืนยัน definition ของ Supabase จริง ชุด browser `scripts/test-private-live-game-browser.mjs` ใช้ API จำลองและไม่ทดแทนการเปิดเสียงจริงหรือ smoke test staging
+ใช้ `npm run check`, `npm run build`, `git diff --check` และ `scripts/test-{assessment-season,safe-roster-import,atomic-team-season,private-live-game,remedial-stage-transaction,guest-campaign-reward,team-season-standings}.mjs` เมื่อมี PGlite (รองรับ `PGLITE_MODULE` สำหรับ path ภายในเครื่อง) ชุด Guest เรียก V3 แบบ Rank จริงของ repo บนฐาน fixture ไม่ใช่การยืนยัน definition ของ Supabase จริง ชุด browser `scripts/test-{private-live-game,team-battle}-browser.mjs` ใช้ API จำลองและไม่ทดแทนการเปิดเสียงจริงหรือ smoke test staging
 
 ส่งกลับเฉพาะ SHA ที่ทดสอบ, ผล CI, ผล gate SQL, รายการ smoke test ที่ผ่าน/ไม่ผ่าน และสถานะ production; ไม่แนบ Secret, บัญชีจริง หรือข้อมูลนักเรียน

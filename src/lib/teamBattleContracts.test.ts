@@ -37,10 +37,21 @@ test('team season migration only writes statuses allowed by the database constra
   assert.match(migration, /'REWARDED'/);
 });
 
-test('game completion endpoint invokes team battle scoring for internal students', () => {
+test('team points move into the completion transaction and the browser cannot score', () => {
   const gameCompleteRoute = readFileSync(new URL('../app/api/game/complete/route.ts', import.meta.url), 'utf8');
-  assert.match(gameCompleteRoute, /record_team_score_event/);
-  assert.match(gameCompleteRoute, /recordTeamScoreForCompletion/);
-  assert.match(gameCompleteRoute, /isActuallyPassed && !isExternalStudent/);
+  const sql = readFileSync(new URL('../../supabase/migrations/20261124130000_team_season_standings.sql', import.meta.url), 'utf8');
+  assert.doesNotMatch(gameCompleteRoute, /record_team_score_event/);
+  assert.match(sql, /AFTER UPDATE OF status ON public\.stage_attempts/);
+  assert.match(sql, /user_type = 'INTERNAL'/);
+  assert.match(sql, /ON CONFLICT \(campaign_attempt_id, season_id, team_id, event_type\)/);
+});
+
+test('class leaderboard uses the viewer’s session classroom and reward confirmation uses a revision', () => {
+  const leaderboard = readFileSync(new URL('../app/api/team-battle/leaderboard/route.ts', import.meta.url), 'utf8');
+  const seasons = readFileSync(new URL('../app/api/admin/seasons/route.ts', import.meta.url), 'utf8');
+  assert.match(leaderboard, /session\.user\.classroomId !== scope\.classroomId/);
+  assert.match(leaderboard, /session\.user\.userType !== 'INTERNAL'/);
+  assert.match(seasons, /requireInternalTeacherRole\(\['ADMIN'\]\)/);
+  assert.match(seasons, /p_revision: action\.revision/);
 });
 

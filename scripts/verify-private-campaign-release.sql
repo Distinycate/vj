@@ -8,7 +8,12 @@ WITH expected(signature) AS (VALUES
   ('public.submit_assessment_v2(uuid,uuid,uuid,text,integer,integer,integer)'),
   ('public.submit_checkpoint_posttest(uuid,uuid,uuid,integer,integer,integer,integer)'),
   ('public.open_school_team_season_v2(text)'),
-  ('public.close_team_season_v2(uuid,uuid)'),
+  ('public.open_classroom_team_season_v1(text,uuid)'),
+  ('public.team_scope_leaderboard_v1(text,uuid)'),
+  ('public.team_reward_preview_v1(uuid)'),
+  ('public.close_team_season_v3(uuid,uuid,text)'),
+  ('public.ensure_student_team_memberships(uuid)'),
+  ('public.shuffle_teams_when_idle_v1()'),
   ('public.submit_remedial_stage_v1(uuid,uuid,text,integer,integer,uuid)'),
   ('public.import_new_season_students(jsonb)')
 ), resolved AS (SELECT signature, to_regprocedure(signature) AS rpc FROM expected)
@@ -36,4 +41,22 @@ UNION ALL
 SELECT name || ' is private', CASE WHEN to_regclass('public.' || name) IS NULL THEN false ELSE
   NOT has_table_privilege('anon', 'public.' || name, 'SELECT')
   AND NOT has_table_privilege('authenticated', 'public.' || name, 'SELECT') END
-FROM (VALUES ('event_participants'), ('event_progress'), ('remedial_stage_submissions')) AS private_tables(name);
+FROM (VALUES ('event_participants'), ('event_progress'), ('remedial_stage_submissions'),
+  ('team_members'), ('team_score_events'), ('team_battle_seasons')) AS private_tables(name)
+UNION ALL
+SELECT 'campaign team score trigger enabled',
+  EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid=to_regclass('public.stage_attempts')
+    AND tgname='vj_campaign_team_points' AND tgenabled IN ('O','A') AND NOT tgisinternal)
+UNION ALL
+SELECT 'existing shuffle implementation installed', to_regprocedure('public.randomize_all_teams()') IS NOT NULL
+UNION ALL
+SELECT 'legacy team reward and score functions are not callable',
+  coalesce(bool_and(NOT has_function_privilege('service_role', rpc::oid, 'EXECUTE')
+    AND NOT has_function_privilege('anon', rpc::oid, 'EXECUTE')
+    AND NOT has_function_privilege('authenticated', rpc::oid, 'EXECUTE')),true)
+FROM (VALUES (to_regprocedure('public.close_team_season_v2(uuid,uuid)')),
+  (to_regprocedure('public.close_and_reward_team_season(uuid,uuid)')),
+  (to_regprocedure('public.record_team_score_event(uuid,text,numeric,jsonb)')),
+  (to_regprocedure('public.start_school_team_season(text)')),
+  (to_regprocedure('public.randomize_all_teams()'))) AS legacy(rpc)
+WHERE rpc IS NOT NULL;

@@ -1,5 +1,4 @@
 import { supabase } from '@/utils/supabase/client';
-import { createTeamScoreEvent } from '@/utils/teamBattleEngine';
 import { ADAPTIVE_RANK_CONFIG, RankConfig, getWorldForStage } from './adaptiveConfig';
 import { useDemoStore } from '@/store/useDemoStore';
 import {

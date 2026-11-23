@@ -1,12 +1,15 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/utils/supabase/client';
 import { Trophy, Plus, CheckCircle, Clock } from 'lucide-react';
+import type { TeamStanding } from '@/utils/teamBattleEngine';
 
 export default function SeasonManager() {
   const [seasons, setSeasons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [newSeasonName, setNewSeasonName] = useState('');
+  const [classrooms, setClassrooms] = useState<{ id: string; class_name: string }[]>([]);
+  const [classroomId, setClassroomId] = useState('');
+  const [settlingId, setSettlingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [message, setMessage] = useState('');
   const teacher = typeof window !== 'undefined'
@@ -22,9 +25,12 @@ export default function SeasonManager() {
     try {
       const res = await fetch('/api/admin/seasons');
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'โหลดข้อมูลฤดูกาลไม่สำเร็จ');
       if (data?.seasons) setSeasons(data.seasons);
+      if (data?.classrooms) setClassrooms(data.classrooms);
     } catch (err) {
       console.error('Failed to load seasons', err);
+      setMessage(err instanceof Error ? err.message : 'โหลดข้อมูลฤดูกาลไม่สำเร็จ');
     } finally {
       setLoading(false);
     }
@@ -32,7 +38,7 @@ export default function SeasonManager() {
 
   async function handleCreateSeason(e: React.FormEvent) {
     e.preventDefault();
-    if (!newSeasonName.trim() || isCreating) return;
+    if (!newSeasonName.trim() || isCreating || settlingId) return;
 
     setIsCreating(true);
     setMessage('');
@@ -40,7 +46,7 @@ export default function SeasonManager() {
       const res = await fetch('/api/admin/seasons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create', seasonName: newSeasonName.trim() }),
+        body: JSON.stringify({ action: 'create', seasonName: newSeasonName.trim(), classroomId: classroomId || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'สร้างฤดูกาลไม่สำเร็จ');
@@ -57,16 +63,34 @@ export default function SeasonManager() {
   }
 
   async function handleCloseAndReward(seasonId: string) {
-    if (!window.confirm('ยืนยันปิดฤดูกาล?\n- แจกตั๋วสุ่มฟรีให้ทีม Top 3 (10, 7, 5 ใบ)\n- ทำโทษทีม 3 อันดับสุดท้ายด้วยการลบการ์ด (3, 2, 1 ใบ)\nการทำรายการนี้ไม่สามารถย้อนกลับได้')) return;
+    if (settlingId || isCreating) return;
+    setSettlingId(seasonId);
     setMessage('');
     try {
-      const res = await fetch('/api/admin/seasons', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'close_and_reward', seasonId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'ปิดฤดูกาลไม่สำเร็จ');
+      async function post(action: 'preview_rewards' | 'close_and_reward', revision?: string) {
+        const res = await fetch('/api/admin/seasons', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, seasonId, revision }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'ทำรายการฤดูกาลไม่สำเร็จ');
+        return data;
+      }
+      const preview = await post('preview_rewards');
+      if (preview.alreadyClosed) {
+        setMessage('ฤดูกาลนี้ปิดแล้ว ไม่แจกรางวัลหรือหักการ์ดซ้ำ');
+        await loadSeasons();
+        return;
+      }
+      const rows = (preview.teams as (TeamStanding & { tickets: number; penalty: number })[])
+        .filter(row => row.tickets > 0 || row.penalty > 0)
+        .map(row => `อันดับ ${row.rank} • ${row.team_name} (${row.finalScore} คะแนน): ${row.tickets
+          ? `ตั๋ว ${row.tickets} ใบ/คน` : `หักการ์ดได้สูงสุด ${row.penalty} ใบ/คน`}`);
+      if (!window.confirm(['ยืนยันปิดฤดูกาลตามผลต่อไปนี้?', ...rows,
+        ...(rows.length === 0 ? ['ไม่มีทีมทำคะแนน จึงไม่แจกตั๋วหรือหักการ์ด'] : []),
+        'การทำรายการนี้ไม่สามารถย้อนกลับได้'].join('\n'))) return;
+      const data = await post('close_and_reward', preview.revision);
       if (data.alreadyClosed) { setMessage('ฤดูกาลนี้ปิดแล้ว ไม่แจกรางวัลหรือหักการ์ดซ้ำ'); return; }
 
       const rewardSummary = (data.rewards || []).map((r: any) => `อันดับ ${r.rank}: ทีม ${r.teamName} (${r.ticketsAwarded} ใบ)`).join(', ');
@@ -76,6 +100,8 @@ export default function SeasonManager() {
       await loadSeasons();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'ปิดฤดูกาลไม่สำเร็จ');
+    } finally {
+      setSettlingId(null);
     }
   }
 
@@ -155,9 +181,9 @@ export default function SeasonManager() {
           <div>
             <h4 className="font-bold text-emerald-300 text-sm">รางวัลสำหรับ 3 อันดับแรก (Top 3)</h4>
             <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-              • <strong>อันดับ 1:</strong> สมาชิกในทีมรับตั๋วสุ่มฟรีคนละ <strong>10 ใบ</strong><br />
-              • <strong>อันดับ 2:</strong> สมาชิกในทีมรับตั๋วสุ่มฟรีคนละ <strong>7 ใบ</strong><br />
-              • <strong>อันดับ 3:</strong> สมาชิกในทีมรับตั๋วสุ่มฟรีคนละ <strong>5 ใบ</strong>
+              ระดับโรงเรียน: 10 / 7 / 5 ใบต่อคน<br />
+              ระดับห้อง: 3 / 2 / 1 ใบต่อคน<br />
+              เฉพาะทีมที่มีคะแนนในฤดูกาลนั้น
             </p>
           </div>
         </div>
@@ -200,12 +226,19 @@ export default function SeasonManager() {
                   required
                 />
               </div>
+              <label className="block text-xs font-bold text-slate-400 mb-2" htmlFor="team-season-classroom">ระดับการแข่งขัน</label>
+              <select id="team-season-classroom" value={classroomId} onChange={event => setClassroomId(event.target.value)}
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white mb-4">
+                <option value="">ทั้งโรงเรียน</option>
+                {classrooms.map(room => <option key={room.id} value={room.id}>{room.class_name}</option>)}
+              </select>
               <p className="text-xs text-rose-400 mb-4 bg-rose-500/10 p-3 rounded-lg border border-rose-500/20 leading-relaxed">
-                *การเปิดฤดูกาลใหม่จะทำการปิดฤดูกาลปัจจุบันทันที คะแนนของฤดูกาลใหม่จะเริ่มนับจาก 0
+                {classroomId ? 'หากห้องนี้มีฤดูกาลอยู่ ต้องปิดก่อนเปิดใหม่' :
+                  'การเปิดฤดูกาลโรงเรียนใหม่จะปิดรอบโรงเรียนเดิมโดยไม่แจกรางวัล ไม่กระทบการแข่งขันรายห้อง'}
               </p>
               <button 
                 type="submit" 
-                disabled={isCreating || !newSeasonName.trim()}
+                disabled={isCreating || !!settlingId || !newSeasonName.trim()}
                 className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold py-3 rounded-xl transition-colors shadow-lg"
               >
                 {isCreating ? 'กำลังสร้าง...' : 'สร้างฤดูกาลใหม่'}
@@ -268,7 +301,8 @@ export default function SeasonManager() {
                     )}
                   </div>
                   <p className="text-xs text-slate-500">
-                    สร้างเมื่อ: {new Date(season.created_at).toLocaleDateString('th-TH')}
+                    {season.scope === 'school' ? 'ทั้งโรงเรียน' :
+                      classrooms.find(room => room.id === season.classroom_id)?.class_name ?? 'ระดับชั้น'} · {new Date(season.created_at).toLocaleDateString('th-TH')}
                   </p>
                 </div>
                 {season.is_active ? (
@@ -276,9 +310,10 @@ export default function SeasonManager() {
                     <CheckCircle className="w-6 h-6 text-indigo-400" />
                     <button
                       onClick={() => handleCloseAndReward(season.id)}
-                      className="px-3 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-lg"
+                      disabled={isCreating || !!settlingId}
+                      className="px-3 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 text-xs font-black rounded-lg"
                     >
-                      ปิดฤดูกาล + แจกรางวัล
+                      {settlingId === season.id ? 'กำลังตรวจผล…' : 'ดูผลก่อนปิดฤดูกาล'}
                     </button>
                   </div>
                 ) : (

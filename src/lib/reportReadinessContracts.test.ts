@@ -44,8 +44,9 @@ test('rank formula, stars, SRS, vocabulary collection, and intervention alerts a
 });
 
 test('team battle and teacher dashboard report views are implemented as live sections', () => {
-  assert.match(teamBattleSource, /team_battle_seasons/);
-  assert.match(teamBattleSource, /\.eq\('scope', 'school'\)/);
+  assert.match(teamBattleSource, /\/api\/team-battle\/leaderboard/);
+  const standings = readFileSync('supabase/migrations/20261124130000_team_season_standings.sql', 'utf8');
+  assert.match(standings, /scope = p_scope AND \(p_scope = 'school' OR classroom_id = p_classroom_id\)/);
   assert.match(dashboardSource, /TeamLeaderboard scope="class"/);
   assert.match(dashboardSource, /TeamLeaderboard scope="school"/);
 });

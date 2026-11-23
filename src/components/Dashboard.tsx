@@ -13,7 +13,7 @@ import { useDemoStore } from '@/store/useDemoStore';
 import { STORY_WORLDS, ADAPTIVE_RANK_CONFIG, getWorldForStage } from '@/utils/adaptiveConfig';
 import AvatarDisplay from '@/components/AvatarDisplay';
 import dynamic from 'next/dynamic';
-import { autoAssignTeamForStudent, calculateTeamScore } from '@/utils/teamBattleEngine';
+import { loadMyTeams, loadTeamLeaderboard } from '@/utils/teamBattleEngine';
 import { Users, Target, Zap, BrainCircuit } from 'lucide-react';
 import StudentHero from '@/components/StudentHero';
 import StudentTeamCard from '@/components/StudentTeamCard';
@@ -371,29 +371,23 @@ export default function Dashboard() {
     setTeamsLoading(true);
     setTeamError('');
     try {
-      await autoAssignTeamForStudent(student.id);
-      const { data: teamsData, error: teamsError } = await supabase
-        .from('team_members')
-        .select('team_id, teams(*)')
-        .eq('user_id', student.id)
-        .eq('is_active', true);
-      if (teamsError) throw teamsError;
+      const teamsData = await loadMyTeams();
 
       if (teamsData) {
-        const tList = teamsData.map((d: any) => d.teams).filter(Boolean);
         const seenTeamIds = new Set<string>();
-        const uniqueTeams = tList.filter((team: any) => {
+        const uniqueTeams = teamsData.filter(team => {
           if (!team || seenTeamIds.has(team.id)) return false;
           seenTeamIds.add(team.id);
           return true;
         });
         setMyTeams(uniqueTeams);
 
-        const scoreEntries = await Promise.all(uniqueTeams.map(async (team: any) => [
-          team.id,
-          await calculateTeamScore(team.id),
-        ] as const));
-        setTeamScores(Object.fromEntries(scoreEntries));
+        const scoreboards = await Promise.all([
+          uniqueTeams.some(team => team.team_type === 'school') ? loadTeamLeaderboard('school') : null,
+          student.classroom_id && uniqueTeams.some(team => team.team_type === 'class')
+            ? loadTeamLeaderboard('classroom', student.classroom_id) : null,
+        ]);
+        setTeamScores(Object.fromEntries(scoreboards.flatMap(board => board?.teams ?? []).map(team => [team.id, team])));
         tabLoadTimestamps.current['teams'] = Date.now();
       }
     } catch (error) {

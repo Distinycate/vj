@@ -1,136 +1,45 @@
-import { supabase } from './supabase/client';
+export type StudentTeam = {
+  id: string;
+  team_name: string;
+  team_icon: string;
+  team_color: string;
+  classroom_id: string | null;
+  team_type: 'class' | 'school';
+};
 
-export type TeamScoreEvent = 'stage_completed' | 'boss_completed' | 'accuracy_bonus' | 'perfect_bonus' | 'review_completed' | 'wrong_word_mastered' | 'streak_bonus' | 'participation_bonus';
-
-async function isInternalStudent(userId: string) {
-  // select('user_type') via secure profile API with pre-migration legacyQuery fallback
-  try {
-    const res = await fetch(`/api/student/profile${userId ? `?studentId=${userId}` : ''}`);
-    if (res.ok) {
-      const json = await res.json();
-      return (json?.student?.user_type || 'INTERNAL') === 'INTERNAL';
-    }
-  } catch {
-    return true;
-  }
-  return true;
+export async function loadMyTeams(): Promise<StudentTeam[]> {
+  const response = await fetch('/api/team-battle/mine', { method: 'POST', cache: 'no-store' });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'โหลดทีมของนักเรียนไม่สำเร็จ');
+  return result.teams;
 }
 
-export async function autoAssignTeamForStudent(userId: string) {
-  if (!(await isInternalStudent(userId))) {
-    return { skipped: true, reason: 'EXTERNAL_USER_NOT_ASSIGNED_TO_INTERNAL_TEAMS' };
-  }
-  const { data, error } = await supabase.rpc('ensure_student_team_memberships', {
-    p_student_id: userId,
-  });
-  if (error) throw new Error(`TEAM_ASSIGNMENT_FAILED: ${error.message}`);
-  return data;
-}
+export type TeamStanding = {
+  id: string;
+  team_name: string;
+  team_icon: string;
+  team_color: string;
+  rank: number;
+  totalMembers: number;
+  activeMembersCount: number;
+  activeMembersRate: number;
+  eventsCount: number;
+  totalScore: number;
+  finalScore: number;
+};
 
-export async function createTeamScoreEvent(params: {
-  userId: string;
-  eventType: TeamScoreEvent;
-  points: number;
-  metadata?: any;
-}) {
-  if (!(await isInternalStudent(params.userId))) {
-    return { skipped: true, reason: 'EXTERNAL_USER_NOT_RECORDED_IN_INTERNAL_TEAM_SCORE' };
-  }
-  const { data, error } = await supabase.rpc('record_team_score_event', {
-    p_student_id: params.userId,
-    p_event_type: params.eventType,
-    p_points: params.points,
-    p_metadata: params.metadata || {},
-  });
-  if (error) throw new Error(`TEAM_SCORE_FAILED: ${error.message}`);
-  return data;
-}
+export type TeamLeaderboardResult = {
+  season: { id: string; name: string; active: boolean } | null;
+  teams: TeamStanding[];
+};
 
-export async function calculateTeamScore(teamId: string, seasonId?: string | null) {
-  try {
-    let resolvedSeasonId = seasonId;
-    if (resolvedSeasonId === undefined) {
-      const { data: season, error: seasonError } = await supabase
-        .from('team_battle_seasons')
-        .select('id')
-        .eq('is_active', true)
-        .eq('scope', 'school')
-        .order('start_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (seasonError) throw seasonError;
-      resolvedSeasonId = season?.id || null;
-    }
-    let query = supabase
-      .from('team_score_events')
-      .select('*, students!inner(user_type)')
-      .eq('team_id', teamId)
-      .eq('students.user_type', 'INTERNAL');
-    if (resolvedSeasonId) query = query.eq('season_id', resolvedSeasonId);
-    
-    let { data: events, error: eventsError }: { data: any[] | null; error: any } = await query;
-    if (eventsError) {
-      let legacyQuery = supabase.from('team_score_events').select('*').eq('team_id', teamId);
-      if (resolvedSeasonId) legacyQuery = legacyQuery.eq('season_id', resolvedSeasonId);
-      const legacyEvents = await legacyQuery;
-      events = legacyEvents.data;
-      eventsError = legacyEvents.error;
-    }
-    if (eventsError) throw eventsError;
-    if (!events) return { totalScore: 0, finalScore: 0, activeMembersRate: 0 };
-
-    let { data: members, error: membersError }: { data: any[] | null; error: any } = await supabase
-      .from('team_members')
-      .select('user_id, students!inner(user_type)')
-      .eq('team_id', teamId)
-      .eq('is_active', true)
-      .eq('students.user_type', 'INTERNAL');
-    if (membersError) {
-      const legacyMembers = await supabase
-        .from('team_members')
-        .select('user_id')
-        .eq('team_id', teamId)
-        .eq('is_active', true);
-      members = legacyMembers.data;
-      membersError = legacyMembers.error;
-    }
-    if (membersError) throw membersError;
-    const totalMembers = members?.length || 1;
-
-    let totalScore = 0;
-    const activeUsers = new Set<string>();
-
-    events.forEach(e => {
-      totalScore += Number(e.points) || 0;
-      activeUsers.add(e.user_id);
-    });
-
-    const activeMembersCount = activeUsers.size;
-    const activeMembersRate = activeMembersCount / totalMembers;
-
-    // Collaboration Bonus
-    let bonusMultiplier = 1;
-    if (activeMembersRate >= 0.9) bonusMultiplier = 1.5;
-    else if (activeMembersRate >= 0.7) bonusMultiplier = 1.25;
-    else if (activeMembersRate >= 0.5) bonusMultiplier = 1.1;
-
-    const averageMemberScore = totalScore / totalMembers;
-
-    // Fair Play Rule
-    // finalTeamScore = (averageMemberScore * 0.6) + (totalTeamScore * 0.4) + activeParticipationBonus
-    const participationBonus = activeMembersRate >= 0.7 ? 100 : 0;
-    const finalScore = Math.round(((averageMemberScore * 0.6) + (totalScore * 0.4)) * bonusMultiplier) + participationBonus;
-
-    return {
-      totalScore,
-      finalScore,
-      activeMembersRate: Math.round(activeMembersRate * 100),
-      activeMembersCount,
-      totalMembers,
-      eventsCount: events.length
-    };
-  } catch (err) {
-    console.error("Error calculating team score:", err);
-    throw err;
-  }
+export async function loadTeamLeaderboard(
+  scope: 'school' | 'classroom', classroomId?: string | null, signal?: AbortSignal,
+): Promise<TeamLeaderboardResult> {
+  const query = new URLSearchParams({ scope });
+  if (scope === 'classroom' && classroomId) query.set('classroomId', classroomId);
+  const response = await fetch(`/api/team-battle/leaderboard?${query}`, { cache: 'no-store', signal });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'โหลดตารางคะแนนไม่สำเร็จ');
+  return result;
 }

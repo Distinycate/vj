@@ -37,12 +37,16 @@ test('external users do not see internal card, gacha, team, leaderboard, or even
 });
 
 test('team and card utilities protect backend calls from external users', () => {
-  assert.match(teamBattleEngine, /select\('user_type'\)/);
-  assert.match(teamBattleEngine, /EXTERNAL_USER_NOT_ASSIGNED_TO_INTERNAL_TEAMS/);
-  assert.match(teamBattleEngine, /EXTERNAL_USER_NOT_RECORDED_IN_INTERNAL_TEAM_SCORE/);
-  assert.match(teamBattleEngine, /\.eq\('students\.user_type', 'INTERNAL'\)/);
-  assert.match(teamBattleEngine, /pre-migration/);
-  assert.match(teamBattleEngine, /legacyQuery/);
+  const teamMine = readFileSync('src/app/api/team-battle/mine/route.ts', 'utf8');
+  const teamBoard = readFileSync('src/app/api/team-battle/leaderboard/route.ts', 'utf8');
+  const standings = readFileSync('supabase/migrations/20261124130000_team_season_standings.sql', 'utf8');
+  assert.match(teamBattleEngine, /\/api\/team-battle\/mine/);
+  assert.doesNotMatch(teamBattleEngine, /\.rpc\(|\.from\(/);
+  assert.match(teamMine, /session\.user\.userType !== 'INTERNAL'/);
+  assert.match(teamMine, /\.eq\('user_id', session\.subjectId\)/);
+  assert.match(teamBoard, /session\.user\.userType !== 'INTERNAL'/);
+  assert.match(standings, /s\.user_type = 'INTERNAL'/);
+  assert.match(standings, /REVOKE ALL ON public\.team_score_events, public\.team_members/);
   assert.match(cardBattle, /assertInternalCardUser/);
   assert.match(cardBattle, /pre-migration databases have no user_type column/);
   assert.match(cardBattle, /ไม่สามารถใช้ระบบการ์ดหรือกาชา/);

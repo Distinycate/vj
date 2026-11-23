@@ -1,101 +1,28 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/utils/supabase/client';
 import { Crown } from 'lucide-react';
-import { calculateTeamScore } from '@/utils/teamBattleEngine';
+import { loadTeamLeaderboard, type TeamLeaderboardResult } from '@/utils/teamBattleEngine';
 
 export default function TeamLeaderboard({ scope = 'school', classroomId }: { scope?: 'class' | 'school', classroomId?: string }) {
-  const [teams, setTeams] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeSeasonName, setActiveSeasonName] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState('');
+  const queryKey = scope === 'school' ? 'school' : classroomId;
+  const [state, setState] = useState<{ key: string; data?: TeamLeaderboardResult; error?: string } | null>(null);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
-    async function loadLeaderboard() {
-      if (scope === 'class' && !classroomId) {
-        setTeams([]);
-        setLoading(false);
-        return;
-      }
-
-      // Clear any legacy polluted cache key
-      try {
-        localStorage.removeItem('vj_leaderboard_cache_class_all');
-      } catch {}
-
-      const cacheKey = `vj_leaderboard_cache_${scope}_${classroomId || 'school'}`;
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          // Check if cache is less than 5 minutes old
-          if (Date.now() - parsed.timestamp < 5 * 60 * 1000 && parsed.data?.length > 0) {
-            setTeams(parsed.data);
-            setLoading(false);
-            return;
-          }
-        } catch (e) {
-          // Ignore cache parse error
+    if (!queryKey) return;
+    const controller = new AbortController();
+    loadTeamLeaderboard(scope === 'class' ? 'classroom' : 'school', classroomId, controller.signal)
+      .then(data => { if (!controller.signal.aborted) setState({ key: queryKey, data }); })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setState({ key: queryKey, error: error instanceof Error ? error.message : 'โหลดข้อมูลทีมไม่สำเร็จ' });
         }
-      }
+      });
+    return () => controller.abort();
+  }, [queryKey, scope, classroomId, reload]);
 
-      setLoading(true);
-      setLoadError('');
-      try {
-        // Fetch active season
-        const { data: season } = await supabase
-          .from('team_battle_seasons')
-          .select('id, season_name')
-          .eq('scope', 'school')
-          .eq('is_active', true)
-          .order('start_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        
-        if (season) setActiveSeasonName(season.season_name);
-        let query = supabase.from('teams').select('*').eq('team_type', scope).eq('is_active', true);
-        if (scope === 'class') {
-          query = query.eq('classroom_id', classroomId);
-        }
-        
-        const { data: dbTeams, error: teamsError } = await query;
-        if (teamsError) throw teamsError;
-          
-        if (dbTeams) {
-          // Deduplicate by team.id and team_name to guarantee no duplicated cards/icons
-          const seenTeamIds = new Set<string>();
-          const uniqueDbTeams = dbTeams.filter((team: any) => {
-            if (!team || seenTeamIds.has(team.id)) return false;
-            seenTeamIds.add(team.id);
-            return true;
-          });
-
-          const scoredTeams = await Promise.all(uniqueDbTeams.map(async (team) => {
-            const scoreData = await calculateTeamScore(team.id, season?.id || null);
-            return {
-              ...team,
-              ...scoreData
-            };
-          }));
-          // Sort by final score
-          scoredTeams.sort((a, b) => b.finalScore - a.finalScore);
-          setTeams(scoredTeams);
-          
-          // Save to local cache
-          localStorage.setItem(cacheKey, JSON.stringify({
-            timestamp: Date.now(),
-            data: scoredTeams
-          }));
-        }
-      } catch (e) {
-        console.error(e);
-        setLoadError(e instanceof Error ? e.message : 'โหลดข้อมูลทีมไม่สำเร็จ');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadLeaderboard();
-  }, [scope, classroomId]);
+  const current = state?.key === queryKey ? state : null;
+  const { teams, season } = current?.data ?? { teams: [], season: null };
 
   if (scope === 'class' && !classroomId) {
     return (
@@ -105,12 +32,16 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
     );
   }
 
-  if (loading) {
+  if (!current) {
     return <div className="text-center py-10 text-slate-400">กำลังโหลดข้อมูล Team Leaderboard...</div>;
   }
 
-  if (loadError) {
-    return <div className="text-center py-8 text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-2xl">{loadError}</div>;
+  if (current.error) {
+    return <div className="text-center py-8 text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-2xl">
+      <p>{current.error}</p>
+      <button type="button" className="mt-3 px-4 py-2 rounded-lg bg-slate-800 text-white"
+        onClick={() => { setState(null); setReload(value => value + 1); }}>ลองใหม่</button>
+    </div>;
   }
 
   return (
@@ -122,7 +53,7 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
             ตารางคะแนนทีม ({scope === 'school' ? 'ระดับโรงเรียน' : 'ระดับห้องเรียน'})
           </h3>
           <p className="text-sm text-slate-400">
-            {activeSeasonName ? `ฤดูกาล: ${activeSeasonName}` : 'รวมคะแนนจากทุกการมีส่วนร่วมของสมาชิก'}
+            {season ? `${season.active ? 'ฤดูกาล' : 'ผลฤดูกาล'}: ${season.name}` : 'ยังไม่มีฤดูกาลสำหรับกลุ่มนี้'}
           </p>
         </div>
       </div>
@@ -131,8 +62,8 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
         {teams.map((team, idx) => {
           const isTop3 = idx < 3;
           return (
-            <div 
-              key={team.id} 
+            <div
+              key={team.id}
               className={`p-4 rounded-2xl flex items-center justify-between border relative overflow-hidden transition-all duration-300 hover-lift ${
                 isTop3 ? 'bg-amber-500/10 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'glass-input border-none shadow-none'
               }`}
@@ -164,7 +95,7 @@ export default function TeamLeaderboard({ scope = 'school', classroomId }: { sco
         })}
 
         {teams.length === 0 && (
-          <div className="text-center py-8 text-slate-500">ยังไม่มีทีมในระบบนี้</div>
+          <div className="text-center py-8 text-slate-500">{season ? 'ยังไม่มีทีมในฤดูกาลนี้' : 'คะแนนจะเริ่มนับเมื่อแอดมินเปิดฤดูกาล'}</div>
         )}
       </div>
     </div>
