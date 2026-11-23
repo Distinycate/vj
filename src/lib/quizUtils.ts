@@ -33,7 +33,7 @@ export type VocabularyAnswerField = "word" | "meaning_th" | "meaning";
 export interface QuizChoice {
   word_id: string;
   text: string;
-  is_correct: boolean;
+  is_correct?: boolean;
   hidden?: boolean;
 }
 

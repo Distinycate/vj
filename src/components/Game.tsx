@@ -31,6 +31,7 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
     score, showScorePopup, shakeScreen, lives, timeLeft, isAnswered, selectedAnswer, lastAnswerCorrect,
     comboCount, maxCombo, wrongWords, assistedWords, usedHintsCount,
     difficultyConfig, qType, choices, fillAnswer, setFillAnswer, showHint,
+    hintDetails, correctFeedback, checkingAnswer, answerError, retryAnswer, powerupBusy, powerupError, audioError, playListeningAudio,
     inventory, usedItemsThisStage,
     refWordsLearned, setRefWordsLearned, refHardestWord, setRefHardestWord, refFeeling, setRefFeeling,
     previousAttempts, passReport, cheatWarning, cheatDetected,
@@ -467,12 +468,14 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
         {inventory.map((invItem) => {
           const itemCode = invItem.items.item_code;
           const isUsed = usedItemsThisStage.includes(itemCode);
+          const incompatible = (itemCode === 'HINT' && qType !== 'FILL_BLANK') ||
+            (itemCode === 'FIFTY_FIFTY' && !qType.includes('_MC'));
           
           return (
             <button 
               key={invItem.id} 
               onClick={() => applyPowerup(itemCode)} 
-              disabled={isUsed}
+              disabled={isUsed || incompatible || isAnswered || checkingAnswer || !!answerError || powerupBusy}
               data-demo-guide={itemCode === 'HINT' ? 'hint-button' : undefined}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs transition-all ${
                 isUsed 
@@ -489,6 +492,14 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
           <p className="text-slate-600 text-xs italic">ไม่มีไอเทมใช้งานในด่านนี้</p>
         )}
       </div>
+      {powerupError && <p role="status" className="mb-3 text-center text-amber-200">{powerupError}</p>}
+      {checkingAnswer && <p role="status" className="mb-3 text-center text-slate-300">กำลังตรวจคำตอบ…</p>}
+      {answerError && (
+        <div role="alert" className="mb-4 flex w-full max-w-2xl flex-wrap items-center gap-3 rounded-xl border border-rose-400/30 bg-rose-950 p-3 text-rose-100">
+          <p>{answerError}</p>
+          <button type="button" onClick={() => void retryAnswer()} className="min-h-11 rounded-lg bg-rose-400 px-4 font-bold text-slate-950">ลองส่งคำตอบเดิม</button>
+        </div>
+      )}
 
       {/* Stage Progress line */}
       <div className="w-full max-w-2xl h-2 bg-slate-900 border border-slate-850 rounded-full mb-8 overflow-hidden relative z-10">
@@ -548,12 +559,13 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
                 <span className="text-[10px] text-slate-500 tracking-widest uppercase block mb-6">ฟังและเลือกสะกด</span>
                 <button 
                   aria-label="เล่นเสียงคำศัพท์"
-                  onClick={() => playWordAudio(currentWord.word, currentWord.audio_url)}
+                  onClick={() => void playListeningAudio()}
                   className="w-20 h-20 premium-btn bg-primary/10 hover:bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg border-primary/20"
                 >
                   <Volume2 className="w-10 h-10" />
                 </button>
                 <p className="text-slate-400 text-base">เสียงสะกดเป็นคำศัพท์ภาษาอังกฤษข้อใด?</p>
+                {audioError && <p role="status" className="mt-2 text-amber-200">{audioError}</p>}
               </div>
             )}
 
@@ -585,24 +597,25 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
                     type="text" 
                     value={fillAnswer}
                     onChange={e => setFillAnswer(e.target.value)}
-                    disabled={isAnswered}
+                    disabled={isAnswered || checkingAnswer || Boolean(answerError) || powerupBusy}
                     autoFocus
+                    maxLength={250}
                     placeholder="พิมพ์สะกดคำศัพท์..."
                     className="w-full text-center px-4 py-4 glass-input text-xl font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-white placeholder-slate-650 mb-3"
                   />
                   {!isAnswered && (
                     <button 
                       type="submit" 
-                      disabled={!fillAnswer.trim()}
+                      disabled={!fillAnswer.trim() || checkingAnswer || Boolean(answerError) || powerupBusy}
                       className="w-full py-3.5 premium-btn bg-primary hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-primary text-slate-950 font-bold shadow-md transition-all"
                     >
                       ยืนยันคำตอบ ➡️
                     </button>
                   )}
                 </form>
-                {showHint && (
+                {showHint && (hintDetails || currentWord.word) && (
                   <p className="text-slate-400 text-xs mt-3 italic">
-                    คำใบ้: ขึ้นต้นด้วยตัว <strong className="text-emerald-400 uppercase">{currentWord.word.charAt(0)}</strong> (คำนี้สะกดด้วย {currentWord.word.length} ตัวอักษร)
+                    คำใบ้: ขึ้นต้นด้วยตัว <strong className="text-emerald-400 uppercase">{hintDetails?.initial ?? currentWord.word?.charAt(0)}</strong> (คำนี้สะกดด้วย {hintDetails?.length ?? currentWord.word?.length} ตัวอักษร)
                   </p>
                 )}
               </div>
@@ -636,7 +649,9 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
                 const normMeaning = normalizeAnswer(currentWord.meaning_th || currentWord.meaning);
                 const targetWordId = currentWord.correct_word_id || currentWord.id || currentWord.word_id;
 
-                const isThisChoiceCorrect = currentWord.answer_language && currentWord.correct_word_id
+                const isThisChoiceCorrect = currentWord.serverGraded
+                  ? correctFeedback?.choiceId === choice.word_id
+                  : currentWord.answer_language && currentWord.correct_word_id
                   ? isConfiguredAnswerCorrect(currentWord, choice) : choice.is_correct === true ||
                   (Boolean(targetWordId) && choice.word_id === targetWordId) ||
                   (Boolean(normCorrect) && normChoice === normCorrect) ||
@@ -663,7 +678,7 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
                 <button 
                   key={`${choice.word_id}-${idx}`}
                   onClick={() => submitAnswer(choice)}
-                  disabled={isAnswered}
+                  disabled={isAnswered || checkingAnswer || Boolean(answerError) || powerupBusy}
                   className={`p-4 sm:p-5 text-base sm:text-lg font-bold flex justify-between items-center transition-all ${btnClass} break-words cursor-pointer`}
                 >
                   <span className="flex-1 text-center notranslate break-words" translate="no">{choice.text}</span>
@@ -675,15 +690,15 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
         )}
 
         {/* Feedback block for spelling input mode */}
-        {isAnswered && (qType === 'FILL_BLANK' || typeof selectedAnswer === 'string') && (
+        {isAnswered && (qType === 'FILL_BLANK' || (!currentWord.serverGraded && typeof selectedAnswer === 'string')) && (
           <div data-demo-guide="feedback-result" className="text-center mt-6">
-            {typeof selectedAnswer === 'string' && Boolean(normalizeAnswer(selectedAnswer)) && (
+            {(currentWord.serverGraded ? lastAnswerCorrect : typeof selectedAnswer === 'string' && Boolean(normalizeAnswer(selectedAnswer)) && (
               (Boolean(currentWord.correct_answer) && normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.correct_answer)) ||
               (Boolean(currentWord.word) && normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.word)) ||
               (Boolean(currentWord.blank_answer) && normalizeAnswer(selectedAnswer) === normalizeAnswer(currentWord.blank_answer)) ||
               parseAcceptableAnswers(currentWord.correct_answer).includes(normalizeAnswer(selectedAnswer)) ||
               parseAcceptableAnswers(currentWord.word).includes(normalizeAnswer(selectedAnswer))
-            ) ? (
+            )) ? (
               <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-lg">
                 <CheckCircle className="w-5 h-5" /> ถูกต้องสมบูรณ์แบบ!
               </div>
@@ -692,7 +707,7 @@ export default function Game({ onFinish }: { onFinish?: () => void } = {}) {
                 <div className="flex items-center gap-2">
                   <XCircle className="w-5 h-5" /> พิมพ์สะกดไม่ถูกต้อง
                 </div>
-                <span className="text-slate-400 text-sm">ตัวสะกดที่ถูกต้องคือ: <strong className="text-slate-200 font-extrabold text-base">{currentWord.word || currentWord.correct_answer}</strong></span>
+                <span className="text-slate-400 text-sm">ตัวสะกดที่ถูกต้องคือ: <strong className="text-slate-200 font-extrabold text-base">{correctFeedback?.text || currentWord.word || currentWord.correct_answer}</strong></span>
               </div>
             )}
           </div>

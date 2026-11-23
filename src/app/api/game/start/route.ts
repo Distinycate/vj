@@ -15,6 +15,7 @@ import {
 } from '@/lib/progression/worldHierarchy';
 import { isStageUnlocked } from '@/lib/progression/unlockRules';
 import { buildCampaignQuestion } from '@/lib/quizUtils';
+import { toLiveGameQuestion } from '@/lib/liveGameQuestions';
 
 const startGameSchema = z.object({
   stageNumber: z.number().int().min(1).max(100),
@@ -25,6 +26,9 @@ export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
     const session = await requireRole(['STUDENT']);
+    if (request.headers.get('x-vj-game-protocol') !== 'private-v1') {
+      return NextResponse.json({ error: 'มีเกมเวอร์ชันใหม่ กรุณารีเฟรชหน้าแล้วเริ่มด่านใหม่' }, { status: 409 });
+    }
 
     const body = await request.json().catch(() => null);
     const parsed = startGameSchema.safeParse(body);
@@ -74,6 +78,7 @@ export async function POST(request: Request) {
       userReviewRes,
       allVocabRes,
       studentRes,
+      answerLedger,
     ] = await Promise.all([
       !isExternalStudent
         ? supabaseAdmin.from('pre_tests').select('id', { count: 'exact', head: true }).eq('student_id', session.subjectId)
@@ -107,7 +112,12 @@ export async function POST(request: Request) {
         .select('is_skull')
         .eq('id', session.subjectId)
         .maybeSingle(),
+      supabaseAdmin.from('live_game_answers').select('attempt_id', { head: true }).limit(0),
     ]);
+    if (answerLedger.error) {
+      console.error('Private live game schema unavailable:', answerLedger.error.code);
+      return NextResponse.json({ error: 'ยังเปิดเกมรุ่นใหม่นี้ไม่ได้ กรุณาแจ้งผู้ดูแลระบบ' }, { status: 503 });
+    }
 
     // Stale tabs cannot bypass the new campaign's baseline assessment.
     if (!isExternalStudent) {
@@ -288,12 +298,14 @@ export async function POST(request: Request) {
         : missionLevel === 1 && i % 5 === 4 ? 'context_mc'
         : missionLevel === 3 && i % 2 === 1 ? 'spelling'
         : missionLevel === 1 ? basicType : mixedTypes[i % mixedTypes.length];
-      const question = buildCampaignQuestion(target, distractorPool, preferred)
+      const built = buildCampaignQuestion(target, distractorPool, preferred)
         ?? buildCampaignQuestion(target, distractorPool, basicType)
         ?? buildCampaignQuestion(target, distractorPool, basicType === 'word_mc' ? 'meaning_mc' : 'word_mc');
-      if (!question) continue;
+      if (!built || authoritativeQuestions.some(q => q.id === built.id)) continue;
+      const question = { ...built, public_id: crypto.randomUUID(),
+        choices: built.choices.map(choice => ({ ...choice, public_id: crypto.randomUUID() })) };
       authoritativeQuestions.push(question);
-      clientQuestions.push({ ...question, stageType });
+      clientQuestions.push(toLiveGameQuestion(question, stageType));
     }
     if (!authoritativeQuestions.length) {
       return NextResponse.json({ error: 'ยังไม่มีชุดข้อสอบที่สมบูรณ์สำหรับด่านนี้' }, { status: 422 });

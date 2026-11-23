@@ -12,8 +12,8 @@ import { calculateRankFromStage, getPassScoreForStage } from '@/utils/adaptiveCo
  *
  * Security boundary:
  *   Browser → Next.js API route (session-validated) → supabaseAdmin (service_role) → V3 RPC
- *   Client supplies ONLY: attemptId + raw answers + response times.
- *   Server evaluates correctness server-side using authoritative question_ids from DB.
+ *   Private attempts accept only the attempt ID; frozen answers are read in SQL.
+ *   Legacy in-flight attempts retain their original answer format.
  *   V3 RPC receives only the trusted server-evaluated wordAttempts payload.
  *
  * Privileged fields that the client must NEVER supply:
@@ -34,7 +34,7 @@ const completeGameSchema = z.object({
       answer: z.string(),
       responseTime: z.number().optional().default(0),
     })
-  ),
+  ).max(150).default([]),
 });
 
 
@@ -180,7 +180,7 @@ export async function POST(request: Request) {
       await supabaseAdmin
         .from('stage_attempts')
         .update({ status: 'EXPIRED' })
-        .eq('id', attemptId);
+        .eq('id', attemptId).eq('status','ACTIVE');
       return NextResponse.json({ error: 'Stage attempt has expired' }, { status: 410 });
     }
 
@@ -190,6 +190,7 @@ export async function POST(request: Request) {
     const originalQuestions: any[] = Array.isArray(attempt.question_ids)
       ? attempt.question_ids
       : [];
+    const privateProtocol = typeof originalQuestions[0]?.public_id === 'string';
 
     const answerMap = new Map<string, string>();
     const responseTimeMap = new Map<string, number>();
@@ -207,7 +208,7 @@ export async function POST(request: Request) {
       response_time_ms: number;
     }> = [];
 
-    for (const q of originalQuestions) {
+    for (const q of privateProtocol ? [] : originalQuestions) {
       const qKey = q.id || q.word_id;
       const submitted = answerMap.get(q.id) ?? (q.word_id ? answerMap.get(q.word_id) : '') ?? '';
       // Clamp response time: mirrors V3 SQL GREATEST(300, LEAST(60000, ...))
@@ -263,7 +264,9 @@ export async function POST(request: Request) {
     //   - hint_count (from attempt_hint_events ledger)
     //   - stars, trusted_performance_tier, primary_reason, bonus_flags
     //   - economy rewards
-    const { data: v3Data, error: v3Err } = await supabaseAdmin.rpc(
+    const { data: v3Data, error: v3Err } = privateProtocol
+      ? await supabaseAdmin.rpc('complete_private_game_stage', { p_attempt: attempt.id, p_student: session.subjectId })
+      : await supabaseAdmin.rpc(
       'complete_stage_with_progression_v3',
       {
         p_attempt_id: attempt.id,
@@ -277,7 +280,7 @@ export async function POST(request: Request) {
 
     if (!v3Err && v3Data?.success) {
       // ── V3 success path ────────────────────────────────────────────────────
-      const correctCount = wordAttempts.filter(w => w.is_correct).length;
+      const correctCount = v3Data.score ?? wordAttempts.filter(w => w.is_correct).length;
       const requiredPassScore = getPassScoreForStage(attempt.stage_number);
       const isActuallyPassed = Boolean(v3Data.passed) && correctCount > 0 && (v3Data.accuracy || 0) >= requiredPassScore;
 

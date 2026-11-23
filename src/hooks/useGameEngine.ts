@@ -46,6 +46,15 @@ export type UseGameEngineReturn = {
   fillAnswer: string;
   setFillAnswer: (val: string) => void;
   showHint: boolean;
+  hintDetails: { initial: string; length: number } | null;
+  correctFeedback: { choiceId: string | null; text: string | null } | null;
+  checkingAnswer: boolean;
+  answerError: string;
+  retryAnswer: () => Promise<void>;
+  powerupBusy: boolean;
+  powerupError: string;
+  audioError: string;
+  playListeningAudio: () => Promise<void>;
   inventory: any[];
   usedItemsThisStage: string[];
   refWordsLearned: string;
@@ -75,6 +84,16 @@ export function useGameEngine(): UseGameEngineReturn {
   const [gameState, setGameState] = useState<GameStep>('play');
   const isAnsweringRef = useRef(false);
   const answerLockRef = useRef(false);
+  const pendingAnswer = useRef<{ answer: QuizChoice | string; elapsed: number } | null>(null);
+  const powerupLock = useRef(false);
+  const [checkingAnswer, setCheckingAnswer] = useState(false);
+  const [answerError, setAnswerError] = useState('');
+  const [powerupBusy, setPowerupBusy] = useState(false);
+  const [powerupError, setPowerupError] = useState('');
+  const [correctFeedback, setCorrectFeedback] = useState<{ choiceId: string | null; text: string | null } | null>(null);
+  const [hintDetails, setHintDetails] = useState<{ initial: string; length: number } | null>(null);
+  const [audioError, setAudioError] = useState('');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const answersRecordRef = useRef<Array<{ wordId: string; answer: string; responseTime: number }>>([]);
   const [stageAttemptId, setStageAttemptId] = useState<string | null>(null);
   const stageAttemptIdRef = useRef<string | null>(null);
@@ -220,7 +239,7 @@ export function useGameEngine(): UseGameEngineReturn {
         const [startRes, stageDataRes, diffConfig, inventoryRes] = await Promise.all([
           fetch('/api/game/start', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-vj-game-protocol': 'private-v1' },
             body: JSON.stringify({
               stageNumber: stageNum,
               missionLevel,
@@ -343,9 +362,16 @@ export function useGameEngine(): UseGameEngineReturn {
 
     setChoices(word.choices || []);
     setShowHint(false);
+    setHintDetails(null);
+    setCorrectFeedback(null);
+    setAnswerError('');
+    setPowerupError('');
+    setAudioError('');
+    pendingAnswer.current = null;
+    audioRef.current?.pause();
 
     if (word.question_type === 'listening_mc' || word.qType === 'LISTENING_MC') {
-      setTimeout(() => playWordAudio(word.word, word.audio_url), 300);
+      void playListeningAudio(word, true);
     }
 
     setFillAnswer('');
@@ -357,39 +383,95 @@ export function useGameEngine(): UseGameEngineReturn {
     setQuestionStartTime(Date.now());
   }
 
+  async function playListeningAudio(word = words[currentIndex], autoplay = false) {
+    if (!word) return;
+    if (!word.serverGraded) { playWordAudio(word.word, word.audio_url); return; }
+    const attempt = stageAttemptIdRef.current;
+    if (!attempt) return;
+    audioRef.current?.pause();
+    const params = new URLSearchParams({ attemptId: attempt, questionId: word.id });
+    const audio = new Audio('/api/game/audio?' + params.toString());
+    audioRef.current = audio;
+    setAudioError('');
+    try { await audio.play(); }
+    catch (error) {
+      if (audioRef.current === audio && !(autoplay && error instanceof DOMException && error.name === 'NotAllowedError'))
+        setAudioError('เล่นเสียงไม่ได้ ลองกดปุ่มฟังอีกครั้ง');
+    }
+  }
+
+  useEffect(() => () => { audioRef.current?.pause(); audioRef.current = null; }, []);
+
+  async function runLiveAction(payload: Record<string, unknown>) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await fetch('/api/game/answer', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload), signal: controller.signal,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'เชื่อมต่อไม่สำเร็จ');
+      return data;
+    } finally { clearTimeout(timeout); }
+  }
+
   useEffect(() => {
-    if (gameState !== 'play' || loading || isAnswered || currentIndex >= words.length || lives <= 0) return;
+    if (gameState !== 'play' || loading || isAnswered || checkingAnswer || answerError || powerupBusy || currentIndex >= words.length || lives <= 0) return;
 
     const timer = setInterval(() => {
       setTimeLeft(t => Math.max(0, t - 1));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameState, loading, isAnswered, currentIndex, words.length, lives]);
+  }, [gameState, loading, isAnswered, checkingAnswer, answerError, powerupBusy, currentIndex, words.length, lives]);
 
   useEffect(() => {
-    if (gameState === 'play' && !isAnswered && timeLeft === 0 && !answerLockRef.current) {
+    if (gameState === 'play' && !isAnswered && !answerError && !powerupBusy && timeLeft === 0 && !answerLockRef.current) {
       submitAnswer('');
     }
-  }, [timeLeft, gameState, isAnswered]);
+  }, [timeLeft, gameState, isAnswered, answerError, powerupBusy]);
 
-  async function submitAnswer(answer: QuizChoice | string) {
-    if (isAnswered || isAnsweringRef.current || answerLockRef.current) return;
+  async function submitAnswer(answer: QuizChoice | string, retry = false) {
+    if (isAnswered || isAnsweringRef.current || answerLockRef.current || powerupLock.current || (pendingAnswer.current && !retry)) return;
     
     answerLockRef.current = true;
     isAnsweringRef.current = true;
-    setTimeout(() => { isAnsweringRef.current = false; }, 500);
+    const wordObj = words[currentIndex] || {};
+    const elapsed = pendingAnswer.current?.elapsed ?? Math.round((Date.now() - questionStartTime) / 1000);
+    let serverCorrect: boolean | undefined;
+    if (wordObj.serverGraded) {
+      pendingAnswer.current = { answer, elapsed };
+      setCheckingAnswer(true);
+      setAnswerError('');
+      try {
+        const result = await runLiveAction({
+          action: 'answer', attemptId: stageAttemptIdRef.current, questionId: wordObj.id,
+          answer: typeof answer === 'string' ? answer : answer.word_id,
+          responseTimeMs: Math.min(60000, Math.max(0, elapsed * 1000)),
+        });
+        serverCorrect = result.correct === true;
+        setCorrectFeedback({ choiceId: result.correctChoiceId, text: result.correctText });
+      } catch (error) {
+        setAnswerError(error instanceof Error ? error.message : 'ตรวจคำตอบไม่สำเร็จ กรุณาลองใหม่');
+        answerLockRef.current = false;
+        return;
+      } finally {
+        isAnsweringRef.current = false;
+        setCheckingAnswer(false);
+      }
+    } else {
+      setTimeout(() => { isAnsweringRef.current = false; }, 500);
+    }
 
     setIsAnswered(true);
     setSelectedAnswer(answer);
 
-    const elapsed = Math.round((Date.now() - questionStartTime) / 1000);
     const finalResponseTimes = [...responseTimes, elapsed];
     setResponseTimes(finalResponseTimes);
 
-    const wordObj = words[currentIndex] || {};
     const submittedAnswerText = typeof answer === 'string' ? answer : answer?.text || '';
-    answersRecordRef.current.push({
+    if (!wordObj.serverGraded) answersRecordRef.current.push({
       wordId: wordObj.id || wordObj.word_id,
       answer: submittedAnswerText,
       responseTime: elapsed,
@@ -397,7 +479,9 @@ export function useGameEngine(): UseGameEngineReturn {
 
     let isCorrect = false;
 
-    if (qType === 'FILL_BLANK' || typeof answer === 'string') {
+    if (serverCorrect !== undefined) {
+      isCorrect = serverCorrect;
+    } else if (qType === 'FILL_BLANK' || typeof answer === 'string') {
       const normInput = normalizeAnswer(answer as string);
       if (!normInput) {
         isCorrect = false;
@@ -436,7 +520,7 @@ export function useGameEngine(): UseGameEngineReturn {
       isCorrect = isFlagMatch || isIdMatch || isTextMatch;
     }
 
-    if (wordObj.answer_language && wordObj.correct_word_id) isCorrect = isConfiguredAnswerCorrect(wordObj, answer);
+    if (serverCorrect === undefined && wordObj.answer_language && wordObj.correct_word_id) isCorrect = isConfiguredAnswerCorrect(wordObj, answer);
     const finalScore = score + (isCorrect ? 1 : 0);
     const finalWrongWords = isCorrect ? wrongWords : [...wrongWords, wordObj.word_id || wordObj.id];
 
@@ -496,6 +580,30 @@ export function useGameEngine(): UseGameEngineReturn {
 
     const inventoryItem = inventory.find(i => i.items.item_code === itemCode);
     if (!inventoryItem || inventoryItem.quantity <= 0) return;
+    const question = words[currentIndex];
+    if (question?.serverGraded) {
+      if (answerLockRef.current || pendingAnswer.current || powerupLock.current) return;
+      powerupLock.current = true;
+      setPowerupBusy(true);
+      setPowerupError('');
+      try {
+        const result = await runLiveAction({ action: 'powerup', itemCode, attemptId: stageAttemptIdRef.current, questionId: question.id });
+        if (itemCode === 'TIME_FREEZE') setTimeLeft(t => t + 10);
+        if (itemCode === 'EXTRA_LIFE') setLives(l => Math.min(3, l + 1));
+        if (itemCode === 'FIFTY_FIFTY') {
+          setChoices(current => current.map(choice => result.hiddenChoiceIds.includes(choice.word_id) ? { ...choice, hidden: true } : choice));
+        }
+        if (itemCode === 'HINT') { setHintDetails(result.hint); setShowHint(true); }
+        if (itemCode === 'HINT' || itemCode === 'FIFTY_FIFTY') {
+          setUsedHintsCount(n => n + 1);
+          setAssistedWords(ids => [...new Set([...ids, question.id])]);
+        }
+        setUsedItemsThisStage(items => [...items, itemCode]);
+        setInventory(items => items.map(item => item.id === inventoryItem.id ? { ...item, quantity: result.remaining } : item).filter(item => item.quantity > 0));
+      } catch (error) { setPowerupError(error instanceof Error ? error.message : 'ยังใช้ไอเทมไม่ได้ กรุณาลองใหม่'); }
+      finally { powerupLock.current = false; setPowerupBusy(false); }
+      return;
+    }
 
     try {
       if (!useDemoStore.getState().isDemoMode) {
@@ -771,6 +879,9 @@ export function useGameEngine(): UseGameEngineReturn {
     score, showScorePopup, shakeScreen, lives, timeLeft, isAnswered, selectedAnswer, lastAnswerCorrect,
     comboCount, maxCombo, wrongWords, assistedWords, usedHintsCount,
     difficultyConfig, qType, choices, fillAnswer, setFillAnswer, showHint,
+    hintDetails, correctFeedback, checkingAnswer, answerError, powerupBusy, powerupError, audioError,
+    retryAnswer: async () => { if (pendingAnswer.current) await submitAnswer(pendingAnswer.current.answer, true); },
+    playListeningAudio: () => playListeningAudio(),
     inventory, usedItemsThisStage,
     refWordsLearned, setRefWordsLearned, refHardestWord, setRefHardestWord, refFeeling, setRefFeeling,
     previousAttempts, passReport, cheatWarning, cheatDetected,
