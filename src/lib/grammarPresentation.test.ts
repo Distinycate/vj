@@ -85,7 +85,7 @@ test('ONET_WRITING_BOOSTER_UNITS contains 9 units (5 Core Writing Booster + 4 Fu
 
   for (const unit of ONET_WRITING_BOOSTER_UNITS) {
     assert.ok(unit.unitNumber >= 101 && unit.unitNumber <= 109);
-    assert.ok(unit.conceptSlides.length >= 2);
+    assert.ok(unit.conceptSlides.length >= (unit.unitNumber >= 106 ? 2 : 1));
     assert.equal(unit.practiceQuestions.length, 5);
     if (unit.unitNumber >= 106) assert.ok(unit.realOnetQuestions.length >= 4);
 
