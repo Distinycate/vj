@@ -97,7 +97,7 @@
 - P1 Session: หน้า Guest ใช้ session API และคงประเภท EXTERNAL เมื่อ refresh; ทั้งสองหน้าจดจำเฉพาะ Username โดยไม่เปลี่ยนรหัสบัญชี
 - P1 นำเข้า: แอดมิน preview ก่อน apply, หยุดเมื่อชน/ห้องไม่ชัด, ข้ามบัญชีเดิม และเพิ่มบัญชีและ learning path ใหม่พร้อมกัน ใช้ `SEASON_ROSTER_JSON` แบบ server-only และต้องติดตั้ง migration `20261123160536_import_new_students_without_reset.sql` ก่อนเปิดใช้ปุ่มนำเข้า ห้าม commit roster ดิบหรือใส่ค่าในตัวแปร NEXT_PUBLIC
 - P1 การประเมิน: เชื่อม API กับ `submit_assessment_v2` และเพิ่ม Post-test หลัง checkpoint ที่ผ่านจริง (เลือกทำได้) **ห้าม deploy จนกว่าจะยืนยัน RPC, assessment_epoch และ post_tests.stage_checkpoint ใน Supabase เป้าหมาย** การติดตั้ง schema ไม่ใช่การเปิดรอบใหม่; รอบนี้ไม่ได้เปิดรอบจริง
-- P1 แก้ 0/ร: เปิดและส่งผลด่านใช้กฎสิทธิ์เดียวกัน จำกัดที่ด่านในชุดกิจกรรมที่เปิดอยู่ และตรวจ error การเขียนก่อนแจ้งผลสำเร็จ ยังไม่ได้ย้ายยอดกิจกรรมเข้า transaction เดียว
+- P1 แก้ 0/ร: การส่งผลใช้ transaction เดียวสำหรับผลด่านและสรุปนักเรียน ตรวจสถานะและด่านที่ปลดล็อกใน DB กันส่งซ้ำจากหน้าใหม่ และคงเวลาและสถานะการรับทราบของครูเมื่อเล่นย้อนหลัง
 - จบด่านและเหรียญ: ใช้ V3 transaction ทางเดียว ตัดทางสำรองที่เขียนแยก ตรวจ V3 ใน staging/production ก่อน merge เข้า main
 - Team Battle: เปิด/ปิดแบบ atomic, เฉพาะแอดมิน, แยกห้อง, รักษาจำนวนรางวัลเดิมและไม่ใช้การ์ดที่ถูกจอง ทดสอบการกดซ้ำ; ตรวจสถานะฤดูกาลที่อาจเคยจ่ายบางส่วนจากระบบเก่าก่อนปิดจริง
 - รายงาน: Pre/Post และกราฟแยกเทอมเวลาไทยและคงคะแนน 0 จริง ส่วน Accuracy/Rank ภาพรวมเป็นข้อมูลสะสมและระบุชัด ไม่เปลี่ยนรหัสเทอมของนักเรียนหรือสถานะกิจกรรม
@@ -105,3 +105,4 @@
 - ก่อนปล่อย Campaign รุ่นใหม่: ติดตั้ง `20261123165742_private_live_game_answers.sql` หลัง V3 RPCs แล้วตรวจ `scripts/verify-private-campaign-release.sql` ให้ทุกแถวเป็น true ทดสอบเสียงจริงและการจบด่านใน staging ก่อน production; migration ไม่สร้าง ปิด หรือรีเซ็ต attempt เดิม
 - หากต้องย้อนเวอร์ชันหลังเปิด Campaign รุ่นใหม่ ให้หยุดเปิด attempt ใหม่และรอให้ attempt รุ่นใหม่หมดก่อนย้อนบริการที่อ่าน ledger ไม่ได้ ห้ามนำผลจาก browser มาแทน ledger
 - GitHub เดิมเป็นสาธารณะ การลบไฟล์จาก branch ใหม่ไม่ลบจาก commit เดิมหรือ build เก่า การเปลี่ยน visibility, จำกัด/ถอด deployment เก่า หรือ rewrite ประวัติ/Git refs ต้องเป็นงานแยกที่เจ้าของ repo และผู้ดูแล production อนุมัติ ห้ามคัดลอกข้อมูลรายบุคคลลง issue/PR และไม่หมุนรหัสในงานนี้
+- เกณฑ์ปล่อยล่าสุด ลำดับ SQL และช่องว่าง Team Battle ดู [Release Handoff](../../VOCAB_JOURNEY_RELEASE_HANDOFF.md) ก่อนนำ branch ขึ้น production

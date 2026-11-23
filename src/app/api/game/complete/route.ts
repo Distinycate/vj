@@ -95,6 +95,7 @@ export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
     const session = await requireRole(['STUDENT']);
+    const isExternalStudent = session.user?.userType === 'EXTERNAL';
 
     const rawBody = await request.json().catch(() => null);
 
@@ -167,8 +168,8 @@ export async function POST(request: Request) {
         score: attempt.score,
         accuracy: attempt.accuracy,
         stars: attempt.stars ?? 0,
-        earnedCoins: attempt.coins_awarded || 0,
-        earnedExp: attempt.exp_awarded || 0,
+        earnedCoins: isExternalStudent ? 0 : (attempt.coins_awarded || 0),
+        earnedExp: isExternalStudent ? 0 : (attempt.exp_awarded || 0),
         currentStage: pathData?.current_stage || attempt.stage_number,
         currentRank: effectiveRank,
         campaignCompleted: pathData?.campaign_completed_at != null,
@@ -276,7 +277,6 @@ export async function POST(request: Request) {
       }
     );
 
-    const isExternalStudent = session.user?.userType === 'EXTERNAL';
 
     if (!v3Err && v3Data?.success) {
       // ── V3 success path ────────────────────────────────────────────────────

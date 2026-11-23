@@ -36,10 +36,15 @@ test('bulk import previews first and never updates existing rows', () => {
   assert.doesNotMatch(sql, /UPDATE public\./i);
 });
 
-test('remedial stage GET and POST use the same unlock check', () => {
+test('remedial stage GET checks access and POST rechecks it in the write transaction', () => {
   const route = readFileSync('src/app/api/events/runs/[runId]/stage/[stageNum]/route.ts', 'utf8');
-  assert.equal([...route.matchAll(/await verifyStageAccess\(runId, session.subjectId, stageNum, participant.target_stages\)/g)].length, 2);
-  assert.equal([...route.matchAll(/run.status !== 'active'/g)].length, 2);
-  assert.match(route, /if \(progressError\) throw progressError/);
-  assert.match(route, /if \(participantError\) throw participantError/);
+  const sql = readFileSync('supabase/migrations/20261124120000_atomic_remedial_stage.sql', 'utf8');
+  assert.match(route, /await verifyStageAccess\(runId, session.subjectId, stageNum, participant.target_stages\)/);
+  assert.match(route, /run.status !== 'active'/);
+  const post = route.slice(route.indexOf('export async function POST'));
+  assert.match(post, /\.rpc\('submit_remedial_stage_v1'/);
+  assert.match(post, /p_student_id: session.subjectId/);
+  assert.doesNotMatch(post, /\.(upsert|update)\(/);
+  assert.match(sql, /v_run.status <> 'active'/);
+  assert.match(sql, /stage_number = p_stage - 1 AND passed/);
 });

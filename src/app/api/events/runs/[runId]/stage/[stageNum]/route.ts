@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { requireSession } from '@/lib/server/session';
 import { supabaseAdmin } from '@/lib/server/supabaseAdmin';
@@ -89,7 +90,8 @@ export async function GET(
 }
 
 const submitAnswersSchema = z.object({
-  answers: z.array(z.number().int().min(0).max(3)).length(10, 'ต้องตอบให้ครบ 10 ข้อ'),
+  answers: z.array(z.number().int().min(0).max(3).nullable()).length(10),
+  submissionId: z.string().uuid().optional(),
 });
 
 export async function POST(
@@ -115,33 +117,19 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid answers', details: parsed.error.issues }, { status: 400 });
     }
 
-    const { answers } = parsed.data;
-
-    // 1. Verify participant
-    const { data: participant, error: partErr } = await supabaseAdmin
-      .from('event_participants')
-      .select('id, target_stages, completed_stages, status, total_attempts')
-      .eq('event_run_id', runId)
-      .eq('student_id', session.subjectId)
-      .maybeSingle();
-
-    if (partErr || !participant) {
-      return NextResponse.json({ error: 'Not assigned to this event' }, { status: 403 });
-    }
+    const { answers, submissionId } = parsed.data;
 
     // 2. Load run info
     const { data: run, error: runErr } = await supabaseAdmin
       .from('event_runs')
-      .select('template_id, status')
+      .select('template_id')
       .eq('id', runId)
       .maybeSingle();
 
-    if (runErr || !run || run.status !== 'active') {
+    if (runErr) throw runErr;
+    if (!run) {
       return NextResponse.json({ error: 'Event run is not active' }, { status: 400 });
     }
-
-    const denied = await verifyStageAccess(runId, session.subjectId, stageNum, participant.target_stages);
-    if (denied) return denied;
 
     // 3. Load authoritative stage data
     const stageData = getRemedialStage(run.template_id, stageNum);
@@ -161,7 +149,7 @@ export async function POST(
       reviewDetails.push({
         id: q.id,
         prompt: q.prompt,
-        selectedChoice: q.choices[selectedIdx] || '',
+        selectedChoice: selectedIdx == null ? '' : (q.choices[selectedIdx] || ''),
         correctChoice: q.choices[q.correctIndex] || '',
         isCorrect,
       });
@@ -169,69 +157,31 @@ export async function POST(
 
     const isPassed = correctCount >= 7;
 
-    // 5. Update stage progress
-    const { data: existingProg, error: existingError } = await supabaseAdmin
-      .from('event_progress')
-      .select('best_score, attempts, passed')
-      .eq('event_run_id', runId)
-      .eq('student_id', session.subjectId)
-      .eq('stage_number', stageNum)
-      .maybeSingle();
-    if (existingError) throw existingError;
-
-    const newAttempts = (existingProg?.attempts || 0) + 1;
-    const newBest = Math.max(existingProg?.best_score || 0, correctCount);
-    const hasEverPassed = Boolean(existingProg?.passed || isPassed);
-
-    const { error: progressError } = await supabaseAdmin
-      .from('event_progress')
-      .upsert({
-        event_run_id: runId,
-        student_id: session.subjectId,
-        stage_number: stageNum,
-        best_score: newBest,
-        attempts: newAttempts,
-        passed: hasEverPassed,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'event_run_id,student_id,stage_number' });
-    if (progressError) throw progressError;
-
-    // 6. Recount total passed stages for this student in this run
-    const { data: allPassed, error: countError } = await supabaseAdmin
-      .from('event_progress')
-      .select('stage_number')
-      .eq('event_run_id', runId)
-      .eq('student_id', session.subjectId)
-      .eq('passed', true);
-    if (countError) throw countError;
-
-    const totalPassedStages = allPassed?.length || 0;
-    const isEventFinished = totalPassedStages >= participant.target_stages;
-
-    let newStatus = participant.status;
-    let completedAt: string | null = null;
-    let teacherSeen = true;
-
-    if (isEventFinished) {
-      newStatus = 'passed';
-      completedAt = new Date().toISOString();
-      teacherSeen = false; // Trigger new badge for teacher!
-    } else if (participant.status === 'not_started') {
-      newStatus = 'in_progress';
+    const { data: saved, error: saveError } = await supabaseAdmin.rpc('submit_remedial_stage_v1', {
+      p_run_id: runId,
+      p_student_id: session.subjectId,
+      p_template_id: run.template_id,
+      p_stage: stageNum,
+      p_score: correctCount,
+      // Tabs opened before release still submit the original payload.
+      p_submission_id: submissionId ?? randomUUID(),
+    });
+    if (saveError || !saved) throw saveError ?? new Error('Missing remedial result');
+    if (saved.error) {
+      switch (saved.error) {
+        case 'LOCKED':
+          return NextResponse.json({ error: 'กรุณาผ่านด่านก่อนหน้า' }, { status: 403 });
+        case 'OUT_OF_RANGE':
+        case 'NOT_ASSIGNED':
+          return NextResponse.json({ error: 'ด่านนี้ไม่อยู่ในชุดกิจกรรมของนักเรียน' }, { status: 403 });
+        case 'INACTIVE':
+          return NextResponse.json({ error: 'กิจกรรมนี้ไม่ได้เปิดให้ส่งผลแล้ว' }, { status: 409 });
+        case 'ATTEMPT_CONFLICT':
+          return NextResponse.json({ error: 'คำตอบไม่ตรงกับการส่งครั้งก่อน กรุณาเริ่มทำด่านใหม่' }, { status: 409 });
+        default:
+          return NextResponse.json({ error: 'ข้อมูลผลด่านไม่ถูกต้อง' }, { status: 400 });
+      }
     }
-
-    const { error: participantError } = await supabaseAdmin
-      .from('event_participants')
-      .update({
-        completed_stages: totalPassedStages,
-        total_attempts: (participant.total_attempts || 0) + 1,
-        status: newStatus,
-        completed_at: completedAt || (participant.status === 'passed' ? undefined : null),
-        teacher_seen: teacherSeen,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', participant.id);
-    if (participantError) throw participantError;
 
     return NextResponse.json({
       success: true,
@@ -239,14 +189,14 @@ export async function POST(
       score: correctCount,
       targetPassScore: 7,
       passed: isPassed,
-      completedStages: totalPassedStages,
-      targetStages: participant.target_stages,
-      isEventCompleted: isEventFinished,
-      eventStatus: newStatus,
+      completedStages: saved.completedStages,
+      targetStages: saved.targetStages,
+      isEventCompleted: saved.isEventCompleted,
+      eventStatus: saved.eventStatus,
       reviewDetails,
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error('POST stage submit error:', err);
-    return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 });
+    return NextResponse.json({ error: 'บันทึกผลไม่สำเร็จ กรุณาลองส่งอีกครั้ง' }, { status: 500 });
   }
 }

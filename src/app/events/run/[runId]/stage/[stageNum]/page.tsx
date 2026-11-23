@@ -1,9 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, XCircle, Trophy, RefreshCw, ChevronLeft, ChevronRight, AlertCircle, Play } from 'lucide-react';
+
+function newSubmissionId() {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  // Safari 14 provides getRandomValues but not randomUUID.
+  const bytes = Array.from(crypto.getRandomValues(new Uint8Array(16)));
+  bytes[6] = (bytes[6] & 15) | 64;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const hex = bytes.map(byte => byte.toString(16).padStart(2, '0')).join('');
+  return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join('-');
+}
 
 export default function RemedialStagePlayerPage() {
   const params = useParams();
@@ -22,6 +32,8 @@ export default function RemedialStagePlayerPage() {
   // Submit & Result State
   const [submitting, setSubmitting] = useState(false);
   const [resultData, setResultData] = useState<any | null>(null);
+  const pendingSubmission = useRef<{ submissionId: string; answers: (number | null)[] } | null>(null);
+  const submitInFlight = useRef(false);
 
   useEffect(() => {
     async function loadQuestions() {
@@ -35,6 +47,7 @@ export default function RemedialStagePlayerPage() {
         }
         const json = await res.json();
         if (json.success) {
+          pendingSubmission.current = null;
           setStageData(json);
           setAnswers(Array(json.questions?.length || 10).fill(null));
           setCurrentQIndex(0);
@@ -53,6 +66,7 @@ export default function RemedialStagePlayerPage() {
 
   // Handle select choice for current question
   const handleSelectChoice = (choiceIndex: number) => {
+    if (pendingSubmission.current) return;
     const updated = [...answers];
     updated[currentQIndex] = choiceIndex;
     setAnswers(updated);
@@ -60,21 +74,22 @@ export default function RemedialStagePlayerPage() {
 
   // Submit answers
   const handleSubmit = async () => {
+    if (submitInFlight.current) return;
     // Check if answered all
     const unansweredCount = answers.filter(a => a === null).length;
-    if (unansweredCount > 0) {
+    if (unansweredCount > 0 && !pendingSubmission.current) {
       const confirmSubmit = confirm(`คุณยังไม่ได้ตอบอีก ${unansweredCount} ข้อ ต้องการส่งคำตอบเลยหรือไม่?`);
       if (!confirmSubmit) return;
     }
 
+    submitInFlight.current = true;
     setSubmitting(true);
     try {
-      // Replace null with 0
-      const payloadAnswers = answers.map(a => a === null ? 0 : a);
+      pendingSubmission.current ??= { submissionId: newSubmissionId(), answers: [...answers] };
       const res = await fetch(`/api/events/runs/${runId}/stage/${stageNum}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers: payloadAnswers }),
+        body: JSON.stringify(pendingSubmission.current),
       });
 
       const json = await res.json();
@@ -86,11 +101,13 @@ export default function RemedialStagePlayerPage() {
     } catch (e: any) {
       alert(`เกิดข้อผิดพลาด: ${e.message}`);
     } finally {
+      submitInFlight.current = false;
       setSubmitting(false);
     }
   };
 
   const handleRetry = () => {
+    pendingSubmission.current = null;
     setAnswers(Array(stageData?.questions?.length || 10).fill(null));
     setCurrentQIndex(0);
     setResultData(null);
